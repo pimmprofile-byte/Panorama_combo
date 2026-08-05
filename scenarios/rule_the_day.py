@@ -865,7 +865,7 @@ CARDS = [
              "액자에는 여러 복장을 한 데이스트가 보인다.\n"
              "아주 어린 시절의 모습도 눈에 띈다.",
      "hint": "언제부터 깨져 있었는지 묻는다."},
-    {"id": "A5", "loc": "A", "locName": "관리자실", "round": 2, "vein": "case",
+    {"id": "A5", "loc": "A", "locName": "관리자실", "round": 1, "vein": "case",
      "spot": "권한 기록",
      "title": "관리자 권한 기록",
      "text": "어젯밤 이 방의 권한이 「데이먼」에게 넘어갔다가,\n"
@@ -901,7 +901,7 @@ CARDS = [
      "hint": "이 목소리가 누구 것인지, 그리고 언제 났는지 묻는다."},
 
     # ── B 기록보관소 ──────────────────────────────────────────────
-    {"id": "B1", "loc": "B", "locName": "기록보관소", "round": 1, "vein": "glitch",
+    {"id": "B1", "loc": "B", "locName": "기록보관소", "round": 2, "vein": "glitch",
      "spot": "로그 상자",
      "title": "낡은 로그 상자",
      "text": "「테스트 1회차」라는 문장이 적혀 있다.\n"
@@ -1008,7 +1008,7 @@ CARDS = [
                 "hint": "이 마을에서 하고 싶은 일이 곧 답이다."}},
 
     # ── D 잠수함 ──────────────────────────────────────────────────
-    {"id": "D1", "loc": "D", "locName": "잠수함", "round": 1, "vein": "case",
+    {"id": "D1", "loc": "D", "locName": "잠수함", "round": 2, "vein": "case",
      "spot": "조타실",
      "title": "조타실 기록",
      "text": "오래전, 마지막 사용 이후 방치되어 있던 것 같다.\n"
@@ -1020,7 +1020,7 @@ CARDS = [
      "text": "영문을 알 수 없는 「알」의 껍질 조각이 여기저기 흩어져 있다.\n"
              "밝은 보랏빛으로 반짝이고 있다.",
      "hint": "이 방을 쓰던 사람에게 무엇이었는지 묻는다."},
-    {"id": "D3", "loc": "D", "locName": "잠수함", "round": 2, "vein": "case",
+    {"id": "D3", "loc": "D", "locName": "잠수함", "round": 1, "vein": "case",
      "spot": "항해 일지",
      "title": "데이스트의 항해 일지",
      "text": "관리자 「데이스트」와 「데이비드」가 함께 항해한 기록이 있다.\n"
@@ -1057,13 +1057,13 @@ CARDS = [
      "puzzle": {"prompt": "[자리표시자] 하늘 끝 — 걸린 것을 빼내려면?",
                 "answer": ["하늘"],
                 "hint": "[자리표시자]"}},
-    {"id": "E1", "loc": "E", "locName": "하늘 끝", "round": 1, "requires": "F1", "vein": "glitch",
+    {"id": "E1", "loc": "E", "locName": "하늘 끝", "round": 2, "requires": "F1", "vein": "glitch",
      "gone": 3, "vanish": 6, "hot": True, "spot": "일렁이는 자리",
      "title": "일렁임의 잔상",
      "text": "허공 한 자리가 계속 일렁인다. 구름이 마치 상자처럼 보이기도 한다.\n"
              "이상함을 느끼면 다시 멀쩡해진다.",
      "hint": "언제 그 일렁임을 봤는지 묻는다."},
-    {"id": "E2", "loc": "E", "locName": "하늘 끝", "round": 1, "requires": "F1", "vein": "glitch",
+    {"id": "E2", "loc": "E", "locName": "하늘 끝", "round": 2, "requires": "F1", "vein": "glitch",
      "spot": "오로라",
      "title": "오로라 하늘",
      "text": "이 마을의 하늘에는 언제나 오로라가 가득하다.\n"
@@ -1123,7 +1123,7 @@ CARDS = [
      "puzzle": {"prompt": "[자리표시자] 바다 끝 — 뱃머리에 박힌 것을 빼내려면?",
                 "answer": ["바다"],
                 "hint": "[자리표시자]"}},
-    {"id": "G1", "loc": "G", "locName": "바다 끝", "round": 1, "requires": "D4", "vein": "case",
+    {"id": "G1", "loc": "G", "locName": "바다 끝", "round": 2, "requires": "D4", "vein": "case",
      "spot": "경계 앞",
      "title": "돌아선 발자국",
      "text": "경계 바로 앞에 발자국이 두 쌍 남아 있다.\n"
@@ -1145,7 +1145,7 @@ CARDS = [
     #    **다만 이것만 열어서는 「데이지가 플레이어다」로 안 읽힙니다** — 누가 누구에게
     #    한 말인지가 안 적혀 있고, 「공략」이 무슨 말인지도 이 세상 사람은 모릅니다.
     #    진상에 가까워질수록 뜻이 늘어나는 자리이고, 그 «늘어남»은 PRIVATE_NOTES 에 있습니다.
-    {"id": "H3", "loc": "H", "locName": "모니터 정원", "round": 2, "vein": "glitch",
+    {"id": "H3", "loc": "H", "locName": "모니터 정원", "round": 1, "vein": "glitch",
      "hot": True, "spot": "수신기",
      "title": "고장난 라디오 수신기",
      "text": "「대체. . . 어떻게. . .」 「관리자실. . . 공략하. . .」\n"
