@@ -409,6 +409,8 @@ def public_state() -> dict:
         used = {rid: sum(1 for r in cm.values() if r == cur) for rid, cm in ROOM["checkedRound"].items()}
         return {
             "rev": ROOM["rev"], "seq": seq, "round": cur, "scenarioId": SC.ID,
+            # 보이는 구역의 지문. 달라지면 화면이 /api/scenario 를 다시 받는다.
+            "zoneSig": _zone_sig(),
             "roomId": ROOM.get("roomId", ""),
             "podOpen": bool(ROOM.get("podOpen")),
             "podLaunch": _pod_launch_public(),
@@ -635,6 +637,16 @@ class AgeReq(BaseModel):
 @app.get("/api/scenario")
 def scenario():
     d = SC.public_scenario()
+    # 아직 열리지 않은 구역은 대본에서 통째로 걷어낸다 — 회색으로 걸어두면 그 칸이
+    # 「저기 뭔가 더 있다」를 공지한다. 자물쇠 카드가 열리는 순간 이 목록이 늘어나고,
+    # 화면은 state 의 zoneSig 로 그걸 알아채 대본을 다시 받는다.
+    _hid = _hidden_zones()
+    if _hid:
+        for _k in ("map", "rooms"):
+            if isinstance(d.get(_k), list):
+                d[_k] = [z for z in d[_k] if z.get("loc") not in _hid]
+        if isinstance(d.get("sealedWhy"), dict):
+            d["sealedWhy"] = {k: v for k, v in d["sealedWhy"].items() if k not in _hid}
     # 「나이를 스스로 적는 배역」 명단은 모두가 받는 이 대본에 실으면 안 된다 —
     # 셋 중 하나만 자기 나이를 댈 수 있다는 것이 이 판의 단서라, 명단이 곧 답이다.
     # 시나리오가 실어 보내더라도 여기서 걷어낸다. 그 사실은 /api/state 가
@@ -661,7 +673,9 @@ def scenario():
                          # item    탈출에 쓰는 도구. 손패 상한 밖의 «인벤토리» 로 들어간다
                          "locked": bool(c.get("puzzle")), "item": bool(c.get("item")),
                          "requires": c.get("requires"), "obligatory": c.get("reveal") == "obligatory"}
-                        for c in SC.CARDS]
+                        for c in SC.CARDS if c.get("loc") not in _hid]
+    # 화면이 「내가 받은 대본이 지금 판과 같은가」를 이 한 줄로 잰다.
+    d["zoneSig"] = _zone_sig()
     return d
 
 
@@ -1462,6 +1476,45 @@ def _zone_lock(loc: str, rnd: int) -> str:
     if z and rnd < int(z.get("until", 0)):
         return z.get("why", "아직 갈 수 없습니다.")
     return ""
+
+
+def _gated_zones() -> dict:
+    """수수께끼를 풀어야 «생기는» 구역 → 그 자물쇠 카드 id.
+
+    원고는 이걸 카드 쪽에 `unlockZone` 한 줄로 적는다(F1 → 하늘 끝, D4 → 바다 끝).
+    구역 쪽에 따로 표를 두지 않는 것은, 자물쇠가 곧 그 구역의 «입구» 라서다.
+    """
+    out = {}
+    for c in getattr(SC, "CARDS", []) or []:
+        z = c.get("unlockZone")
+        if z:
+            out.setdefault(z, c["id"])
+    return out
+
+
+def _hidden_zones() -> set:
+    """지금 **화면에 아예 없어야 할** 구역들.
+
+    잠긴 구역을 회색으로 걸어두는 것과 아예 안 보이는 것은 전혀 다른 판이다.
+    회색 칸은 「저기 뭔가 더 있다」를 그 자리에서 공지한다 — 하늘 끝과 바다 끝은
+    «있는 줄도 몰랐던 곳이 열리는» 자리라서, 열리기 전에는 지도에 없어야 한다.
+
+    그래서 여기서 걸러낸 구역은 대본(`/api/scenario`)에서 통째로 빠진다.
+    자물쇠 카드가 공개되는 순간 목록이 바뀌고, 화면은 `zoneSig` 가 달라진 것을
+    보고 대본을 다시 받는다 — 그 한 박자가 없으면 새 구역의 카드가 손에 들어왔는데
+    카탈로그에는 없는 상태가 잠깐 생긴다.
+    """
+    seen = set(ROOM.get("revealed") or [])
+    for cids in ROOM.get("hands", {}).values():
+        seen.update(cids)
+    return {z for z, cid in _gated_zones().items() if cid not in seen}
+
+
+def _zone_sig() -> str:
+    """지금 보이는 구역들의 지문. 이 값이 바뀌면 화면이 대본을 다시 받는다."""
+    hid = _hidden_zones()
+    return ",".join(sorted(z["loc"] for z in (getattr(SC, "MAP", []) or [])
+                           if z.get("loc") not in hid))
 
 
 def _quota_for(seq: int) -> list:

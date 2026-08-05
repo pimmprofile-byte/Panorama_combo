@@ -2380,7 +2380,10 @@ def public_card(cid: str):
     out = {"id": c["id"], "loc": c["loc"], "locName": c["locName"], "round": c["round"],
            "title": c["title"], "text": c["text"], "bait": c.get("bait", False),
            "spot": c.get("spot", ""), "unlocks": c.get("unlocks", ""),
-           "item": bool(c.get("item"))}
+           # 손패 상한 밖의 물건 둘. 화면이 「카드」와 「도구」를 이 두 표로 가른다 —
+           # keyHalf 를 안 실어 보냈더니 열쇠 반쪽이 카드 칸에 들어가서, 서버가
+           # 세는 장수와 화면이 세는 장수가 어긋났다.
+           "item": bool(c.get("item")), "keyHalf": bool(c.get("keyHalf"))}
     p = c.get("puzzle")
     if p:
         out["puzzle"] = {"prompt": p.get("prompt", "")}

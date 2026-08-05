@@ -97,6 +97,18 @@
        붙는 자리는 조사카드 본문·힌트, 롤카드 줄글, 진상 정본 — 셋뿐이다.
        라벨과 제목은 안 따라간다(그건 이 화면의 얼굴이라 비트맵으로 남는다). */
     --body:var(--pix);
+    /* ── 읽는 글 ──────────────────────────────────────────────────
+       조사카드처럼 «여러 줄을 이어 읽는» 자리만 프리텐다드로 뺀다. 비트맵은 라벨·숫자·
+       제목에서는 또렷한데, 열 줄 넘게 이어지는 본문에서는 눈이 빨리 지친다.
+
+       ★ --body 와 «따로» 둔다. --body 가 붙은 세 자리(진상 정본 .rev-sol · 롤카드 줄글
+         .bc-body · 나의 이야기 .story p)는 비트맵을 그대로 «유지하기로» 했다 —
+         내 정보는 지금 그대로가 낫다는 것이 이 판의 결정이다. --body 를 뒤집으면
+         그 셋이 같이 갈린다.
+       ★ --ui 와도 따로 둔다. 그건 「13px 아래 작은 글자」용 이름이라, 14~16px 짜리
+         줄글에 붙이면 이름과 쓰임이 어긋난다.
+       웹폰트는 새로 안 받는다 — 위 @font-face 의 같은 Pretendard-400 을 쓴다. */
+    --read:"PIMM Body","Pretendard","Apple SD Gothic Neo",system-ui,sans-serif;
     /* 작은 글자용. 12px 아래에서는 비트맵 획이 뭉개져 탭 이름이 서로 안 갈린다 —
        그 자리만 프리텐다드로 뺀다(스타일시트 맨 끝의 «작은 글자» 규칙 참고).
        비트맵으로 되돌리려면 이 한 줄을 var(--pix) 로 바꾸면 된다. */
@@ -200,13 +212,16 @@
   /* ★ 초록 ③ — 되돌릴 수 없는 확정 둘. 클래스가 아니라 «무슨 일을 하는가» 로 잡는다.
      .btn.gold 는 전송·계속·코드넣기까지 아홉 군데가 나눠 쓰고 있어서, 클래스로 칠하면
      초록이 화면마다 떠 버린다. 실제로 판을 넘기는 advance() 와 이름을 적는 acSend()
-     둘만 골라 켠다. JS 는 손대지 않는다 — 속성 선택자로 집는다. */
-  .btn[onclick="advance()"],.btn[onclick="acSend()"]{
+     둘만 골라 켠다. JS 는 손대지 않는다 — 속성 선택자로 집는다.
+     막을 넘기는 단추를 누르면 확인창이 한 번 뜨는데, 거기서 실제로 판을 넘기는 쪽
+     (「1차 조사 시작」)도 같은 일을 하는 단추다 — 같은 초록이어야 한다. 그 창은
+     dialog() 가 만들어서 onclick 이 없으므로 .go 클래스로 집는다. 취소는 그대로 둔다. */
+  .btn[onclick="advance()"],.btn[onclick="acSend()"],.btn.go{
     background:linear-gradient(180deg,var(--gold),#00b877);border-color:#04150e;color:#04150e;font-weight:800;
     box-shadow:2px 2px 0 #04150e,var(--neon)}
-  .btn[onclick="advance()"]:hover,.btn[onclick="acSend()"]:hover{
+  .btn[onclick="advance()"]:hover,.btn[onclick="acSend()"]:hover,.btn.go:hover{
     background:linear-gradient(180deg,#3dffb4,var(--gold));color:#04150e}
-  .btn[onclick="advance()"]:active,.btn[onclick="acSend()"]:active{
+  .btn[onclick="advance()"]:active,.btn[onclick="acSend()"]:active,.btn.go:active{
     transform:translate(2px,2px);box-shadow:inset 0 1px 0 rgba(0,0,0,.32);
     background:linear-gradient(180deg,#00a86c,var(--gold))}
   /* 못 누르는 것 — 케이스에 파묻힌 판. 그림자가 없으니 튀어나와 보이지 않는다. */
@@ -439,6 +454,17 @@
   .dock .dk .bdg{position:absolute;top:2px;right:calc(50% - 22px);min-width:15px;height:15px;line-height:15px;
     border-radius:0;background:var(--ember);color:#fff;font-size:9.5px;font-weight:800;padding:0 4px;display:none}
   .dock .dk .bdg.on{display:block}
+  /* 안 읽은 대화 — 밝았다 어두워졌다 하는 맥박(하이라이트 디밍). 8비트라 steps() 로
+     끊어 친다. 부드럽게 흐르면 이 화면에서 혼자 다른 세계가 된다.
+     칸 전체가 밝아진다 — 아이콘·글자·바탕이 같이 오르내려야 «칸이 부른다»로 읽힌다. */
+  .dock .dk.unread{animation:dkDim 1.15s steps(1) infinite}
+  @keyframes dkDim{
+    0%,49%  {background:rgba(0,230,147,.16);color:var(--gold-b)}
+    50%,100%{background:rgba(0,230,147,.04);color:var(--sub)}
+  }
+  .dock .dk.unread .i{stroke:currentColor}
+  @media(prefers-reduced-motion:reduce){
+    .dock .dk.unread{animation:none;background:rgba(0,230,147,.14);color:var(--gold-b)} }
   .dock .dk .dot{position:absolute;top:5px;right:calc(50% - 18px);width:7px;height:7px;border-radius:0;
     background:var(--ember);display:none}
   .dock .dk .dot.on{display:block}
@@ -648,7 +674,7 @@
   .gcard.locked{cursor:default;opacity:.5}
   /* 손패 상한 정리 */
   .trimgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr));gap:10px;margin-top:4px}
-  /* 되가져오기 — 왼쪽은 테이블 것(차가운 색), 오른쪽은 내 것(불꽃색)으로 방향을 읽히게. */
+  /* 테이블 위 카드와 바꾸기 — 왼쪽은 테이블 것(차가운 색), 오른쪽은 내 것(불꽃색)으로 방향을 읽히게. */
   .swap-h{font-size:12px;letter-spacing:.05em;color:var(--muted);margin:16px 0 8px;font-weight:700}
   .swaprow{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr))}
   .swapcard{text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:2px;
@@ -660,9 +686,19 @@
   .swapcard .sc-w{font-size:11px;color:var(--muted);word-break:keep-all}
   .swaphint{margin-top:16px;padding:11px 13px;border:1px dashed var(--line);border-radius:2px;
     font-size:13px;line-height:1.7;color:var(--sub);word-break:keep-all}
-  .trimcard{text-align:left;background:linear-gradient(160deg,#232019,#151413);border:1px solid var(--case-line);border-radius:2px;padding:12px;color:inherit;transition:.15s}
+  /* 여러 장을 한꺼번에 고른다 — 그래서 「골랐다」가 한눈에 세어져야 한다.
+     모서리에 각진 체크칸을 두고, 고른 것만 채운다(라디오가 아니라 체크다). */
+  .trimcard{position:relative;text-align:left;background:linear-gradient(160deg,#232019,#151413);border:1px solid var(--case-line);border-radius:2px;padding:12px 12px 12px 34px;color:inherit;transition:.15s}
   .trimcard:hover{border-color:var(--case-ink)}
   .trimcard.on{border-color:var(--ember);box-shadow:0 0 0 1px var(--ember) inset,0 0 18px -6px var(--ember)}
+  .trimcard .tck{position:absolute;left:11px;top:13px;width:14px;height:14px;border-radius:0;
+    border:1px solid var(--case-line);background:#0e0d0c;box-shadow:inset 1px 1px 0 rgba(0,0,0,.5)}
+  .trimcard.on .tck{border-color:var(--ember);background:var(--ember)}
+  /* 체크표도 픽셀이다 — 두 획을 각지게 세운다 */
+  .trimcard.on .tck::after{content:"";position:absolute;left:3px;top:6px;width:2px;height:2px;
+    background:#fff;box-shadow:2px 2px 0 #fff,4px 0 0 #fff,6px -2px 0 #fff,8px -4px 0 #fff}
+  /* 이미 필요한 만큼 골랐으면 나머지는 못 누른다 — 되돌릴 수 없는 공개라 더 못 고른다 */
+  .trimcard.full{opacity:.42;pointer-events:none}
   .trimcard .tt{font-weight:800;color:var(--ink);font-size:14.5px;margin-bottom:6px}
   .trimcard .tm{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px}
   .trimcard .tb{font-size:12.5px;color:#dddcdb;line-height:1.6}
@@ -746,15 +782,21 @@
   .viccard .vic-rc{border-color:color-mix(in srgb,var(--rc,var(--ember-b)) 42%,var(--line))}
   .viccard .vic-rc .badge{color:var(--rc,var(--ember-b));
     border-color:color-mix(in srgb,var(--rc,var(--ember-b)) 42%,var(--line))}
-  .viccard .vic-facts{min-width:0;display:flex;flex-direction:column;gap:0}
+  /* 초상 오른쪽에 서는 소개 — 초상과 같은 줄에서 시작해 위가 맞는다 */
+  .viccard .vic-about{min-width:0;display:flex;flex-direction:column;gap:9px}
+  .viccard .vic-about p{margin:0;font-size:13px;line-height:1.72;color:var(--sub);word-break:keep-all}
+  /* 시신 앞에서 눈에 들어오는 것 — 소개와 성격이 달라 두 단 «아래»에 통째로 깔린다 */
+  .viccard .vic-facts{grid-column:1/-1;min-width:0;display:flex;flex-direction:column;gap:0;
+    margin-top:2px;padding-top:9px;border-top:1px solid var(--line)}
   .viccard .vf{font-size:13px;line-height:1.68;color:#cfcdcb;padding:7px 0 7px 13px;position:relative;
     border-bottom:1px solid var(--line);word-break:keep-all}
   .viccard .vf:last-of-type{border-bottom:0}
   .viccard .vf::before{content:"";position:absolute;left:1px;top:15px;width:5px;height:5px;
     border-radius:0;background:var(--ember-b);opacity:.8}
   .viccard .vic-s{grid-column:1/-1;margin-top:4px}
-  /* 한 칸으로 접으면 3:4 초상이 탭 하나를 통째로 먹는다 — 아주 좁을 때만 접고, 폭을 묶는다. */
-  @media(max-width:330px){ .viccard{grid-template-columns:1fr}
+  /* 한 칸으로 접으면 3:4 초상이 탭 하나를 통째로 먹는다 — 아주 좁을 때만 접고, 폭을 묶는다.
+     접혀도 남는 빈 띠는 없다(빈 tagline 칸을 없앴다) — 그냥 초상·소개·관찰 순으로 쌓인다. */
+  @media(max-width:360px){ .viccard{grid-template-columns:1fr}
     .viccard .vic-rc{max-width:210px} }
   .casebox .case-h{font-size:11px;letter-spacing:.2em;color:var(--cold);font-weight:700;
     margin:0 0 11px;text-transform:uppercase;display:flex;align-items:center;gap:9px}
@@ -809,6 +851,9 @@
     border:1px solid var(--line);background:var(--bg)}
   .rdybar .rb-n{font-size:12.5px;color:var(--sub);margin-right:auto;font-variant-numeric:tabular-nums}
   /* 내 단서 / 소지품 탭 */
+  /* 도구 칸 머리의 한 줄 — 여기만 상한이 «없다»는 것을 못 박는다. 카드탭에는 안 뜬다. */
+  .toolnote{margin:0 0 12px;padding:9px 11px;border-left:2px solid var(--gold);
+    background:rgba(0,230,147,.07);color:var(--sub);font-size:12.5px;line-height:1.65;word-break:keep-all}
   .htabs{display:flex;gap:6px;padding:0 14px 11px;border-bottom:1px solid var(--line)}
   .htab{flex:1 1 0;padding:8px 6px;border-radius:2px;border:1px solid var(--line);background:var(--bg);
     color:var(--sub);font-size:13px;font-family:inherit;cursor:pointer;transition:.14s}
@@ -889,6 +934,69 @@
   .mhead .mh-x:hover{border-color:var(--mt);color:var(--ink)}
   /* 본문 — 창 안에서 구르는 곳은 여기 하나뿐이다 */
   .mbody{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;padding:16px 18px}
+
+  /* ── CRT 플리커선 ─────────────────────────────────────────────
+     오래된 브라운관은 수직동기가 어긋나면 굵은 밝은 띠 하나가 화면을 아래에서
+     위로 천천히 훑고 지나간다. 얇은 주사선을 촘촘히 까는 것과는 다른 현상이다 —
+     굵고, 하나고, 가끔이다. landing.html 에서 그대로 옮겨온 덩어리다.
+
+     쓰는 법: 떠오르는 창에 class="crt-flick" 한 줄. 이 파일에서는 창이 전부 같은
+     껍데기(.modal .box)를 쓰므로 그 선택자를 같이 적어 한 번에 건다 — 새로 만드는
+     창(수수께끼·QA 기록·확인창)까지 저절로 따라온다.
+     붙일 자리는 «가리개»(.modal)가 아니라 그 안에 든 «창»(.box)이다. 두 가지만 조심한다 —
+       ① .crt-flick 이 position:relative 를 건다. 제가 position:fixed 로 자리를
+          잡고 있는 판(가리개·토스트)에 붙이면 그 자리를 잃는다. 안쪽 창에 붙여라.
+       ② 창이 제 안에서 구르면(overflow:auto) 띠도 내용과 같이 굴러 내려간다.
+          이 파일에서 구르는 것은 .box 가 아니라 그 안의 .mbody 라 어긋나지 않는다.
+     ★ #vn(비주얼노벨)에는 안 붙인다 — 거기는 이미 제 연출이 있다. .modal .box 가
+       아니므로 이 선택자에 걸리지 않는다.
+
+     띠는 ::after 한 장이다. 그 판은 창 전체를 덮고, 띠 모양은 판 «맨 아래» 64px 에만
+     마스크로 뚫어 둔다(mask-position 0 100%). 그래서 판을 위로 밀면 띠가 창을
+     아래에서 위로 지나간다. translateY 로만 움직인다 — top 을 건드리면 매 프레임
+     배치를 다시 잡는다. 시작(+띠 높이)과 끝(-100%)은 둘 다 창 밖이라 쉬는 동안
+     아무것도 안 보인다.
+
+     밝히는 방식은 흰색을 덧칠하는 게 아니라 backdrop-filter:brightness 다.
+     덧칠은 «더하기»라 어두운 판 위 인광 글자의 대비를 깎아먹는다. brightness 는
+     «곱하기»라 글자와 바탕이 같은 비율로 밝아져 대비가 그대로 남는다. 어두운 화면
+     칸은 곱해도 거의 안 밝아지므로, 거기만 아주 옅은 흰색(.05)을 한 겹 같이 얹는다.
+     contrast(1.04) 는 그 흰색이 깎아먹은 만큼을 도로 세워 주는 몫이다. */
+  .crt-flick,.modal .box{position:relative;overflow:hidden;--crt-band:64px}
+  .crt-flick::after,.modal .box::after{
+    content:"";position:absolute;inset:0;z-index:9;pointer-events:none;
+    background:rgba(255,255,255,.05);
+    backdrop-filter:brightness(1.18) contrast(1.04);
+    -webkit-backdrop-filter:brightness(1.18) contrast(1.04);
+    /* 계단진 띠. 가운데 한 칸은 딱 끊고 위아래 가장자리만 두 계단으로 풀어 준다 —
+       전부 딱 끊으면 CRT 가 아니라 그냥 흰 사각형이 된다. */
+    --crt-mask:linear-gradient(180deg,
+      rgba(0,0,0,0)     0%,
+      rgba(0,0,0,.26)   9%, rgba(0,0,0,.26) 17%,
+      rgba(0,0,0,.60)  17%, rgba(0,0,0,.60) 28%,
+      rgba(0,0,0,1)    28%, rgba(0,0,0,1)   72%,
+      rgba(0,0,0,.60)  72%, rgba(0,0,0,.60) 83%,
+      rgba(0,0,0,.26)  83%, rgba(0,0,0,.26) 91%,
+      rgba(0,0,0,0)   100%);
+    -webkit-mask-image:var(--crt-mask);mask-image:var(--crt-mask);
+    -webkit-mask-size:100% var(--crt-band);mask-size:100% var(--crt-band);
+    -webkit-mask-position:0 100%;mask-position:0 100%;
+    -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+    transform:translateY(var(--crt-band));
+    will-change:transform;
+    animation:crtFlick 9s linear infinite}
+  /* 9초에 한 번, 1.17초 동안 창을 아래에서 위로 가로지르고 나머지 7.8초는 창 위쪽
+     밖에 서서 쉰다. 계속 돌면 눈이 아프고 글을 못 읽는다 — 「이따금」이 이 연출의
+     전부다. 긴 주기 하나에 쉬는 구간을 물려 두는 게 제일 싸다. 타이머도 JS 도 없다. */
+  @keyframes crtFlick{
+    0%{transform:translateY(var(--crt-band))}
+    13%{transform:translateY(-100%)}
+    100%{transform:translateY(-100%)}
+  }
+  @media(prefers-reduced-motion:reduce){ .crt-flick::after,.modal .box::after{display:none} }
+  /* 제 안에서 구르는 창은 .crt-flick 의 overflow:hidden 을 되돌린다 —
+     landing 의 .adcard.crt-flick{overflow:auto} 와 같은 방식이다. */
+  .crt-flick.scrolls{overflow:auto}
   /* 방 안 — 그림 위에 핀이 선다. 핀은 「무엇을 뒤지는가」까지만 말하고 내용은 말하지 않는다. */
   .room{position:relative;border-radius:2px;overflow:hidden;border:1px solid var(--line);background:#080807}
   .room>img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
@@ -1238,6 +1346,8 @@
   .mynote .lb::after{content:"나에게만 보입니다";margin-left:auto;font-weight:600;letter-spacing:0;
     font-size:10.5px;color:#9a938a;opacity:.9}
   .mynote .tx{color:#e2dbd2}
+  /* 한 이름표 아래 여러 줄 — 줄과 줄 사이만 벌린다. 줄마다 칸을 다시 그리지 않는다. */
+  .mynote .tx+.tx{margin-top:6px;padding-top:6px;border-top:1px solid rgba(195,186,176,.16)}
   .mynote.keep{border-color:rgba(195,186,176,.34);background:linear-gradient(180deg,rgba(195,186,176,.10),rgba(195,186,176,.04))}
   .mynote.keep .lb{color:var(--cold)} .mynote.keep .lb::after{color:#9a938a} .mynote.keep .tx{color:#e2dbd2}
   .bc-avwrap{display:flex;align-items:center;gap:14px;margin-bottom:6px}
@@ -1506,6 +1616,11 @@
   /* 타자 연출은 글자를 "덧붙이지" 않고, 처음부터 전체를 깔아둔 뒤 안 읽은 쪽을 감춘다.
      그래야 글자가 늘어날 때마다 줄갈이가 다시 계산돼 문장이 들썩이는 일이 없다. */
   #vn .vn-off{opacity:0}
+  /* 대사 본문에 나오는 인물 이름 — 그 사람의 키컬러. 이름표(.vn-name)가 화자의 색으로
+     서 있는 것과 같은 규칙이다. 죽은 사람 이름도 여기서 색을 얻는다(피해자 카드의 color).
+     굵기만 한 단계 올리고 배경은 안 깐다 — 대사 한가운데에 칩이 박히면 문장이 끊긴다. */
+  #vn .vn-nm{color:var(--nc,inherit);font-weight:800;
+    text-shadow:.12cqw .12cqw 0 rgba(0,0,0,.95)}
   /* 커서는 자리를 차지하면 안 된다 — 폭만큼 음수 마진으로 상쇄해 줄갈이에 영향이 0이 되게 */
   #vn .vn-line.typing .vn-on::after{content:"";display:inline-block;width:.1em;height:1em;
     margin:0 -.1em 0 0;vertical-align:-.13em;background:var(--spk,#c9c2b4);
@@ -1607,6 +1722,29 @@
   .dz-h:hover{color:#fff}
   .dz-h .n{margin-left:auto;font-size:11.5px;font-weight:400;color:var(--muted);font-variant-numeric:tabular-nums}
   .dz-h .go{font-size:12px;color:var(--muted)}
+  /* ── 새로 열린 구역 ────────────────────────────────────────────
+     밝았다 어두워졌다 하는 맥박(하이라이트 디밍)이다. 8비트라 steps() 로 끊어 친다 —
+     부드럽게 흐르면 이 화면에서 혼자 다른 세계가 된다.
+     그 구역을 처음 누르면 멎는다(ackZone). 사람마다 따로 기억한다. */
+  .dz.znew{padding:8px 10px;margin:-8px -10px;
+    border:1px solid color-mix(in srgb,var(--gold) 45%,var(--line));
+    animation:zoneDim 1.15s steps(1) infinite}
+  .dz.znew .dz-h{color:var(--gold-b);border-bottom-color:color-mix(in srgb,var(--gold) 40%,var(--line))}
+  .dz-h .znew-t{font-size:10.5px;letter-spacing:.1em;font-weight:800;color:#0b0b09;
+    background:var(--gold-b);padding:1px 6px}
+  @keyframes zoneDim{
+    0%,49%  {background:rgba(0,230,147,.15)}
+    50%,100%{background:rgba(0,230,147,.03)}
+  }
+  /* 지도 쪽 구역 칸도 같은 박자로 — SVG 라 채우기만 오간다 */
+  svg .z-new .zone-fill{animation:zoneDimSvg 1.15s steps(1) infinite}
+  @keyframes zoneDimSvg{
+    0%,49%  {fill:#16342a;stroke:#5bffc2}
+    50%,100%{fill:#141310;stroke:#2a6b52}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .dz.znew{animation:none;background:rgba(0,230,147,.12)}
+    svg .z-new .zone-fill{animation:none;stroke:#5bffc2} }
   /* 칸은 제 내용만큼만 높다 — 늘려 맞추면 전체공개 한 장 때문에 한 줄이 통째로 길어진다 */
   .dcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,214px),1fr));gap:8px;align-items:start}
   .dc{--wc:var(--line);display:flex;flex-direction:column;gap:5px;text-align:left;font-family:inherit;
@@ -1677,9 +1815,13 @@
   .dc.mine{--wc:var(--me,var(--cold));border-color:color-mix(in srgb,var(--me,var(--cold)) 44%,var(--line));
     background:linear-gradient(160deg,color-mix(in srgb,var(--me,var(--cold)) 13%,#151413),#151413)}
   .dc.mine .ti{color:var(--me,var(--ink))}
-  /* 전체공개 — 제목도 본문도 나온다. 여기만 읽을 것이 있다. */
-  .dc.pub{--wc:var(--cold);background:linear-gradient(160deg,#201e1a,#171613)}
+  /* 전체공개 — 제목도 본문도 나온다. 여기만 읽을 것이 있다.
+     현황판에서 제일 먼저 눈에 들어와야 하는 칸이라 테두리를 신호색으로 두른다.
+     .hot(붉은 테두리)보다 «뒤에» 있어야 이긴다 — 자리를 옮기지 않는다. */
+  .dc.pub{--wc:var(--gold);border-color:color-mix(in srgb,var(--gold) 52%,var(--line));
+    background:linear-gradient(160deg,#1a201c,#171613)}
   .dc.pub .ti{color:var(--cold)}
+  .dc.pub .st{color:var(--gold-b)}
   .dc.lock{opacity:.5}
   /* 구역 점 — 시나리오 선택창 사람표시와 같은 읽는 법 */
   .zpips{display:flex;gap:3px}
@@ -2119,19 +2261,45 @@
 
   /* ── 나이 적기 ─────────────────────────────────────────────────────
      이 칸은 「그 배역을 맡은 사람」의 화면에만 뜬다. 남의 화면에는 자리도 없다.
-     8bit 톤 — 파낸 홈처럼 안쪽 그림자만 주고 둥글리지 않는다. */
-  .agebox{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:9px;
-    padding:8px 10px;border:1px solid var(--gold);background:rgba(201,154,78,.08)}
-  .agebox .k{font-size:11px;color:var(--gold-b);letter-spacing:.04em;flex:0 0 auto}
+     8bit 톤 — 파낸 홈처럼 안쪽 그림자만 주고 둥글리지 않는다.
+     색은 그 배역의 키컬러(--rc)를 받는다. 배역을 여기에 박지 않는다 — 다른 사건에서는
+     다른 배역이 적는다. 안 넘어오면 예전처럼 금색으로 선다. */
+  .agebox{--rc:var(--gold);display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:9px;
+    padding:8px 10px;border:1px solid var(--rc);
+    background:color-mix(in srgb,var(--rc) 10%,transparent)}
+  .agebox .k{font-size:11px;color:var(--rc);letter-spacing:.04em;flex:0 0 auto;font-weight:700}
   .agebox .d{flex:1 0 100%;font-size:11px;color:var(--sub);line-height:1.5}
+  .agebox .d b{color:var(--rc)}
+  /* 이미 적은 뒤 — 입력칸도 단추도 없다. 숫자만 박혀 있다. */
+  .agebox.done{background:color-mix(in srgb,var(--rc) 7%,transparent)}
+  .agebox .agefix{font-family:var(--pix);font-size:18px;font-weight:800;letter-spacing:.06em;
+    color:var(--rc);padding:2px 10px;border:1px solid color-mix(in srgb,var(--rc) 45%,var(--line));
+    background:#0e0d0c;box-shadow:inset 0 2px 0 rgba(0,0,0,.45)}
   .agein{width:74px;padding:5px 7px;font-family:inherit;font-size:14px;text-align:center;
     color:var(--ink);background:#0e0d0c;border:1px solid var(--line);border-radius:0;
     box-shadow:inset 0 2px 0 rgba(0,0,0,.45)}
-  .agein:focus{outline:none;border-color:var(--gold)}
+  .agein:focus{outline:none;border-color:var(--rc,var(--gold))}
   .agebtn{padding:5px 11px;font-family:inherit;font-size:12px;cursor:pointer;
-    color:#1a1512;background:var(--gold);border:1px solid var(--gold-b);border-radius:0;
+    color:#12100e;background:var(--rc,var(--gold));
+    border:1px solid color-mix(in srgb,var(--rc,var(--gold)) 60%,#fff);border-radius:0;
     box-shadow:inset 0 -2px 0 rgba(0,0,0,.28)}
   .agebtn:active{box-shadow:inset 0 2px 0 rgba(0,0,0,.28)}
+
+  /* ── 읽는 글은 프리텐다드로 ────────────────────────────────────
+     조사카드에서 «이어 읽는 글»만 갈아끼운다. 제목·이름표·숫자·라벨은 비트맵 그대로다 —
+     그건 이 화면의 얼굴이다. 내 정보(--body 가 붙은 세 자리)는 손대지 않는다.
+     한 자리에 모아 둬야 나중에 되돌릴 때도 이 덩어리만 보면 된다. */
+  .sec .b,                    /* 카드창 본문 */
+  .bigcard.clue .bc-body,     /* 손패에서 넘겨 읽는 카드 본문 (롤카드 .bc-body 는 제외) */
+  .mynote .tx,                /* 내 눈에만 걸리는 것 · 내가 찾던 것 */
+  .cnote,                     /* 카드 아래 해석 */
+  .unlocknote,                /* 이 카드를 공개하면… */
+  .puz-q,.puz-hint,.puz-dead, /* 수수께끼 물음 · 힌트 · 잠김 안내 */
+  .zcard .zc-body,.zc-q,      /* 구역 목록·자리 안내창의 줄글 */
+  .panel-note                 /* 카드 안팎의 안내문 */
+  {font-family:var(--read)}
+  /* 내 정보는 그대로 둔다 — 안내문 한 줄까지 프리텐다드가 되면 그 화면만 결이 달라진다 */
+  #sheetModal .panel-note{font-family:var(--pix)}
 
   /* ── QA 검수 모드 ─────────────────────────────────────────────────
      실제 판에서 이게 보이면 사고다. 그래서 게임의 어느 색과도 안 겹치는 자홍색 경고띠로
@@ -2157,6 +2325,21 @@
   .qabar .qa-sp{flex:1 1 auto}
   .qabar .qa-x{flex:0 0 auto;padding:3px 8px;border:1px solid #4d4a40;background:transparent;
     color:var(--qa);font-family:inherit;font-size:11px;cursor:pointer}
+  /* 시점 칩과 자동조사 단추는 «한 배역의 것» 이라, 줄이 접혀도 갈라지면 안 된다 */
+  .qabar .qa-g{flex:0 0 auto;display:inline-flex;align-items:stretch}
+  /* 자동조사 — 칩에 바로 붙여 그 배역의 것임을 못 박고, 테두리는 그 사람 색으로 얇게 */
+  .qabar .qa-a{flex:0 0 auto;padding:3px 7px;margin-left:-1px;
+    border:1px solid var(--rc,#4d4a40);background:#100f0c;
+    color:var(--rc,#b8b2a2);font-family:inherit;font-size:10.5px;cursor:pointer;line-height:1.2}
+  .qabar .qa-a:hover{background:var(--rc,#4d4a40);color:#0b0b09}
+  .qabar .qa-a:disabled{opacity:.35;cursor:default}
+  /* 전원 자동조사는 제일 자주 누른다 — 나머지 잡버튼과 섞이지 않게 채워둔다 */
+  .qabar .qa-x.hot{border-color:var(--qa);background:rgba(233,226,205,.14);font-weight:700}
+  /* 조사 페이즈가 아니면 흐리게 — 감추지는 않는다. 눌리면 서버가 준 말이 뜬다. */
+  .qabar .qa-a.dim,.qabar .qa-x.dim{opacity:.42}
+  /* 자동조사 결과 — 무엇을 열었는지 순서대로 */
+  .qa-log{margin:0;padding-left:1.5em;font-size:12.5px;line-height:1.85;color:var(--sub)}
+  .qa-log li{word-break:keep-all}
   /* 로비 쪽 안내판 — 세 자리를 한 기기가 쥐는 문이 여기 하나뿐이다 */
   .qapanel{margin:10px 0;padding:11px 12px;border:2px solid #c9c2ab;background:#16150f}
   .qapanel .qp-t{color:#efe9d6;font-weight:700;font-size:13px;margin-bottom:4px}
@@ -2176,41 +2359,47 @@
     color:var(--gold-b);font-family:var(--pix);font-size:16px;padding:10px 12px;letter-spacing:.06em;
     box-shadow:inset 2px 2px 0 rgba(0,0,0,.5)}
   .puz-in input:focus{outline:none;border-color:var(--case-line)}
+  /* 세 번 틀려 잠긴 자리 — 답 칸이 있던 자리를 그대로 메운다. 「입력이 사라졌다」가
+     아니라 「여기는 내 자리가 아니다」로 읽혀야 넘길 생각을 한다. */
+  .puz-dead{margin-top:12px;padding:12px 13px;border:1px solid var(--ember);
+    background:rgba(200,68,47,.10);color:var(--ember-b);
+    font-size:13.5px;line-height:1.6;word-break:keep-all;box-shadow:var(--shadow-sm)}
   .puz-msg{min-height:1.3em;margin-top:9px;font-size:13px;color:var(--ember-b)}
   .puz-note{margin-top:4px;font-size:12px;color:var(--muted)}
   .puz-hint{margin-top:10px;padding:10px 12px;border-left:2px solid var(--cold);
     background:rgba(195,186,176,.06);font-size:13.5px;line-height:1.7;color:var(--sub);word-break:keep-all}
-  /* 현황판의 잠긴 아이템 칸 */
-  .dc.puz{border-style:dashed;border-color:color-mix(in srgb,var(--gold) 40%,var(--line))}
-  .dc.puz .wh{color:var(--gold-b)}
-  .dc.puz .st{color:var(--gold-b)}
+  /* 현황판의 수수께끼 칸은 «따로 없다». 눌러보기 전에는 다른 카드와 구분이 안 되는
+     것이 이 판의 규칙이다 — 점선도, 열쇠도, 다른 색도 안 붙인다(.dc.puz 삭제).
+     자물쇠 여부는 데이터(catalog.locked)에 그대로 남아 있어 누르면 수수께끼가 뜬다. */
 
   /* ── 열쇠 표시 ─────────────────────────────────────────────────
-     퍼즐카드는 조사턴으로 여는 자리가 아니다. 점선 테두리만으로는 «지금은 못 여는
-     칸» 처럼 읽혀서, 열쇠를 붙여 «수수께끼로 여는 자리» 라는 걸 못 박는다.
-     SVG 에셋은 새로 만들지 않는다 — 5×9 비트맵을 box-shadow 로 찍어 그린다.
-     한 칸이 2px 이고, 아래 좌표가 그 비트맵이다.
-         . █ █ █ .      고리
-         █ . . . █
-         █ . . . █
-         . █ █ █ .
-         . . █ . .      대
-         . . █ . .
-         . . █ █ .      이빨
-         . . █ . .
-         . . █ █ .                                                        */
-  .kmk{display:inline-block;position:relative;width:10px;height:18px;flex:0 0 auto;
-    vertical-align:-4px}
-  .kmk::before{content:"";position:absolute;left:2px;top:0;width:2px;height:2px;
+     퍼즐카드는 조사턴으로 여는 자리가 아니다. 열쇠를 붙여 «수수께끼로 여는 자리»
+     라는 걸 못 박는다. SVG 에셋은 새로 만들지 않는다 — 비트맵을 box-shadow 로 찍는다.
+
+     ★ 예전 판은 5×9 (10×18px) 세로 열쇠였다. 글자가 12~13px 인 줄에 세로로 18px 짜리가
+       서니 그 자리만 키가 커 보였다. 대각선으로 눕히되, transform:rotate 로 돌리지
+       않는다 — box-shadow 로 찍은 점을 45도로 돌리면 래스터가 안티에일리어싱을 먹여
+       도트가 뭉갠다. 8비트 화면에서 흐린 점 하나는 규칙이 깨진 것으로 읽힌다.
+       그래서 «비스듬한 열쇠를 다시 찍는다» — 계단으로 사선을 그리는, 도트아트가
+       원래 쓰는 방법이다. 한 칸 2px, 7×7 = 14×14px 로 주변 글자보다 살짝 크다.
+         █ █ █ . . . .      고리 — 3×3 속 빈 사각. 마름모로 깎아봤더니 14px 에서는
+         █ . █ . . . .      «고리»로 안 읽히고 흩어진 점으로 보였다.
+         █ █ █ . . . .
+         . . . █ . . .      대 — 모서리로 맞물린 점열이 곧 1px 45도 선이다
+         . . . . █ . .
+         . . . █ . █ .      이빨 — 대의 왼쪽 아래로 한 칸 비껴 붙은 짧은 사선
+         . . . . █ . █                                                    */
+  .kmk{display:inline-block;position:relative;width:14px;height:14px;flex:0 0 auto;
+    vertical-align:-2px}
+  .kmk::before{content:"";position:absolute;left:0;top:0;width:2px;height:2px;
     background:currentColor;
     box-shadow:2px 0,4px 0,
-               -2px 2px,6px 2px,
-               -2px 4px,6px 4px,
-               0 6px,2px 6px,4px 6px,
-               2px 8px,2px 10px,
-               2px 12px,4px 12px,
-               2px 14px,
-               2px 16px,4px 16px}
+               0 2px,4px 2px,
+               0 4px,2px 4px,4px 4px,
+               6px 6px,
+               8px 8px,
+               6px 10px,10px 10px,
+               8px 12px,12px 12px}
   /* 카드 어디에 붙어도 같은 딱지다 — 현황판 칸·큰 화면·손패가 같은 것을 본다.
      8비트라 모서리는 각지고, 그림자는 blur 없이 2px 밀린다. */
   .keytag{display:inline-flex;align-items:center;gap:5px;padding:2px 8px 2px 6px;
@@ -2220,12 +2409,8 @@
     box-shadow:var(--shadow-sm)}
   .keytag.cold{border-color:color-mix(in srgb,var(--cold) 45%,var(--line));
     background:rgba(195,186,176,.10);color:var(--cold)}
-  /* 현황판 칸은 좁아서 딱지가 안 들어간다 — 모서리에 열쇠만 찍는다 */
-  .dc .keycorner{position:absolute;right:8px;top:8px;color:var(--gold-b);opacity:.9}
-  .dc.lock .keycorner{opacity:.55}
-  .dc:has(.dc-qa) .keycorner{top:28px}
-  /* 열쇠가 앉은 자리는 비워둔다 — 안 그러면 긴 제목이 그 밑으로 지나간다 */
-  .dc:has(.keycorner) .sp,.dc:has(.keycorner) .ti{padding-right:18px}
+  /* 현황판 칸 모서리의 열쇠는 뺐다 — 조사 현황에서는 수수께끼 카드인지 알 수 없어야
+     한다(눌렀을 때 자리 안내창에서 알게 된다). 딱지(.keytag)는 그 창에 그대로 남는다. */
 
   /* ── 조사 현황의 라운드 탭 ──────────────────────────────────────
      밤이 없고 조사가 여러 번인 판에서는, 라운드가 섞여 한 줄로 늘어서면
@@ -2241,7 +2426,8 @@
   .dtab .dt-c{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
   .dtab .dt-now{font-size:10px;letter-spacing:.1em;color:var(--gold-b);
     border:1px solid color-mix(in srgb,var(--gold) 45%,var(--line));padding:0 4px}
-  .dtab .kmk{width:7px;height:12px;vertical-align:-2px;opacity:.8}
+  /* 라운드 탭의 열쇠도 같은 크기다 — 자리마다 크기가 다르면 규칙이 아니라 장식이 된다 */
+  .dtab .kmk{opacity:.8}
   .dtab.on{color:#fff;border-color:var(--gold);background:rgba(0,230,147,.12);
     box-shadow:var(--shadow-sm),inset 0 1px 0 rgba(255,255,255,.08)}
   .dtab.on .dt-c{color:var(--gold-b)}
@@ -2490,8 +2676,12 @@
   .qabar,
   .qabar .qa-r,
   .qabar .qa-x,
+  .qabar .qa-a,
+  .qa-log,
   .qapanel .qp-d,
   .dc .dc-qa,
+  .dz-h .znew-t,
+  .toolnote,
   .qa-peek .qk,
   .qa-peek .qh,
   .qa-list .qz>h4,
@@ -2762,6 +2952,7 @@ function checkRoomSwitch(){
   if(!known) return false;                 // 이 기기에서 처음 보는 방 — 갈린 게 아니다
   wipeLocal(true);
   try{ localStorage.setItem("pmb.room",rid); }catch(e){}   // wipeLocal이 지운 것을 되돌린다
+  startAsked=false;                        // 새 판이면 「시작 확인창을 이미 띄웠다」도 같이 푼다
   banner("새 방이 열렸습니다 — 지난 판 기록을 지우고 배역 선택으로 돌아갑니다.");
   go("lobby");
   return true;
@@ -2779,6 +2970,13 @@ async function poll(){
   if(checkRoomSwitch()) return;
   // 다른 사람이 시나리오를 바꿨으면(허브에서) 이 기기도 새 시나리오로 갱신
   if(STATE&&SCEN&&STATE.scenarioId&&STATE.scenarioId!==SCEN.scenarioId){ try{ await loadScenario(); }catch(e){} }
+  /* 구역이 늘었으면 대본을 다시 받는다. 서버는 «아직 열리지 않은 구역»을 대본에서 통째로
+     빼서 보낸다 — 회색으로 걸어두면 그 칸이 「저기 뭔가 더 있다」를 공지하기 때문이다.
+     자물쇠가 열리는 순간 그 목록이 늘어나고, 그 사실은 state 의 zoneSig 로만 알 수 있다.
+     이 한 박자가 없으면 새 구역의 카드가 손에 들어왔는데 카탈로그에는 없는 순간이 생긴다. */
+  if(STATE&&SCEN&&STATE.zoneSig!=null&&SCEN.zoneSig!=null&&STATE.zoneSig!==SCEN.zoneSig){
+    try{ await loadScenario(); }catch(e){}
+  }
   // 밤이 지나면 «덱 자체»가 바뀐다 — 그날 밤 다녀간 자리의 카드가 잠에서 깬다.
   // 카탈로그를 첫 화면에서 한 번만 받아두면 그 세 장이 지도에도 조사 현황에도 안 나온다.
   if(STATE&&SCEN&&STATE.night&&STATE.night.done&&!deckAfterNight){
@@ -2894,21 +3092,67 @@ function paintQA(){
   if(!qaOn||!SCEN){ b.hidden=true; b.innerHTML=""; return; }
   b.hidden=false;
   const seats=(SCEN.characters||[]);
+  /* 자동조사는 조사 페이즈에서만 통한다(서버가 그 밖에서는 409). 그래도 단추를 감추지는
+     않는다 — 안 보이면 「없어졌나」 싶어 찾게 된다. 흐리게 두고, 눌리면 서버가 준 말을 띄운다. */
+  const inv=!!(STATE&&STATE.phase&&STATE.phase.key==="invest");
   const chips=seats.map(c=>{
     const held=((STATE&&STATE.roles)||{})[c.id];
     const mine=(myRoleId===c.id);
     const has=!!(held&&held.mode==="human");
-    return `<button class="qa-r${mine?" on":""}" style="--rc:${c.color}"${has?"":" disabled"}
+    return `<span class="qa-g"><button class="qa-r${mine?" on":""}" style="--rc:${c.color}"${has?"":" disabled"}
       title="${has?esc(c.name)+" 시점으로 보기":"아직 이 자리를 안 쥐었습니다"}"
-      onclick="qaSee('${c.id}')">${esc(c.name)}</button>`;
+      onclick="qaSee('${c.id}')">${esc(c.name)}</button>`
+      +`<button class="qa-a${inv?"":" dim"}" style="--rc:${c.color}"${has?"":" disabled"}
+      title="${esc(c.name)}가 지금 열 수 있는 자리를 전부 조사합니다"
+      onclick="qaAuto('${c.id}')">자동조사</button></span>`;
   }).join("");
   const holds=seats.filter(c=>(((STATE&&STATE.roles)||{})[c.id]||{}).mode==="human").length;
   b.innerHTML=`<span class="qa-tag">QA</span><span class="qa-lbl">시점</span>${chips}
     <span class="qa-sp"></span>
+    <button class="qa-x hot${inv?"":" dim"}" onclick="qaAuto('')"
+      title="좌석에 앉은 배역 전부를 한 번에 돌립니다">전원 자동조사</button>
     <button class="qa-x" onclick="qaAllCards()">카드 전부</button>
     ${holds<seats.length?`<button class="qa-x" onclick="qaClaimAll()">자리 마저 쥐기</button>`:""}
     <button class="qa-x" onclick="qaAskKey()">키</button>
     <button class="qa-x" onclick="qaOff()">QA 끄기</button>`;
+}
+/* ── QA 자동조사 ───────────────────────────────────────────────────
+   3인 판을 혼자 검수하면 조사 페이즈 한 번에 스물한 번을 손으로 눌러야 다음 막이 온다.
+   서버에 이미 그걸 대신 해주는 창구(/api/qa/auto)가 있으니 여기서는 부르고, 무엇이
+   열렸는지 보여주고, 판을 다시 읽는 것까지만 한다.
+
+   ★ 열쇠는 hostKey() 다. gmKey 를 그대로 쓰면 GM 키를 안 넣고 들어온 로컬 검수판에서
+     빈 문자열이 되어 서버가 호스트로 안 봐준다. */
+let qaAutoBusy=false;
+async function qaAuto(roleId){
+  if(qaAutoBusy) return; qaAutoBusy=true;
+  try{
+    const r=await post("/api/qa/auto",{roleId:roleId||"",key:hostKey(),puzzles:true});
+    if(!r||r.error){ banner("자동조사 — "+((r&&r.error)||"실패했습니다")); return; }
+    await poll();                       // 판을 다시 읽어야 현황판·손패가 따라온다
+    qaAutoLog(r.log||{},roleId);
+  } finally { qaAutoBusy=false; }
+}
+/* 무엇이 열렸는지 그대로 펼친다 — 배너 한 줄로는 스무 줄이 안 들어간다. */
+function qaAutoLog(log,roleId){
+  const seats=(SCEN&&SCEN.characters)||[];
+  const nameOf=id=>{ const c=seats.find(x=>x.id===id); return c?c.name:id; };
+  const colOf =id=>{ const c=seats.find(x=>x.id===id); return (c&&c.color)||"var(--gold-b)"; };
+  const ids=Object.keys(log);
+  let n=0; ids.forEach(id=>{ n+=(log[id]||[]).length; });
+  const body=ids.length?ids.map(id=>`<div class="qz"><h4 style="color:${colOf(id)}">${esc(nameOf(id))} · ${(log[id]||[]).length}줄</h4>
+      <ol class="qa-log">${(log[id]||[]).map(t=>`<li>${esc(t)}</li>`).join("")}</ol></div>`).join("")
+    :`<div class="qz"><h4>열린 것이 없습니다</h4></div>`;
+  const m=document.createElement("div");
+  m.className="modal on"; m.onclick=e=>{ if(e.target===m) m.remove(); };
+  m.innerHTML=`<div class="box" onclick="event.stopPropagation()">
+    <div class="mhead"><div class="mh-t"><span class="mh-eb">QA · 자동조사</span>
+      <h2>${roleId?esc(nameOf(roleId)):"전원"} 자동조사</h2><span class="mh-sub">${n}줄 · 조사턴은 실제 판과 똑같이 씁니다</span></div>
+      <button class="mh-x" onclick="this.closest('.modal').remove()">${ICO.close}</button></div>
+    <div class="mbody qa-list">${body}</div>
+    <div class="mfoot"><span class="mf-note">수수께끼를 먼저 풀고, 남은 조사턴을 씁니다.</span>
+      <button class="btn" onclick="this.closest('.modal').remove()">닫기</button></div></div>`;
+  document.body.appendChild(m);
 }
 /* 열쇠 다시 넣기 — QA는 이 열쇠 하나로 서는 모드라, 안 맞으면 아무것도 안 된다. */
 async function qaAskKey(){ if(await askGMKey()){ qaCards=null; await poll(); } }
@@ -2998,6 +3242,7 @@ function applyState(){
   if(qaOn&&!qaRole&&myRoleId){ qaRole=myRoleId; try{ localStorage.setItem("pmb.qarole",qaRole); }catch(e){} }
   applyGM();   // 배역이 바뀌면 진행석 쪽 '내 자리' 버튼도 따라 바뀐다
   paintQA();   // 「지금 누구로 보고 있는가」는 폴링마다 다시 박는다
+  scanNewZones();   // 새로 열린 구역이 있으면 현황판이 그걸 깜빡인다
   // 오프닝은 화면에도 배역에도 매이지 않는다.
   // 예전엔 플레이 화면의 오프닝 패널이 그릴 때만 열렸는데, 거기로 넘어가는 조건에
   // myRoleValid()가 붙어 있어서 '배역 없는 GM'은 로비에 남고 영영 못 봤다 —
@@ -3014,7 +3259,7 @@ function applyState(){
     if(myRoleValid()){ go("play"); return; }
     if(gmOn){ go("gm"); return; }
   }
-  if(scr==="lobby") renderLobby();
+  if(scr==="lobby"){ renderLobby(); maybeAutoStart(); }
   else if(scr==="gm"){ renderGM(); maybePhaseFx(STATE.phase||{}); }
   else if(scr==="play"){
     const ph=STATE.phase||{};
@@ -3026,12 +3271,14 @@ function applyState(){
     // 채팅
     if($("chatModal").classList.contains("on")) renderChat("chatFull");
     // 소지품 탭은 남이 공개한 카드로도 늘어난다 — 열어둔 채로도 따라 움직여야 한다.
-    if(belongLocs().length&&$("handModal").classList.contains("on")&&!document.querySelector("#handBox .swipe.drag"))
+    if((belongLocs().length||hasToolDeck())&&$("handModal").classList.contains("on")
+       &&!document.querySelector("#handBox .swipe.drag"))
       showMyHand(handTab);
     // 손패 수는 상단바가 아니라 여기서 센다 — 카드를 여는 자리와 세는 자리가 같아야 한다.
-    $("dkHandN").textContent=belongLocs().length
-      ? `${clueCards().length}/${handLimit()}${belongCards().length?` · ${(SCEN.belongLabel||"소지품").slice(0,3)} ${belongCards().length}`:""}`
-      : `${myHand.length}/${handLimit()}`;
+    // 도구는 상한 밖이라 이 숫자에 안 섞는다 — 섞으면 「4/1」처럼 늘 넘친 것으로 보인다.
+    $("dkHandN").textContent=`${clueCount()}/${handLimit()}`
+      +(belongLocs().length&&belongCards().length?` · ${(SCEN.belongLabel||"소지품").slice(0,3)} ${belongCards().length}`:"")
+      +(toolCards().length?` · 도구 ${toolCards().length}`:"");
     const hb=$("dkHand"); hb.classList.toggle("on", overLimit()>0);
     hb.textContent=overLimit()>0?"!":"";
     $("dkSheet").classList.toggle("on",(sheetSeenSeq!=null&&STATE.seq>sheetSeenSeq)||hasUnseenTab());
@@ -3168,6 +3415,10 @@ function paintChatBadge(){
   const n=Math.max(0, chatLines()-chatSeen);
   b.textContent=n>99?"99+":String(n);
   b.classList.toggle("on", n>0);
+  /* 안 읽은 말이 있으면 하단바의 대화 칸이 맥박친다 — 숫자 딱지 하나는 화면을 안 보고
+     있던 사람에게 안 보인다. 읽으면(chatSeen 이 따라붙으면) 저절로 멎는다. */
+  const dk=b.closest?b.closest(".dk"):null;
+  if(dk) dk.classList.toggle("unread", n>0);
 }
 /* 말이 새로 왔으면 한 번 울린다 — 대화창을 안 보고 있어도 오간 걸 알아채게.
    내가 방금 쓴 말과 첫 폴링은 뺀다(들어오자마자 밀린 말이 우수수 울리면 안 된다). */
@@ -3462,11 +3713,52 @@ function openVN(force){
   $("vnMute").innerHTML=(vnMuted?ICO.mute:ICO.sound)+' <span class="vn-ml">소리</span>';
   $("vn").classList.add("on"); vnArmAudio(); vnRender();
 }
-/* 피해자는 배역도 NPC도 아니라 따로 세운다. 이름은 피해자 카드에서 가져온다. */
+/* 피해자는 배역도 NPC도 아니라 따로 세운다. 이름도 색도 피해자 카드에서 가져온다 —
+   여기에 색을 박아두면 다른 사건에서 그 사람만 엉뚱한 색으로 선다. */
 function vnVictimSpeaker(){
   const v=(SCEN&&SCEN.victimCard)||{};
-  return {id:"victim", name:v.name||"피해자", job:"", color:"#b9a98f", avatar:""};
+  return {id:"victim", name:v.name||"피해자", job:"", color:v.color||"#b9a98f", avatar:""};
 }
+/* ── 대사 안의 인물 이름에 그 사람의 키컬러 ──────────────────────────
+   이름표(#vnName)는 이미 화자의 색으로 서 있는데, 대사 «본문»에 나오는 이름은 흰
+   글자였다. 오프닝에서 죽은 데이스트의 이름이 나올 때 그게 사람 이름인지 물건인지
+   구분이 안 됐다.
+
+   ★ 이름 목록은 시나리오에서 만든다 — 배역·NPC·피해자. 색도 거기서 읽는다.
+   ★ 긴 이름부터 치환한다. 「데이」가 먼저 걸리면 「데이스트」가 앞 두 글자만 물든다.
+   ★ 치환은 «HTML 이스케이프 뒤에» 한다. 순서를 바꾸면 이름이 든 대사 한 줄로
+     마크업을 넣을 수 있다 — 대사는 원고에서 오지만 규칙은 규칙이다.
+   ★ 색값도 그대로 안 쓴다. 속성 안에 들어가는 값이라 흰 목록으로 거른다. */
+let vnNameSid=null, vnNameRe=null, vnNameCol=null;
+function vnNameSafeColor(c){ return /^#[0-9a-fA-F]{3,8}$/.test(String(c||"")) ? String(c) : ""; }
+function vnNamesBuild(){
+  const sid=(SCEN&&SCEN.scenarioId)||"";
+  if(vnNameSid===sid&&vnNameRe!==null) return;
+  vnNameSid=sid; vnNameCol={};
+  const add=c=>{ const col=vnNameSafeColor(c&&c.color); if(c&&c.name&&col) vnNameCol[c.name]=col; };
+  ((SCEN&&SCEN.characters)||[]).forEach(add);
+  ((SCEN&&SCEN.npcs)||[]).forEach(add);
+  add((SCEN&&SCEN.victimCard)||null);
+  const ns=Object.keys(vnNameCol)
+    .sort((a,b)=>b.length-a.length)                      // 긴 이름부터
+    .map(n=>esc(n).replace(/[.*+?^${}()|[\]\\]/g,"\\$&"));
+  vnNameRe=ns.length?new RegExp(ns.join("|"),"g"):false;
+}
+/* ★ 이미 이스케이프된 글자에만 쓴다. */
+function vnHi(html){
+  vnNamesBuild();
+  if(!vnNameRe) return html;
+  return String(html).replace(vnNameRe,m=>{
+    // 이스케이프된 글자를 되돌려 색을 찾는다 — 목록의 키는 원문 이름이다.
+    const key=Object.keys(vnNameCol).find(n=>esc(n)===m);
+    const col=key?vnNameCol[key]:"";
+    return col?`<span class="vn-nm" style="--nc:${col}">${m}</span>`:m;
+  });
+}
+/* 이 줄에 물들일 이름이 있는가 — 없으면 타자 연출은 예전처럼 textContent 만 만진다.
+   한 글자마다 innerHTML 을 다시 넣는 건 이름이 실제로 든 줄에서만 치른다. */
+function vnHasName(txt){ vnNamesBuild(); if(!vnNameRe) return false;
+  vnNameRe.lastIndex=0; return vnNameRe.test(esc(txt)); }
 function vnRender(){
   const cut=vnCuts[vnAt]; if(!cut) return;
   const sid=(STATE&&STATE.scenarioId)||"";
@@ -3521,7 +3813,7 @@ function vnRender(){
    글자를 덧붙이는 게 아니라 전체를 깔아두고 안 읽은 쪽을 감추는 방식이라,
    타자가 진행돼도 줄갈이가 처음 잡힌 그대로 유지된다. */
 function vnLineHTML(txt,shown){
-  return `<span class="vn-on">${esc(txt.slice(0,shown))}</span>`+
+  return `<span class="vn-on">${vnHi(esc(txt.slice(0,shown)))}</span>`+
          `<span class="vn-off">${esc(txt.slice(shown))}</span>`;
 }
 function vnType(lines,who){
@@ -3531,6 +3823,7 @@ function vnType(lines,who){
   // 두 조각(읽은 쪽·안 읽은 쪽)은 처음 한 번만 만들고, 이후엔 그 안의 글자만 바꾼다.
   // 예전엔 한 글자마다 innerHTML을 다시 넣어 줄 전체를 파싱하고 배치를 다시 계산했다.
   const pair=els.map(el=>[el.querySelector(".vn-on"),el.querySelector(".vn-off")]);
+  const hasNm=lines.map(vnHasName);
   let li=0, ci=0;
   vnTyping=true; vnHintText();
   const step=()=>{
@@ -3539,7 +3832,11 @@ function vnType(lines,who){
     if(ci===0) el.classList.add("typing");
     if(ci>=txt.length){ el.classList.remove("typing"); li++; ci=0; vnTimer=setTimeout(step,360); return; }
     const ch=txt.charAt(ci); ci++;
-    on.textContent=txt.slice(0,ci); off.textContent=txt.slice(ci);
+    // 이름이 든 줄만 색을 입힌다. 아직 반만 찍힌 이름은 안 걸리므로, 이름이
+    // 다 찍히는 순간 그 자리에 색이 들어온다 — 타자와 같은 박자다.
+    if(hasNm[li]) on.innerHTML=vnHi(esc(txt.slice(0,ci)));
+    else on.textContent=txt.slice(0,ci);
+    off.textContent=txt.slice(ci);
     if(ci%3===0) vnBlip(who);
     vnTimer=setTimeout(step, ".…—?!,".indexOf(ch)>=0 ? 165 : 34);
   };
@@ -3728,6 +4025,7 @@ function showSpot(id){
   document.body.appendChild(m);
 }
 function openZone(loc){
+  ackZone(loc);            // 처음 누른 순간 깜빡임이 멎는다 — 사람마다 따로 기억한다
   const home=roomHome(loc);
   if(home&&STATE.scenarioId){ openRoom(home.key); return; }
   openZoneList(loc);
@@ -4042,11 +4340,40 @@ function startBoxHTML(){
     <button class="btn ember" onclick="startGame()">이대로 진행하기 ›</button></div>`;
 }
 async function startGame(){
-  if(!await ask({title:"이 배역으로 시작합니다", body:"모두 자리를 잡았습니다. 오프닝이 시작됩니다.",
-                 warn:"시작한 뒤에는 배역을 바꿀 수 없습니다.", ok:"시작", cancel:"아직", tone:"gold"})) return;
-  const r=await post("/api/start",{clientId,key:hostKey()});
-  if(r&&r.error){ banner(r.error); return; }
-  await poll();
+  if(startBusy) return; startBusy=true;
+  try{
+    if(!await ask({title:"이 배역으로 시작합니다", body:"모두 자리를 잡았습니다. 오프닝이 시작됩니다.",
+                   warn:"시작한 뒤에는 배역을 바꿀 수 없습니다.", ok:"시작", cancel:"아직",
+                   tone:"gold", okGo:true})) return;
+    const r=await post("/api/start",{clientId,key:hostKey()});
+    if(r&&r.error){ banner(r.error); return; }
+    await poll();
+  } finally { startBusy=false; }
+}
+/* ── 배역이 다 정해지면 시작 확인창이 저절로 뜬다 ────────────────────
+   마지막 자리가 차는 순간이 이 화면의 끝이다. 그런데 그 뒤에도 「이대로 진행하기」를
+   찾아 눌러야 다음이 열려서, 다 골라놓고 서로 쳐다보는 시간이 생겼다.
+
+   ★ 「다 정해졌다」의 판정은 서버 말을 그대로 쓴다 — roles 에 mode==="open" 인 자리가
+     하나도 없으면 다 정해진 것이다. /api/start 도 같은 기준으로 409 를 낸다.
+   ★ 폴링이 1.5초마다 돌기 때문에 조건만 보고 열면 닫아도 계속 다시 뜬다. 그래서
+     「이번 판에서 이미 띄웠다」를 기억하고, 한 번 띄운 뒤에는 손으로만 연다.
+     사람이 취소하고 배역을 바꿨다가 다시 다 차도 저절로는 안 뜬다.
+   ★ 시작을 누를 수 없는 사람에게는 안 띄운다. 참가자에게 「시작」 단추를 보여줘 봐야
+     서버가 403 으로 막는다 — 그 사람 화면에는 로비의 「호스트가 시작하기를 기다리는
+     중…」 띠가 이미 서 있다.
+   ★ 다른 창이 열려 있으면 그 위에 겹치지 않는다. 읽던 것을 뺏는 창은 안내가 아니다. */
+let startAsked=false, startBusy=false;
+function maybeAutoStart(){
+  if(startAsked||startBusy) return;
+  if(!STATE||STATE.started) return;              // 이미 시작된 판에 들어온 사람에게는 안 뜬다
+  if(scr!=="lobby") return;
+  if(!SCEN||!SCEN.characters||!SCEN.characters.length) return;
+  if(!(STATE.isHost||gmOn||qaOn)) return;        // 시작을 누를 수 있는 사람에게만
+  if(SCEN.characters.some(c=>((STATE.roles||{})[c.id]||{}).mode==="open")) return;
+  if(document.querySelector(".modal.on")) return;
+  startAsked=true;
+  startGame();
 }
 function roleBarHTML(){
   if(STATE&&STATE.started){
@@ -4698,6 +5025,47 @@ async function askPodCode(){
 }
 /* 배치도의 구역이 곧 버튼이다. 개수는 SVG가 이미 갖고 있는 자리(#cnt-X)에 채워 넣는다 —
    글자를 새로 만들어 얹으면 지도를 고칠 때마다 자리가 어긋난다. */
+/* ── 새로 열린 구역은 깜빡인다 ─────────────────────────────────────
+   구역은 조용히 열렸다. 대화창에 「— 「하늘 끝」 구역이 열렸습니다.」 한 줄이 뜨긴 하는데,
+   말이 오가는 중이면 그 줄은 순식간에 위로 밀린다 — 새 자리가 생긴 줄을 아무도 모른다.
+
+   ★ 근거를 어디서 읽는가. 원칙은 「unlockZone 을 가진 카드가 공개됐는가」인데, 그 필드는
+     카탈로그에도(cardCatalog) 공개 카드(public_card)에도 안 실려 온다 — 서버가 답을
+     감추느라 뺀 것이라 여기서 되살릴 수 없다. STATE.sealed 도 이 사건에서는 늘 비어
+     있다(구역 잠금을 sealed 가 아니라 카드의 requires 로 걸어 놨다).
+     그래서 남은 것은 대화창 문구다. 다만 그 문구는 사람이 쓴 글이 아니라 서버가
+     MAP 의 구역 이름으로 «찍어내는» 한 줄이라, 이름을 SCEN.map 에 되맞춰 loc 을 얻는다.
+     이름이 안 맞으면 그냥 아무것도 안 깜빡인다 — 틀린 칸을 깜빡이는 일은 없다.
+   ★ 「봤다」는 사람마다 따로 기억한다. 한 기기에서 QA 로 세 배역을 오갈 때도 갈리도록
+     clientId 와 방 id 를 열쇠에 같이 넣는다. */
+let zoneNewSig=null, zoneNew=[];
+function zoneAckKey(loc){ return `pmb.zack.${clientId}.${(STATE&&STATE.roomId)||""}.${loc}`; }
+function zoneAcked(loc){ try{ return localStorage.getItem(zoneAckKey(loc))==="1"; }catch(e){ return false; } }
+function zoneIsNew(loc){ return zoneNew.indexOf(loc)>=0; }
+/* 그 구역을 처음 누르면 멎는다. 누른 사람의 기기에만 남는다. */
+function ackZone(loc){
+  if(!zoneIsNew(loc)) return;
+  try{ localStorage.setItem(zoneAckKey(loc),"1"); }catch(e){}
+  zoneNew=zoneNew.filter(x=>x!==loc);
+  const d=$("dash"); if(d) d.innerHTML=dashHTML();
+  document.querySelectorAll(".z-new").forEach(g=>g.classList.remove("z-new"));
+}
+function scanNewZones(){
+  const tb=(STATE&&STATE.table)||[];
+  // 구역 지문도 지문에 넣는다 — 대화 줄 수가 그대로여도 대본이 갈리면 다시 훑어야 한다
+  const sig=`${(STATE&&STATE.roomId)||""}:${tb.length}:${(STATE&&STATE.zoneSig)||""}`;
+  if(zoneNewSig===sig) return;
+  zoneNewSig=sig;
+  const byName={}; ((SCEN&&SCEN.map)||[]).forEach(z=>{ if(z.name) byName[z.name]=z.loc; });
+  const out=[];
+  tb.forEach(m=>{
+    if(m.kind!=="system") return;
+    const mm=/「([^」]+)」\s*구역이 열렸습니다/.exec(String(m.text||""));
+    const loc=mm?byName[mm[1]]:null;
+    if(loc&&!zoneAcked(loc)&&out.indexOf(loc)<0) out.push(loc);
+  });
+  zoneNew=out;
+}
 function wireZones(svg){
   ((SCEN.map)||[]).forEach(z=>{
     const g=svg.querySelector("#zone-"+z.loc); if(!g) return;
@@ -4709,6 +5077,7 @@ function wireZones(svg){
     if(!p.cards.length){ g.classList.add("z-empty"); return; }
     g.classList.add("z-live");
     if(p.done>=p.cards.length) g.classList.add("z-done");
+    if(zoneIsNew(z.loc)) g.classList.add("z-new");
     g.addEventListener("click",()=>openZone(z.loc));
   });
 }
@@ -4742,8 +5111,10 @@ function dashCard(c){
   const st=cardState(c), full=cardOpen(c.id);
   const spot=esc(c.spot||c.locName||"")+(isFresh(c)?`<span class="fr">이튿날</span>`:"");
   const fr=(isFresh(c)?" fresh":"")+(c.hot?" hot":"");
-  // 퍼즐카드는 어느 상태로 뜨든 열쇠를 달고 다닌다 — 이미 푼 뒤에도 «그렇게 연 카드»다.
-  const key=c.locked?`<span class="keycorner">${keyMark()}</span>`:"";
+  /* 조사 현황판에서는 수수께끼 카드를 «드러내지 않는다». 열쇠도, 점선도, 다른 문구도
+     안 붙인다 — 다른 카드와 똑같은 얼굴로 서 있다가, 눌렀을 때 비로소 수수께끼가 뜬다.
+     데이터(c.locked)는 손대지 않는다. 그 값으로 누를 곳이 갈리기 때문이다. */
+  const key="";
   // QA — 아직 안 열린 자리는 여기서 바로 본문을 편다. 조사턴을 쓰지도, 손패에 넣지도 않는다.
   // 한 판에 열 수 있는 건 절반뿐인데 원고를 보려면 서른아홉 장을 다 읽어야 한다.
   const qk=(qaOn&&!full)?`<span class="dc-qa" role="button" tabindex="0" title="조사턴을 쓰지 않고 본문만 봅니다" onclick="event.stopPropagation();qaPeek('${c.id}')">엿보기</span>`:"";
@@ -4761,13 +5132,15 @@ function dashCard(c){
       <span class="wh">${avaHTML(w,"xs")}${esc(w.name||"")} 쥐고 있음</span></button>`; }
   // cardState 의 잠김 사유에는 '내 차례 아님'처럼 내 사정이 섞여 있다. 현황판은 판 전체를
   // 읽는 자리라 카드 쪽 사정만 적는다 — 나머지는 그냥 아직 아무도 안 본 카드다.
-  if(st.k==="puzzle") return `<button class="dc puz act${fr}" onclick="openPuzzle('${c.id}')">
-    ${qk}<span class="sp">${spot}</span>
-    <span class="wh">${keyMark()} 수수께끼 — 조사턴을 안 씁니다</span>
-    <span class="st">풀기 ›</span></button>`;
+  // 수수께끼로 여는 자리도 여기서는 «아직 아무도 안 본 칸»과 똑같이 선다. 누르면
+  // 조사창이 아니라 수수께끼창이 뜬다는 것만 다르고, 그건 눌러야 알 수 있다.
+  if(st.k==="puzzle") return `<button class="dc none act${fr}" onclick="openPuzzle('${c.id}')">
+    ${qk}<span class="sp">${spot}</span><span class="st">아직 아무도 보지 않음</span>
+    <span class="dc-go">조사하기 ›</span></button>`;
   let why="아직 아무도 보지 않음", dim=false;
-  if(c.locked){ why="수수께끼를 풀어야 열립니다"; dim=true; }
-  else if(c.auto){ why="때가 되면 판이 엽니다 — 뒤질 수 없음"; dim=true; }
+  // c.locked(수수께끼 카드)는 여기서 따로 말하지 않는다 — 아직 못 푸는 때에도
+  // 「아직 아무도 보지 않음」으로 남아, 누르면 자리 안내창이 사정을 말해준다.
+  if(c.auto){ why="때가 되면 판이 엽니다 — 뒤질 수 없음"; dim=true; }
   else if(sealedLoc(c.loc)){ why="물에 잠김 — 닿을 수 없음"; dim=true; }
   else if(c.round>(STATE.round||0)){ why=`조사 R${c.round}에 열림`; dim=true; }
   else if((c.needs||(c.requires?[c.requires]:[])).some(r=>!discoveredIds().has(r))){
@@ -4775,9 +5148,7 @@ function dashCard(c){
       .map(r=>((SCEN.cardCatalog||[]).find(x=>x.id===r)||{}).spot||r);
     why=`먼저 찾아야 한다 — ${miss.join(", ")}`; dim=true; }
   // 아직 아무도 안 본 자리는 여기서 바로 조사한다. 지도를 눌러 들어가는 것과 같은 창이 뜬다.
-  // 퍼즐카드는 아직 못 푸는 때에도 점선 테두리와 열쇠를 그대로 단다 — 「언젠가 열리는
-  // 조사칸」이 아니라 「조사턴으로는 영영 안 열리는 칸」이라는 게 미리 보여야 한다.
-  return `<button class="dc none act${fr}${c.locked?" puz":""}${dim?" lock":""}" onclick="showSpot('${c.id}')">
+  return `<button class="dc none act${fr}${dim?" lock":""}" onclick="showSpot('${c.id}')">
     ${qk}${key}<span class="sp">${spot}</span><span class="st">${esc(why)}</span>
     ${dim?"":`<span class="dc-go">조사하기 ›</span>`}</button>`;
 }
@@ -4849,6 +5220,14 @@ function ensureCardBack(){
    맞히면 그 카드가 «푼 사람의» 인벤토리로 들어간다(손패 상한 밖).
    판정은 전부 서버가 한다 — 답은 이 파일 어디에도 없다. */
 let puzTries={};
+/* 아래 안내 한 줄 — 상황마다 말이 달라야 앞뒤가 맞는다.
+   힌트가 아직 안 열렸으면 「언제 열리는지」와 「언제 잠기는지」를 같이,
+   힌트가 이미 열렸으면 잠김만, 이미 잠겼으면 그 사실만 말한다. */
+function puzNoteText(hint,locked,hintN,maxT){
+  if(locked) return `이 카드는 다른 사람만 풀 수 있습니다.`;
+  if(hint)   return `${maxT}번 틀리면 해당 카드는 잠깁니다.`;
+  return `${hintN}번 틀리면 한 줄이 열리고, ${maxT}번 틀리면 해당 카드는 잠깁니다.`;
+}
 async function openPuzzle(cid){
   const c=(SCEN.cardCatalog||[]).find(x=>x.id===cid); if(!c) return;
   let d={items:[]};
@@ -4856,6 +5235,9 @@ async function openPuzzle(cid){
   const row=(d.items||[]).find(x=>x.id===cid);
   if(!row){ banner(d.why||"지금은 풀 수 없습니다"); return; }
   puzTries[cid]=row.tries||0;
+  /* 세 번 틀리면 그 사람에게 잠긴다 — 목록에는 그대로 남는다. 사라지면 「넘겨야 한다」는
+     생각 자체를 못 하기 때문이다. 잠긴 자리는 답 넣는 칸을 아예 안 그린다. */
+  const maxT=+(d.maxTries||3), hintN=+(d.hintAfter||2);
   const m=document.createElement("div");
   m.className="modal on"; m.onclick=e=>{ if(e.target===m) m.remove(); };
   m.innerHTML=`<div class="box" onclick="event.stopPropagation()">
@@ -4865,13 +5247,15 @@ async function openPuzzle(cid){
       <button class="mh-x" onclick="this.closest('.modal').remove()">${ICO.close}</button></div>
     <div class="mbody">
       <div class="puz-q">${mdB(esc(row.prompt||""))}</div>
-      <div class="puz-in">
+      ${row.locked
+        ? `<div class="puz-dead">이 카드는 당신에게 잠겼습니다 — 다른 사람에게 넘기세요</div>`
+        : `<div class="puz-in">
         <input id="puzAns" type="text" autocomplete="off" placeholder="답을 적으세요" enterkeyhint="done">
         <button class="btn primary" onclick="puzSend('${cid}')">맞춰 보기</button>
-      </div>
-      <div class="puz-msg" id="puzMsg">${row.tries?`${row.tries}번 틀렸습니다.`:""}</div>
-      ${row.hint?`<div class="puz-hint">${esc(row.hint)}</div>`
-        :`<div class="puz-note">${d.hintAfter||3}번 틀리면 한 줄이 열립니다.</div>`}
+      </div>`}
+      <div class="puz-msg" id="puzMsg">${row.tries&&!row.locked?`${row.tries}번 틀렸습니다 — ${maxT-row.tries}번 남았습니다.`:""}</div>
+      ${row.hint?`<div class="puz-hint">${esc(row.hint)}</div>`:""}
+      <div class="puz-note" id="puzNote">${puzNoteText(row.hint,row.locked,hintN,maxT)}</div>
     </div></div>`;
   document.body.appendChild(m);
   setTimeout(()=>{ const i=$("puzAns"); if(i){ i.focus();
@@ -4892,17 +5276,36 @@ async function puzSend(cid){
     await poll(); openCard(cid);
     return;
   }
-  if(r&&r.error){ if(msg) msg.textContent=r.error; return; }
+  if(r&&r.error){
+    if(msg) msg.textContent=r.error;
+    if(r.locked) puzSeal(cid);            // 서버가 이미 잠갔다고 말한 자리
+    return;
+  }
+  const maxT=+(r&&r.maxTries||3);
   puzTries[cid]=(r&&r.tries)||0;
-  if(msg) msg.textContent=`틀렸습니다 — ${puzTries[cid]}번째.`;
+  const left=maxT-puzTries[cid];
+  if(msg) msg.textContent=left>0?`틀렸습니다 — ${puzTries[cid]}번째. ${left}번 남았습니다.`
+                               :`틀렸습니다 — ${puzTries[cid]}번째.`;
   if(r&&r.hint){
     const box=msg&&msg.parentNode;
     if(box&&!box.querySelector(".puz-hint")){
       const h=document.createElement("div"); h.className="puz-hint"; h.textContent=r.hint;
-      const n=box.querySelector(".puz-note"); if(n) n.remove();
-      box.appendChild(h);
+      const n=box.querySelector(".puz-note"); if(n) box.insertBefore(h,n); else box.appendChild(h);
     }
+    const n2=$("puzNote"); if(n2) n2.textContent=puzNoteText(r.hint,false,0,maxT);
   }
+  if(r&&r.locked) puzSeal(cid);
+}
+/* 잠긴 자리로 바꾼다 — 답 넣는 칸을 «없애고» 그 자리에 왜 못 넣는지를 박는다.
+   목록에서는 지우지 않는다. 사라지면 옆사람에게 넘길 생각을 못 한다. */
+function puzSeal(cid){
+  const box=document.querySelector(".modal.on .mbody"); if(!box) return;
+  const inw=box.querySelector(".puz-in");
+  if(inw){ const d=document.createElement("div"); d.className="puz-dead";
+    d.textContent="이 카드는 당신에게 잠겼습니다 — 다른 사람에게 넘기세요";
+    inw.replaceWith(d); }
+  const n=$("puzNote"); if(n) n.textContent=puzNoteText("",true,0,0);
+  sfx("bad");
 }
 
 /* ── 조사 라운드 탭 ───────────────────────────────────────────────
@@ -4969,8 +5372,10 @@ function dashHTML(){
     const done=cards.filter(c=>{ const k=cardState(c).k; return k!=="open"&&k!=="lock"; }).length;
     const list=cards.filter(dashPass);
     if(!list.length) return "";
-    return `<div class="dz">
+    const fresh=zoneIsNew(z.loc);
+    return `<div class="dz${fresh?" znew":""}">
       <button class="dz-h" onclick="openZone('${z.loc}')">${esc(z.name||z.loc)}
+        ${fresh?`<span class="znew-t">새로 열렸습니다</span>`:""}
         <span class="n">${done}/${cards.length}</span><span class="go">들어가기 ›</span></button>
       <div class="dcards">${list.map(dashCard).join("")}</div></div>`;
   }).join("");
@@ -5174,11 +5579,23 @@ function showPairHint(id, pi){
 function cnote(c){ return ""; }
 /* 이 카드에서 나만 읽어낸 것. 서버가 내 배역 몫만 만들어 보내므로 남의 화면엔 애초에 없다.
    keep = 「내가 찾던 게 이거였다」 · eye = 배운 게 있어 한 겹 더 본 것. */
+/* 카드 한 장에 붙는 내 몫의 메모. 원고에 두 줄이 적힌 카드가 열여덟 곳 있는데,
+   예전에는 한 줄마다 .mynote 를 통째로 그려서 「내 눈에만 걸리는 것」 이름표가 두 번
+   붙었다. 이름표는 «종류마다 한 번»이고 그 아래에 줄이 쌓인다.
+   kind 는 성격이 다르다 — keep(내가 찾던 것 +점수)과 eye(내 눈에만)는 따로 묶는다.
+   서버가 {kind, text, points?} 로 정규화해 보낸다. 문자열이 올 일은 없다. */
 function mynote(id){
   const ns=(STATE&&STATE.myNotes&&STATE.myNotes[id])||[]; if(!ns.length) return "";
-  return ns.map(n=>n.kind==="keep"
-    ? `<div class="mynote keep"><div class="lb">${ICO.goal} 내가 찾던 것 · 끝까지 쥐면 +${n.points}</div><div class="tx">${esc(n.text)}</div></div>`
-    : `<div class="mynote"><div class="lb">${ICO.eye} 내 눈에만 걸리는 것</div><div class="tx">${esc(n.text)}</div></div>`).join("");
+  const keep=ns.filter(n=>n.kind==="keep"), eye=ns.filter(n=>n.kind!=="keep");
+  const lines=a=>a.map(n=>`<div class="tx">${esc(n.text)}</div>`).join("");
+  let out="";
+  if(keep.length){
+    // 점수는 줄마다 다를 수 있다 — 같은 값이면 한 번만, 다르면 합을 적는다.
+    const pts=keep.reduce((s,n)=>s+(+n.points||0),0);
+    out+=`<div class="mynote keep"><div class="lb">${ICO.goal} 내가 찾던 것${pts?` · 끝까지 쥐면 +${pts}`:""}</div>${lines(keep)}</div>`;
+  }
+  if(eye.length) out+=`<div class="mynote"><div class="lb">${ICO.eye} 내 눈에만 걸리는 것</div>${lines(eye)}</div>`;
+  return out;
 }
 /* 목적격 조사 — 받침이 있으면 '을', 없으면 '를' */
 function objp(w){ if(!w) return "를"; const cd=w.charCodeAt(w.length-1);
@@ -5236,7 +5653,8 @@ function handWarn(){
       <button class="btn ember sm" onclick="showBelongTrim()">고르기</button></div>`;
   }
   const n=overLimit(); if(n>0)
-    h+=`<div class="handwarn">${ICO.card} 손패 <b>${clueCards().length}/${handLimit()}</b> — <b>${n}장</b>을 공개해야 합니다.
+    // 장수는 서버 셈과 같은 자리에서 읽는다 — 여기만 따로 세면 「3/1인데 1장 공개」처럼 안 맞는다
+    h+=`<div class="handwarn">${ICO.card} 손패 <b>${clueCount()}/${handLimit()}</b> — <b>${n}장</b>을 공개해야 합니다.
       <button class="btn ember sm" onclick="showHandTrim()">정리하기</button></div>`;
   return h;
 }
@@ -5281,56 +5699,104 @@ async function belongConfirm(){
 
 /* ── 손패 상한 — 넘치면 남길 카드를 고르고, 고르지 않은 카드는 전체공개로 내려놓는다 ── */
 function handLimit(){ return (STATE&&STATE.handLimit)||3; }
-function overLimit(){ return myRoleValid()? Math.max(0, clueCards().length-handLimit()) : 0; }
-let trimPick=null;
+/* 넘친 장수는 서버가 센다. 도구·열쇠 반쪽을 상한 밖으로 빼는 셈이 서버에만 있어서,
+   여기서 다시 세면 도구를 하나 줍는 순간 「손패가 넘쳤다」가 잘못 뜬다.
+   서버는 넘치는 사람만 실어 보낸다 — 목록에 없으면 안 넘친 것이다. */
+function overLimit(){
+  if(!myRoleValid()) return 0;
+  const sv=STATE&&STATE.overLimit;
+  if(sv&&typeof sv==="object") return Math.max(0, +(sv[myRoleId]||0));
+  return Math.max(0, clueCards().length-handLimit());
+}
+/* 여러 장을 한 번에 고른다. 예전에는 한 장 고르고 → 확인 → 창이 다시 뜨고 → 또 한 장이라,
+   세 장을 내려놓으려면 같은 창을 세 번 지나야 했다. 그동안 무엇을 이미 내려놨는지도
+   화면에 안 남았다.
+   ★ 서버에는 여러 장을 받는 창구가 없다(/api/publish 는 한 장, /api/belongings/keep 은
+     소지품 전용이다). 그래서 «보내는 것»은 한 장짜리를 순서대로 보내고, «화면»에서는
+     한 번의 동작으로 보이게 한다 — 고르는 것도 확인도 한 번이고, 중간에 창이 안 튄다. */
+let trimPick=[], trimBusy=false;
+function trimNeed(){ return overLimit(); }
 function showHandTrim(){
-  const need=overLimit(); if(need<=0) return;
-  trimPick=null;
+  const need=trimNeed(); if(need<=0) return;
+  trimPick=[]; trimBusy=false;
   const cards=clueCards();
   $("trimBox").innerHTML=`<div class="mhead">
       <div class="mh-t"><span class="mh-eb">손패 상한</span><h2>손패 정리</h2>
         <span class="mh-sub">${need}장을 내려놓아야 합니다</span></div></div>
     <div class="mbody">
-    <div class="mlead">손패에는 <b>${handLimit()}장</b>까지만 둘 수 있어요. <b>${need}장</b>을 골라 전체공개로 내려놓아야 합니다.<br>
+    <div class="mlead">손패에는 <b>${handLimit()}장</b>까지만 둘 수 있어요. <b>${need}장</b>을 골라 전체공개로 내려놓아야 합니다.
+      여러 장을 한꺼번에 고를 수 있습니다.<br>
       내려놓은 카드는 <b>모두가 보게</b> 되고, 남긴 카드는 계속 나만 봅니다.</div>
     <div class="trimgrid">${cards.map(c=>`
-      <button class="trimcard" data-id="${c.id}" onclick="trimSelect('${c.id}')">
+      <button class="trimcard" data-id="${c.id}" aria-pressed="false" onclick="trimSelect('${c.id}')">
+        <span class="tck" aria-hidden="true"></span>
         <div class="tt">${esc(c.title)}</div>
         <div class="tm"><span class="pill">${esc(c.locName)}</span>${c.spot?`<span class="pill">${esc(c.spot)}</span>`:''}<span class="pill">R${c.round}</span></div>
         <div class="tb">${esc(c.text)}</div>
         ${c.hint?`<div class="cnote" style="margin-top:8px;font-size:12px"><b>해석</b>${esc(c.hint)}</div>`:""}
       </button>`).join("")}</div></div>
     <div class="mfoot">
-      <span class="mf-note" id="trimHint">공개할 카드를 하나 고르세요</span>
+      <span class="mf-note" id="trimHint"></span>
       <button class="btn ember" id="trimGo" disabled onclick="trimConfirm()">전체공개</button>
     </div>`;
   $("trimBox").style.setProperty("--mt","var(--ember)");
+  trimPaint();
   openModal("trimModal");
 }
+/* 고른 만큼 채워야 확정이 열린다 — 덜 골라 보내면 서버가 한 장씩 받아 놓고 판이 반쯤
+   정리된 채로 남는다. 더 고르는 것도 막는다(되돌릴 수 없는 공개다). */
+function trimPaint(){
+  const need=trimNeed(), n=trimPick.length;
+  document.querySelectorAll("#trimBox .trimcard").forEach(b=>{
+    const on=trimPick.indexOf(b.dataset.id)>=0;
+    b.classList.toggle("on",on);
+    b.setAttribute("aria-pressed",on?"true":"false");
+    // 다 골랐으면 나머지는 못 누르게 — 「하나 빼고 다시」가 아니라 「이만큼」이 규칙이다
+    b.classList.toggle("full",!on&&n>=need);
+  });
+  const h=$("trimHint");
+  if(h){
+    const names=trimPick.map(id=>((myHand.find(x=>x.id===id))||{}).title||"").filter(Boolean);
+    h.innerHTML=n>=need
+      ? `<b style="color:var(--ember-b)">${esc(names.join(", "))}</b> — ${n}장을 공개합니다`
+      : `${need}장 중 <b>${n}장</b> 골랐습니다 — ${need-n}장 더 고르세요`;
+  }
+  const g=$("trimGo");
+  if(g){ g.disabled=trimBusy||n<need; g.textContent=trimBusy?"공개하는 중…":`${n||need}장 전체공개`; }
+}
 function trimSelect(id){
-  trimPick=id;
-  document.querySelectorAll("#trimBox .trimcard").forEach(b=>b.classList.toggle("on",b.dataset.id===id));
-  const c=myHand.find(x=>x.id===id);
-  const t=c?c.title:"";
-  $("trimHint").innerHTML=`<b style="color:var(--ember-b)">${esc(t)}</b>${objp(t)} 공개합니다`;
-  $("trimGo").disabled=false;
+  if(trimBusy) return;
+  const i=trimPick.indexOf(id);
+  if(i>=0) trimPick.splice(i,1);
+  else { if(trimPick.length>=trimNeed()) return; trimPick.push(id); }
+  trimPaint();
 }
 async function trimConfirm(){
-  if(!trimPick) return;
-  const c=myHand.find(x=>x.id===trimPick);
-  const w=c?(c.locName+(c.spot?" · "+c.spot:"")):"";
-  if(!await ask({title:"이 카드를 전체공개합니다", body:`「${c?c.title:""}」\n\n${w}`,
+  const need=trimNeed();
+  if(trimBusy||trimPick.length<need||!need) return;
+  const picks=trimPick.slice();
+  const rows=picks.map(id=>{ const c=myHand.find(x=>x.id===id)||{};
+    return `「${c.title||id}」  ${c.locName||""}${c.spot?" · "+c.spot:""}`; });
+  if(!await ask({title:`${picks.length}장을 전체공개합니다`, body:rows.join("\n"),
                  warn:`손패는 ${handLimit()}장까지만 쥘 수 있습니다. 공개한 카드는 되돌릴 수 없습니다.`,
                  ok:"공개", cancel:"쥐고 있기", tone:"danger"})) return;
-  const r=await post("/api/publish",{cardId:trimPick,roleId:myRoleId,clientId});
-  if(r&&r.error){ banner(r.error); return; }
-  trimPick=null; await poll();
-  if(overLimit()>0) showHandTrim(); else { closeModal("trimModal"); banner("공개했습니다."); }
+  trimBusy=true; trimPaint();
+  // 서버는 한 장씩만 받는다 — 순서대로 보내고, 화면에는 한 번의 동작으로 남긴다.
+  let done=0, err="";
+  for(const id of picks){
+    const r=await post("/api/publish",{cardId:id,roleId:myRoleId,clientId});
+    if(r&&r.error){ err=r.error; break; }
+    done++;
+  }
+  trimBusy=false; trimPick=[]; await poll();
+  if(err){ banner(`${done}장까지 공개했습니다 — ${err}`); }
+  if(overLimit()>0){ showHandTrim(); if(!err) banner(`${done}장 공개했습니다 — 아직 ${overLimit()}장 남았습니다.`); }
+  else { closeModal("trimModal"); if(!err) banner(`${done}장 공개했습니다.`); }
 }
 
-/* 되가져오기 — 손패가 두 장뿐이라 «지금 감춰야 할 것»이 페이즈마다 바뀐다.
+/* 테이블 위 카드와 바꾸기 — 손패가 두 장뿐이라 «지금 감춰야 할 것»이 페이즈마다 바뀐다.
    한 번 내려놓은 카드를 다시 품을 길이 없으면 초반의 한 수가 판 끝까지 간다.
-   다만 공짜는 아니다. 되가져온 만큼 내 것 하나가 반드시 테이블로 나가고, 그 교환은 모두가 본다. */
+   다만 공짜는 아니다. 도로 품은 만큼 내 것 하나가 반드시 테이블로 나가고, 그 교환은 모두가 본다. */
 let swapGive=null, swapTake=null, swapBusy=false;
 /* 손패 한 장을 대화에 올린다 — 실제 테이블에서 카드를 뒤집어 내려놓는 동작이다.
    올리는 순간 전체공개가 되므로(모두가 내용을 본다) 무엇이 걸리는지 먼저 알려준다. */
@@ -5469,10 +5935,16 @@ function victimCardHTML(){
         <span class="badge">피해자</span>
         <div class="scrim"><div class="nm">${esc(v.name||"")}</div>
           <div class="jb">${esc(meta)}</div></div></div>
-      <div class="tg">${esc(v.tagline||"")}</div></div>
+      </div>
+    ${/* 초상 오른쪽 — 이 사람이 어떤 사람이었는가. 예전에는 초상 «아래»에 tagline 한 줄을
+         깔았는데, 이 사건의 원고에는 그 값이 아예 없어서 띠가 통째로 비어 있었다.
+         빈 띠(.tg)를 지우고, 원고에 새로 들어온 about(세 줄)을 초상 옆에 세운다. */""}
+    ${(v.about&&v.about.length)?`<div class="vic-about">${v.about
+        .map(t=>`<p>${mdB(esc(t))}</p>`).join("")}</div>`:""}
     ${/* 사건마다 이 칸을 «facts 목록» 으로도 쓰고 «line 한 덩이» 로도 써 왔다.
          line 만 적은 사건에서는 여태 이 칸이 통째로 비어서, 시신을 처음 봤을 때
-         눈에 들어오는 것 — 그 카드의 본론 — 이 화면에 아예 안 떴다. 둘 다 받는다. */""}
+         눈에 들어오는 것 — 그 카드의 본론 — 이 화면에 아예 안 떴다. 둘 다 받는다.
+         about 과는 성격이 달라서(사람 소개 / 시신 앞의 관찰) 아래에 따로 둔다. */""}
     <div class="vic-facts">${((v.facts&&v.facts.length)?v.facts
         :String(v.line||"").split("\n").map(x=>x.trim()).filter(Boolean))
       .map(f=>`<div class="vf">${mdB(esc(f))}</div>`).join("")}
@@ -5539,15 +6011,23 @@ function ageBoxHTML(rid){
   const ask=STATE&&STATE.ageAsk;
   if(!ask||!rid||rid!==myRoleId) return "";
   const cur=ask.mine||"";
+  /* 칸은 그 배역의 키컬러를 쓴다 — 이 화면에서 「내 것」인 자리는 늘 내 색이다.
+     배역을 여기에 박지 않는다. 다른 사건에서는 다른 배역이 적는다. */
+  const rc=((roleById(rid)||{}).color)||"var(--gold)";
+  /* ★ 한 번 적으면 끝이다. 고칠 수 있으면 그 숫자가 판 위의 사실이 안 된다 —
+     몰린 뒤에 슬쩍 바꿔 대는 길이 열린다. 그래서 이미 적힌 자리에는 입력칸도
+     「고치기」도 아예 안 그린다. 서버도 두 번째 요청을 409로 막는다. */
+  if(cur) return `<div class="agebox done" style="--rc:${rc}">
+    <span class="k">내 나이</span><span class="agefix">${esc(cur)}</span>
+    <span class="d">인물정보에 박혔습니다 — 한 번만 적을 수 있어 고칠 수 없습니다.</span></div>`;
   // 이 칸은 인물정보와 롤카드 두 군데에 동시에 뜬다 — id 로 찾으면 둘 중 아무거나 잡힌다.
   // 그래서 누른 단추에서 제 칸을 거슬러 찾는다.
-  return `<div class="agebox">
-    <span class="k">${cur?"내 나이":"당신의 나이를 적으세요"}</span>
+  return `<div class="agebox" style="--rc:${rc}">
+    <span class="k">당신의 나이를 적으세요</span>
     <input class="agein" inputmode="numeric" maxlength="3" autocomplete="off"
-      value="${esc(cur)}" placeholder="숫자" onkeydown="if(event.key==='Enter')saveAge(this)">
-    <button class="agebtn" onclick="saveAge(this)">${cur?"고치기":"적기"}</button>
-    <span class="d">${cur?"인물정보에서 모두가 봅니다 — 고칠 수 있어요."
-                        :"당신 자신의 나이입니다. 적으면 인물정보에서 모두가 봅니다."}</span></div>`;
+      value="" placeholder="숫자" onkeydown="if(event.key==='Enter')saveAge(this)">
+    <button class="agebtn" onclick="saveAge(this)">적기</button>
+    <span class="d">당신 자신의 나이입니다. <b>한 번만</b> 적을 수 있고, 적으면 인물정보에서 모두가 봅니다.</span></div>`;
 }
 async function saveAge(el){
   const box=el&&el.closest?el.closest(".agebox"):null;
@@ -5556,11 +6036,15 @@ async function saveAge(el){
   const v=(i.value||"").trim();
   if(!v){ banner("나이를 적어주세요"); return; }
   const r=await post("/api/age",{roleId:myRoleId,clientId,age:v});
-  if(r&&r.error){ banner(r.error); return; }
-  await poll();
-  // 열려 있는 창을 그 자리에서 다시 그린다 — 적자마자 자기 칸이 채워져야 한다.
-  if($("whoModal").classList.contains("on")) showWho(true);
-  if($("sheetModal")&&$("sheetModal").classList.contains("on")) showMySheet();
+  const redraw=()=>{ // 열려 있는 창을 그 자리에서 다시 그린다 — 적자마자 자기 칸이 채워져야 한다.
+    if($("whoModal").classList.contains("on")) showWho(true);
+    if($("sheetModal")&&$("sheetModal").classList.contains("on")) showMySheet(); };
+  if(r&&r.error){
+    // 서버가 준 말을 그대로 띄운다. 두 번째 요청은 409 「나이는 한 번만 적을 수 있습니다」다 —
+    // 그 말이 왔다는 건 이미 적혔다는 뜻이라, 판을 다시 읽어 칸을 읽기전용으로 바꿔 준다.
+    banner(r.error); await poll(); redraw(); return;
+  }
+  await poll(); redraw();
   banner("나이를 적었습니다.");
 }
 
@@ -5635,7 +6119,7 @@ function showSwap(){
       <span class="sc-t">${esc(c.title)}</span>
       <span class="sc-w">${esc(c.locName)}${c.spot?" · "+esc(c.spot):""}</span></button>`;
   $("swapBox").innerHTML=`<div class="mhead">
-      <div class="mh-t"><span class="mh-eb">한 장 내주고 한 장 받는다</span><h2>${ICO.swap} 되가져오기</h2>
+      <div class="mh-t"><span class="mh-eb">한 장 내주고 한 장 받는다</span><h2>${ICO.swap} 테이블 위 카드와 바꾸기</h2>
         <span class="mh-sub">손패는 ${handLimit()}장까지 — 바꾸는 장면은 모두가 봅니다</span></div>
       <button class="mh-x" onclick="closeModal('swapModal')" aria-label="닫기">${ICO.close}</button></div>
     <div class="mbody">
@@ -6584,9 +7068,10 @@ async function advance(){
   const body=`지금 막 — ${cur.name||""}\n다음 막 — ${nx.name}${nx.min?`  (약 ${nx.min}분)`:""}`
     +(nx.ap?`\n\n조사 ${nx.ap}장이 새로 주어집니다.`:"")
     +(cur.key==="invest"?`\n\n아직 조사하지 않은 사람이 있어도 넘어갑니다.`:"");
+  // 확인 쪽은 실제로 판을 넘기는 단추다 — 하단바의 「다음 막」과 같은 네온그린으로 세운다.
   if(!await ask({title:"막을 넘깁니다", body,
                  warn: left&&left.length?`손패가 넘치는 배역이 있습니다 — ${left.join(", ")}`:"",
-                 ok:`${nx.name} 시작`, cancel:"조금 더", tone:"cold"})) return;
+                 ok:`${nx.name} 시작`, cancel:"조금 더", tone:"cold", okGo:true})) return;
   // clientId를 실어야 서버가 호스트로 알아본다. 안 보내면 403인데 예전엔 조용히 삼켰다.
   const r=await post("/api/advance",{clientId,key:hostKey()});
   if(r&&r.error){ banner(r.error==="host"?"호스트만 페이즈를 넘길 수 있습니다":"진행 실패: "+r.error); return; }
@@ -6596,7 +7081,9 @@ async function advance(){
    브라우저 기본 alert/confirm은 이 게임의 화면이 아니다 — 폰트도 색도 다르고,
    무엇보다 「무슨 일이 벌어지는지」를 설명할 자리가 없다. 나머지 창과 같은 결로 세운다.
 
-     await ask({title, body, ok, cancel, tone, warn})   → true/false
+     await ask({title, body, ok, cancel, tone, warn, okGo}) → true/false
+   okGo: 확인 쪽이 «실제로 판을 움직이는» 단추일 때 켠다 — 네온그린으로 선다.
+         취소는 손대지 않는다.
      await say({title, body, ok, tone})                 → 확인만
      await askText({title, body, value, ok})            → 입력값 또는 null
    tone: "gold"(기본) · "danger"(되돌릴 수 없음) · "cold"(진행) */
@@ -6617,7 +7104,7 @@ function dialog(o){
         ${o.kind==="text"?`<input class="dlg-in" id="dlgIn" value="${esc(o.value||"")}">`:""}</div>
       <div class="mfoot">
         ${o.kind==="say"?"":`<button class="btn" data-x>${esc(o.cancel||"취소")}</button>`}
-        <button class="btn ${o.tone==="danger"?"ember":"primary"}" data-o>${esc(o.ok||"확인")}</button>
+        <button class="btn ${o.okGo?"go":(o.tone==="danger"?"ember":"primary")}" data-o>${esc(o.ok||"확인")}</button>
       </div></div>`;
     m.onclick=e=>{ if(e.target===m) done(o.kind==="text"?null:false); };
     m.querySelector("[data-o]").onclick=()=>done(o.kind==="text"?(($("dlgIn")||{}).value||""):true);
@@ -7197,34 +7684,65 @@ function belongCards(){
   });
   return out.sort((a,b)=>(a.round-b.round)||a.id.localeCompare(b.id));
 }
-function clueCards(){ return (myHand||[]).filter(c=>!isBelong(c)); }
+/* ── 도구 ─────────────────────────────────────────────────────────
+   손패 상한 «밖»의 물건이다. 수수께끼를 풀어 얻고, 판이 끝날 때까지 손에 남는다.
+   서버가 카드에 item 표를 실어 준다(카탈로그에도, /api/hand 에도) — 확성기든 연장이든
+   그 표 하나로 갈린다. 카드 이름을 여기에 박지 않는다. 다음 사건에서는 다른 물건이다.
+
+   상한 밖의 물건은 둘이다 — 도구(item)와 열쇠 반쪽(keyHalf). 서버가 그 둘을 같이
+   상한 밖으로 세므로 화면도 같이 가른다. 「몇 장이 넘쳤는가」는 여기서 다시 세지 않고
+   서버가 준 overLimit 을 그대로 쓴다 — 두 셈이 어긋나면 사람이 손쓸 수 없는 경고가 뜬다. */
+function isTool(c){ return !!(c&&(c.item||c.keyHalf)); }
+function toolCards(){ return (myHand||[]).filter(isTool); }
+/* 이 사건에 도구라는 것이 있는가 — 없으면 탭을 아예 안 세운다 */
+function hasToolDeck(){ return ((SCEN&&SCEN.cardCatalog)||[]).some(c=>c.item)||toolCards().length>0; }
+function clueCards(){ return (myHand||[]).filter(c=>!isBelong(c)&&!isTool(c)); }
+/* 카드탭에 적는 장수. 넘쳤을 때는 서버 셈(상한+넘침)이 정확하고, 안 넘쳤을 때는
+   상한을 넘겨 적지 않는다 — 경고 없이 「2/1장」이 떠 있으면 화면이 고장난 것으로 읽힌다. */
+function clueCount(){ const o=overLimit(); return o>0?handLimit()+o:Math.min(clueCards().length,handLimit()); }
 
 let handTab="clue";
+/* 내 단서는 두 칸이다 — «카드»와 «도구».
+   카드는 손패 상한이 있고(넘치면 내려놓아야 한다), 도구는 상한 밖이라 몇 개든 든다.
+   그래서 한 목록에 섞어 두면 「몇 장까지」가 어느 쪽 이야기인지 알 수 없다.
+   소지품(belongLocs)을 쓰는 사건에서는 그 칸이 하나 더 붙는다. */
 function showMyHand(tab){
   if(!myRoleValid()){ banner("배역을 맡아야 단서가 있어요"); return; }
-  const split=belongLocs().length>0;
+  const bsplit=belongLocs().length>0, tsplit=hasToolDeck();
   if(tab) handTab=tab;
-  if(!split) handTab="clue";
-  // 소지품이 있는데 손패가 비었으면 소지품 쪽을 먼저 연다 — 빈 화면부터 보여줄 이유가 없다.
-  if(split&&!tab&&!clueCards().length&&belongCards().length) handTab="belong";
-  const bel=handTab==="belong";
-  const cards=bel?belongCards():clueCards();
+  if(handTab==="belong"&&!bsplit) handTab="clue";
+  if(handTab==="tool"&&!tsplit) handTab="clue";
+  // 카드가 비었는데 볼 것이 다른 칸에 있으면 그쪽을 먼저 연다 — 빈 화면부터 보여줄 이유가 없다.
+  if(!tab&&!clueCards().length){
+    if(tsplit&&toolCards().length) handTab="tool";
+    else if(bsplit&&belongCards().length) handTab="belong";
+  }
+  const bel=handTab==="belong", tool=handTab==="tool";
+  const cards=bel?belongCards():(tool?toolCards():clueCards());
   const label=(SCEN&&SCEN.belongLabel)||"소지품";
+  /* 머리에 적는 한 줄. ★ 도구탭에서는 상한 이야기를 «아예 꺼내지 않는다» —
+     상한이 없는 칸에서 장수를 세어 보이면 없는 규칙을 만들어 낸다. */
+  const meta=bel?`${cards.length}장 · 넷의 물건을 나란히`
+            :(tool?`${cards.length}개 · 손패 상한 밖입니다`
+                  :`${clueCount()}/${handLimit()}장 · 나만 봅니다`);
   let h=`<div class="mhead sheeth">
-      <div class="sh-id"><span class="sh-nm" style="color:var(--me,var(--gold-b))">${ICO.card} ${bel?esc(label):"내 단서"}</span>
-        <span class="sh-meta">${bel?`${cards.length}장 · 넷의 물건을 나란히`:`${clueCards().length}/${handLimit()}장 · 나만 봅니다`}</span></div>
+      <div class="sh-id"><span class="sh-nm" style="color:var(--me,var(--gold-b))">${ICO.card} ${bel?esc(label):(tool?"도구":"카드")}</span>
+        <span class="sh-meta">${meta}</span></div>
       </div>`;
-  if(split){
+  if(bsplit||tsplit){
     h+=`<div class="htabs">
-      <button class="htab${bel?"":" on"}" onclick="showMyHand('clue')">내 단서 <b>${clueCards().length}</b></button>
-      <button class="htab${bel?" on":""}" onclick="showMyHand('belong')">${esc(label)} <b>${belongCards().length}</b></button>
+      <button class="htab${(bel||tool)?"":" on"}" onclick="showMyHand('clue')">카드 <b>${clueCards().length}</b></button>
+      ${tsplit?`<button class="htab${tool?" on":""}" onclick="showMyHand('tool')">도구 <b>${toolCards().length}</b></button>`:""}
+      ${bsplit?`<button class="htab${bel?" on":""}" onclick="showMyHand('belong')">${esc(label)} <b>${belongCards().length}</b></button>`:""}
     </div>`;
   }
   h+=`<div class="mbody">`;
+  if(tool) h+=`<div class="toolnote">도구는 손패 상한과 상관없습니다 — 몇 개든 판이 끝날 때까지 들고 있습니다.</div>`;
   if(!cards.length){
     h+=`<div class="panel-note">${bel
       ?`아직 열린 ${esc(label)}이 없어요. 조사 페이즈에 ${esc(label)}을 열면 여기 모입니다.`
-      :"아직 조사한 단서가 없어요. 조사 페이즈에 카드를 열면 여기에 계속 쌓입니다."}</div>`;
+      :(tool?"아직 얻은 도구가 없어요. 수수께끼를 풀면 여기에 모입니다."
+            :"아직 조사한 단서가 없어요. 조사 페이즈에 카드를 열면 여기에 계속 쌓입니다.")}</div>`;
   }
   else{ const slides=cards.map(c=>{
       const isPub=bel&&!(myHand||[]).some(x=>x.id===c.id);
@@ -7236,10 +7754,11 @@ function showMyHand(tab){
       <div class="bc-body">${esc(c.text)}</div>${mynote(c.id)}${cnote(c)}
       ${c.unlocks&&!isPub?`<div class="unlocknote">${ICO.unlock} 이 카드를 <b>전체공개</b>하면 무언가 밝혀질 수 있습니다.</div>`:""}</div>`; });
     h+=buildSwipe(slides); }
-  const pubN=(STATE.revealed||[]).length, canAct=!bel&&myRoleValid()&&clueCards().length;
+  // 카드탭에서만 「대화에 올리기」·「바꾸기」가 선다. 도구는 내려놓는 물건이 아니다.
+  const pubN=(STATE.revealed||[]).length, canAct=!bel&&!tool&&myRoleValid()&&clueCards().length;
   h+=`</div>${canAct?`<div class="mfoot">
     <button class="btn" onclick="showShare()">${ICO.chat} 대화에 올리기</button>
-    ${pubN?`<button class="btn" onclick="showSwap()">${ICO.swap} 되가져오기</button>`:""}</div>`:""}`;
+    ${pubN?`<button class="btn" onclick="showSwap()">${ICO.swap} 테이블 위 카드와 바꾸기</button>`:""}</div>`:""}`;
   $("handBox").innerHTML=h;
   $("handBox").style.setProperty("--mt","var(--me,var(--gold))");
   openModal("handModal"); wireSwipe($("handBox"));
