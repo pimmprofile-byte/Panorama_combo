@@ -1,5 +1,5 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>PIMM MURDERMYSTERY BOARD</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%230b0a0d' stroke='%23c9a24a' stroke-width='2'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='Georgia,serif' font-size='17' font-weight='700' fill='%23c9a24a'%3EP%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' fill='%23050c09' stroke='%2300ff99' stroke-width='2'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='monospace' font-size='17' font-weight='700' fill='%2300ff99'%3EP%3C/text%3E%3C/svg%3E">
 <style>
   /* 한글 웹폰트 자체 호스팅 — 이름만 적어두면 보는 기기에 그 폰트가 있을 때만 먹는다.
      KS X 1001 상용 2350자 서브셋. swap이라 폰트가 늦어도 글은 먼저 보인다. */
@@ -10,32 +10,67 @@
   @font-face{font-family:"PIMM Sans";src:url("/assets/fonts/NotoSansKR-700.woff2") format("woff2");
     font-weight:700;font-style:normal;font-display:swap}
 
+  /* 8비트 게임기 팔레트.
+     ★ 프레임은 무채색, 색은 사람이 쓴다 — 플레이 화면과 같은 규칙이다.
+     패미컴이든 게임보이든 인터페이스는 회색 케이스고, 색은 화면 위의 캐릭터가 쓴다.
+     --brass 는 이름만 남았다. 값은 네온그린이었다가 지금은 «뼈색 회색» 이다 —
+     버튼·라벨·테마다 초록이 뜨면 그 초록이 상징이 아니라 그냥 UI 색으로 값이 떨어진다.
+     이름을 바꾸면 인라인 스타일까지 흩어진 자리를 다 쫓아야 해서 값만 갈았다.
+     --signal(#00FF99, 오리지널 로고색이자 데이비드의 키컬러)이 켜지는 자리는 넷뿐:
+       ① P 로고(마스트·상단바·파비콘)  ② 지금 고른 사건 · 진행 중인 판
+       ③ 「나는 호스트다」 표시          ④ 없음(로비에는 되돌릴 수 없는 확정이 없다)
+     바탕의 보라 기미는 걷었다. 초록 옆에서 보라가 뜨면 화면이 두 갈래로 찢어진다. */
   :root{
-    --bg:#0d0b0e; --bg2:#141016; --panel:#1a151c; --panel2:#221b25;
-    --bone:#ece4d3; --bone-dim:#b7ad9a; --faint:#6d6560;
-    --line:#2c2530; --line2:#3a3140;
-    --blood:#c8392b; --blood-bri:#e0503f; --brass:#c99a4e; --signal:#00ff99;
-    --blood-bg:rgba(200,57,43,.14); --brass-bg:rgba(201,154,78,.12);
+    --bg:#0a0a09; --bg2:#111110; --panel:#171716; --panel2:#201f1e;
+    --bone:#ece4d3; --bone-dim:#b7ad9a; --faint:#847c76;   /* 대비 3.34 → 4.9 */
+    --line:#2a2825; --line2:#3a3733;
+    --blood:#c8392b; --blood-bri:#e0503f; --brass:#c9c2b6; --signal:#00ff99;
+    --blood-bg:rgba(200,57,43,.14); --brass-bg:rgba(201,194,182,.10);
+    /* 게임기 케이스 — 눌리는 판 · 손이 닿은 판 · 파인 테 · 못 누르는 판 */
+    --case-b:#46423b; --case-h:#575148; --case-e:#0e0d0b; --case-off:#211f1c;
+    --case-ink:#efece5; --case-line:#5f594f;
     --serif:"Playfair Display","PIMM Myeongjo","Nanum Myeongjo",Georgia,serif;
     --sans:"PIMM Sans","Pretendard","Apple SD Gothic Neo",system-ui,sans-serif;
-    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"PIMM Sans",monospace;
+    /* PIMM 의 기울어진 P — 플레이 화면 .pmark 와 같은 윤곽을 오리지널 색으로 담았다 */
+    --plogo:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 264 343'%3E%3Cpath fill='%2300ff99' d='M41 3 L226 3 L238 6 L247 11 L257 22 L262 35 L261 55 L249 90 L245 108 L242 113 L238 131 L234 139 L230 157 L227 162 L213 213 L211 215 L206 233 L201 241 L188 253 L177 256 L97 258 L90 275 L87 290 L76 322 L66 333 L49 340 L30 339 L20 334 L11 326 L3 309 L3 291 L19 236 L23 228 L27 210 L31 202 L35 184 L38 179 L42 161 L46 153 L58 109 L63 103 L137 104 L141 113 L126 158 L125 170 L129 175 L139 175 L146 161 L147 153 L165 97 L165 90 L159 84 L43 84 L28 80 L21 76 L13 68 L8 59 L6 51 L7 31 L10 23 L20 11 L26 7 Z'/%3E%3C/svg%3E");
+    /* 8비트는 blur 그림자가 없다 — 한 칸 밀린 오프셋이 그 자리를 맡는다 */
+    --shadow:4px 4px 0 rgba(0,0,0,.55);
+    --neon:0 0 0 1px rgba(0,255,153,.45),0 0 12px -4px var(--signal);
+    /* 포스터 그림이 아직 없을 때 깔리는 8비트 플레이스홀더 */
+    --ph:repeating-linear-gradient(45deg,rgba(235,230,220,.05) 0 7px,transparent 7px 14px),
+         repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 8px),
+         repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 1px,transparent 1px 8px),
+         linear-gradient(180deg,#16150f,#0c0b09);
   }
   *{box-sizing:border-box} html,body{margin:0}
   body{background:var(--bg);color:var(--bone);font-family:var(--sans);word-break:keep-all;overflow-wrap:break-word;text-wrap:pretty;-webkit-font-smoothing:antialiased;min-height:100vh}
   .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
   button{font-family:inherit;cursor:pointer;color:inherit}
-  ::-webkit-scrollbar{height:10px;width:10px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:10px}::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar{height:10px;width:10px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px}::-webkit-scrollbar-track{background:transparent}
 
   /* shared noir stage — 전 화면 동일 무드 */
   .stage{position:relative;min-height:100vh;overflow:hidden}
+  /* 로비 바탕 사진은 「낡은 저택」 결이라 8비트 게임기 화면과 정면으로 부딪힌다.
+     사진을 갈아끼우는 건 에셋 일이니 여기서는 «브라운관에 남은 잔상» 정도까지 눌러 둔다 —
+     채도를 거의 빼고 밝기를 절반으로 내린다. 사진은 질감으로만 남는다.
+     filter 는 그 요소의 가상요소까지 같이 먹으므로, 색을 내는 층(어둠막·초록 한 겹·
+     8비트 격자·스캔라인)은 필터가 안 걸리는 .vig 로 통째로 옮겼다. */
+  /* 이 판의 로비 그림은 «회로기판 위에 선 브라운관»이라, 예전처럼 채도를 다 빼면
+     초록 회로가 통째로 사라진다. 세계관이 곧 배경인 그림이라 색을 살려 둔다 —
+     대신 밝기만 눌러서 글자가 위에 얹힐 자리를 만든다. */
   .bg{position:fixed;inset:-3%;z-index:0;
+    background:url("/assets/rule_the_day_lobby.webp") center 22%/cover no-repeat;
+    filter:saturate(.72) contrast(1.04) brightness(.42)}
+  /* 격자는 8px 눈금, 세기 .03 — 이보다 세면 마스트 글자가 격자에 갉힌다. */
+  .vig{position:fixed;inset:0;z-index:1;pointer-events:none;image-rendering:pixelated;
+    box-shadow:inset 0 0 240px 40px rgba(0,0,0,.82);
     background:
-      linear-gradient(180deg, rgba(10,8,11,.72), rgba(9,7,10,.82) 55%, rgba(7,5,8,.95)),
-      radial-gradient(900px 480px at 50% -8%, rgba(200,57,43,.12), transparent 60%),
-      url("/assets/lobby_bg.jpg") center 32%/cover no-repeat;}
-  .bg::after{content:"";position:absolute;inset:0;opacity:.05;mix-blend-mode:overlay;
-    background-image:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px);pointer-events:none}
-  .vig{position:fixed;inset:0;z-index:1;pointer-events:none;box-shadow:inset 0 0 240px 40px rgba(0,0,0,.82)}
+      repeating-linear-gradient(0deg,rgba(235,230,220,.032) 0 1px,transparent 1px 8px),
+      repeating-linear-gradient(90deg,rgba(235,230,220,.032) 0 1px,transparent 1px 8px),
+      repeating-linear-gradient(0deg,rgba(255,255,255,.028) 0 1px,transparent 1px 3px),
+      linear-gradient(180deg,rgba(6,10,8,.70),rgba(5,8,7,.80) 55%,rgba(4,6,5,.94)),
+      radial-gradient(900px 480px at 50% -8%,rgba(235,230,220,.05),transparent 60%)}
   /* VHS / 노이즈 — 엔트리 전용(#scr-entry 안에 있어 사건선택 화면엔 안 뜸) */
   .vhs{position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden}
   .vhs .scan{position:absolute;inset:0;opacity:.5;background:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px)}
@@ -55,34 +90,60 @@
   /* top rail */
   .toprail{display:flex;align-items:center;gap:12px;padding:6px 2px 0;min-height:40px}
   .toprail .mini{display:flex;align-items:center;gap:9px;font-family:var(--serif);font-weight:800;letter-spacing:.02em}
-  .toprail .mini .dot{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--brass);display:grid;place-items:center;font-size:.8rem}
+  /* 상단바의 P — 오리지널 로고색(--signal)으로 되돌린다. 세리프 'P' 글자 대신 로고
+     윤곽을 얹어, 마스트의 엠블럼·플레이 화면의 .pmark 와 같은 물건이 되게 했다.
+     8비트라 원이 아니라 네모, 그림자는 blur 없는 한 칸 오프셋. */
+  .toprail .mini .dot{width:24px;height:24px;border-radius:0;border:1px solid var(--signal);
+    display:grid;place-items:center;font-size:0;color:transparent;image-rendering:pixelated;
+    box-shadow:2px 2px 0 rgba(0,255,153,.20);
+    background:var(--plogo) center/auto 12px no-repeat,linear-gradient(180deg,#06231a,#040e0b)}
   .toprail .sp{flex:1}
-  .back{background:none;border:1px solid var(--line2);color:var(--bone-dim);border-radius:9px;padding:7px 13px;font-size:.82rem;font-weight:600}
-  .back:hover{border-color:var(--brass);color:var(--bone)}
+  /* ── 버튼 = 게임기 케이스의 «물리 버튼» ────────────────────────
+     색이 아니라 형태로 말한다: 밝은 회색 판 + 어두운 테 + 한 칸 오프셋 그림자.
+     누르면 그림자가 사라지고 그만큼 내려앉는다. 못 쓰면 판이 케이스에 파묻힌다. */
+  .back,.adclose,.adcp,.adform button{
+    background:linear-gradient(180deg,var(--case-h),var(--case-b));
+    border:1px solid var(--case-e);color:var(--case-ink);
+    box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.09)}
+  .back:hover,.adclose:hover,.adcp:hover{background:linear-gradient(180deg,#665f54,var(--case-h));color:#fff;border-color:var(--case-e)}
+  .back:active,.adclose:active,.adcp:active,.adform button:active{
+    transform:translate(2px,2px)!important;box-shadow:inset 0 1px 0 rgba(0,0,0,.4);
+    background:linear-gradient(180deg,#3b372f,var(--case-b))}
+  .back{border-radius:2px;padding:7px 13px;font-size:.82rem;font-weight:600}
   .hostpill{display:inline-flex;align-items:center;gap:6px;font-family:var(--serif);font-weight:800;font-size:.74rem;letter-spacing:.03em;
-    color:var(--signal);border:1px solid color-mix(in srgb,var(--signal) 34%,var(--line2));border-radius:999px;padding:4px 12px 4px 9px;
+    color:var(--signal);border:1px solid color-mix(in srgb,var(--signal) 34%,var(--line2));border-radius:2px;padding:4px 12px 4px 9px;
     background:color-mix(in srgb,var(--signal) 8%,transparent)}
   .hostpill svg{width:15px;height:15px;flex:0 0 auto}
   .hostpill.part{color:var(--bone-dim);border-color:var(--line2);background:rgba(255,255,255,.02)}
 
   /* ENTRY */
   .mast{text-align:center;padding:clamp(30px,10vw,90px) 0 clamp(20px,4vw,36px)}
+  /* 마스트의 P 엠블럼 — 색이 baked-in 된 PNG를 얹고 있어서 붉은 계통으로 굳어 있었다.
+     PNG는 그대로 두고 감춘 뒤(마크업은 건드리지 않는다) 같은 윤곽의 벡터를 오리지널
+     로고색으로 올린다. 8비트라 둥근 테를 네모로 바꾸고, 불꽃 맥동은 네온 맥동이 됐다. */
   .emblem{width:88px;height:88px;margin:0 auto 22px;position:relative;display:grid;place-items:center;
-    border:2px solid var(--blood);border-radius:50%;
-    box-shadow:0 0 0 4px rgba(200,57,43,.14), 0 0 36px rgba(200,57,43,.30), 0 10px 34px rgba(0,0,0,.6);
-    background:radial-gradient(circle at 40% 35%, #2a1113, #12080a);animation:emberpulse 4.5s ease-in-out infinite}
-  .emblem span{font-family:var(--serif);font-weight:800;font-size:2.1rem;color:var(--bone);
-    text-shadow:0 0 16px rgba(224,80,63,.65), 0 1px 0 #000}
-  @keyframes emberpulse{0%,100%{box-shadow:0 0 0 4px rgba(200,57,43,.14), 0 0 26px rgba(200,57,43,.22), 0 10px 34px rgba(0,0,0,.6)}50%{box-shadow:0 0 0 4px rgba(200,57,43,.2), 0 0 44px rgba(200,57,43,.42), 0 10px 34px rgba(0,0,0,.6)}}
-  .emblem img{width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 3px 8px rgba(0,0,0,.55))}
+    border:2px solid var(--signal);border-radius:0;image-rendering:pixelated;
+    box-shadow:0 0 0 2px rgba(0,255,153,.16), 4px 4px 0 rgba(0,0,0,.5);
+    background:var(--plogo) center/auto 46px no-repeat,linear-gradient(180deg,#06231a,#04100c);
+    animation:emberpulse 4.5s ease-in-out infinite}
+  .emblem span{font-family:var(--mono);font-weight:800;font-size:2.1rem;color:var(--signal);
+    letter-spacing:.08em;text-shadow:0 0 16px rgba(0,255,153,.5), 0 1px 0 #000}
+  @keyframes emberpulse{0%,100%{box-shadow:0 0 0 2px rgba(0,255,153,.14), 4px 4px 0 rgba(0,0,0,.5)}50%{box-shadow:0 0 0 2px rgba(0,255,153,.3), 0 0 26px -6px rgba(0,255,153,.8), 4px 4px 0 rgba(0,0,0,.5)}}
+  /* 색이 굳은 PNG는 감춘다 — 위 벡터가 같은 그림을 오리지널 색으로 대신 그린다 */
+  .emblem img{display:none}
   .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.42em;color:var(--blood-bri);text-transform:uppercase;margin-bottom:14px}
-  h1.title{font-family:var(--serif);font-weight:800;line-height:.94;margin:0;letter-spacing:.01em;
+  /* 마스트 제목 — 8비트 게임기의 타이틀 화면이다. 세리프에서 게임기 글꼴로 옮기고
+     자간을 벌린다. 본문은 지금 글꼴 그대로다(한글 가독성이 먼저). */
+  h1.title{font-family:var(--mono);font-weight:800;line-height:1.02;margin:0;letter-spacing:.06em;
     /* 390px(아이폰13)에서 2.3rem 하한이 걸려 "MURDERMYSTERY"가 본문 폭을 꽉 채웠다(354/359px).
        하한만 낮춰 8.5vw가 먹게 하면 390에서 33px로 떨어져 좌우 여백이 생긴다. 430·1280은 그대로. */
-    font-size:clamp(1.85rem,8.5vw,4.6rem);text-wrap:balance;color:var(--bone);
-    text-shadow:.6px 0 rgba(224,80,63,.6), -.6px 0 rgba(0,255,153,.22), 0 2px 20px rgba(0,0,0,.75);
+    /* 게임기 글꼴은 세리프보다 글자 하나가 넓다. 상한을 한 단계 내려야 1280에서 안 넘친다. */
+    font-size:clamp(1.5rem,7vw,3.6rem);text-wrap:balance;color:var(--bone);
+    /* 색수차 — 브라운관에서 RGB가 한 픽셀씩 어긋난 그 자국. blur 없이 1px 씩만. */
+    text-shadow:1px 0 rgba(224,80,63,.55), -1px 0 rgba(0,255,153,.4), 0 2px 0 rgba(0,0,0,.75);
     animation:vflick 6s steps(1) infinite}
-  h1.title .amp{color:var(--blood);font-style:italic}
+  /* 게임기 글꼴에는 이탤릭이 없다 — 기울이는 대신 색으로만 가른다 */
+  h1.title .amp{color:var(--blood);font-style:normal}
   @keyframes vflick{0%,96%,100%{opacity:1}97%{opacity:.72}98%{opacity:1}98.6%{opacity:.85}}
   .tageline{color:var(--bone-dim);font-size:clamp(.9rem,2.2vw,1.05rem);margin-top:18px;letter-spacing:.02em;
     /* ch는 숫자 0 기준이라 한글 폭(1em)보다 한참 좁다. 24ch로는 <br>로 나눈 두 문장이
@@ -90,21 +151,21 @@
     line-height:1.6;word-break:keep-all;text-wrap:balance;max-width:27ch;margin-left:auto;margin-right:auto}
 
   .entrybox{max-width:460px;margin:0 auto}
-  .cta-host{width:100%;position:relative;overflow:hidden;text-align:left;border-radius:15px;padding:17px 18px;
+  .cta-host{width:100%;position:relative;overflow:hidden;text-align:left;border-radius:2px;padding:17px 18px;
     display:flex;align-items:center;gap:15px;
     border:1px solid color-mix(in srgb,var(--blood) 55%,var(--line2));
-    background:linear-gradient(180deg,var(--blood-bg),var(--panel));box-shadow:0 16px 44px rgba(0,0,0,.5)}
+    background:linear-gradient(180deg,var(--blood-bg),var(--panel));box-shadow:4px 4px 0 rgba(0,0,0,.5)}
   .cta-host+.cta-host{margin-top:13px}
-  .cta-host:hover{transform:translateY(-2px);border-color:var(--blood);box-shadow:0 22px 54px rgba(200,57,43,.18)}
-  .cta-host.alt{border-color:var(--line2);background:linear-gradient(180deg,rgba(32,27,36,.7),var(--panel))}
-  .cta-host.alt:hover{border-color:var(--brass);box-shadow:0 22px 54px rgba(0,0,0,.5)}
-  .cta-host .eic{flex:0 0 auto;width:46px;height:46px;display:grid;place-items:center;border-radius:12px;color:var(--blood-bri);
+  .cta-host:hover{transform:translateY(-2px);border-color:var(--blood);box-shadow:5px 5px 0 rgba(200,57,43,.3)}
+  .cta-host.alt{border-color:var(--line2);background:linear-gradient(180deg,rgba(38,35,31,.72),var(--panel))}
+  .cta-host.alt:hover{border-color:var(--case-line);box-shadow:5px 5px 0 rgba(0,0,0,.5)}
+  .cta-host .eic{flex:0 0 auto;width:46px;height:46px;display:grid;place-items:center;border-radius:2px;color:var(--blood-bri);
     border:1px solid color-mix(in srgb,var(--blood) 40%,var(--line2));background:rgba(200,57,43,.08)}
   .cta-host.alt .eic{color:var(--bone);border-color:var(--line2);background:rgba(255,255,255,.03)}
   .cta-host .eic .ic{width:24px;height:24px}
   .cta-host .txt{flex:1;min-width:0}
   .cta-host .k{font-family:var(--mono);font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--blood-bri)}
-  .cta-host.alt .k{color:var(--brass)}
+  .cta-host.alt .k{color:var(--bone-dim)}
   .cta-host .nm{font-weight:800;font-size:1.26rem;margin:3px 0 4px;color:var(--bone)}
   /* balance로 두 줄 길이를 맞춰, "…진행 / 시 꼭 필요한" 처럼 한 글자만 넘어가는 걸 막는다 */
   .cta-host .ds{font-size:.79rem;color:var(--bone-dim);line-height:1.45;word-break:keep-all;text-wrap:balance}
@@ -126,16 +187,27 @@
   .rail::-webkit-scrollbar{display:none}
   .poster{scroll-snap-align:center;flex:0 0 auto;width:clamp(242px,75vw,290px);text-align:left;background:none;border:none;padding:0;transition:.2s;color:inherit}
   .poster:hover{transform:translateY(-7px)}
-  .frame{position:relative;border-radius:9px;padding:12px;
-    background:linear-gradient(145deg,#3a2f22,#1c1610 40%,#2a2118);
-    box-shadow:0 20px 48px rgba(0,0,0,.62), inset 0 0 0 1px rgba(201,154,78,.35), inset 0 0 22px rgba(0,0,0,.7)}
-  .frame::before{content:"";position:absolute;inset:6px;border:1px solid rgba(201,154,78,.28);border-radius:5px;pointer-events:none;z-index:3}
-  .art{position:relative;aspect-ratio:3/4.2;border-radius:4px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;
+  .frame{position:relative;border-radius:2px;padding:12px;
+    background:linear-gradient(145deg,#3c3830,#1a1815 40%,#2a2721);
+    box-shadow:5px 5px 0 rgba(0,0,0,.62), inset 0 0 0 1px rgba(235,230,220,.16), inset 0 0 22px rgba(0,0,0,.7)}
+  .frame::before{content:"";position:absolute;inset:6px;border:1px solid rgba(235,230,220,.14);border-radius:2px;pointer-events:none;z-index:3}
+  /* 포스터 그림자리 — 사건 그림(SVG/JPG)은 나중에 한 번에 만든다.
+     그때까지 이 칸이 그냥 검게 비어 있으면 「준비중인 사건」과 구분이 안 갔다.
+     그래서 .art 자체를 8비트 플레이스홀더(격자+빗금+「그림 없음」)로 깔고,
+     실제 그림은 그 위에 .artimg 한 겹으로 얹는다. 그림이 없거나 404면 그 한 겹이
+     투명해서 아래 플레이스홀더가 그대로 드러난다 — 자리는 이미 잡혀 있으니
+     나중에 그림을 넣어도 줄이 흔들리지 않는다. */
+  .art{position:relative;aspect-ratio:3/4.2;border-radius:2px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;
+    background:var(--ph);
     box-shadow:inset 0 0 60px rgba(0,0,0,.78)}
+  .art .artimg{position:absolute;inset:0;z-index:1;background-size:cover;background-position:center 56%}
+  .art::after{content:"그림 없음";position:absolute;left:50%;top:38%;transform:translateX(-50%);z-index:0;
+    font-family:var(--mono);font-size:.58rem;letter-spacing:.28em;line-height:1;white-space:nowrap;
+    color:rgba(235,230,220,.5);border:1px solid rgba(235,230,220,.26);padding:5px 9px}
   .art .ph-ic{position:absolute;inset:0;display:grid;place-items:center;font-size:3.6rem;opacity:.4}
   .art .gloss{position:absolute;inset:0;background:linear-gradient(150deg,rgba(255,255,255,.10),transparent 42%);z-index:2;pointer-events:none}
   .hc{position:absolute;top:10px;right:10px;z-index:4;display:flex;align-items:center;gap:6px;
-    background:rgba(6,4,7,.72);border:1px solid var(--line2);border-radius:999px;padding:3px 9px 3px 8px;backdrop-filter:blur(4px)}
+    background:rgba(6,4,7,.72);border:1px solid var(--line2);border-radius:2px;padding:3px 9px 3px 8px;backdrop-filter:blur(4px)}
   .hc .pips{display:inline-flex;gap:2px;align-items:center}
   .hc .pip{display:inline-flex;color:var(--faint);opacity:.45;transition:.2s}
   .hc .pip svg{width:12px;height:12px;display:block}
@@ -143,7 +215,8 @@
   .hc .pip.part{color:#E5A02C;opacity:1}                        /* 참가자 = 노랑(호박) */
   .hc b{font-family:var(--mono);font-size:.66rem;color:var(--bone-dim);font-weight:700;letter-spacing:.02em}
   .hc.live{border-color:var(--line2)}
-  .art .grain{position:absolute;inset:0;opacity:.06;background-image:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
+  /* 스캔라인 — .artimg(z:1) 위에 얹혀야 그림에도 걸린다 */
+  .art .grain{position:absolute;inset:0;z-index:2;opacity:.06;background-image:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
   .art .cap{position:relative;padding:26px 16px 18px;z-index:2}
   /* 포그: 블러+어둠을 마스크로 위로 서서히 사라지게 → 경계선 없는 자연 그라데이션 */
   .art .cap::before{content:"";position:absolute;left:0;right:0;bottom:0;top:-56px;z-index:-1;pointer-events:none;
@@ -151,82 +224,88 @@
     backdrop-filter:blur(7px) saturate(.85);-webkit-backdrop-filter:blur(7px) saturate(.85);
     -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 46%,rgba(0,0,0,.6) 72%,transparent 100%);
     mask-image:linear-gradient(0deg,#000 0%,#000 46%,rgba(0,0,0,.6) 72%,transparent 100%)}
-  .art .cap .tone{font-family:var(--mono);font-size:.55rem;letter-spacing:.22em;text-transform:uppercase;color:var(--brass);margin-bottom:9px;display:inline-block;padding-bottom:6px;border-bottom:1px solid color-mix(in srgb,var(--brass) 32%,transparent)}
+  .art .cap .tone{font-family:var(--mono);font-size:.55rem;letter-spacing:.22em;text-transform:uppercase;color:var(--brass);margin-bottom:9px;display:inline-block;padding-bottom:6px;border-bottom:1px solid color-mix(in srgb,var(--brass) 28%,transparent)}
   .art .cap .pt{font-family:var(--serif);font-weight:800;font-size:clamp(1.9rem,7.6vw,2.25rem);line-height:1.0;letter-spacing:.01em;margin:2px 0 7px;color:#efe4d1;
     /* 양각(엠보) 릴리프 — 위 하이라이트 + 아래 그림자로 어둠에서 도드라지게 */
     text-shadow:0 -1px 0 rgba(245,236,220,.16), 0 1px 0 rgba(0,0,0,.92), 0 2px 3px rgba(0,0,0,.8), 0 3px 14px rgba(0,0,0,.7), .5px 0 rgba(226,86,69,.28)}
   .art .cap .psub{font-size:.82rem;color:var(--bone-dim);letter-spacing:.02em;line-height:1.45}
   .meta{display:flex;align-items:center;gap:8px;margin-top:12px;padding:0 3px}
-  .chip{font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;color:var(--bone-dim);border:1px solid var(--line2);border-radius:999px;padding:2px 8px}
+  .chip{font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;color:var(--bone-dim);border:1px solid var(--line2);border-radius:2px;padding:2px 8px}
   /* 분량은 난이도(추리의 어려움)와 다른 축이다 — 결을 갈라 한눈에 구분되게 한다 */
   .chip.tx{border-color:rgba(120,170,200,.34);color:rgba(178,210,228,.9);letter-spacing:.02em}
   .meta .sel{margin-left:auto;font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;color:var(--faint)}
-  .poster.on .frame{box-shadow:0 24px 54px rgba(0,0,0,.72), inset 0 0 0 2px var(--blood), inset 0 0 26px rgba(0,0,0,.7)}
-  .poster.on .meta .sel{color:var(--blood-bri)}
+  /* ★ 초록 ② — 「지금 내가 고른 사건」. 로비에서 초록이 켜지는 자리는 여기와 로고뿐이다. */
+  .poster.on .frame{box-shadow:5px 5px 0 rgba(0,0,0,.72), inset 0 0 0 2px var(--signal), 0 0 22px -8px var(--signal), inset 0 0 26px rgba(0,0,0,.7)}
+  .poster.on .meta .sel{color:var(--signal)}
   .poster.locked{opacity:.72;cursor:not-allowed}
   .poster.locked .frame{filter:grayscale(.55)}
   /* 지금 판이 돌고 있는 사건. 다른 걸 고르면 그 판을 닫아야 한다는 걸 미리 알려준다. */
   .livetag{position:absolute;top:9px;right:9px;z-index:5;font-family:var(--mono);font-size:.56rem;
-    letter-spacing:.18em;color:#0d0b0c;background:var(--brass);border-radius:20px;padding:3px 9px;font-weight:700}
+    letter-spacing:.18em;color:#04150e;background:var(--signal);border-radius:0;padding:3px 9px;font-weight:700}
   .lockband{position:absolute;top:46%;left:-9px;right:-9px;transform:translateY(-50%) rotate(-7deg);z-index:4;
-    background:repeating-linear-gradient(45deg,#141013 0 14px,#c8392b 14px 28px);border-top:1px solid #000;border-bottom:1px solid #000;box-shadow:0 4px 14px rgba(0,0,0,.6)}
+    background:repeating-linear-gradient(45deg,#141013 0 14px,#c8392b 14px 28px);border-top:1px solid #000;border-bottom:1px solid #000;box-shadow:3px 3px 0 rgba(0,0,0,.6)}
   .lockband span{display:block;text-align:center;font-family:var(--mono);font-weight:700;font-size:.7rem;letter-spacing:.3em;color:#fff;padding:6px 0;text-shadow:0 1px 2px #000;background:rgba(20,16,19,.35)}
 
   .confirm{display:flex;justify-content:center;margin:14px 0 2px;min-height:52px;align-items:center}
   .pickhint{margin:0;font-size:.82rem;color:var(--bone-dim)}
   .confirm .in{display:flex;align-items:center;gap:14px;background:rgba(20,16,22,.94);backdrop-filter:blur(10px);
-    border:1px solid var(--line2);border-radius:14px;padding:10px 12px 10px 18px;box-shadow:0 12px 34px rgba(0,0,0,.55);max-width:calc(100% - 20px)}
+    border:1px solid var(--line2);border-radius:2px;padding:10px 12px 10px 18px;box-shadow:4px 4px 0 rgba(0,0,0,.55);max-width:calc(100% - 20px)}
   .confirm .lbl{font-size:.85rem;color:var(--bone-dim)}.confirm .lbl b{color:var(--bone);font-family:var(--serif)}
   .confirm .lbl.warn{color:var(--blood-bri)}
-  .confirm .go{background:var(--blood);color:#fff;border:none;border-radius:10px;padding:11px 20px;font-weight:800;font-size:.92rem;white-space:nowrap}
+  .confirm .go{background:linear-gradient(180deg,#d8503c,#a02c1e);color:#fff;border:1px solid #3a0f0a;
+    border-radius:2px;padding:11px 20px;font-weight:800;font-size:.92rem;white-space:nowrap;
+    box-shadow:2px 2px 0 #2a0b07,inset 0 1px 0 rgba(255,255,255,.16)}
+  .confirm .go:active{transform:translate(2px,2px)!important;box-shadow:inset 0 1px 0 rgba(0,0,0,.4);
+    background:linear-gradient(180deg,#8f2718,#b03c2a)}
+  .confirm .go:disabled{background:var(--case-off);border-color:#171614;color:var(--faint);box-shadow:none}
   .confirm .go.alt{background:transparent;border:1px solid var(--blood);color:var(--blood-bri)}
   .confirm .go:disabled{opacity:.4;cursor:not-allowed}
 
   /* toast */
   .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(12px);z-index:70;
-    background:rgba(20,16,22,.96);border:1px solid var(--line2);border-radius:11px;padding:11px 18px;
-    font-size:.85rem;color:var(--bone);box-shadow:0 14px 40px rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:.28s;max-width:88vw;text-align:center;word-break:keep-all}
+    background:rgba(20,16,22,.96);border:1px solid var(--line2);border-radius:2px;padding:11px 18px;
+    font-size:.85rem;color:var(--bone);box-shadow:4px 4px 0 rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:.28s;max-width:88vw;text-align:center;word-break:keep-all}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
   /* 관리자 / 열람(테스트) 모드 */
   .adminbtn{position:fixed;top:12px;right:12px;z-index:55;font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;
-    background:rgba(20,16,22,.8);border:1px solid var(--line2);color:var(--faint);border-radius:999px;padding:6px 12px;backdrop-filter:blur(6px)}
-  .adminbtn:hover{color:var(--bone);border-color:var(--brass)}
-  .adminbtn.on{color:var(--signal);border-color:color-mix(in srgb,var(--signal) 45%,var(--line2))}
+    background:rgba(20,16,22,.8);border:1px solid var(--line2);color:var(--faint);border-radius:2px;padding:6px 12px;backdrop-filter:blur(6px)}
+  .adminbtn:hover{color:var(--bone);border-color:var(--case-line)}
+  .adminbtn.on{color:var(--bone);border-color:var(--case-line);background:var(--case-off)}
   .admask{position:fixed;inset:0;z-index:80;background:rgba(4,3,5,.82);backdrop-filter:blur(6px);display:none;place-items:center;padding:20px}
   .admask.on{display:grid}
   .adcard{width:min(580px,95vw);max-height:86vh;overflow:auto;background:linear-gradient(180deg,var(--panel),#100c12);
-    border:1px solid var(--line2);border-radius:16px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+    border:1px solid var(--line2);border-radius:2px;padding:24px;box-shadow:6px 6px 0 rgba(0,0,0,.7)}
   .adcard h3{font-family:var(--serif);font-weight:800;font-size:1.4rem;margin:0 0 4px}
   .adcard .adsub{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;color:var(--faint);margin-bottom:18px}
   .adform{display:flex;gap:9px;margin-top:6px}
-  .adform input{flex:1;min-width:0;background:#0c0910;border:1px solid var(--line2);color:var(--bone);border-radius:9px;padding:11px 13px;font-size:.95rem;letter-spacing:.2em}
-  .adform input:focus{outline:none;border-color:var(--brass)}
-  .adform button{background:var(--blood);color:#fff;border:none;border-radius:9px;padding:0 18px;font-weight:800}
+  .adform input{flex:1;min-width:0;background:#0c0910;border:1px solid var(--line2);color:var(--bone);border-radius:2px;padding:11px 13px;font-size:.95rem;letter-spacing:.2em}
+  .adform input:focus{outline:none;border-color:var(--case-line)}
+  .adform button{background:var(--blood);color:#fff;border:none;border-radius:2px;padding:0 18px;font-weight:800}
   .aderr{color:var(--blood-bri);font-size:.78rem;margin-top:10px;min-height:1.1em}
-  .adclose{margin-top:18px;width:100%;background:none;border:1px solid var(--line2);color:var(--bone-dim);border-radius:9px;padding:11px;font-size:.85rem}
-  .adclose:hover{color:var(--bone);border-color:var(--brass)}
+  .adclose{margin-top:18px;width:100%;background:none;border:1px solid var(--line2);color:var(--bone-dim);border-radius:2px;padding:11px;font-size:.85rem}
+
   /* 카드 훑어보기 — 검수용. 한 화면에 다 늘어놓고 눈으로 훑는 게 목적이라 넓게 쓴다. */
   .adcard.wide{width:min(1080px,96vw)}
   .adtabs{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 16px}
   .adtab{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;background:#0c0910;
-    border:1px solid var(--line2);color:var(--bone-dim);border-radius:999px;padding:7px 13px}
-  .adtab.on{color:#120d08;background:var(--brass);border-color:var(--brass);font-weight:800}
+    border:1px solid var(--line2);color:var(--bone-dim);border-radius:2px;padding:7px 13px}
+  .adtab.on{color:#14120f;background:var(--case-ink);border-color:var(--case-e);font-weight:800}
   .adzone{margin-top:20px}
   .adzone > h4{font-family:var(--serif);font-size:1.05rem;margin:0 0 9px;color:var(--bone);
     border-bottom:1px solid var(--line2);padding-bottom:7px}
   .adzone > h4 .n{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;color:var(--faint);margin-left:8px}
   .adcards{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr))}
-  .adc{background:#0c0910;border:1px solid var(--line2);border-radius:11px;padding:13px 14px}
+  .adc{background:#0c0910;border:1px solid var(--line2);border-radius:2px;padding:13px 14px}
   .adc.bait{border-color:color-mix(in srgb,var(--blood) 45%,var(--line2))}
   /* 이튿날 새로 나오는 카드 — 몇 장인지 세는 자리라 눈으로 갈라져야 한다 */
   .adc.fresh{background:linear-gradient(180deg,rgba(96,150,190,.12),#0c0910 70%);
     border-color:color-mix(in srgb,#6096be 42%,var(--line2))}
   /* 카드 갈래 딱지 — 관리자 열람에서 이걸로 분류한다 */
   .adc .cfr{font-family:var(--mono);font-size:.55rem;letter-spacing:.08em;font-weight:700;
-    border-radius:20px;padding:1px 6px;white-space:nowrap;
+    border-radius:2px;padding:1px 6px;white-space:nowrap;
     color:var(--faint);border:1px solid var(--line2);background:rgba(255,255,255,.03)}
-  .adc .cfr.k1{color:#d9c9a4;border-color:rgba(201,154,78,.42);background:rgba(201,154,78,.13)}
+  .adc .cfr.k1{color:#d9d3c8;border-color:rgba(217,211,200,.42);background:rgba(217,211,200,.10)}
   .adc .cfr.k2{color:#9cc6e0;border-color:rgba(156,198,224,.45);background:rgba(96,150,190,.16)}
   .adc .cfr.k4{color:#e8b45c;border-color:rgba(232,180,92,.5);background:rgba(232,180,92,.14)}
   .adc .cfr.k9{color:#8e8798;border-color:rgba(142,135,152,.4);background:rgba(142,135,152,.10);
@@ -246,7 +325,7 @@
   .adc .chint{font-size:.75rem;line-height:1.6;color:var(--faint);margin-top:8px;
     border-left:2px solid var(--line2);padding-left:9px;word-break:keep-all}
   /* 하루가 지나면 접히는 카드 — 어제 판본 아래에 오늘 판본을 붙여 같이 검수한다 */
-  .adc .cday2{margin-top:11px;padding:10px 12px;border-radius:9px;
+  .adc .cday2{margin-top:11px;padding:10px 12px;border-radius:2px;
     border:1px dashed color-mix(in srgb,#6096be 45%,var(--line2));background:rgba(96,150,190,.07)}
   .adc .cday2>b{display:block;font-family:var(--mono);font-size:.55rem;letter-spacing:.1em;
     color:#9cc6e0;margin-bottom:6px}
@@ -255,7 +334,7 @@
     color:#8e8798;border-left:2px solid rgba(142,135,152,.5);padding-left:8px}
   .adc .ctags{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
   .adc .ctags i{font-style:normal;font-family:var(--mono);font-size:.55rem;letter-spacing:.08em;
-    border:1px solid var(--line2);color:var(--faint);border-radius:5px;padding:2px 6px}
+    border:1px solid var(--line2);color:var(--faint);border-radius:2px;padding:2px 6px}
   .adc .ctags i.r{color:var(--brass);border-color:color-mix(in srgb,var(--brass) 40%,var(--line2))}
   .adc .ctags i.b{color:var(--blood-bri);border-color:color-mix(in srgb,var(--blood) 45%,var(--line2))}
   .adpair{font-size:.8rem;line-height:1.7;color:var(--bone-dim);padding:8px 0;border-top:1px solid var(--line2)}
@@ -264,29 +343,29 @@
   /* 에셋 프롬프트 훑어보기 — 읽는 화면이 아니라 «복사하는» 화면이다.
      프롬프트 하나는 앞머리 + 톤 + 본문 세 조각을 이어 붙여야 완성되므로,
      그 셋을 한 번에 붙여주는 버튼을 항목마다 세워 둔다. */
-  .adp{background:#0c0910;border:1px solid var(--line2);border-radius:11px;padding:13px 14px;margin-bottom:10px}
+  .adp{background:#0c0910;border:1px solid var(--line2);border-radius:2px;padding:13px 14px;margin-bottom:10px}
   .adp .ph{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:2px}
   .adp .pti{font-family:var(--serif);font-weight:800;font-size:1rem;color:var(--bone)}
   .adp .pfile{font-family:var(--mono);font-size:.6rem;letter-spacing:.03em;color:var(--brass);word-break:break-all}
   .adp .pmeta{font-size:.72rem;color:var(--faint);margin-bottom:7px;word-break:keep-all}
   .adp .pbody{font-family:var(--mono);font-size:.72rem;line-height:1.8;color:var(--bone-dim);
-    background:#080610;border:1px solid var(--line2);border-radius:8px;padding:11px 12px;
+    background:#080610;border:1px solid var(--line2);border-radius:2px;padding:11px 12px;
     white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto}
   .adp .pbody b{color:var(--brass);font-weight:700}
   .adp .pacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;align-items:center}
   .adp .pnote{font-size:.74rem;line-height:1.6;margin-top:8px;display:flex;gap:7px;word-break:keep-all}
   .adp .pnote .w{font-family:var(--mono);font-size:.55rem;letter-spacing:.08em;border:1px solid currentColor;
-    border-radius:5px;padding:1px 6px;flex:0 0 auto;align-self:flex-start}
+    border-radius:2px;padding:1px 6px;flex:0 0 auto;align-self:flex-start}
   .adp .pnote.m{color:#8fb37f}
   .adp .pnote.r{color:var(--blood-bri)}
   .adp .pnote span.t{color:var(--bone-dim)}
   .adp .phave{font-family:var(--mono);font-size:.55rem;letter-spacing:.08em;margin-left:auto;
-    border:1px solid rgba(143,179,127,.5);color:#8fb37f;border-radius:20px;padding:1px 7px;white-space:nowrap}
+    border:1px solid rgba(143,179,127,.5);color:#8fb37f;border-radius:2px;padding:1px 7px;white-space:nowrap}
   .adcp{font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;background:#0c0910;
-    border:1px solid var(--line2);color:var(--bone-dim);border-radius:7px;padding:6px 11px}
-  .adcp:hover{color:var(--bone);border-color:var(--brass)}
-  .adcp.k{background:var(--brass);border-color:var(--brass);color:#120d08;font-weight:800}
-  .adcp.done{background:#3f6b3a!important;border-color:#3f6b3a!important;color:#fff!important}
+    border:1px solid var(--line2);color:var(--bone-dim);border-radius:2px;padding:6px 11px}
+
+  .adcp.k{background:var(--case-ink);border-color:var(--case-e);color:#14120f;font-weight:800}
+  .adcp.done{background:#2f6b62!important;border-color:#2f6b62!important;color:#fff!important}
   .adphint{font-size:.74rem;line-height:1.7;color:var(--faint);margin:0 0 14px;word-break:keep-all}
   .adphint b{color:var(--brass)}
 
@@ -295,7 +374,7 @@
   .adroles{display:grid;gap:14px;grid-template-columns:1fr}
   @media (min-width:900px){ .adroles{grid-template-columns:1fr 1fr} }
   .adr{background:#0c0910;border:1px solid var(--line2);border-left:3px solid var(--rk,var(--line2));
-    border-radius:11px;padding:14px 15px}
+    border-radius:2px;padding:14px 15px}
   .adr .rh{display:flex;align-items:center;gap:10px;margin-bottom:4px}
   .adr .rav{flex:0 0 34px;height:34px;border-radius:50%;border:1px solid var(--line2);
     display:grid;place-items:center;font-size:1.05rem;background:#0a0710}
@@ -303,7 +382,7 @@
   .adr .rjb{font-size:.72rem;color:var(--faint)}
   .adr .rflag{font-family:var(--mono);font-size:.55rem;letter-spacing:.1em;margin-left:auto;
     border:1px solid color-mix(in srgb,var(--blood) 50%,var(--line2));color:var(--blood-bri);
-    border-radius:5px;padding:2px 7px;white-space:nowrap}
+    border-radius:2px;padding:2px 7px;white-space:nowrap}
   .adr .rflag.q{color:var(--brass);border-color:color-mix(in srgb,var(--brass) 40%,var(--line2))}
   .adr .rtag{font-size:.78rem;line-height:1.65;color:var(--bone-dim);word-break:keep-all;margin-bottom:4px}
   .adr h5{font-family:var(--mono);font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;
@@ -339,13 +418,30 @@
   .cta-host:active,.roombtn:active,.back:active,.join button:active{transform:scale(.955)!important;filter:brightness(1.12)}
   .confirm .go:active{transform:scale(.93)!important;filter:brightness(1.14)}
   .poster:active{transform:translateY(-4px) scale(.965)!important}
-  .cta-host:active{box-shadow:0 6px 20px rgba(200,57,43,.28)!important}
+  .cta-host:active{box-shadow:3px 3px 0 rgba(200,57,43,.4)!important}
   @keyframes pop{0%{transform:translateY(-6px) scale(.98)}45%{transform:translateY(-8px) scale(1.035)}100%{transform:translateY(-6px) scale(1)}}
   .poster.on{animation:pop .3s cubic-bezier(.2,.9,.25,1)}
   /* 탭 하이라이트 제거 + 클릭 물결(엔트리 host) */
   button{-webkit-tap-highlight-color:transparent}
   .cta-host::after{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at var(--rx,50%) var(--ry,50%),rgba(255,255,255,.16),transparent 45%);opacity:0;transition:opacity .5s}
   .cta-host:active::after{opacity:1;transition:opacity 0s}
+  /* ══ 게임기 케이스의 «구조» ═══════════════════════════════════
+     색을 걷어낸 자리를 구조로 채운다 — 판마다 안쪽 실선 한 줄, 네 귀의 픽셀 코너.
+     플레이 화면(index.html)의 같은 블록과 짝이다. */
+  .cta-host,.adcard,.adc,.adp,.adr,.confirm .in{
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05),inset 0 0 0 1px rgba(0,0,0,.3),4px 4px 0 rgba(0,0,0,.5)}
+  .adcard,.confirm .in{
+    background-image:
+      linear-gradient(var(--case-line),var(--case-line)),
+      linear-gradient(var(--case-line),var(--case-line)),
+      linear-gradient(var(--case-line),var(--case-line)),
+      linear-gradient(var(--case-line),var(--case-line));
+    background-size:2px 2px;background-repeat:no-repeat;
+    background-position:4px 4px,calc(100% - 4px) 4px,4px calc(100% - 4px),calc(100% - 4px) calc(100% - 4px)}
+  /* 눈썹라벨 앞의 픽셀 블록 — 색 없이 «여기서 한 덩이가 시작된다» 를 말한다 */
+  .scr-head .eyebrow::before,.cta-host .k::before{
+    content:"";display:inline-block;width:6px;height:6px;margin-right:7px;vertical-align:1px;
+    background:currentColor;opacity:.6}
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
   @media(max-width:560px){ .toprail .mini span.full{display:none} .cta-host .arrow{display:none} }
 </style></head><body>
@@ -606,8 +702,9 @@ function posterHTML(s,c){
     <button class="poster ${s.locked&&!admin?"locked":""} ${me.pick===s.id?"on":""}"
        data-c="${c}" data-id="${s.id}" onclick="pickScenario('${s.id}')">
       <div class="frame">
-        <div class="art" style="background-image:url('${s.img}');background-size:cover;background-position:center 56%">
-          <div style="position:absolute;inset:0;background:radial-gradient(130% 72% at 50% 130%, ${s.glow}, transparent 66%)"></div>
+        <div class="art">
+          <div class="artimg" style="background-image:url('${s.img}')"></div>
+          <div style="position:absolute;inset:0;z-index:1;background:radial-gradient(130% 72% at 50% 130%, ${s.glow}, transparent 66%)"></div>
           <div class="grain"></div><div class="gloss"></div>
           ${s.locked?`<div class="lockband"><span>COMING SOON</span></div>`:""}
           ${liveId===s.id?`<div class="livetag">진행 중</div>`:""}
@@ -1085,8 +1182,28 @@ function showAdminPanel(){
     <button class="adtab" style="margin-top:16px;width:100%;padding:11px" onclick="showCardBrowser()">조사카드 전부 훑어보기 →</button>
     <button class="adtab" style="margin-top:7px;width:100%;padding:11px" onclick="showRoleBrowser()">배역 전부 훑어보기 →</button>
     <button class="adtab" style="margin-top:7px;width:100%;padding:11px" onclick="showAssetBrowser()">에셋 프롬프트 훑어보기 →</button>
+    <div class="adtabs" style="margin-top:16px">${qaTabs()}</div>
+    <div class="adsub" style="margin-top:8px">QA 모드 — 한 기기가 세 좌석을 다 쥐고, 배역을 갈아끼우며 판을 처음부터 끝까지 돌려봅니다.
+      「내 정보」·「내 단서」까지 그 배역 것으로 갈립니다. 서버에 AGENT_KEY를 걸어뒀다면 위의 GM 키가 맞아야 열립니다.</div>
     <button class="adclose" onclick="closeAdmin()">닫기</button>`;
   $("admask").classList.add("on");
+}
+/* QA 모드 입장 단추 — 사건 하나에 하나씩. 고른 사건으로 방을 열고 /play?qa=1 로 넘긴다. */
+function qaTabs(){
+  return admOrder().map(id=>{ const sc=SCEN.find(s=>s.id===id); if(!sc) return "";
+    return `<button class="adtab" onclick="qaEnter('${id}')">▶ 《${ADM_ESC(sc.title)}》 QA 모드로 들어가기</button>`;
+  }).join("");
+}
+async function qaEnter(id){
+  note("QA 모드로 판을 여는 중…");
+  // 게임 화면이 쓸 열쇠는 이 값 하나다 — 관리자 화면과 같은 자리(pmb.gmkey)에 둔다.
+  // 빈 값으로 덮어쓰지 않는다. 카드 훑어보기를 안 거치고 바로 들어오면 admKey가 비어 있는데,
+  // 그걸로 덮으면 이미 넣어둔 열쇠가 지워져 QA 좌석 확보가 조용히 실패한다.
+  try{ if(admKey) localStorage.setItem("pmb.gmkey",admKey);
+       localStorage.setItem("pmb.gmkeyset","1"); }catch(e){}
+  await claimHost();
+  if(!await openScenario(id)) return;
+  location.href="/play?qa=1";
 }
 function closeAdmin(){ $("admask").classList.remove("on"); }
 </script>

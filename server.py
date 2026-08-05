@@ -101,6 +101,9 @@ def fresh_room() -> dict:
         # 결재 결정문 — 자리마다 한 문장씩 고른다. 범인으로 지목된 사람은 결재권을 잃고
         # 그 칸은 남은 사람들의 투표로 찬다. picks 는 최종값, votes 는 잃은 칸의 표다.
         "decision": {"picks": {}, "votes": {}, "extra": ""},
+        # 나이 — 배역이 스스로 적는 자리. 시나리오의 AGE_INPUT 에 오른 배역만 적을 수 있고,
+        # 적힌 값은 인물정보에서 모두가 본다. 「누가 적을 수 있는가」는 이 방 상태에 안 담긴다.
+        "ages": {},               # roleId -> 그 사람이 적어 넣은 나이
         "ready": [],              # 「결과 확인」을 누른 배역. 전원이 누르면 판이 다음으로 넘어간다
         "typing": None,
         "events": [],            # 진행 세션이 따라 읽는 사건 기록
@@ -316,6 +319,34 @@ def _my_notes(role_id: str, card_ids) -> dict:
     return out
 
 
+def _age_inputs() -> set:
+    """나이를 「본인이 적는」 배역들. 시나리오가 정한다 — 엔진은 배역 id를 모른다."""
+    return set(getattr(SC, "AGE_INPUT", []) or [])
+
+
+def _age_display(cid: str) -> str:
+    """그 배역의 나이 칸에 «그대로 뜰 글자». 판단을 서버가 끝내서 문자열로 내려보낸다.
+
+    화면이 「이 배역은 나이를 적을 수 있는 자리인가」를 스스로 가르려면 결국 그 명단을
+    받아야 하는데, 그 명단이 곧 이 판의 답이다(셋 중 하나만 자기 나이를 댈 수 있다).
+    그래서 명단은 내보내지 않고, 나온 글자만 내보낸다.
+
+    적어 넣은 값 → 시나리오가 적어 둔 값 → 둘 다 없으면
+    「신원미상」(태어난 날이 없는 자들). 다만 스스로 적는 자리는 아직 안 적었을 뿐이므로
+    빈 값으로 두고, 화면이 그 칸을 「—」로 그린다.
+    """
+    v = str((ROOM.get("ages") or {}).get(cid) or "").strip()
+    if v:
+        return v
+    v = str((SC.get_character(cid) or {}).get("age") or "").strip()
+    if v:
+        return v
+    # 나이 기믹이 없는 사건에서는 빈 칸이 그냥 빈 칸이다 — 없던 「신원미상」을 만들어내지 않는다.
+    if not _age_inputs() or cid in _age_inputs():
+        return ""
+    return str(getattr(SC, "AGE_UNKNOWN", "") or "신원미상")
+
+
 def public_state() -> dict:
     with LOCK:
         seq = ROOM["seq"]
@@ -348,6 +379,8 @@ def public_state() -> dict:
                       "quota": [{"label": b.get("label", ""), "locs": list(b.get("locs") or []),
                                  "n": int(b.get("n", 0) or 0)} for b in _quota_for(seq)]},
             "roles": {rid: {"mode": r["mode"], "claimed": r["clientId"] is not None} for rid, r in ROOM["roles"].items()},
+            # 나이 — 배역마다 화면에 뜰 글자 한 칸. 모두가 같은 것을 본다.
+            "ages": {rid: _age_display(rid) for rid in ROOM["roles"]},
             "table": table_tail(),
             "revealed": [SC.public_card(cid) for cid in ROOM["revealed"]],
             "revealedIds": list(ROOM["revealed"]),
@@ -413,6 +446,10 @@ except Exception:
 class Claim(BaseModel):
     roleId: str
     clientId: str
+    # QA 검수 모드 — 한 기기가 좌석을 여러 개 쥐겠다는 신고다. 열쇠(key)가 맞아야 통한다.
+    # 평소 판은 이 두 값을 안 보내므로 예전과 한 톨도 다르지 않게 돈다.
+    qa: bool = False
+    key: str = ""
 
 
 class HumanSay(BaseModel):
@@ -520,9 +557,20 @@ class FinalAnswers(BaseModel):
     answers: list[str]
 
 
+class AgeReq(BaseModel):
+    roleId: str
+    clientId: str
+    age: str = ""
+
+
 @app.get("/api/scenario")
 def scenario():
     d = SC.public_scenario()
+    # 「나이를 스스로 적는 배역」 명단은 모두가 받는 이 대본에 실으면 안 된다 —
+    # 셋 중 하나만 자기 나이를 댈 수 있다는 것이 이 판의 단서라, 명단이 곧 답이다.
+    # 시나리오가 실어 보내더라도 여기서 걷어낸다. 그 사실은 /api/state 가
+    # «그 배역 본인에게만» ageAsk 한 줄로 알린다.
+    d.pop("ageInput", None)
     # 클라이언트는 STATE.scenarioId와 이걸 비교해 시나리오가 바뀐 걸 알아챈다.
     # 여태 어느 시나리오도 이 값을 안 실어 보내서, 호스트가 시나리오를 바꿔도
     # 다른 기기는 옛 대본을 그대로 들고 있었다.
@@ -802,7 +850,11 @@ def select_scenario(b: SelectScenario):
 
 
 @app.get("/api/state")
-def state(clientId: str = "", gm: int = 0):
+def state(clientId: str = "", gm: int = 0, roleId: str = "", key: str = ""):
+    """방 상태 한 벌. 비밀(내 메모·내 소지품·내 밤·내 표)은 「나」의 몫만 실린다.
+
+    roleId/key 는 QA 검수 모드 전용이다 — 둘 다 안 보내면 예전과 완전히 같은 길로 간다.
+    """
     st = public_state()
     with LOCK:
         # 진행석은 각자 기기에서 토글하는 것이라 서버는 여태 그 존재를 몰랐다.
@@ -818,9 +870,33 @@ def state(clientId: str = "", gm: int = 0):
             if now - t > 20:           # 폴링이 1.5초 간격이니 20초면 확실히 떠난 것이다
                 ROOM["gmSeats"].pop(cid, None)
         st["hasGM"] = bool(ROOM["gmSeats"])
+        # ── 「나」를 여기서 한 번만 정한다 ──────────────────────────────
+        # 아래로 내려가는 비밀(추가 정보·소지품·밤의 선택·내 표·내 메모)은 전부 이 한 사람의 것이다.
+        # 예전엔 같은 찾기를 대여섯 번 되풀이했다 — 시점을 갈아끼우려면 그게 다 갈라진다.
+        #
+        # QA 검수 모드: 혼자 세 좌석을 쥔 검수자는 clientId만으로 배역이 하나로 안 좁혀진다
+        # (첫 번째 좌석만 잡힌다). 그래서 시점을 명시로 받되 문을 세 겹으로 잠근다 —
+        #   ① AGENT_KEY(진행석·관리자 창구와 같은 열쇠)를 맞출 것
+        #   ② 그 좌석을 실제로 «내가» 쥐고 있을 것 (남의 자리는 열쇠가 있어도 못 본다)
+        #   ③ roleId 를 안 보내면 이 갈래를 아예 지나가지 않을 것
+        # 그래서 열쇠 없는 요청은 예전과 한 톨도 다르지 않게 돈다.
+        qa_role = ""
+        if roleId and clientId and _agent_ok(key):
+            _seat = ROOM["roles"].get(roleId) or {}
+            if _seat.get("clientId") == clientId:
+                qa_role = roleId
+        me = qa_role or next((rid for rid, r in ROOM["roles"].items()
+                              if clientId and r["clientId"] == clientId), "")
+        if qa_role:
+            st["qaRole"] = qa_role       # 서버가 이 시점을 받아들였다는 확인 — 화면이 이걸로 표시한다
+        # 나이를 스스로 적는 자리인가 — «그 배역 본인에게만» 알린다.
+        # 남의 화면에 이 표시가 실리면 「셋 중 하나만 나이를 댈 수 있다」가 판 밖에서 풀린다.
+        # 그래서 명단이 아니라 「나는 적을 수 있다」 한 줄만, 그 사람에게만 내려간다.
+        if me and me in _age_inputs():
+            st["ageAsk"] = {"mine": str((ROOM.get("ages") or {}).get(me) or "")}
         # 「추가 정보」가 몇 장인가. 화면은 이 숫자가 늘어난 것만 보고 알림을 띄운다 —
         # 무엇이 늘었는지는 열어봐야 안다.
-        mine0 = next((rid for rid, r in ROOM["roles"].items() if r["clientId"] and r["clientId"] == clientId), "")
+        mine0 = me
         if mine0:
             n = 0
             try:
@@ -834,18 +910,18 @@ def state(clientId: str = "", gm: int = 0):
             st["extraN"] = n
         # 자기가 이미 적었는지는 자기만 안다. 남이 무엇을 적었는지는 다 던진 뒤에 열린다.
         if st.get("accuse1") is not None:
-            who = next((rid for rid, r in ROOM["roles"].items() if r["clientId"] and r["clientId"] == clientId), "")
+            who = me
             # 내가 무엇을 적었는지는 언제든 나만 볼 수 있다. 남의 표는 종막까지 안 열린다.
             st["accuse1"]["mineDone"] = who in ((ROOM.get("accuse1") or {}).get("picks") or {})
             st["accuse1"]["mine"] = ((ROOM.get("accuse1") or {}).get("picks") or {}).get(who, "")
         # 소지품 — 내 것과, 압수돼 펴진 것만. 남의 주머니는 압수 전에는 안 보인다.
-        _who = next((rid for rid, r in ROOM["roles"].items() if r["clientId"] and r["clientId"] == clientId), "")
+        _who = me
         _bl = _belongings_public(_who)
         if _bl:
             st["belongings"] = _bl
         # 밤의 선택지는 그 사람 것만 내려간다. 공개 상태에는 «누가 정했나»만 있다.
         if st.get("night") is not None:
-            mine = next((rid for rid, r in ROOM["roles"].items() if r["clientId"] and r["clientId"] == clientId), "")
+            mine = me
             st["night"] = _night_public(mine)
             # 그 사람의 밤은 그 사람 화면에서만 돈다. 방이 다 같이 보는 컷 목록에는
             # 못 넣는다 — 넣는 순간 누가 무엇을 했는지가 통째로 새어 나간다.
@@ -877,8 +953,7 @@ def state(clientId: str = "", gm: int = 0):
         st["hasHost"] = ROOM.get("host") is not None
         # 내가 맡은 배역. 예전엔 클라이언트가 localStorage 기억만 보고 판단해서,
         # 잡은 직후나 새로고침 뒤에 자기 배역을 '참여 중'(남이 맡음)으로 그리곤 했다.
-        st["myRole"] = next((rid for rid, r in ROOM["roles"].items()
-                             if clientId and r["clientId"] == clientId), None)
+        st["myRole"] = me or None
         if st["myRole"]:
             # 내가 던진 표만 나에게 돌려준다. 남의 표는 열릴 때까지 아무에게도 안 간다.
             if st.get("pod") is not None:
@@ -912,10 +987,6 @@ def state(clientId: str = "", gm: int = 0):
         # 호스트를 아무도 안 잡은 방도 있다. 그때는 '호스트 전용' 연출을 아무도 못 보게 되므로
         # 클라이언트가 그 사정을 알 수 있게 해준다(다른 엔드포인트도 같은 규칙으로 통과시킨다).
         st["hasHost"] = ROOM.get("host") is not None
-        # 내가 맡은 배역. 예전엔 클라이언트가 localStorage 기억만 보고 판단해서,
-        # 잡은 직후나 새로고침 뒤에 자기 배역을 '참여 중'(남이 맡음)으로 그리곤 했다.
-        st["myRole"] = next((rid for rid, r in ROOM["roles"].items()
-                             if clientId and r["clientId"] == clientId), None)
     return st
 
 
@@ -1033,10 +1104,15 @@ def claim(b: Claim):
             return JSONResponse({"error": "없는 배역"}, status_code=404)
         if r["clientId"] and r["clientId"] != b.clientId:
             return JSONResponse({"error": "이미 다른 사람이 맡은 배역입니다"}, status_code=409)
-        for rr in ROOM["roles"].values():
-            if rr["clientId"] == b.clientId:
-                rr["clientId"] = None
-                rr["mode"] = "open"
+        # 평소에는 한 기기가 한 자리다 — 다른 배역을 고르면 앞자리를 놓는다.
+        # QA 검수 모드에서만 이 놓기를 건너뛴다. 원고를 쓰는 사람은 혼자 들어와
+        # 세 배역을 다 겪어봐야 하는데, 좌석이 전부 사람이라 셋이 안 차면 판이 시작되지 않는다.
+        # 열쇠는 진행석·관리자 창구와 같은 것(AGENT_KEY)을 쓴다 — 새 인증을 만들지 않는다.
+        if not (b.qa and _agent_ok(b.key)):
+            for rr in ROOM["roles"].values():
+                if rr["clientId"] == b.clientId:
+                    rr["clientId"] = None
+                    rr["mode"] = "open"
         r["clientId"] = b.clientId
         r["mode"] = "human"
         bump()
@@ -1081,9 +1157,18 @@ def sheet(role_id: str, clientId: str = ""):
         seq = ROOM["seq"]
         if not r:
             return JSONResponse({"error": "없는 배역"}, status_code=404)
-        if r["clientId"] != clientId:  # 엄격: 내가 '맡은' 배역만 (빈자리 비밀 열람 차단)
+        # 엄격: 내가 '맡은' 배역만 (빈자리 비밀 열람 차단).
+        # QA 검수 모드에도 이 자물쇠를 그대로 둔다 — 검수자는 세 좌석을 «실제로 쥐고» 들어오므로
+        # 여기서 열쇠를 따로 볼 필요가 없다. 문을 하나 더 내면 그 문이 언젠가 열린 채로 남는다.
+        if r["clientId"] != clientId:
             return JSONResponse({"error": "자기 배역만 열람할 수 있습니다"}, status_code=403)
     s = SC.private_sheet(role_id)
+    # 나이는 롤카드에도 «지금 값»으로 뜬다. 스스로 적는 배역이면 적어 넣은 것이,
+    # 아니면 「신원미상」이 온다. 이 창구는 본인만 열 수 있으니 여기서는 ageInput 을 실어도 된다 —
+    # 자기가 적을 수 있다는 건 자기가 알아야 할 일이다.
+    if s:
+        s["age"] = _age_display(role_id)
+        s["ageInput"] = role_id in _age_inputs()
     _cs = (ROOM.get("crisis") or {}).get("solved")
     try:
         s["fragments"] = SC.memory_up_to(role_id, seq, _cs)
@@ -1106,6 +1191,31 @@ def sheet(role_id: str, clientId: str = ""):
         except Exception:                  # noqa: BLE001
             pass
     return s
+
+
+@app.post("/api/age")
+def set_age(b: AgeReq):
+    """자기 나이를 적어 넣는다 — 시나리오가 지정한 배역이, 그 배역을 맡은 기기에서만.
+
+    게임 밖의 숫자가 게임 안으로 들어오는 자리다. 적힌 값은 인물정보에서 모두가 본다.
+
+    ★ 되돌아오는 말은 두 갈래 다 똑같은 403이다. 「그 자리가 아니다」와 「적을 수 있는
+      배역이 아니다」를 갈라 말하면, 남의 배역 id를 넣어보는 것만으로 누가 적을 수 있는
+      자리인지가 드러난다 — 그게 이 판의 답이다.
+    ★ 한 번 적어도 고칠 수 있게 둔다. 오타 하나가 판 끝까지 가는데 되돌릴 길이 없으면
+      그 숫자를 근거로 도는 판이 통째로 어긋난다. 감출 것은 숫자가 아니라
+      「댈 수 있다」는 사실이고, 그건 고쳐도 새지 않는다.
+    """
+    with LOCK:
+        r = ROOM["roles"].get(b.roleId)
+        if b.roleId not in _age_inputs() or not r or r["clientId"] != b.clientId:
+            return JSONResponse({"error": "권한 없음"}, status_code=403)
+        v = re.sub(r"\s+", " ", str(b.age or "")).strip()[:12]
+        if not v:
+            return JSONResponse({"error": "나이를 적어주세요"}, status_code=400)
+        ROOM.setdefault("ages", {})[b.roleId] = v
+        bump()
+    return {"ok": True, "age": v}
 
 
 @app.post("/api/reveal-card")
@@ -1980,11 +2090,19 @@ def _dest_state():
 
 
 def _decision_barred() -> str:
-    """결재권을 잃는 사람 — 종막에서 표가 제일 많이 몰린 배역.
+    """이 막에서 제 칸을 잃는 사람 — 종막에서 표가 제일 많이 몰린 배역.
 
     동률이면 아무도 잃지 않는다. 「누군가는 반드시 잃는다」로 만들면 표가 갈렸을 때
     임의로 한 명을 골라야 하는데, 그건 판정이 아니라 주사위다.
+
+    ★ 시나리오가 켤 때만 건다(DECISION_BAR_ACCUSED = True).
+      이건 「결재」 기믹에서 온 규칙이다 — 범인으로 지목된 사람은 도장을 못 찍고,
+      그 칸은 남은 사람들이 표로 채운다. 마지막 막이 «각자 한 문장씩 남기는 질문지»인
+      사건에서는 이 규칙이 안 맞는다. 지목당했다고 자기 답을 못 적을 이유가 없고,
+      셋이 각자 답해야 엔딩이 갈린다. 그래서 기본값은 «안 건다» 다.
     """
+    if not getattr(SC, "DECISION_BAR_ACCUSED", False):
+        return ""
     tally = {}
     for t in ROOM.get("accuse", {}).values():
         if t:
@@ -1997,10 +2115,14 @@ def _decision_barred() -> str:
 
 
 def _decision_state():
-    """결재 결정문. 이 기믹이 있는 사건에서만 내려간다(지금은 쉘터).
+    """자리마다 한 문장씩 고르는 막. 이 기믹이 있는 사건에서만 내려간다.
 
-    행선지와 달리 «가리지» 않는다 — 결재란은 원래 앞사람 도장을 보고 찍는 자리고,
-    마지막 전략란은 앞의 셋을 보고 따를지 뒤집을지 정하는 자리라서 순서가 곧 규칙이다.
+    무엇으로 불리는지는 사건이 정한다 — 「결재」인 사건도 있고 「마지막 질문」인 사건도
+    있다. 그래서 화면에 뜰 이름(title)도 여기서 같이 내보낸다. 시나리오가 안 주면
+    막 이름을 쓴다.
+
+    행선지와 달리 «가리지» 않는다 — 앞사람이 무엇을 골랐는지 보고 따를지 뒤집을지
+    정하는 자리라서 순서가 곧 규칙이다.
     """
     seats = getattr(SC, "DECISION", None)
     if not seats:
@@ -2050,6 +2172,8 @@ def _decision_state():
             extra = getattr(SC, "DECISION_EXTRA_AI", "none")
 
     st = {"intro": getattr(SC, "DECISION_INTRO", ""), "seats": seats, "extraSpec": ex,
+          # 이 막의 이름. 시나리오가 안 주면 클라이언트가 막 이름으로 폴백한다.
+          "title": getattr(SC, "DECISION_TITLE", "") or "",
           "barred": barred, "picks": picks, "extra": extra,
           "votes": {k: len(v) for k, v in (d.get("votes") or {}).items()},
           "voters": len([r for r in humans if r != barred]),

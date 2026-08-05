@@ -9,11 +9,16 @@ public_scenario()/compute_ending()/build_*_prompt()/…). 무엇이 필수이고
   2. 아래 세 자리에 이름을 넣는다 — 임포트, _MODS, _ORDER
   3. 끝. 로비(landing.html)와 관리자 화면이 저절로 집어간다
 """
-from . import template
+# 이 패키지는 사건 둘로 이루어진다 — 같은 세계(콤보-룰더데이)의 두 판이다.
+# 둘째(combo)는 아직 원고가 없고, 포스터만 걸린 «잠긴 카드»로 뜬다(META.locked).
+#
+# template 은 «복사해 가는 틀»이라 목록에 안 올린다. 파일은 그대로 두되 여기서만 뺀다 —
+# 로비에 빈 판이 같이 뜨면 잘못 눌러 들어가는 일이 생긴다.
+from . import rule_the_day, combo
 
-_MODS = {template.ID: template}
+_MODS = {rule_the_day.ID: rule_the_day, combo.ID: combo}
 # 로비에 뜨는 순서. 첫 번째가 기본 사건이다.
-_ORDER = [template.ID]
+_ORDER = [rule_the_day.ID, combo.ID]
 
 
 def get(sid):

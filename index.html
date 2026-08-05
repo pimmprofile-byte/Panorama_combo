@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
 <title>졸업사진 卒業寫眞 — PIMMmurderboard</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%230b0a0d' stroke='%23c9a24a' stroke-width='2'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='Georgia,serif' font-size='17' font-weight='700' fill='%23c9a24a'%3EP%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' fill='%23050c09' stroke='%2300ff99' stroke-width='2'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='monospace' font-size='17' font-weight='700' fill='%2300ff99'%3EP%3C/text%3E%3C/svg%3E">
 
 <style>
   /* 한글 웹폰트를 직접 얹는다. 예전에는 "Noto Sans KR" 같은 이름만 적어뒀는데
@@ -22,59 +22,182 @@
     font-weight:700;font-style:normal;font-display:swap}
   /* 바탕은 무채색이다 — 다크그레이와 블랙만 쓴다.
      예전 팔레트는 --bg 부터 --line 까지 전부 보라 기미(초록이 가장 낮은 값)를 깔고 있어서
-     진행 화면 전체에 보랏빛이 돌았다. 색은 인물 키컬러 여섯과 금색·불꽃색만 낸다.
-     회색에 아주 약한 온기(R+1, B-1)만 남겨 금색·불꽃색과 물리게 했다. */
+     진행 화면 전체에 보랏빛이 돌았다. 색은 인물 키컬러와 키컬러·불꽃색만 낸다.
+     회색에 아주 약한 온기(R+1, B-1)만 남겨 네온그린·불꽃색과 물리게 했다.
+
+     ── 이번 사건은 «게임 속 세상» 이다. 화면을 8비트 게임기로 다시 잡았다 ──
+
+     ★ 이 판의 색 규칙은 한 줄이다 — «프레임은 무채색, 색은 사람이 쓴다».
+       패미컴이든 게임보이든 인터페이스는 회색 케이스고, 색을 쓰는 건 화면 위의
+       캐릭터다. 여기도 그렇다. 버튼·탭·테·제목은 전부 회색이고, 색이 켜지는 자리는
+       사람(배역 키컬러 셋)과, 아래 적은 네 자리뿐이다.
+
+     ★ 네온그린은 상징이다 — 원작 주인공 「데이비드」의 키컬러라서 테마가 초록이다.
+       버튼마다 초록이면 상징이 소모되고 주인공 색이 그냥 버튼색으로 값이 떨어진다.
+       그래서 초록이 켜지는 자리를 넷으로 못박았다. 한 화면에 한두 군데만 보이면 맞다.
+         ① P 로고 (--signal)
+         ② 지금 어디인가 — 현재 페이즈 알약 · 현재 차례 · 지금 보고 있는 탭
+         ③ 확정되는 순간 — 「다음 페이즈 진행」과 「이 이름으로 적는다」 둘뿐
+         ④ 성공 · 열림 — 조합 성사 · 해금 · 다 읽음 (--good)
+       그 밖의 어떤 자리도 초록을 쓰지 않는다. 새로 초록을 켜기 전에 이 넷 중
+       어디에 해당하는지 먼저 답할 것.
+
+     · --case* : 게임기 «케이스» 회색. --bg 가 웜 다크라 순회색을 얹으면 푸르게 뜬다.
+       같은 온도(R+2, B-2)로 잡아 두었다. 버튼은 이 회색이 판이 되고, 어두운 테와
+       한 칸 오프셋 그림자로 «튀어나온 물건» 이 된다. 눌리면 그림자가 사라지고
+       그만큼 내려앉는다 — 8비트 UI에서 어포던스를 지는 건 색이 아니라 이 동작이다.
+     · --gold / --gold-b : 이름은 예전 그대로 두되 값은 네온그린이다. 위 ②③ 자리와,
+       인라인 스타일의 «배역색 fallback» 으로만 남아 있다. 이름을 바꾸면 JS 안의
+       인라인 스타일까지 같이 쫓아야 해서 값만 갈았다.
+     · --signal : 오리지널 P 로고 색. 로고만 이 값을 쓴다. 데이비드의 키컬러와 같은
+       #00FF99 이고, 그게 맞다 — 테마가 그 사람 때문에 초록이다.
+     · --cold : 「판이 하는 말 · 시스템 안내」의 색. 파랑이었는데 8비트 초록 옆에서
+       파랑이 뜨면 화면이 두 갈래로 찢어진다. 온기가 아주 약한 웜그레이로 내렸다.
+     · --good : 맞힌 것 · 열린 것. 청록으로 빼 둔 것을 그대로 둔다 —
+       배역 셋(네온그린·네온퍼플·네온오렌지) 어느 것과도 안 겹치는 유일한 자리가
+       청록이고, 무채 케이스 위에서 대비도 6:1 넘게 선다. 데이비드의 #00FF99 와
+       색상각이 14° 벌어져 있어 나란히 놓여도 갈린다. */
   :root{
     --bg:#0a0a09;--bg2:#111110;--panel:#171716;--panel2:#201f1e;--line:#312f2c;
-    --ink:#ecebe8;--sub:#a5a29d;--muted:#726f6a;
-    --ember:#c8442f;--ember-b:#e7654c;--gold:#c9a24a;--gold-b:#e0bd6a;--cold:#7fb4d6;
-    --good:#7ee0a8;--bad:#ff8f8f;--warn:#ffd479;--shadow:0 18px 50px rgba(0,0,0,.6);
+    /* --muted 를 한 단계 올렸다(#726f6a → #8a8781, 대비 3.96 → 5.1).
+       프레임이 무채색이 되면서 눈금·부제 같은 작은 글자가 화면의 뼈대를 지게 됐는데,
+       예전 값은 본문 대비 4.5 를 못 넘겨 그 뼈대가 흐려 보였다. --sub 과의 단차는 남는다. */
+    --ink:#ecebe8;--sub:#a5a29d;--muted:#8a8781;
+    --ember:#c8442f;--ember-b:#e7654c;--gold:#00e693;--gold-b:#5bffc2;--cold:#c3bab0;
+    --signal:#00ff99;
+    --good:#3fdfc4;--bad:#ff8f8f;--warn:#ffd479;
+    /* 게임기 케이스 — 눌리는 판(b)·손이 닿은 판(h)·파인 테(e)·못 누르는 판(off) */
+    --case-b:#46423b;--case-h:#575148;--case-e:#0e0d0b;--case-off:#211f1c;
+    --case-ink:#efece5;--case-line:#5f594f;
+    /* 8비트에 부드러운 blur 그림자는 없다. 한 칸 밀린 «오프셋 그림자» 가 그 자리를 맡는다. */
+    --shadow:4px 4px 0 rgba(0,0,0,.55);
+    --shadow-sm:2px 2px 0 rgba(0,0,0,.5);
+    /* 네온은 위 ②③ 자리에만. 남발하면 상징이 소모된다. */
+    --neon:0 0 0 1px rgba(0,230,147,.5),0 0 12px -4px var(--gold);
+    /* 숫자·라벨·눈금 — 짧은 자리만 게임기 글꼴로. 본문은 한글 가독성이 먼저다. */
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"PIMM Sans",monospace;
+    /* 그림이 아직 없는 자리에 까는 8비트 플레이스홀더.
+       격자 + 대각선 빗금 + 바닥색. 웹폰트도 이미지도 안 쓴다(오프라인 배포).
+       빗금을 초록으로 두었더니 배역 카드 여섯 장이 통째로 초록 판이 됐다 —
+       플레이스홀더는 «아직 비었다» 는 뜻이지 상징이 아니라서 무채로 내렸다. */
+    --ph:repeating-linear-gradient(45deg,rgba(235,230,220,.045) 0 7px,transparent 7px 14px),
+         repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 8px),
+         repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 1px,transparent 1px 8px),
+         linear-gradient(180deg,#15140f,#0c0b09);
   }
   *{box-sizing:border-box}html,body{margin:0;height:100%}
   /* 두 손가락 확대·두 번 눌러 확대를 막는다 — 카드를 넘기다 화면이 커져 버렸다.
      그림을 크게 보는 자리는 따로 있다(카드 크게 보기·배치도 확대). */
   html,body{overflow-x:hidden;max-width:100%;touch-action:manipulation;overscroll-behavior:none}
   html{-webkit-text-size-adjust:100%}
-  body{background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;
+  /* 화면 바탕의 8비트 격자 — 8px 눈금. 판 위에 깔린 모눈 위에서 논다는 느낌을 준다.
+     ::before 로 얹지 않고 body 의 배경 레이어로 넣는다. 겹쳐 얹으면 z-index 를 안 준
+     본문 위로 올라와 글을 덮는 기기가 있었다. 배경이면 무슨 일이 있어도 맨 뒤다.
+     세기는 .022 — 이보다 세면 본문 글자와 격자가 서로 갉아먹는다.
+     fixed 라 화면을 굴려도 눈금이 따라 흐르지 않는다(게임기 화면은 고정된 판이다). */
+  body{background-color:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;
+    background-image:
+      repeating-linear-gradient(0deg,rgba(235,230,220,.028) 0 1px,transparent 1px 8px),
+      repeating-linear-gradient(90deg,rgba(235,230,220,.028) 0 1px,transparent 1px 8px);
+    background-attachment:fixed;
     font-family:"PIMM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo",sans-serif}
   .serif{font-family:"PIMM Myeongjo","Nanum Myeongjo","AppleMyungjo",serif}
+  /* 숫자·라벨·눈금 — 짧은 자리만 게임기 글꼴로 세운다. 본문은 지금 글꼴 그대로다(한글 가독성).
+     .mono 는 새로 쓰는 자리에, 아래 선택자들은 이미 숫자만 서 있던 자리에 얹는다. */
+  .mono,.rmid,.pill,.alb-t,.rv-t,.keeprow .rs,.tb-chip .tg,.sw-dots,.vd-n,.vd-cnt,
+  .dc .st,.zcard .zc-off,.po .po-n,.rb-n,.tb-tick,.nt-t,.gm-pick .pk .n,.dz-h .n,
+  .cr-foot .tally,.nt-foot .tally,.podrush .pr-c b,.floodbar,.dfilt .fk{
+    font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:.06em}
+  /* 눈썹라벨·머리띠 라벨은 폭이 넓어야 계기판처럼 읽힌다 */
+  .bc-eyebrow,.mh-eb,.casebox .case-h,.nt-kick,.cr-kick,.npch,.nq-sep,.ac-tally .w,
+  .sharesec,.swap-h,#phaseFx .fx-kick{font-family:var(--mono);letter-spacing:.2em}
   /* 줄갈이 — 한글은 단어 중간에서 끊기면 읽기가 확 나빠진다. 어절 단위로만 끊고,
      끊을 자리는 브라우저가 줄 길이를 고르게 맞춰 고르도록 한다. */
   body{word-break:keep-all;overflow-wrap:break-word;text-wrap:pretty}
   h1,h2,h3,h4{text-wrap:balance}
   button{font-family:inherit;color:inherit}
-  .btn{background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:8px 14px;border-radius:10px;cursor:pointer;font-size:13.5px;transition:.15s}
-  .btn:hover{border-color:var(--gold);color:#fff}
-  .btn.gold{background:linear-gradient(90deg,#8a7038,var(--gold));border-color:var(--gold);color:#1a1509;font-weight:700}
-  .btn.ember{background:linear-gradient(90deg,#7a1410,var(--ember));border-color:var(--ember-b);color:#fff;font-weight:700}
-  .btn.gold:hover,.btn.ember:hover{filter:brightness(1.1)}
-  /* 랜딩 머리의 P 엠블럼과 같은 마크 — 붉은 테 원 안에 PIMM 의 기울어진 P.
+  /* ── 버튼 = 게임기 케이스의 «물리 버튼» ────────────────────────
+     색으로 누를 수 있음을 말하지 않는다. 형태와 상태로 말한다.
+       평소 : 밝은 회색 판 + 어두운 1px 테 + 한 칸 오프셋 그림자(= 튀어나와 있다)
+       누름 : 그림자가 사라지고 그만큼 내려앉는다(= 실제로 들어간다)
+       못 씀 : 딥 그레이 · 그림자 없음 · 글자 물러남
+     회색은 --bg 의 온기에 맞춰 잡았다(R+2,B-2). 순회색을 얹으면 이 바탕에서 푸르게 뜬다.
+     transition 에 transform 을 넣지 않는다 — 눌림은 즉시 떨어져야 손맛이 난다. */
+  .btn{background:linear-gradient(180deg,var(--case-h),var(--case-b));
+    border:1px solid var(--case-e);color:var(--case-ink);
+    padding:8px 14px;border-radius:2px;cursor:pointer;font-size:13.5px;font-weight:600;
+    box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.09);
+    transition:background .12s,color .12s,border-color .12s}
+  .btn:hover{background:linear-gradient(180deg,#665f54,var(--case-h));color:#fff;border-color:var(--case-e)}
+  /* 눌린 판은 어두워진다 — 그림자가 사라지고 내려앉는 것만으로는 «들어갔다» 가 약하다 */
+  .btn:active{transform:translate(2px,2px);box-shadow:inset 0 1px 0 rgba(0,0,0,.4);
+    background:linear-gradient(180deg,#3b372f,var(--case-b))}
+  .btn:focus-visible{outline:2px solid var(--case-line);outline-offset:2px}
+  /* 「이 판을 지운다」처럼 되돌릴 수 없는 붉은 문 — 케이스 위의 빨간 버튼 하나 */
+  .btn.ember{background:linear-gradient(180deg,#b3382a,#8a2418);border-color:#3a0f0a;color:#fff;font-weight:700;
+    box-shadow:2px 2px 0 #2a0b07,inset 0 1px 0 rgba(255,255,255,.16)}
+  .btn.ember:hover{background:linear-gradient(180deg,#c8442f,#a02c1e);color:#fff}
+  .btn.ember:active{transform:translate(2px,2px);box-shadow:inset 0 1px 0 rgba(0,0,0,.4);
+    background:linear-gradient(180deg,#7d2015,#9c2d1e)}
+  /* 랜딩 머리의 P 엠블럼과 같은 마크 — PIMM 의 기울어진 P.
      세리프 글자 'P' 를 원에 넣어두었던 것이 랜딩과 달라 보이던 원인이다.
      랜딩(landing.html .emblem)은 같은 그림을 PNG 로 얹지만, 여기서는 헤더에 들어가는
-     작은 마크라 같은 윤곽을 path 로 옮겨 담았다. 헤더 크기에서는 짙은 #c8392b 가
-     테와 뭉개져 한 톤 밝은 --ember-b 로 칠한다. */
-  .pmark{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:50%;
-    flex:0 0 auto;border:1.5px solid var(--ember);box-shadow:0 0 0 2px rgba(200,57,43,.12);
-    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 264 343'%3E%3Cpath fill='%23e7654c' d='M41 3 L226 3 L238 6 L247 11 L257 22 L262 35 L261 55 L249 90 L245 108 L242 113 L238 131 L234 139 L230 157 L227 162 L213 213 L211 215 L206 233 L201 241 L188 253 L177 256 L97 258 L90 275 L87 290 L76 322 L66 333 L49 340 L30 339 L20 334 L11 326 L3 309 L3 291 L19 236 L23 228 L27 210 L31 202 L35 184 L38 179 L42 161 L46 153 L58 109 L63 103 L137 104 L141 113 L126 158 L125 170 L129 175 L139 175 L146 161 L147 153 L165 97 L165 90 L159 84 L43 84 L28 80 L21 76 L13 68 L8 59 L6 51 L7 31 L10 23 L20 11 L26 7 Z'/%3E%3C/svg%3E") center/auto 13px no-repeat,
-      radial-gradient(circle at 40% 35%,#2a1113,#12080a);
-    background-size:auto 15px,auto;font-size:0;color:transparent}
-  .btn.sm{padding:5px 10px;font-size:12px;border-radius:8px}
-  /* 위계 — 한 화면에 primary는 하나. quiet는 물러나는 보조 동작. */
-  .btn.primary{background:linear-gradient(90deg,#8a7038,var(--gold));border-color:var(--gold);
-    color:#1a1509;font-weight:800}
-  .btn.primary:hover{filter:brightness(1.08);color:#1a1509}
-  .btn.quiet{background:none;border-color:transparent;color:var(--sub)}
-  .btn.quiet:hover{border-color:var(--line);color:var(--ink)}
-  /* 읽을 게 새로 생겼다는 신호. 처음 하는 사람은 자기 시트가 있는 줄도 모른다. */
-  .btn.fresh{border-color:var(--gold);color:var(--gold-b);
-    background:linear-gradient(180deg,rgba(196,158,74,.16),rgba(196,158,74,.05));
-    animation:freshpulse 1.9s ease-in-out infinite}
-  .btn.fresh::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
-    background:var(--ember);margin-left:6px;vertical-align:middle;box-shadow:0 0 0 2px rgba(160,40,30,.28)}
-  @keyframes freshpulse{0%,100%{box-shadow:0 0 0 0 rgba(196,158,74,0)}50%{box-shadow:0 0 0 3px rgba(196,158,74,.16)}}
+     작은 마크라 같은 윤곽을 path 로 옮겨 담았다.
+     색은 오리지널 로고색(--signal, #00FF99)으로 되돌렸다 — 그동안 불꽃색 계통으로
+     칠해 두어 랜딩의 로고와 다른 물건처럼 보였다. 로고만은 «가장 순수한 초록» 이라
+     화면의 어포던스 초록(--gold)보다 한 단계 위에 선다.
+     8비트라 원이 아니라 네모다. 테는 1px, 그림자는 blur 없는 한 칸 오프셋. */
+  .pmark{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:0;
+    flex:0 0 auto;border:1px solid var(--signal);
+    box-shadow:2px 2px 0 rgba(0,255,153,.20);image-rendering:pixelated;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 264 343'%3E%3Cpath fill='%2300ff99' d='M41 3 L226 3 L238 6 L247 11 L257 22 L262 35 L261 55 L249 90 L245 108 L242 113 L238 131 L234 139 L230 157 L227 162 L213 213 L211 215 L206 233 L201 241 L188 253 L177 256 L97 258 L90 275 L87 290 L76 322 L66 333 L49 340 L30 339 L20 334 L11 326 L3 309 L3 291 L19 236 L23 228 L27 210 L31 202 L35 184 L38 179 L42 161 L46 153 L58 109 L63 103 L137 104 L141 113 L126 158 L125 170 L129 175 L139 175 L146 161 L147 153 L165 97 L165 90 L159 84 L43 84 L28 80 L21 76 L13 68 L8 59 L6 51 L7 31 L10 23 L20 11 L26 7 Z'/%3E%3C/svg%3E") center/auto 13px no-repeat,
+      linear-gradient(180deg,#06231a,#040e0b);
+    background-size:auto 14px,auto;font-size:0;color:transparent}
+  .btn.sm{padding:5px 10px;font-size:12px;border-radius:2px}
+  /* ── 색이 아니라 형태로 가른다 ────────────────────────────────
+     버튼이 무채색이 되면서 규칙이 아주 단순해졌다.
+       · 회색 판이 튀어나와 있으면 = 누를 수 있는 것
+       · 색이 켜져 있으면 = 사람(배역 키컬러) 아니면 위 ①~④ 상징
+     배역색은 채우지 않는다 — 테·왼쪽 선·픽셀 칩으로 서고 그림자는 한 칸 오프셋이다.
+     그래서 데이비드의 초록과 화면의 초록이 나란히 서도 서로를 갉아먹지 않는다:
+     하나는 «사람이 붙은 각진 칩», 다른 하나는 «지금 여기» 나 «확정» 한 군데뿐이다. */
+  /* 위계 — 한 화면에 primary는 하나. 색을 더 쓰지 않고 판을 한 단계 더 밝게 세운다. */
+  .btn.gold,.btn.primary{background:linear-gradient(180deg,#6e6759,var(--case-h));
+    border-color:var(--case-e);color:#fff;font-weight:800;
+    box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.14)}
+  .btn.gold:hover,.btn.primary:hover{background:linear-gradient(180deg,#7d7565,#615a4f);color:#fff}
+  .btn.gold:active,.btn.primary:active{transform:translate(2px,2px);box-shadow:inset 0 1px 0 rgba(0,0,0,.4);
+    background:linear-gradient(180deg,#4f4a41,var(--case-h))}
+  /* ★ 초록 ③ — 되돌릴 수 없는 확정 둘. 클래스가 아니라 «무슨 일을 하는가» 로 잡는다.
+     .btn.gold 는 전송·계속·코드넣기까지 아홉 군데가 나눠 쓰고 있어서, 클래스로 칠하면
+     초록이 화면마다 떠 버린다. 실제로 판을 넘기는 advance() 와 이름을 적는 acSend()
+     둘만 골라 켠다. JS 는 손대지 않는다 — 속성 선택자로 집는다. */
+  .btn[onclick="advance()"],.btn[onclick="acSend()"]{
+    background:linear-gradient(180deg,var(--gold),#00b877);border-color:#04150e;color:#04150e;font-weight:800;
+    box-shadow:2px 2px 0 #04150e,var(--neon)}
+  .btn[onclick="advance()"]:hover,.btn[onclick="acSend()"]:hover{
+    background:linear-gradient(180deg,#3dffb4,var(--gold));color:#04150e}
+  .btn[onclick="advance()"]:active,.btn[onclick="acSend()"]:active{
+    transform:translate(2px,2px);box-shadow:inset 0 1px 0 rgba(0,0,0,.32);
+    background:linear-gradient(180deg,#00a86c,var(--gold))}
+  /* 못 누르는 것 — 케이스에 파묻힌 판. 그림자가 없으니 튀어나와 보이지 않는다. */
+  .btn:disabled,.btn[disabled]{background:var(--case-off);border-color:#171614;color:var(--muted);
+    box-shadow:none;transform:none;filter:none}
+  .btn:disabled:hover,.btn[disabled]:hover{background:var(--case-off);color:var(--muted)}
+  .btn.quiet{background:none;border-color:transparent;color:var(--sub);box-shadow:none;font-weight:600}
+  .btn.quiet:hover{background:none;border-color:var(--case-line);color:var(--ink)}
+  .btn.quiet:active{transform:translate(1px,1px);box-shadow:none}
+  /* 읽을 게 새로 생겼다는 신호. 처음 하는 사람은 자기 시트가 있는 줄도 모른다.
+     예전엔 판을 초록으로 물들였는데, 이건 «확정»도 «지금 여기»도 아니라 초록 자리가 아니다.
+     판은 케이스 회색 그대로 두고, 붉은 점 하나와 테가 깜빡이는 것으로만 말한다. */
+  .btn.fresh{border-color:#6d2c26;color:#fff;animation:freshpulse 1.9s ease-in-out infinite}
+  .btn.fresh::after{content:"";display:inline-block;width:6px;height:6px;border-radius:0;
+    background:var(--ember);margin-left:6px;vertical-align:middle;box-shadow:1px 1px 0 rgba(0,0,0,.5)}
+  @keyframes freshpulse{0%,100%{box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.09)}
+    50%{box-shadow:2px 2px 0 var(--case-e),0 0 0 2px rgba(200,68,47,.34),inset 0 1px 0 rgba(255,255,255,.09)}}
   @media (prefers-reduced-motion:reduce){.btn.fresh{animation:none}}
-  .btn:disabled{opacity:.4;cursor:not-allowed}
-  .pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:11px;background:var(--panel2);border:1px solid var(--line);color:var(--sub)}
+  .btn:disabled{opacity:.6;cursor:not-allowed}
+  .pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:2px;background:var(--panel2);border:1px solid var(--line);color:var(--sub)}
   .pill.bad{color:var(--bad);border-color:#5a2c2c}
   .screen{display:none}.screen.on{display:block}
 
@@ -89,43 +212,48 @@
   @media(min-width:620px){ .role-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px} }
   /* 카드는 컨테이너, 실제 동작은 카드 안 '선택' 버튼이 맡는다 */
   .rc{position:relative;display:block;padding:0 0 10px;overflow:hidden;text-align:left;
-    background:var(--panel);border:1px solid var(--line);border-radius:14px;transition:border-color .16s,box-shadow .16s}
+    background:var(--panel);border:1px solid var(--line);border-radius:2px;transition:border-color .16s,box-shadow .16s}
   .rc.off{opacity:.55}
   .rc.tap{cursor:pointer}
-  .rc.tap:hover{border-color:var(--rc,var(--gold))}
+  .rc.tap:hover{border-color:var(--rc,var(--case-line))}
   .rc.tap:active{transform:scale(.985)}
-  .rc.tap:focus-visible{outline:2px solid var(--rc,var(--gold));outline-offset:2px}
-  .rc.mine{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset,0 12px 34px -14px rgba(201,162,74,.5)}
+  .rc.tap:focus-visible{outline:2px solid var(--rc,var(--case-line));outline-offset:2px}
+  /* 내가 고른 배역 — 여기 켜지는 색은 «그 사람» 의 색이지 UI 색이 아니다 */
+  .rc.mine{border-color:var(--rc,var(--case-line));
+    box-shadow:0 0 0 1px var(--rc,var(--case-line)) inset,3px 3px 0 rgba(0,0,0,.55)}
   /* 인물 자리 — 사진이 있으면 사진, 없으면 이모지로 폴백(그 사이에도 안 깨진다) */
   .rc .por{position:relative;aspect-ratio:3/4;display:grid;place-items:center;overflow:hidden;
     background:linear-gradient(158deg,color-mix(in srgb,var(--rc,#555) 30%,#171615),#0f0e0d)}
-  .rc .por .emo{font-size:64px;opacity:.92;filter:drop-shadow(0 8px 20px rgba(0,0,0,.65))}
+  .rc .por .emo{font-size:64px;opacity:.92;filter:drop-shadow(3px 3px 0 rgba(0,0,0,.65))}
   .rc .por img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
   .rc .scrim{position:absolute;left:0;right:0;bottom:0;padding:26px 10px 9px;
     background:linear-gradient(0deg,rgba(7,6,5,.95),rgba(7,6,5,.6) 52%,transparent)}
   .rc .nm{font-weight:800;font-size:15px;line-height:1.22;color:var(--rc,var(--ink));word-break:keep-all}
   .rc .jb{font-size:10.5px;color:#b0afae;margin-top:2px}
   .rc .badge{position:absolute;top:7px;right:7px;z-index:2;font-size:9.5px;font-weight:700;letter-spacing:.04em;
-    padding:3px 8px;border-radius:999px;background:rgba(6,5,4,.72);border:1px solid var(--line);color:var(--sub);backdrop-filter:blur(4px)}
-  .rc .badge.me{color:var(--gold-b);border-color:#6b5730}
-  .rc .badge.hu{color:var(--gold-b);border-color:#6b5730}
-  .rc .badge.ai{color:#8fb3c9;border-color:#2c465a}
+    padding:3px 8px;border-radius:2px;background:rgba(6,5,4,.72);border:1px solid var(--line);color:var(--sub);backdrop-filter:blur(4px)}
+  .rc .badge.me{color:var(--rc,var(--case-ink));border-color:var(--case-line)}
+  .rc .badge.hu{color:var(--case-ink);border-color:var(--case-line)}
+  .rc .badge.ai{color:#b3aba1;border-color:#4b453d}
   /* -webkit-line-clamp는 브라우저에 따라 display가 blockify돼 안 먹는다.
      2줄 높이를 직접 잡고 넘치는 부분은 페이드로 흘려보낸다 — 글자가 중간에 잘려 보이지 않게. */
   .rc .tg{font-size:11.5px;line-height:1.5;color:#bbbab9;padding:8px 10px 10px;
     min-height:calc(3em + 18px);word-break:keep-all}
   /* 카드마다 붙는 선택 버튼 */
-  .rc-go{display:block;width:calc(100% - 20px);margin:0 10px;padding:8px 6px;border-radius:9px;
+  .rc-go{display:block;width:calc(100% - 20px);margin:0 10px;padding:8px 6px;border-radius:2px;
     font-family:inherit;font-size:12.5px;font-weight:800;text-align:center;border:1px solid var(--line);
     background:var(--panel2);color:var(--sub);cursor:pointer;transition:.14s}
-  .rc-go.pick{background:linear-gradient(180deg,#3a2f14,#2a2210);border-color:#6b5730;color:var(--gold-b)}
-  .rc-go.pick:hover{background:linear-gradient(180deg,#4a3c1a,#332813);border-color:var(--gold)}
-  .rc-go.done{background:linear-gradient(180deg,#22301f,#1a2418);border-color:#3f6b3a;
+  .rc-go.pick{background:linear-gradient(180deg,var(--case-h),var(--case-b));border-color:var(--case-e);
+    color:#fff;box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.09)}
+  .rc-go.pick:hover{background:linear-gradient(180deg,#665f54,var(--case-h))}
+  .rc-go.pick:active{transform:translate(2px,2px);box-shadow:inset 0 1px 0 rgba(0,0,0,.4);
+    background:linear-gradient(180deg,#3b372f,var(--case-b))}
+  .rc-go.done{background:linear-gradient(180deg,#22301f,#1a2418);border-color:#2f6b62;
     color:var(--good);cursor:default;font-weight:700}
-  .rc-go:not(.pick):not(.done):not(.off):hover{border-color:var(--gold);color:var(--ink)}
+  .rc-go:not(.pick):not(.done):not(.off):hover{border-color:var(--case-line);color:var(--ink)}
   .rc-go.off{background:none;border-color:transparent;color:var(--muted);font-weight:600;cursor:default}
   /* 전원 배역 확정 → 호스트 확정 박스 */
-  .startbox{margin-top:16px;padding:15px 16px;border-radius:13px;text-align:center;
+  .startbox{margin-top:16px;padding:15px 16px;border-radius:2px;text-align:center;
     border:1px solid #6b3a2c;background:linear-gradient(180deg,rgba(200,68,47,.16),rgba(200,68,47,.04))}
   .startbox .sb-t{font-weight:800;font-size:15px;color:#ffb9a8}
   .startbox .sb-d{font-size:12.5px;color:var(--sub);margin:5px 0 12px}
@@ -133,7 +261,7 @@
   /* 카드에서 뺀 액션들 — 내 배역 여부에 따라 바뀌는 하단 바 */
   .rolebar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:16px}
   .rolebar .hint{font-size:12px;color:var(--muted)}
-  .rolebar .hint.locked{border:1px dashed var(--line);border-radius:10px;padding:8px 13px;
+  .rolebar .hint.locked{border:1px dashed var(--line);border-radius:2px;padding:8px 13px;
     color:var(--sub);font-size:12.5px}
 
   /* 플레이 · 페이즈 드리븐 */
@@ -151,8 +279,8 @@
     line-height:1.3;letter-spacing:-.01em;color:#fff;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
   /* 이름이 흰색이 됐으니 키컬러는 점 하나로만 남는다 — 판 전체에서 나를 가리키는 색이다. */
-  .chead .ch-me::before{content:"";flex:0 0 auto;width:6px;height:6px;border-radius:50%;
-    background:var(--mec,var(--sub));box-shadow:0 0 7px -1px var(--mec,transparent)}
+  .chead .ch-me::before{content:"";flex:0 0 auto;width:7px;height:7px;border-radius:0;
+    background:var(--mec,var(--sub));box-shadow:2px 2px 0 rgba(0,0,0,.65)}
   .chead .ch-me.nodot::before{display:none}
   .chead .ch-scen{display:flex;align-items:center;gap:5px;min-width:0;
     font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden}
@@ -164,13 +292,13 @@
   .hmenu.on{display:block}
   .hmenu .sheet{position:absolute;left:0;right:0;top:0;background:var(--bg2);border-bottom:1px solid var(--line);
     padding:10px 12px calc(12px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:7px;
-    box-shadow:0 18px 40px rgba(0,0,0,.55);animation:hmIn .16s ease}
+    box-shadow:0 4px 0 rgba(0,0,0,.55);animation:hmIn .16s ease}
   @keyframes hmIn{from{transform:translateY(-8px);opacity:0}to{transform:none;opacity:1}}
   .hmenu .hm-t{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.16em;color:var(--sub);
     padding:2px 2px 6px;border-bottom:1px solid var(--line);margin-bottom:2px}
-  .hmenu .hm-t b{margin-left:auto;font-size:12px;letter-spacing:0;color:var(--gold-b);font-weight:700}
+  .hmenu .hm-t b{margin-left:auto;font-size:12px;letter-spacing:0;color:var(--cold);font-weight:700}
   .hmenu button.hm-i{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
-    background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;color:var(--fg);
+    background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:2px;color:var(--fg);
     font-family:inherit;font-size:14px;padding:11px 13px;cursor:pointer}
   .hmenu button.hm-i:active{background:rgba(255,255,255,.08)}
   /* 되돌릴 수 없는 문 — 나머지와 같은 색으로 서 있으면 안 된다 */
@@ -184,11 +312,11 @@
   @media (prefers-reduced-motion:reduce){ .hmenu .sheet{animation:none} }
   /* 방 코드 — 창을 여러 개 열어두면 어느 판인지 구분이 안 된다. 네 글자면 충분하다. */
   .chead .rmid{flex:0 0 auto;font-size:9.5px;font-weight:800;letter-spacing:.1em;color:var(--sub);
-    border:1px solid var(--line);border-radius:4px;padding:1px 4px}
+    border:1px solid var(--line);border-radius:2px;padding:1px 4px}
   .chead .spacer{margin-left:auto}
   /* 막을 넘기는 건 호스트의 일이다. 다른 사람에게는 누구 차례인지만 알려준다. */
   .pb-wait{flex:0 0 auto;font-size:11px;color:var(--muted);white-space:nowrap;
-    border:1px solid var(--line);border-radius:20px;padding:4px 10px}
+    border:1px solid var(--line);border-radius:2px;padding:4px 10px}
   .ppanel{flex:1 1 auto;overflow-y:auto;padding:14px}
   /* 토론은 말이 본체다. 패널을 눌러 대화가 화면 절반쯤을 갖게 한다. */
   /* 대화가 이제 제 탭을 가졌으므로, 아래 미리보기 때문에 본 화면을 눌러둘 이유가 없다.
@@ -197,10 +325,10 @@
   #s-play.reveal .ppanel{flex:1 1 auto;max-height:none}
   .cchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
   .cchip{display:inline-flex;align-items:center;gap:4px;max-width:100%;
-    background:rgba(120,190,220,.10);border:1px solid rgba(120,190,220,.32);border-radius:999px;
-    color:#bfe0ee;font-family:inherit;font-size:12px;font-weight:600;padding:5px 11px;cursor:pointer;
+    background:rgba(195,186,176,.10);border:1px solid rgba(195,186,176,.32);border-radius:2px;
+    color:#ddd6cc;font-family:inherit;font-size:12px;font-weight:600;padding:5px 11px;cursor:pointer;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .cchip:active{background:rgba(120,190,220,.22)}
+  .cchip:active{background:rgba(195,186,176,.22)}
   /* 아직 공개되지 않은 카드 — 무엇이 언급됐는지만 알리고 내용은 잠근다 */
   .cchip.lock{background:rgba(255,255,255,.04);border-color:var(--line);color:var(--sub)}
   /* 하단 독 — 판 중에 제일 자주 여는 다섯 곳. 머리띠까지 손을 올릴 일을 없앤다. */
@@ -216,17 +344,17 @@
   .tline .tl-rail{position:absolute;top:0;left:0;height:26px;display:flex;align-items:center;gap:0;width:max-content;
     transition:transform .42s cubic-bezier(.22,.9,.24,1);will-change:transform}
   .tline .phz{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:4px;
-    min-width:66px;padding:3px 8px;border-radius:20px;
+    min-width:66px;padding:3px 8px;border-radius:2px;
     font-size:10.5px;font-weight:700;color:var(--muted);white-space:nowrap;
     transition:color .3s ease,opacity .3s ease}
-  .tline .phz i{width:5px;height:5px;border-radius:50%;background:var(--line);flex:0 0 auto;transition:.3s}
+  .tline .phz i{width:5px;height:5px;border-radius:0;background:var(--line);flex:0 0 auto;transition:.3s}
   .tline .phz.done{color:var(--sub);opacity:.62}
   .tline .phz.done i{background:var(--sub)}
   .tline .phz.todo{opacity:.5}
   /* 지금 막 — 채우지 않고 테두리와 발광으로 짚는다. 글자는 늘 밝게 남는다. */
   .tline .phz.now{color:#fff;
-    background:linear-gradient(180deg,rgba(201,162,74,.22),rgba(201,162,74,.07));
-    border:1px solid rgba(201,162,74,.62);padding:2px 10px;
+    background:linear-gradient(180deg,rgba(0,230,147,.22),rgba(0,230,147,.07));
+    border:1px solid rgba(0,230,147,.62);padding:2px 10px;
     box-shadow:0 0 14px -4px var(--gold),inset 0 1px 0 rgba(255,255,255,.07)}
   .tline .phz.now i{background:var(--gold);box-shadow:0 0 6px var(--gold)}
   .tline .sep{flex:0 0 auto;width:8px;height:1px;background:var(--line);margin:0;opacity:.55}
@@ -237,18 +365,18 @@
     padding:5px 4px calc(5px + env(safe-area-inset-bottom))}
   .dock .dk{position:relative;flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:3px;
     background:none;border:0;color:var(--sub);font-family:inherit;font-size:10.5px;font-weight:700;
-    padding:6px 2px;border-radius:10px;cursor:pointer;min-width:0}
+    padding:6px 2px;border-radius:2px;cursor:pointer;min-width:0}
   .dock .dk .i{width:22px;height:22px;display:block;fill:none;stroke:currentColor;
     stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-  .dock .dk:active .i,.dock .dk.on .i{stroke:var(--gold)}
+  .dock .dk:active .i,.dock .dk.on .i{stroke:var(--case-ink)}
   .dock .dk .t{white-space:nowrap}
-  .dock .dk .t b{font-weight:800;color:var(--gold-b);font-variant-numeric:tabular-nums;margin-left:1px}
+  .dock .dk .t b{font-weight:800;color:var(--cold);font-variant-numeric:tabular-nums;margin-left:1px}
   .dock .dk.over .t b{color:var(--ember-b)}
   .dock .dk:active{background:rgba(255,255,255,.06);color:var(--fg)}
   .dock .dk .bdg{position:absolute;top:2px;right:calc(50% - 22px);min-width:15px;height:15px;line-height:15px;
-    border-radius:8px;background:var(--gold);color:#1a1508;font-size:9.5px;font-weight:800;padding:0 4px;display:none}
+    border-radius:0;background:var(--ember);color:#fff;font-size:9.5px;font-weight:800;padding:0 4px;display:none}
   .dock .dk .bdg.on{display:block}
-  .dock .dk .dot{position:absolute;top:5px;right:calc(50% - 18px);width:7px;height:7px;border-radius:50%;
+  .dock .dk .dot{position:absolute;top:5px;right:calc(50% - 18px);width:7px;height:7px;border-radius:0;
     background:var(--ember);display:none}
   .dock .dk .dot.on{display:block}
   /* 하단바 위로만 덮는 창 — 대화창·내 단서·내 정보·인물정보는 「다른 화면으로 간 것」이지
@@ -261,24 +389,28 @@
   .modal.overdock .mhead{padding-top:calc(12px + env(safe-area-inset-top))}
   .modal.overdock .box{max-width:none;width:100%;height:100%;max-height:none;
     border:0;border-radius:0;box-shadow:none;animation:none}
-  .dock .dk.here{color:var(--gold-b)}
-  .dock .dk.here .i{stroke:var(--gold)}
+  /* 지금 보고 있는 탭 — 「지금 어디인가」이긴 하지만, 하단바는 어느 화면에나 늘 떠 있다.
+     여기까지 초록을 켜면 화면마다 초록이 하나씩 늘어 상징이 닳는다. 흰색으로 세우고
+     밑줄 한 줄로만 짚는다. 초록은 머리띠(페이즈·차례)에 모아 둔다. */
+  .dock .dk.here{color:#fff}
+  .dock .dk.here .i{stroke:#fff}
   .dock .dk.here::after{content:"";position:absolute;left:50%;top:2px;transform:translateX(-50%);
-    width:16px;height:2px;border-radius:2px;background:var(--gold)}
+    width:16px;height:2px;border-radius:0;background:#fff}
   /* 오프닝 — 아직 자기 이야기를 안 펼친 사람에게. 하단바의 그 칸만 남기고 나머지를 덮는다. */
   .coach{position:fixed;inset:0;z-index:55;background:rgba(4,3,3,.72);
     backdrop-filter:blur(1.5px);animation:fade .35s ease both}
-  .dock .dk.callout{z-index:56;color:var(--gold-b)}
-  .dock .dk.callout .i{stroke:var(--gold)}
-  .dock .dk.callout::before{content:"";position:absolute;inset:-3px -1px;border-radius:12px;
-    background:var(--panel);border:1px solid var(--gold);z-index:-1;
-    box-shadow:0 0 0 4px rgba(201,162,74,.14),0 -6px 26px rgba(201,162,74,.22)}
+  .dock .dk.callout{z-index:56;color:#fff}
+  .dock .dk.callout .i{stroke:#fff}
+  .dock .dk.callout::before{content:"";position:absolute;inset:-3px -1px;border-radius:2px;
+    background:var(--case-b);border:1px solid var(--case-e);z-index:-1;
+    box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.12)}
   .coach-tip{position:fixed;z-index:57;transform:translateX(-50%);
-    background:var(--gold);color:#141110;font-size:12.5px;font-weight:800;letter-spacing:.01em;
-    padding:8px 14px;border-radius:20px;white-space:nowrap;box-shadow:0 6px 22px rgba(0,0,0,.55);
+    box-shadow:2px 2px 0 var(--case-e);
+    background:var(--case-ink);color:#14120f;font-size:12.5px;font-weight:800;letter-spacing:.01em;
+    padding:8px 14px;border-radius:2px;white-space:nowrap;box-shadow:2px 2px 0 rgba(0,0,0,.55);
     animation:bob 1.9s ease-in-out infinite}
   .coach-tip::after{content:"";position:absolute;left:50%;bottom:-5px;transform:translateX(-50%) rotate(45deg);
-    width:10px;height:10px;background:var(--gold)}
+    width:10px;height:10px;background:var(--case-ink)}
   @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-4px)}}
   /* 전체화면 대화 */
   .modal.full .box{max-width:920px;width:100%;height:100%;max-height:100%;border-radius:0;display:flex;flex-direction:column}
@@ -291,73 +423,104 @@
   .whorow .wn .sub{font-weight:600;font-size:11.5px;color:var(--sub)}
   .whorow .wt{font-size:12.5px;line-height:1.6;color:#c9c8c7;margin-top:3px}
   .whorow .wcards{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
-  .whorow .wc{display:inline-flex;align-items:center;gap:4px;border-radius:7px;padding:4px 8px;
+  .whorow .wc{display:inline-flex;align-items:center;gap:4px;border-radius:2px;padding:4px 8px;
     font-size:11.5px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--sub)}
-  .whorow .wc.mine{border-color:color-mix(in srgb,var(--me,var(--gold)) 42%,transparent);
-    background:color-mix(in srgb,var(--me,var(--gold)) 11%,transparent);color:var(--me,var(--gold-b));cursor:pointer}
-  .whorow .wc.pub{border-color:rgba(120,190,220,.34);background:rgba(120,190,220,.1);color:#bfe0ee;cursor:pointer}
+  .whorow .wc.mine{border-color:color-mix(in srgb,var(--me,var(--cold)) 42%,transparent);
+    background:color-mix(in srgb,var(--me,var(--cold)) 11%,transparent);color:var(--me,var(--cold));cursor:pointer}
+  .whorow .wc.pub{border-color:rgba(195,186,176,.34);background:rgba(195,186,176,.1);color:#ddd6cc;cursor:pointer}
   .whorow .wnone{font-size:11.5px;color:var(--muted);margin-top:7px}
   /* 조사가 다 끝난 턴바 — 차례 안내가 있던 자리에 다음 페이즈가 들어선다 */
-  .turnbar.done{border-color:rgba(90,190,140,.35)}
+  .turnbar.done{border-color:rgba(63,200,185,.35)}
   .tb-act.col{flex-direction:column;align-items:stretch;gap:7px}
   .tb-act.col .btn{width:100%}
   .tb-act .btn[disabled]{opacity:.45;cursor:not-allowed}
   .tb-why{font-size:12.5px;line-height:1.6;color:var(--sub);text-align:center}
-  .tb-why b{color:var(--gold-b)}
-  .sys.ref{color:#cfe4ee}
+  .tb-why b{color:var(--ink)}
+  .sys.ref{color:#ddd6cc}
   .sys .cchips{justify-content:center}
   /* 대화는 제 탭에서 전부를 쓴다 — 조사화면에 미리보기를 겹쳐 두지 않는다. */
   .chat{flex:1 1 auto;overflow-y:auto;padding:12px 14px;border-top:1px solid var(--line);background:radial-gradient(130% 90% at 50% 0%,#131211,var(--bg) 70%);display:flex;flex-direction:column;gap:10px}
-  .sys{align-self:center;text-align:center;color:var(--muted);font-size:12px;border:1px dashed var(--line);border-radius:20px;padding:4px 14px;max-width:92%}
-  .sys.bc{color:var(--cold);border-color:#2c465a;background:#0e1620}
+  .sys{align-self:center;text-align:center;color:var(--muted);font-size:12px;border:1px dashed var(--line);border-radius:2px;padding:4px 14px;max-width:92%}
+  .sys.bc{color:var(--cold);border-color:#4b453d;background:#171613}
   /* 한 대목이 끝난 자리. 여기서 판이 멈춰 서고, 누르면 다음 대목이 이어진다 —
      성격이 다른 이야기가 이어 붙을 때 어디서 끊겼는지가 보이게. */
   .dripgo{align-self:center;display:flex;align-items:center;gap:10px;padding:4px 0 2px;width:100%}
   .dripgo::before,.dripgo::after{content:"";flex:1 1 auto;height:1px;background:var(--line)}
   .dripgo .btn{flex:0 0 auto}
   /* GM은 대화창에서 말한다 — 배역들 사이에 끼되, 배역의 말투와 구분되게 */
+  /* GM 은 사람이 아니라 «판» 이다 — 시스템 색(웜그레이)으로 선다 */
   .gmsay{align-self:stretch;display:flex;gap:9px;align-items:flex-start;max-width:100%;
-    border-left:2px solid var(--gold);background:linear-gradient(90deg,rgba(140,110,50,.16),transparent);
-    border-radius:2px 10px 10px 2px;padding:8px 12px}
-  .gmsay .g{flex:0 0 auto;color:var(--gold);font-size:10px;letter-spacing:.08em;font-weight:800;margin-top:3px}
-  .gmsay .t{flex:1 1 auto;min-width:0;font-size:13px;line-height:1.72;color:#e8e2d4;word-break:keep-all}
+    border-left:2px solid var(--cold);background:linear-gradient(90deg,rgba(195,186,176,.10),transparent);
+    border-radius:0 2px 2px 0;padding:8px 12px}
+    .gmsay .g{flex:0 0 auto;color:var(--cold);font-size:10px;letter-spacing:.08em;font-weight:800;margin-top:3px}
+  .gmsay .t{flex:1 1 auto;min-width:0;font-size:13px;line-height:1.72;color:#e2dbd2;word-break:keep-all}
   /* 남의 말은 예외 없이 왼쪽에 붙는다. align-self 를 안 적어두면 기본값이 stretch 라
      기기에 따라 줄이 늘어나 말풍선이 가운데로 밀려 보였다. 내 말만 오른쪽이다. */
   .msg{display:flex;gap:8px;max-width:90%;align-self:flex-start}
   .msg.own{align-self:flex-end;flex-direction:row-reverse}
-  /* 얼굴 아바타 — 초상을 동그랗게 자른다. 초상이 없으면 .noimg가 붙고 이름 첫 글자가 대신 뜬다. */
+  /* ── 그림이 아직 없는 자리 ─────────────────────────────────────
+     이 사건의 SVG 에셋은 나중에 한 번에 만든다. 그때까지 그림 자리가 «빈칸» 이면
+     레이아웃이 그림이 붙는 순간 통째로 다시 짜인다. 그래서 지금부터 자리를 잡아두고,
+     그 안을 8비트 플레이스홀더(격자 + 대각선 빗금 + 「그림 없음」)로 채운다.
+     --ph 는 :root 에 있는 한 덩이 패턴이라 자리마다 같은 결로 뜬다.
+     라벨은 붙일 수 있는 자리에만 붙인다 — 20px 짜리 아바타에는 글자가 안 들어간다. */
+  .imgslot,.ava.noimg,.por.noimg,.bc-av:not(:has(img)),
+  .cardart:not(:has(img)),.room:not(:has(img)),.vic-p:not(:has(img)){
+    background:var(--ph);background-attachment:local;image-rendering:pixelated}
+  /* 라벨은 자리가 넉넉한 칸에만. 8비트 계기판 글씨처럼 폭을 벌린다.
+     20px 짜리 말풍선 아바타에는 글자가 안 들어가므로 큰 초상(.cover/.lg)에만 붙인다. */
+  .por.noimg::before,.cardart:not(:has(img))::before,.room:not(:has(img))::before,
+  .vic-p:not(:has(img))::before,.ava.cover.noimg::before,.ava.lg.noimg::before{
+    content:"그림 없음";position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.24em;line-height:1;
+    color:rgba(235,230,220,.45);border:1px solid rgba(235,230,220,.24);padding:3px 7px;
+    white-space:nowrap;pointer-events:none}
+  /* 배역 카드의 초상은 아래쪽을 이름 스크림이 덮는다 — 라벨은 그 위로 올린다 */
+  .por.noimg::before{bottom:auto;top:64%}
+  /* 아직 아무것도 안 들어온 그림칸은 스스로 자리를 잡는다 — 나중에 그림이 오면 그대로 대체된다 */
+  .cardart:not(:has(img)){position:relative;min-height:130px;display:block}
+  .room:not(:has(img)){position:relative;aspect-ratio:16/9}
+  .vic-p:not(:has(img)){position:relative;aspect-ratio:3/4}
+  .bc-av:not(:has(img)){position:relative}
+  /* 얼굴 아바타 — 초상을 동그랗게 자른다. 사람은 동그란 것으로 읽히니 여기만 원을 남겼다
+     (나머지 UI는 8비트라 전부 각졌다). 초상이 없으면 .noimg 가 붙고 이름 첫 글자가 대신 뜬다. */
   .ava{display:inline-grid;place-items:center;overflow:hidden;border-radius:50%;flex:0 0 auto;
-    vertical-align:middle;background:var(--panel);border:1px solid var(--ac,var(--line));position:relative}
+    vertical-align:middle;background:var(--panel);border:1px solid var(--ac,var(--line));position:relative;
+    box-shadow:2px 2px 0 rgba(0,0,0,.5)}
   .ava img.pt{width:100%;height:100%;object-fit:cover;object-position:50% 22%;display:block}
-  .ava.noimg::after{content:attr(data-emo);font-family:"PIMM Myeongjo","Nanum Myeongjo","AppleMyungjo",serif;
-    font-size:.5em;font-weight:600;line-height:1;color:var(--ac,var(--gold));opacity:.85}
+  .ava.noimg::after{content:attr(data-emo);font-family:var(--mono);
+    font-size:.44em;font-weight:700;line-height:1;letter-spacing:.02em;
+    color:var(--ac,var(--cold));opacity:.9;text-shadow:1px 1px 0 rgba(0,0,0,.7)}
   .ava.xs{width:20px;height:20px;font-size:20px}
   .ava.sm{width:30px;height:30px;font-size:30px}
   .ava.lg{width:100%;height:100%;border-radius:inherit;border:0;font-size:60px}
-  .ava.cover{width:100%;height:100%;border-radius:14px;border:0;font-size:76px}
+  .ava.cover{width:100%;height:100%;border-radius:2px;border:0;font-size:76px}
   .ava.cover img.pt{object-position:50% 18%}
-  .msg .av{font-size:18px;width:32px;height:32px;flex:0 0 32px;display:grid;place-items:center;background:var(--panel);border:1px solid var(--line);border-radius:9px}
+  .msg .av{font-size:18px;width:32px;height:32px;flex:0 0 32px;display:grid;place-items:center;background:var(--panel);border:1px solid var(--line);border-radius:2px}
   .msg .nm{font-size:11px;font-weight:700;margin:0 0 2px 2px}.msg.own .nm{text-align:right}
-  .msg .bub{background:var(--panel);border:1px solid var(--line);border-radius:4px 12px 12px 12px;padding:8px 12px;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
-  .msg.own .bub{background:linear-gradient(135deg,#8a7038,var(--gold));color:#1a1509;border-radius:12px 4px 12px 12px}
-  .tag-me{font-size:9px;color:var(--gold);border:1px solid var(--gold);border-radius:5px;padding:0 4px;margin-left:4px}
+  .msg .bub{background:var(--panel);border:1px solid var(--line);border-radius:0 2px 2px 2px;padding:8px 12px;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+  /* 내 말풍선 — 케이스 회색 판. 누가 말했는지는 위의 이름표(배역색)가 말한다. */
+  .msg.own .bub{background:linear-gradient(180deg,var(--case-h),var(--case-b));
+    border-color:var(--case-e);color:#fff;border-radius:2px 0 2px 2px}
+  .tag-me{font-size:9px;color:var(--me,var(--cold));border:1px solid currentColor;border-radius:0;padding:0 4px;margin-left:4px}
   /* 결말이 모두에게 얹어주는 몫 — 맞히고 틀린 것과는 다른 축이라 색을 가른다 */
-  .pill.bonus{color:var(--gold-b);border-color:color-mix(in srgb,var(--gold) 55%,transparent);
-    background:rgba(140,110,50,.16)}
+  /* ★ 초록 ④ — 결말이 얹어주는 몫. 「얻었다」는 성공 계열이라 --good 을 쓴다. */
+  .pill.bonus{color:var(--good);border-color:color-mix(in srgb,var(--good) 55%,transparent);
+    background:color-mix(in srgb,var(--good) 12%,transparent)}
   .composer{display:flex;gap:8px;padding:9px 12px;border-top:1px solid var(--line);background:var(--bg2);align-items:flex-end}
   /* 이름표를 따로 두지 않는다 — 「오세린이 되어 말하세요」가 그 자리를 대신하고,
      그만큼 입력칸이 길어진다. 좁은 폰에서 이름표가 88px을 먹고 있었다. */
-  .composer textarea{flex:1;resize:none;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:11px;padding:9px 12px;font-size:16px;font-family:inherit;line-height:1.5;max-height:96px}
+  .composer textarea{flex:1;resize:none;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:2px;padding:9px 12px;font-size:16px;font-family:inherit;line-height:1.5;max-height:96px}
   /* 손가락으로 쓰는 기기에서 입력칸 글자가 16px보다 작으면 사파리가 화면을 확대해버리고,
      확대된 채로 돌아오지 않는다. 타이핑하는 모든 칸의 바닥을 16px로 잡는다. */
   @media (pointer:coarse){
     textarea,input[type="text"],input[type="password"],input[type="search"],input:not([type]),select{font-size:16px}
   }
-  .composer textarea:focus{outline:none;border-color:var(--gold)}.composer textarea:disabled{opacity:.5}
+  .composer textarea:focus{outline:none;border-color:var(--case-line)}.composer textarea:disabled{opacity:.5}
   .banner{position:fixed;left:50%;top:112px;transform:translate(-50%,-14px);z-index:80;
     max-width:min(92vw,420px);background:#2a1414;border:1px solid #5a2c2c;color:#ffd3d3;
-    padding:9px 15px;font-size:13px;line-height:1.5;text-align:center;border-radius:11px;
-    box-shadow:0 12px 30px -10px #000;opacity:0;pointer-events:none;transition:opacity .22s,transform .22s}
+    padding:9px 15px;font-size:13px;line-height:1.5;text-align:center;border-radius:2px;
+    box-shadow:3px 3px 0 rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .22s,transform .22s}
   .banner.on{opacity:1;transform:translate(-50%,0)}
 
   /* 오프닝/토론 패널 */
@@ -368,23 +531,23 @@
   .alb-msg .nm{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
   .alb-j{font-size:10.5px;font-weight:400;color:var(--muted)}
   .alb-t{font-size:10.5px;font-weight:400;color:var(--sub);font-variant-numeric:tabular-nums;
-    border:1px solid var(--line);border-radius:20px;padding:0 7px;white-space:nowrap}
-  .alb-bub{border-left:2px solid var(--gold);background:var(--bg2);color:#d8d6d4;
-    border-radius:2px 10px 10px 10px;font-size:13.5px;line-height:1.75}
+    border:1px solid var(--line);border-radius:2px;padding:0 7px;white-space:nowrap}
+  .alb-bub{border-left:2px solid var(--case-line);background:var(--bg2);color:#d8d6d4;
+    border-radius:0 2px 2px 2px;font-size:13.5px;line-height:1.75}
   /* 내 배역이 한 말은 조서에서도 내 쪽이다 — 오른쪽에 붙고 글자가 금색이다.
      내 말은 채우지 않는다. 조서는 «옮겨 적은 것»이라 결이 조용해야 한다. */
   .alb-msg.own .nm{justify-content:flex-end}
-  .alb-msg.own .alb-bub{border-left:0;border-right:2px solid var(--gold);
-    border-radius:10px 2px 10px 10px;color:var(--gold-b);
+  .alb-msg.own .alb-bub{border-left:0;border-right:2px solid var(--me,var(--cold));
+    border-radius:2px 0 2px 2px;color:var(--ink);
     background:var(--bg2)}
   .panel-note{color:var(--sub);font-size:13.5px;line-height:1.8}
 
   /* 카드맵 */
   .clue-h{display:flex;align-items:center;gap:7px;margin-bottom:9px;flex-wrap:wrap}
   .clue-h .mspace{flex:1 1 auto}
-  .clue-h h3{margin:0;font-size:15px;color:var(--gold-b)}
-  .gcard{aspect-ratio:3/4;border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-direction:column;cursor:pointer;position:relative;overflow:hidden;background:linear-gradient(160deg,#1a1918,#141312);transition:.15s}
-  .gcard:hover{transform:translateY(-2px);border-color:var(--gold)}
+  .clue-h h3{margin:0;font-size:15px;color:var(--ink)}
+  .gcard{aspect-ratio:3/4;border:1px solid var(--line);border-radius:2px;padding:8px;display:flex;flex-direction:column;cursor:pointer;position:relative;overflow:hidden;background:linear-gradient(160deg,#1a1918,#141312);transition:.15s}
+  .gcard:hover{transform:translateY(-2px);border-color:var(--case-line)}
   .gcard .rb{font-size:9.5px;color:var(--muted)}
   .gcard .t{font-size:12px;font-weight:700;margin-top:auto;line-height:1.3}
   .gcard.face{align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,#181716,#181716 6px,#151413 6px,#151413 12px)}
@@ -393,49 +556,49 @@
   .gcard.face{padding:20px 6px 22px}
   .gcard.face .sp{font-size:11.5px;font-weight:700;line-height:1.35;color:#999897;text-align:center;
     word-break:keep-all;text-wrap:balance}
-  .gcard.face:hover .sp{color:var(--gold-b)}
+  .gcard.face:hover .sp{color:#fff}
   .gcard.locked .sp{color:#5c5b5a}
   .gcard.face.taken .q{font-size:16px;margin-bottom:3px}
   .gcard.face.taken .sp{font-size:10.5px;font-weight:600}
   .gcard .spot{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.3;word-break:keep-all}
-  .gcard.face .rb{position:absolute;bottom:7px;left:0;right:0;text-align:center}.gcard.face .tag{color:var(--gold-b)}
+  .gcard.face .rb{position:absolute;bottom:7px;left:0;right:0;text-align:center}.gcard.face .tag{color:var(--cold)}
   .gcard.locked{cursor:default;opacity:.5}
   /* 손패 상한 정리 */
   .trimgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr));gap:10px;margin-top:4px}
   /* 되가져오기 — 왼쪽은 테이블 것(차가운 색), 오른쪽은 내 것(불꽃색)으로 방향을 읽히게. */
   .swap-h{font-size:12px;letter-spacing:.05em;color:var(--muted);margin:16px 0 8px;font-weight:700}
   .swaprow{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr))}
-  .swapcard{text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:11px;
+  .swapcard{text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:2px;
     padding:10px 12px;color:inherit;font-family:inherit;cursor:pointer;transition:.15s;display:grid;gap:3px}
   .swapcard:hover{border-color:var(--sub)}
-  .swapcard[data-kind="take"].on{border-color:var(--cold);background:rgba(90,140,180,.10)}
+  .swapcard[data-kind="take"].on{border-color:var(--cold);background:rgba(195,186,176,.10)}
   .swapcard[data-kind="give"].on{border-color:var(--ember-b);background:rgba(160,40,30,.12)}
   .swapcard .sc-t{font-weight:700;font-size:13.5px;word-break:keep-all}
   .swapcard .sc-w{font-size:11px;color:var(--muted);word-break:keep-all}
-  .swaphint{margin-top:16px;padding:11px 13px;border:1px dashed var(--line);border-radius:10px;
+  .swaphint{margin-top:16px;padding:11px 13px;border:1px dashed var(--line);border-radius:2px;
     font-size:13px;line-height:1.7;color:var(--sub);word-break:keep-all}
-  .trimcard{text-align:left;background:linear-gradient(160deg,#221c14,#151413);border:1px solid #5a4a2c;border-radius:12px;padding:12px;color:inherit;transition:.15s}
-  .trimcard:hover{border-color:var(--gold)}
+  .trimcard{text-align:left;background:linear-gradient(160deg,#232019,#151413);border:1px solid var(--case-line);border-radius:2px;padding:12px;color:inherit;transition:.15s}
+  .trimcard:hover{border-color:var(--case-ink)}
   .trimcard.on{border-color:var(--ember);box-shadow:0 0 0 1px var(--ember) inset,0 0 18px -6px var(--ember)}
-  .trimcard .tt{font-weight:800;color:var(--gold-b);font-size:14.5px;margin-bottom:6px}
+  .trimcard .tt{font-weight:800;color:var(--ink);font-size:14.5px;margin-bottom:6px}
   .trimcard .tm{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px}
   .trimcard .tb{font-size:12.5px;color:#dddcdb;line-height:1.6}
   /* 끝까지 쥐기 — 다른 목표와 성격이 달라서(카드 한 장에 매여 있다) 결을 구분한다.
      border-style만 주면 네 변에 다 걸린다. 위·좌·우는 굵기도 색도 지정된 적이 없어서
      기본값(3px · 글자색)으로 그려졌고, 그게 목표 줄을 감싼 흰 상자로 보였다. */
   .bc-goal.keep{border-bottom-style:dashed}
-  .keepnote{margin-top:9px;padding:10px 12px;border:1px dashed var(--line);border-radius:9px;
+  .keepnote{margin-top:9px;padding:10px 12px;border:1px dashed var(--line);border-radius:2px;
     font-size:12.5px;line-height:1.7;color:var(--sub)}
-  .keepnote b{color:var(--gold-b)}
+  .keepnote b{color:var(--ink)}
   .keepnote .q{color:var(--muted);font-weight:400}
   /* 진상 시각표 — 시각·인물·사건 세 칸. 사건의 마디와 진범의 자리를 결로 갈라놓는다. */
   .rv-tl{display:flex;flex-direction:column}
   .rv-r{display:grid;grid-template-columns:52px 1fr;gap:2px 10px;padding:9px 0 9px 10px;
     border-top:1px solid var(--line);border-left:2px solid transparent;font-size:13px;line-height:1.65}
   .rv-r:first-child{border-top:0}
-  .rv-r.key{border-left-color:var(--gold);background:rgba(196,158,74,.05)}
+  .rv-r.key{border-left-color:var(--cold);background:rgba(195,186,176,.05)}
   .rv-r.cul{border-left-color:var(--ember-b);background:rgba(160,40,30,.07)}
-  .rv-t{font-family:"SF Mono",Consolas,monospace;font-size:11.5px;color:var(--gold-b);
+  .rv-t{font-family:"SF Mono",Consolas,monospace;font-size:11.5px;color:var(--cold);
     font-variant-numeric:tabular-nums;padding-top:2px}
   .rv-w{font-size:11.5px;display:flex;align-items:center;gap:5px}
   .rv-x{grid-column:2;color:var(--sub);word-break:keep-all}
@@ -443,17 +606,17 @@
   @media (max-width:430px){ .rv-r{grid-template-columns:46px 1fr} }
   /* 그날 밤 동선 — 가로가 시각, 세로가 구역. 선이 겹친 자리가 같은 방에 있었던 순간이다.
      도표를 읽히려는 게 아니라 「언제 누가 누구와 겹쳤나」만 눈에 걸리면 된다. */
-  .xline{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+  .xline{display:flex;border:1px solid var(--line);border-radius:2px;overflow:hidden;
     background:rgba(255,255,255,.02)}
   .xl-lab{flex:0 0 auto;background:rgba(0,0,0,.28);border-right:1px solid var(--line)}
   .xl-vp{flex:1 1 auto;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
   .xl-vp::-webkit-scrollbar{height:5px}
-  .xl-vp::-webkit-scrollbar-thumb{background:#3a3532;border-radius:3px}
+  .xl-vp::-webkit-scrollbar-thumb{background:#3a3532;border-radius:2px}
   .xl-leg{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:9px;font-size:11.5px;color:var(--sub)}
   .xl-leg span{display:inline-flex;align-items:center;gap:5px}
   .xl-leg i{width:14px;height:2px;border-radius:2px;display:inline-block}
-  .pill.pair{font-family:inherit;cursor:pointer;color:var(--cold);border-color:#2f4a5c;
-    background:rgba(90,140,180,.10);transition:.15s}
+  .pill.pair{font-family:inherit;cursor:pointer;color:var(--cold);border-color:#4b453d;
+    background:rgba(195,186,176,.10);transition:.15s}
   .pill.pair:hover{filter:brightness(1.25)}
   .pairbox{margin-top:14px;display:flex;flex-direction:column;gap:2px}
   .pb-r{display:flex;gap:10px;padding:11px 0;border-top:1px solid var(--line);font-size:13.5px;line-height:1.7}
@@ -464,28 +627,30 @@
   .keeprow:last-child{border-bottom:0}
   .keeprow .nm{font-weight:800}
   .keeprow .lb{color:var(--sub);flex:1;min-width:160px}
-  .keeprow .rs{font-family:"SF Mono",Consolas,monospace;font-size:11.5px;padding:2px 9px;border-radius:999px;border:1px solid var(--line)}
-  .keeprow.ok .rs{color:var(--good);border-color:#2f6b48}
+  .keeprow .rs{font-family:"SF Mono",Consolas,monospace;font-size:11.5px;padding:2px 9px;border-radius:2px;border:1px solid var(--line)}
+  .keeprow.ok .rs{color:var(--good);border-color:#2a6b62}
   .keeprow.no .rs{color:var(--bad);border-color:#6b2f2f}
   .keeprow .dt{flex-basis:100%;font-size:12px;color:var(--muted)}
   /* 오프닝 아래 「다음 페이즈」 — 머리띠의 다음 막과 같은 금색을 쓴다 */
   .nextblock{margin:18px 0 6px}
-  .nextbig{width:100%;justify-content:center;padding:14px 16px;font-size:15px;border-radius:12px;
-    box-shadow:0 10px 26px -12px rgba(201,162,74,.55)}
+  .nextbig{width:100%;justify-content:center;padding:14px 16px;font-size:15px;border-radius:2px;
+    box-shadow:var(--neon),3px 3px 0 rgba(0,0,0,.5)}
   .nextbig b{font-weight:800}
   .nextwait{text-align:center;font-size:13px;color:var(--muted);padding:13px 14px;
-    border:1px dashed var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center;gap:7px}
-  .nextwait b{color:var(--gold-b)}
-  .handwarn{background:#3a1f10;border:1px solid #7a4520;color:#ffd9b0;border-radius:11px;padding:7px 9px 7px 13px;margin-bottom:10px;display:flex;align-items:center;gap:7px 9px;font-size:13px;flex-wrap:wrap;line-height:1.7}
+    border:1px dashed var(--line);border-radius:2px;display:flex;align-items:center;justify-content:center;gap:7px}
+  .nextwait b{color:var(--cold)}
+  .handwarn{background:#3a1f10;border:1px solid #7a4520;color:#ffd9b0;border-radius:2px;padding:7px 9px 7px 13px;margin-bottom:10px;display:flex;align-items:center;gap:7px 9px;font-size:13px;flex-wrap:wrap;line-height:1.7}
   .handwarn b{color:#ffc078}
   .handwarn .btn{margin-left:auto}
   .gcard.face.taken{border-color:var(--tc,#555);background:linear-gradient(160deg,#161514,#100f0e);opacity:.75;cursor:not-allowed}
   .gcard.face.taken .q{font-size:20px;filter:grayscale(.2)}
   .gcard.face.taken .rb{color:var(--tc,var(--muted));font-size:9.5px}
-  .gcard.hand{border-color:#5a4a2c;background:linear-gradient(160deg,#221c14,#151413)}.gcard.hand .t{color:var(--gold-b)}
-  .gcard.pub{border-color:var(--cold);background:linear-gradient(160deg,#111a22,#0e1620)}
-  .gcard .tag{position:absolute;top:6px;right:6px;font-size:8.5px;padding:1px 5px;border-radius:6px;background:rgba(0,0,0,.45)}
-  .gcard.hand .tag{color:var(--gold-b)}.gcard.pub .tag{color:var(--cold)}
+  /* 내 손패 — 「내 것」이라 배역색 테를 두른다(사람). 판은 케이스 회색 그대로. */
+  .gcard.hand{border-color:color-mix(in srgb,var(--me,var(--case-line)) 55%,var(--line));
+    background:linear-gradient(160deg,#232019,#151413)}.gcard.hand .t{color:var(--me,var(--ink))}
+  .gcard.pub{border-color:var(--cold);background:linear-gradient(160deg,#201e1a,#171613)}
+  .gcard .tag{position:absolute;top:6px;right:6px;font-size:8.5px;padding:1px 5px;border-radius:2px;background:rgba(0,0,0,.45)}
+  .gcard.hand .tag{color:var(--me,var(--cold))}.gcard.pub .tag{color:var(--cold)}
 
   /* 질문지 */
   /* 피해자 — 초상이 있으면 글 왼쪽에 세워 붙인다. 없으면 글만 그대로 흐른다.
@@ -501,7 +666,7 @@
     border-bottom:1px solid var(--line);word-break:keep-all}
   .viccard .vf:last-of-type{border-bottom:0}
   .viccard .vf::before{content:"";position:absolute;left:1px;top:15px;width:5px;height:5px;
-    border-radius:50%;background:var(--ember-b);opacity:.8}
+    border-radius:0;background:var(--ember-b);opacity:.8}
   .viccard .vic-s{grid-column:1/-1;margin-top:4px}
   /* 한 칸으로 접으면 3:4 초상이 탭 하나를 통째로 먹는다 — 아주 좁을 때만 접고, 폭을 묶는다. */
   @media(max-width:330px){ .viccard{grid-template-columns:1fr}
@@ -510,7 +675,7 @@
     margin:0 0 11px;text-transform:uppercase;display:flex;align-items:center;gap:9px}
   .casebox .case-h::after{content:"";flex:1 1 auto;height:1px;background:var(--line)}
   /* 덩이마다 테를 둘러 가른다 — 여태 지문과 피해자가 붙어 있어 한 덩이로 읽혔다 */
-  .casebox .case-sec{padding:14px 14px 15px;border:1px solid var(--line);border-radius:12px;
+  .casebox .case-sec{padding:14px 14px 15px;border:1px solid var(--line);border-radius:2px;
     background:rgba(255,255,255,.016);margin-bottom:13px}
   .casebox .case-sec:last-child{margin-bottom:0}
   .casebox .case-intro p:last-child{margin-bottom:0}
@@ -521,14 +686,14 @@
   .alb-c{flex:1 1 auto;min-width:0}
   .alb-n{font-size:12.5px;font-weight:700;display:flex;align-items:baseline;gap:7px}
   .alb-w{font-size:11px;color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
-  .alb-s{margin-top:4px;padding:8px 11px;border-radius:3px 11px 11px 11px;font-size:13px;line-height:1.8;
+  .alb-s{margin-top:4px;padding:8px 11px;border-radius:0 2px 2px 2px;font-size:13px;line-height:1.8;
     color:#dcdad7;background:rgba(255,255,255,.045);border:1px solid var(--line);word-break:keep-all}
   .alb-note{margin-top:12px;padding-top:11px;border-top:1px solid var(--line);
     font-size:12px;color:var(--muted);line-height:1.7}
   .casebox .case-intro p{font-size:14.5px;line-height:1.95;color:#dcdad7;margin:0 0 12px;word-break:keep-all}
   .casebox .case-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:20px;
     padding-top:14px;border-top:1px solid var(--line)}
-  .vic-p{flex:0 0 clamp(150px,42%,210px);border-radius:5px;overflow:hidden;
+  .vic-p{flex:0 0 clamp(150px,42%,210px);border-radius:2px;overflow:hidden;
     border:1px solid var(--line);background:var(--bg2)}
   .vic-p img{display:block;width:100%;aspect-ratio:3/4;object-fit:cover;object-position:50% 18%}
   .vic .panel-note{flex:1 1 auto;min-width:0}
@@ -536,79 +701,79 @@
   .piccap{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);
     font-size:13.5px;line-height:1.75;color:var(--sub);word-break:keep-all}
   .vic-s{width:100%;text-align:left;font-family:inherit;margin-top:11px;display:flex;align-items:center;gap:11px;padding:8px;cursor:pointer;
-    border:1px solid var(--line);border-radius:5px;background:var(--bg2);
+    border:1px solid var(--line);border-radius:2px;background:var(--bg2);
     transition:border-color .15s}
-  .vic-s:hover{border-color:var(--gold)}
-  .vic-s img{flex:0 0 96px;display:block;width:96px;aspect-ratio:16/9;object-fit:cover;border-radius:3px}
+  .vic-s:hover{border-color:var(--case-line)}
+  .vic-s img{flex:0 0 96px;display:block;width:96px;aspect-ratio:16/9;object-fit:cover;border-radius:2px}
   .vic-s .cap{flex:1 1 auto;min-width:0;font-size:12px;line-height:1.6;color:var(--sub)}
   .vic-s .cap b{display:block;color:var(--ink);font-size:13px;margin-bottom:2px}
   /* 소지품 정리 목록 */
   .trimlist{display:flex;flex-direction:column;gap:7px;margin-top:11px}
   .trimrow{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:11px 12px;
-    border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);
+    border-radius:2px;border:1px solid var(--line);background:var(--bg);color:var(--ink);
     font-family:inherit;cursor:pointer;transition:.14s}
   .trimrow:active{transform:scale(.985)}
   .trimrow .tr-t{font-size:13.5px;font-weight:600}
   .trimrow .tr-s{font-size:12px;color:var(--sub);margin-right:auto}
   .trimrow .tr-k{font-size:11.5px;color:var(--muted);border:1px solid var(--line);
-    border-radius:999px;padding:2px 8px}
-  .trimrow.on{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 11%,var(--bg))}
-  .trimrow.on .tr-k{color:var(--gold-b);border-color:color-mix(in srgb,var(--gold) 52%,var(--line))}
+    border-radius:2px;padding:2px 8px}
+  .trimrow.on{border-color:var(--case-line);background:var(--case-off);box-shadow:inset 0 1px 0 rgba(0,0,0,.4)}
+  .trimrow.on .tr-k{color:var(--case-ink);border-color:var(--case-line)}
   /* 결과 확인 토글 */
-  .rdybar{display:flex;align-items:center;gap:9px;margin-top:11px;padding:10px 12px;border-radius:10px;
+  .rdybar{display:flex;align-items:center;gap:9px;margin-top:11px;padding:10px 12px;border-radius:2px;
     border:1px solid var(--line);background:var(--bg)}
   .rdybar .rb-n{font-size:12.5px;color:var(--sub);margin-right:auto;font-variant-numeric:tabular-nums}
   /* 내 단서 / 소지품 탭 */
   .htabs{display:flex;gap:6px;padding:0 14px 11px;border-bottom:1px solid var(--line)}
-  .htab{flex:1 1 0;padding:8px 6px;border-radius:9px;border:1px solid var(--line);background:var(--bg);
+  .htab{flex:1 1 0;padding:8px 6px;border-radius:2px;border:1px solid var(--line);background:var(--bg);
     color:var(--sub);font-size:13px;font-family:inherit;cursor:pointer;transition:.14s}
   .htab b{margin-left:3px;font-variant-numeric:tabular-nums;font-weight:800}
-  .htab.on{color:var(--me,var(--gold-b));border-color:color-mix(in srgb,var(--me,var(--gold)) 52%,var(--line));
-    background:color-mix(in srgb,var(--me,var(--gold)) 11%,var(--bg))}
+  .htab.on{color:var(--me,var(--case-ink));border-color:color-mix(in srgb,var(--me,var(--case-line)) 52%,var(--line));
+    background:color-mix(in srgb,var(--me,var(--case-line)) 11%,var(--bg))}
   .htab:active{transform:scale(.985)}
   /* 결재 결정문 */
-  .dc-barred{margin-top:11px;padding:9px 11px;border-radius:9px;font-size:13px;line-height:1.75;
+  .dc-barred{margin-top:11px;padding:9px 11px;border-radius:2px;font-size:13px;line-height:1.75;
     color:var(--ember-b);background:color-mix(in srgb,var(--ember) 11%,transparent);
     border:1px solid color-mix(in srgb,var(--ember) 34%,transparent)}
   .dseat .ds-h{display:flex;align-items:center;gap:10px}
-  .dseat .ds-n{flex:0 0 auto;width:23px;height:23px;border-radius:50%;background:var(--gold);color:#12100e;
+  .dseat .ds-n{flex:0 0 auto;width:23px;height:23px;border-radius:0;background:var(--case-ink);color:#14120f;
     font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
   .dseat .ds-who{font-size:12px;color:var(--sub);margin-top:2px}
   .dseat .ds-h .pill{margin-left:auto}
-  .dseat .ds-h .pill.ok{color:var(--gold-b);border-color:color-mix(in srgb,var(--gold) 46%,var(--line))}
-  .dseat .ds-q{margin-top:10px;font-size:13.5px;color:var(--gold-b);line-height:1.7}
+  .dseat .ds-h .pill.ok{color:var(--good);border-color:color-mix(in srgb,var(--good) 46%,var(--line))}
+  .dseat .ds-q{margin-top:10px;font-size:13.5px;color:var(--ink);line-height:1.7}
   .dseat .ds-opts{display:flex;flex-direction:column;gap:7px;margin-top:10px}
   .dseat .ds-o{width:100%;text-align:left;background:var(--bg);border:1px solid var(--line);
-    border-radius:9px;padding:10px 12px;color:var(--ink);cursor:pointer;transition:.14s}
+    border-radius:2px;padding:10px 12px;color:var(--ink);cursor:pointer;transition:.14s}
   .dseat .ds-o:active{transform:scale(.985)}
-  .dseat .ds-o.on{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,var(--bg))}
+  .dseat .ds-o.on{border-color:var(--case-line);background:var(--case-off);box-shadow:inset 0 1px 0 rgba(0,0,0,.4)}
   .dseat .ds-ol{font-size:13.5px;line-height:1.7}
   .dseat .ds-on{margin-top:5px;font-size:12.5px;color:var(--sub);line-height:1.7}
-  .dseat.sealed{border-color:color-mix(in srgb,var(--gold) 30%,var(--line))}
-  .dseat .ds-line{margin-top:10px;padding:10px 12px;border-radius:9px;font-size:13.5px;line-height:1.8;
-    background:color-mix(in srgb,var(--gold) 7%,var(--bg));border:1px solid color-mix(in srgb,var(--gold) 22%,var(--line))}
-  .ds-paper{padding:13px 14px;border-radius:9px;background:#17150f;border:1px solid color-mix(in srgb,var(--gold) 26%,var(--line))}
-  .ds-pl{font-size:13.5px;line-height:1.9;padding:5px 0;border-bottom:1px dashed color-mix(in srgb,var(--gold) 18%,var(--line))}
+  .dseat.sealed{border-color:color-mix(in srgb,var(--good) 30%,var(--line))}
+  .dseat .ds-line{margin-top:10px;padding:10px 12px;border-radius:2px;font-size:13.5px;line-height:1.8;
+    background:var(--case-off);border:1px solid var(--case-line)}
+  .ds-paper{padding:13px 14px;border-radius:2px;background:#1a1815;border:1px solid var(--case-line)}
+  .ds-pl{font-size:13.5px;line-height:1.9;padding:5px 0;border-bottom:1px dashed var(--line)}
   .ds-pl:last-child{border-bottom:none}
   .ds-note{margin-top:9px;font-size:12.5px;color:var(--sub);line-height:1.75}
   .ds-note.flip{color:var(--ember-b)}
-  .q-block{margin-bottom:13px}.q-block .q{font-size:14px;color:var(--gold-b);margin-bottom:6px;font-weight:600}
-  .q-block textarea{width:100%;min-height:62px;resize:vertical;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:9px 11px;font-size:13.5px;font-family:inherit;line-height:1.55}
-  .q-block textarea:focus{outline:none;border-color:var(--gold)}
+  .q-block{margin-bottom:13px}.q-block .q{font-size:14px;color:var(--ink);margin-bottom:6px;font-weight:600}
+  .q-block textarea{width:100%;min-height:62px;resize:vertical;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:2px;padding:9px 11px;font-size:13.5px;font-family:inherit;line-height:1.55}
+  .q-block textarea:focus{outline:none;border-color:var(--case-line)}
   /* 클로드에 붙여넣을 한 덩어리. 줄바꿈이 곧 형식이라 pre 로 두되, 좁은 화면에서
      가로로 새지 않게 어절 단위로 접는다. */
   .handoff{margin:0;max-height:280px;overflow-y:auto;white-space:pre-wrap;word-break:keep-all;
-    overflow-wrap:anywhere;background:var(--bg);border:1px solid var(--line);border-radius:11px;
+    overflow-wrap:anywhere;background:var(--bg);border:1px solid var(--line);border-radius:2px;
     padding:12px 14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
     line-height:1.75;color:var(--sub)}
   .handoff::-webkit-scrollbar{width:5px}
-  .handoff::-webkit-scrollbar-thumb{background:#4a4844;border-radius:3px}
+  .handoff::-webkit-scrollbar-thumb{background:#4a4844;border-radius:2px}
   .grade{display:flex;gap:7px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;flex-wrap:wrap}.grade .v{flex-basis:100%;font-size:12px;color:var(--muted)}
   .verdict{font-size:23px;font-weight:800;margin-bottom:10px}.verdict.good{color:var(--good)}.verdict.warn{color:var(--warn)}.verdict.bad{color:var(--bad)}
   .rev-sol{font-size:14px;line-height:1.85;color:#e3e2e1;white-space:pre-wrap}
 
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 17px;margin-bottom:14px}
-  .card h2{margin:0 0 10px;font-size:15px;color:var(--gold-b)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:16px 17px;margin-bottom:14px}
+  .card h2{margin:0 0 10px;font-size:15px;color:var(--ink)}
   /* ── 팝업 공통 골격 ────────────────────────────────────────────
      구역·손패·시트·심문·현황판이 저마다 다른 머리 모양으로 짜여 있어서, 팝업이 뜬 순간
      지금 무슨 창인지가 안 읽혔다. 셋으로 못박는다 — 머리(눈썹라벨·제목·닫기), 본문(여기만
@@ -616,7 +781,7 @@
      색이 창마다 다른 계기등처럼 든다. 색은 팔레트 안에서만 고른다.
      blur 는 쓰지 않는다 — backdrop-filter/filter 는 이 판에서 프레임 드랍의 원인이었다. */
   .modal{position:fixed;inset:0;background:rgba(6,5,4,.86);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}.modal.on{display:flex}
-  .modal .box{--mt:var(--gold);background:var(--panel);border:1px solid var(--line);border-radius:18px;max-width:540px;width:100%;
+  .modal .box{--mt:var(--cold);background:var(--panel);border:1px solid var(--line);border-radius:2px;max-width:540px;width:100%;
     box-shadow:var(--shadow);max-height:92vh;max-height:92svh;display:flex;flex-direction:column;overflow:hidden;min-height:0}
   .modal h2{margin:0;font-size:20px}.modal .mlead{color:var(--sub);font-size:13px;margin-bottom:14px}
   /* 머리 — 창이 굴러도 제목은 자리를 지킨다. 위 띠가 이 창의 성격이다. */
@@ -632,32 +797,32 @@
   .mhead .mh-sub{display:block;font-size:12.5px;color:var(--muted);margin-top:4px;word-break:keep-all}
   /* 하단바에서 여는 창은 탭이다 — ✕가 없다. 머리띠가 화면 폭을 다 쓴다. */
   .modal.overdock .mhead .mh-t{flex:1 1 auto;min-width:0}
-  .mhead .mh-x{flex:0 0 auto;width:32px;height:32px;border-radius:50%;background:var(--panel2);
+  .mhead .mh-x{flex:0 0 auto;width:32px;height:32px;border-radius:0;background:var(--panel2);
     border:1px solid var(--line);color:var(--sub);font-size:15px;line-height:1;display:grid;
     place-items:center;cursor:pointer;transition:.15s}
   .mhead .mh-x:hover{border-color:var(--mt);color:var(--ink)}
   /* 본문 — 창 안에서 구르는 곳은 여기 하나뿐이다 */
   .mbody{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;padding:16px 18px}
   /* 방 안 — 그림 위에 핀이 선다. 핀은 「무엇을 뒤지는가」까지만 말하고 내용은 말하지 않는다. */
-  .room{position:relative;border-radius:4px;overflow:hidden;border:1px solid var(--line);background:#07080a}
+  .room{position:relative;border-radius:2px;overflow:hidden;border:1px solid var(--line);background:#080807}
   .room>img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
   .pin{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:5px;
-    background:rgba(8,10,13,.86);border:1px solid var(--cold);border-radius:20px;padding:2px 8px 2px 4px;
+    background:rgba(10,9,8,.86);border:1px solid var(--cold);border-radius:2px;padding:2px 8px 2px 4px;
     color:var(--ink);font-size:10.5px;line-height:1.5;cursor:pointer;backdrop-filter:blur(3px);
     white-space:nowrap;max-width:34%;transition:border-color .15s,background .15s,z-index 0s}
   /* 겹친 라벨은 누른 것이 위로 온다 — 좁은 방에서는 아무리 벌려도 붙는 자리가 생긴다. */
   .pin:hover,.pin:focus{z-index:3}
   /* 라벨이 늘 오른쪽으로 뻗으면 오른편 핀을 덮는다. 오른쪽 절반은 왼쪽으로 뻗게 뒤집는다. */
   .pin.rt{flex-direction:row-reverse;padding:2px 4px 2px 8px}
-  .pin i{flex:0 0 9px;height:9px;border-radius:50%;background:var(--cold);
-    box-shadow:0 0 0 3px rgba(90,166,205,.22)}
+  .pin i{flex:0 0 9px;height:9px;border-radius:0;background:var(--cold);
+    box-shadow:0 0 0 3px rgba(195,186,176,.22)}
   .pin span{overflow:hidden;text-overflow:ellipsis}
-  .pin:hover{background:rgba(14,20,26,.95);border-color:var(--gold-b)}
+  .pin:hover{background:rgba(18,17,14,.95);border-color:var(--case-ink)}
   .pin.seen{border-color:var(--line);color:var(--muted)}
   .pin.seen i{background:var(--muted);box-shadow:none}
   .pin.lock{opacity:.55}
   /* 가로로 보기 — 화면을 통째로 덮고 90도 돌린다. 폰을 눕히면 방이 꽉 찬다. */
-  .roomfs{position:fixed;inset:0;z-index:80;background:#05060a;overflow:hidden}
+  .roomfs{position:fixed;inset:0;z-index:80;background:#060505;overflow:hidden}
   /* 돌린 뒤에도 화면 한가운데 있어야 한다. grid 가운데정렬은 자식이 화면보다 넓으면
      시작점부터 흘러넘쳐서, 회전축이 화면 밖으로 밀려난다. */
   .roomfs .rfs-rot{position:absolute;left:50%;top:50%;transform-origin:center center}
@@ -666,7 +831,7 @@
   .roomfs .pin{font-size:13px;padding:5px 12px 5px 7px;max-width:38%}
   .roomfs .pin i{flex-basis:11px;height:11px}
   .rfs-bar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:9px;
-    padding:9px 14px;background:linear-gradient(0deg,rgba(5,6,10,.92),transparent);color:var(--ink)}
+    padding:9px 14px;background:linear-gradient(0deg,rgba(6,5,5,.92),transparent);color:var(--ink)}
   .rfs-bar b{flex:1;font-size:14px}
   /* 조합 조각 — 카드 이름표에 붙는 반쪽. 같은 색·같은 표시끼리 맞는다. */
   /* 아이콘 — 글자 색을 따라간다. 버튼 안에서는 글자와 같은 높이로 앉는다. */
@@ -676,9 +841,9 @@
   .pchip{width:23px;height:19px;display:block;flex:0 0 auto;margin-right:1px}
   /* 조합으로 나온 카드 — 반쪽이 아니라 온전한 한 조각이다 */
   .combobadge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;
-    color:var(--good);background:rgba(80,180,130,.12);border:1px solid rgba(80,180,130,.44);
-    border-radius:999px;padding:3px 9px 3px 5px;white-space:nowrap;vertical-align:middle;
-    box-shadow:0 0 12px -4px rgba(80,180,130,.75)}
+    color:var(--good);background:rgba(63,200,185,.12);border:1px solid rgba(63,200,185,.44);
+    border-radius:2px;padding:3px 9px 3px 5px;white-space:nowrap;vertical-align:middle;
+    box-shadow:0 0 12px -4px rgba(63,200,185,.75)}
   .combobadge .pchip{width:19px;height:15px;margin:0}
   /* 목록에서는 한 줄만. 전문을 늘어놓으면 무엇이 중요한지가 묻힌다 — 눌러서 본다. */
   .lead.clip1{margin:5px 0 0;font-size:12.5px;line-height:1.6;color:var(--sub);
@@ -687,15 +852,15 @@
   /* 카드 그림 — 본문 위에 눕는다. 눌러서 크게 본다. */
   /* 비율을 고정하지 않는다 — 물건마다 알맞은 틀이 다르다(세운 병은 세로, 널린 서류는 가로).
      다만 세로로 길어도 화면을 다 먹지는 않게 잘라둔다. 카드는 읽는 물건이다. */
-  .cardart{margin:0 0 13px;border-radius:5px;overflow:hidden;border:1px solid var(--line);
+  .cardart{margin:0 0 13px;border-radius:2px;overflow:hidden;border:1px solid var(--line);
     cursor:pointer;max-height:54svh;background:rgba(0,0,0,.35)}
   /* 잘라내지 않는다 — 세로 그림은 아래쪽에 단서가 앉는 경우가 많아서(밀랍 직인, 바닥의 자국)
      가운데를 오려내면 그 카드가 말하려던 것이 사라진다. 남는 자리는 어둡게 둔다. */
   .cardart img{display:block;width:100%;height:auto;max-height:54svh;object-fit:contain}
-  .sharesec{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--gold-b);
+  .sharesec{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--cold);
     margin:14px 0 7px;padding-bottom:5px;border-bottom:1px solid var(--line)}
   .sharesec.cold{color:var(--cold)}
-  .shareSay{width:100%;margin-top:12px;padding:10px 12px;border-radius:4px;font-size:14px;
+  .shareSay{width:100%;margin-top:12px;padding:10px 12px;border-radius:2px;font-size:14px;
     font-family:inherit;line-height:1.6;resize:vertical;
     background:var(--bg2);border:1px solid var(--line);color:var(--ink)}
   .shareSay:focus{outline:none;border-color:var(--cold)}
@@ -704,11 +869,11 @@
   .pill.pair{display:inline-flex;align-items:center;gap:3px;padding-left:4px}
   /* 짝이 눈앞에 있는 조각 — 채워서 「지금 맞춰볼 수 있다」를 알린다. */
   .pill.pair.rdy{border-color:var(--good);color:var(--good);animation:pfit 2.4s ease-in-out infinite}
-  @keyframes pfit{0%,100%{box-shadow:0 0 0 0 rgba(126,176,110,0)}50%{box-shadow:0 0 0 3px rgba(126,176,110,.16)}}
-  .pin.door{border-color:var(--gold);color:var(--gold-b)}
-  .pin.door i{background:var(--gold);box-shadow:0 0 0 3px rgba(201,162,74,.22)}
+  @keyframes pfit{0%,100%{box-shadow:0 0 0 0 rgba(63,200,185,0)}50%{box-shadow:0 0 0 3px rgba(63,200,185,.16)}}
+  .pin.door{border-color:var(--case-line);color:var(--case-ink)}
+  .pin.door i{background:var(--case-ink);box-shadow:1px 1px 0 rgba(0,0,0,.6)}
   .mbody::-webkit-scrollbar{width:5px}
-  .mbody::-webkit-scrollbar-thumb{background:#4a4844;border-radius:3px}
+  .mbody::-webkit-scrollbar-thumb{background:#4a4844;border-radius:2px}
   .mbody::-webkit-scrollbar-track{background:transparent}
   /* 바닥 — 액션은 늘 같은 자리에 앉는다. 본문이 길어도 버튼을 찾으러 내려가지 않게. */
   .mfoot{flex:0 0 auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;
@@ -720,7 +885,7 @@
   .dlg{z-index:120}
   .dlg .box{max-width:400px}
   .dlg .mhead{align-items:center;gap:11px;padding:17px 18px 14px}
-  .dlg .dlg-ic{flex:0 0 34px;height:34px;border-radius:11px;display:grid;place-items:center;
+  .dlg .dlg-ic{flex:0 0 34px;height:34px;border-radius:2px;display:grid;place-items:center;
     font-size:16px;background:var(--bg2);border:1px solid var(--line);color:var(--mt)}
   .dlg h2{font-size:17px;line-height:1.35}
   .dlg .mbody{padding:2px 18px 16px;font-size:13.5px;line-height:1.8;color:var(--sub);white-space:pre-line}
@@ -728,7 +893,7 @@
   .dlg .mbody .dlg-warn{margin-top:7px;color:var(--ember-b)}
   .dlg .mfoot{justify-content:stretch}
   .dlg .mfoot .btn{flex:1;justify-content:center;padding:11px 14px;font-size:14px}
-  .dlg input.dlg-in{width:100%;margin-top:11px;padding:10px 12px;border-radius:4px;font-size:14px;
+  .dlg input.dlg-in{width:100%;margin-top:11px;padding:10px 12px;border-radius:2px;font-size:14px;
     background:var(--bg2);border:1px solid var(--line);color:var(--ink)}
   .dlg input.dlg-in:focus{outline:none;border-color:var(--mt)}
   @media(max-width:430px){
@@ -737,8 +902,8 @@
     .mfoot .mf-note{flex-basis:100%;margin:0 0 2px}
   }
   .sec{border-top:1px dashed var(--line);padding-top:11px;margin-top:11px}.sec:first-of-type{border-top:0;margin-top:0;padding-top:0}
-  .sec .h{font-weight:700;color:var(--gold-b);font-size:13.5px;margin-bottom:4px}.sec .b{font-size:14px;color:#dddcdb;line-height:1.72}
-  .frag{background:#0e1620;border:1px solid #2c465a;border-radius:10px;padding:9px 12px;margin:8px 0;color:#cfe0ee;font-size:13.5px}.frag .w{font-size:11px;color:var(--cold);margin-bottom:3px}
+  .sec .h{font-weight:700;color:var(--ink);font-size:13.5px;margin-bottom:4px}.sec .b{font-size:14px;color:#dddcdb;line-height:1.72}
+  .frag{background:#171613;border:1px solid #4b453d;border-radius:2px;padding:9px 12px;margin:8px 0;color:#ddd6cc;font-size:13.5px}.frag .w{font-size:11px;color:var(--cold);margin-bottom:3px}
   .goal{display:flex;gap:8px;font-size:13px;padding:5px 0;border-bottom:1px solid var(--line)}.goal:last-child{border-bottom:0}.goal .pt{margin-left:auto;color:var(--good);font-weight:700;font-family:"PIMM Myeongjo","Nanum Myeongjo",serif}
   /* ── 스와이프 카드 캐러셀 (롤카드·손패 넘겨보기) ── */
   .swipe{position:relative;margin:6px 0 2px}
@@ -772,21 +937,21 @@
   /* 커서가 있는 기기 — 가까워질수록 진해진다. */
   html.cursor .sw-nav{opacity:calc(.1 + .72 * var(--p,0));pointer-events:auto}
   html.cursor .swipe.dragging .sw-nav{opacity:.16}
-  .sw-nav.prev{left:0;border-left:0;border-radius:0 10px 10px 0}
-  .sw-nav.next{right:0;border-right:0;border-radius:10px 0 0 10px}
-  .sw-nav:hover:not(:disabled),.sw-nav:active:not(:disabled){opacity:1 !important;border-color:var(--gold);color:#fff;background:rgba(10,9,8,.9)}
+  .sw-nav.prev{left:0;border-left:0;border-radius:0 2px 2px 0}
+  .sw-nav.next{right:0;border-right:0;border-radius:2px 0 0 2px}
+  .sw-nav:hover:not(:disabled),.sw-nav:active:not(:disabled){opacity:1 !important;border-color:var(--case-line);color:#fff;background:rgba(10,9,8,.9)}
   .sw-nav:disabled{opacity:0;pointer-events:none}
   /* 카드가 화면보다 길면 아래 끝은 아무도 못 본다 — 네비는 바닥에 붙어 따라온다. */
   .sw-top{position:absolute;top:17px;left:0;right:0;z-index:2;display:flex;justify-content:center;pointer-events:none}
   .sw-top .sw-dots{pointer-events:auto}
   .sw-dots{display:flex;gap:7px;justify-content:center;align-items:center;flex-wrap:wrap}
-  .sw-dot{width:6px;height:6px;border-radius:50%;background:#3a3734;transition:.22s;cursor:pointer}
-  .sw-dot.on{background:var(--gold);box-shadow:0 0 8px -1px var(--gold)}
+  .sw-dot{width:6px;height:6px;border-radius:0;background:#3a3734;transition:.22s;cursor:pointer}
+  .sw-dot.on{background:var(--case-ink);box-shadow:1px 1px 0 rgba(0,0,0,.6)}
   /* 큰 카드(롤/손패) */
-  .bigcard{border-radius:16px;padding:18px 18px 20px;background:linear-gradient(165deg,#1d1c1b,#141312);border:1px solid var(--line);min-height:220px}
-  .bigcard.role{border-color:color-mix(in srgb,var(--rc,#8a7a4a) 45%,var(--line));background:linear-gradient(165deg,#201f1e,#151413)}
-  .bigcard.role::before{content:"";display:block;height:3px;width:46px;border-radius:3px;background:var(--rc,var(--gold));margin-bottom:14px}
-  .bigcard.clue{border-color:#5a4a2c;background:linear-gradient(165deg,#241d13,#151413)}
+  .bigcard{border-radius:2px;padding:18px 18px 20px;background:linear-gradient(165deg,#1d1c1b,#141312);border:1px solid var(--line);min-height:220px}
+  .bigcard.role{border-color:color-mix(in srgb,var(--rc,#2f6b57) 45%,var(--line));background:linear-gradient(165deg,#201f1e,#151413)}
+  .bigcard.role::before{content:"";display:block;height:3px;width:46px;border-radius:0;background:var(--rc,var(--cold));margin-bottom:14px}
+  .bigcard.clue{border-color:var(--case-line);background:linear-gradient(165deg,#232019,#151413)}
   .bc-eyebrow{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
   .bc-title{font-weight:800;font-size:20px;line-height:1.28;color:#f2ecdf}
   .bc-title.role{color:var(--rc,#f2ecdf)}
@@ -809,7 +974,7 @@
   .sheeth .sh-meta{flex:1 1 auto;min-width:0;font-size:12px;color:var(--muted);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .shtabs{flex-basis:100%;display:flex;gap:6px;margin-top:10px}
-  .shtab{flex:1;font-family:inherit;font-size:12.5px;font-weight:700;padding:8px 6px;border-radius:9px;
+  .shtab{flex:1;font-family:inherit;font-size:12.5px;font-weight:700;padding:8px 6px;border-radius:2px;
     background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.012));
     background:var(--panel2);border:1px solid var(--line);color:var(--sub);cursor:pointer;transition:.15s;
     display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}
@@ -818,14 +983,14 @@
      채우면 색마다 글자가 묻힌다. */
   .shtab.on{color:#fff;
     background:linear-gradient(180deg,rgba(255,255,255,.085),rgba(255,255,255,.02));
-    border-color:var(--mt,var(--gold));
-    box-shadow:0 0 11px -5px var(--mt,var(--gold))}
+    border-color:var(--mt,var(--case-line));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
   .shtab .n{font-size:10.5px;opacity:.7;font-variant-numeric:tabular-nums}
   .shtab.on .n{opacity:.85}
   /* 아직 안 열어본 탭 — 붉은 점 하나. 글자색을 바꾸면 알림이 아니라 디자인으로 읽힌다. */
   .shtab{position:relative}
   .shtab.unseen::after{content:"";position:absolute;top:5px;right:6px;width:7px;height:7px;
-    border-radius:50%;background:var(--ember);box-shadow:0 0 0 2px var(--panel2),0 0 8px -1px var(--ember);
+    border-radius:0;background:var(--ember);box-shadow:0 0 0 2px var(--panel2),0 0 8px -1px var(--ember);
     animation:tabPulse 1.9s ease-in-out infinite}
   .shtab.on.unseen::after{display:none}
   @keyframes tabPulse{0%,100%{opacity:1}50%{opacity:.4}}
@@ -838,12 +1003,12 @@
   .tipitem{position:relative;padding:11px 0 11px 20px;border-top:1px solid var(--line);
     font-size:13.5px;line-height:1.75;color:#d8d6d4;word-break:keep-all}
   .tipitem:first-child{border-top:0}
-  .tipitem::before{content:"›";position:absolute;left:2px;top:11px;color:var(--gold-b);font-weight:700}
-  .cov-por{width:100%;aspect-ratio:3/4;border-radius:14px;overflow:hidden;
+  .tipitem::before{content:"›";position:absolute;left:2px;top:11px;color:var(--cold);font-weight:700}
+  .cov-por{width:100%;aspect-ratio:3/4;border-radius:2px;overflow:hidden;
     background:linear-gradient(158deg,color-mix(in srgb,var(--rc,#555) 28%,#171615),#0f0e0d)}
   .cov-nm{font-size:26px;font-weight:800;line-height:1.15;word-break:keep-all}
   .cov-sub{font-size:13px;color:var(--muted);margin-top:4px}
-  .cov-hook{margin-top:16px;padding:14px 15px;border-left:3px solid var(--rc,var(--gold));
+  .cov-hook{margin-top:16px;padding:14px 15px;border-left:3px solid var(--rc,var(--cold));
     background:linear-gradient(90deg,color-mix(in srgb,var(--rc,#555) 12%,transparent),transparent);
     white-space:pre-line;font-size:16.5px;line-height:1.75;font-weight:700;color:#fff;word-break:keep-all}
   #sheetModal .cov-hook{font-size:18px;line-height:1.8}
@@ -853,11 +1018,11 @@
   #sheetModal .story p{font-size:16.5px;line-height:2.0;max-width:34em}
   #sheetModal .story p.lede{font-size:18.5px}
   /* 밤 판 아래에 붙는 안내 — 다 읽었는지가 여기서 세어진다 */
-  .vgate{margin-top:14px;padding:13px 15px;border:1px solid color-mix(in srgb,var(--gold) 40%,var(--line));
-    border-radius:12px;background:linear-gradient(180deg,rgba(140,110,50,.13),transparent)}
+  .vgate{margin-top:14px;padding:13px 15px;border:1px solid var(--case-line);
+    border-radius:2px;background:var(--case-off)}
   .vgate.done{border-color:color-mix(in srgb,var(--good) 45%,var(--line));
-    background:linear-gradient(180deg,rgba(70,150,110,.12),transparent)}
-  .vgate .vg-h{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:800;color:var(--gold-b)}
+    background:linear-gradient(180deg,rgba(55,160,150,.12),transparent)}
+  .vgate .vg-h{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:800;color:var(--ink)}
   .vgate.done .vg-h{color:var(--good)}
   .vgate .vg-h svg{width:16px;height:16px}
   .vgate .vg-t{margin-top:6px;font-size:13px;line-height:1.75;color:var(--sub);word-break:keep-all}
@@ -865,31 +1030,31 @@
   .vgate .btn{margin-top:11px;width:100%;justify-content:center}
   /* ── 금고에서 나온 서류 ─────────────────────────────────────
      조사카드가 아니라 다 함께 들여다보는 종이다. 카드 결이 아니라 «문서» 결로 세운다. */
-  .bigcard.k-vault{border-color:color-mix(in srgb,var(--gold) 42%,var(--line))}
+  .bigcard.k-vault{border-color:var(--case-line)}
   .vl-lede{margin-top:13px;font-size:13.5px;line-height:1.85;color:var(--sub);white-space:pre-line;word-break:keep-all}
-  .vdoc{margin-top:16px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg2)}
+  .vdoc{margin-top:16px;border:1px solid var(--line);border-radius:2px;overflow:hidden;background:var(--bg2)}
   .vd-h{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);
-    background:linear-gradient(180deg,rgba(140,110,50,.14),transparent)}
-  .vd-no{flex:0 0 28px;height:28px;display:grid;place-items:center;border-radius:8px;
-    border:1px solid color-mix(in srgb,var(--gold) 50%,transparent);color:var(--gold-b);
+    background:linear-gradient(180deg,rgba(235,230,220,.07),transparent)}
+  .vd-no{flex:0 0 28px;height:28px;display:grid;place-items:center;border-radius:2px;
+    border:1px solid var(--case-line);color:var(--case-ink);
     font-family:"PIMM Myeongjo","Nanum Myeongjo",serif;font-size:15px}
   .vd-w{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
-  .vd-w b{font-size:15px;font-weight:800;color:var(--gold-b);word-break:keep-all}
+  .vd-w b{font-size:15px;font-weight:800;color:var(--ink);word-break:keep-all}
   .vd-w i{font-style:normal;font-size:11.5px;color:var(--muted);word-break:keep-all}
   .vd-n{flex:0 0 auto;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
   /* 그림이 실제로 있을 때만 자리를 차지한다 — 없으면 JS가 이 칸을 지운다 */
   .vd-art{display:none;aspect-ratio:16/10;background-size:cover;background-position:center;
     border-bottom:1px solid var(--line)}
   .vd-art.on{display:block}
-  .vd-q{margin:14px 14px 0;padding:12px 14px;border-left:2px solid var(--gold);
-    background:rgba(140,110,50,.08);border-radius:2px 10px 10px 2px;
+  .vd-q{margin:14px 14px 0;padding:12px 14px;border-left:2px solid var(--cold);
+    background:rgba(195,186,176,.06);border-radius:0 2px 2px 0;
     font-family:"PIMM Myeongjo","Nanum Myeongjo",serif;font-size:16px;line-height:1.9;
-    color:#efe6d4;white-space:pre-line;word-break:keep-all}
+    color:#e6dfd6;white-space:pre-line;word-break:keep-all}
   .vd-notes{margin:12px 14px 14px;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px}
   .vd-notes li{position:relative;padding-left:15px;font-size:14px;line-height:1.8;
     color:#dcdbda;word-break:keep-all}
   .vd-notes li::before{content:"";position:absolute;left:1px;top:.72em;width:5px;height:5px;
-    border-radius:50%;background:var(--gold);opacity:.7}
+    border-radius:0;background:var(--cold);opacity:.7}
   .vd-more{margin-top:14px;text-align:right;font-size:12px;color:var(--muted)}
   .vd-foot{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
   .vd-why{font-size:12.5px;line-height:1.7;color:var(--sub);word-break:keep-all}
@@ -904,11 +1069,11 @@
   .bigcard.k-night{border-color:color-mix(in srgb,var(--cold) 40%,var(--line))}
   .ntb{margin-top:16px}
   .ntb-h{font-size:11.5px;font-weight:800;letter-spacing:.06em;color:var(--muted);margin-bottom:7px}
-  .ntb.post .ntb-h{color:var(--rc,var(--gold))}
-  .ntx{padding:13px 15px;border-radius:11px;background:var(--bg2);
+  .ntb.post .ntb-h{color:var(--rc,var(--cold))}
+  .ntx{padding:13px 15px;border-radius:2px;background:var(--bg2);
     border-left:2px solid var(--line);
     font-size:15.5px;line-height:1.85;color:#e1e0df;white-space:pre-wrap;word-break:keep-all}
-  .ntb.post .ntx{border-left-color:var(--rc,var(--gold))}
+  .ntb.post .ntx{border-left-color:var(--rc,var(--cold))}
   .eyes{margin-top:18px;padding-top:15px;border-top:1px solid var(--line)}
   .eyes-h{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;
     letter-spacing:.06em;color:var(--cold);margin-bottom:11px}
@@ -923,20 +1088,20 @@
   /* ── 소지품 한 장 ─────────────────────────────────────────
      내 것은 판이 열릴 때부터 여기 있다. 남의 것은 압수돼야만 이 자리에 붙는다 —
      그래서 압수된 장은 테를 붉게 세운다. 「이건 이제 내 것이 아니라 증거다」. */
-  .bigcard.k-belong{border-color:color-mix(in srgb,var(--gold) 30%,var(--line))}
+  .bigcard.k-belong{border-color:color-mix(in srgb,var(--rc,var(--case-line)) 30%,var(--line))}
   .bigcard.k-belong.seized{border-color:color-mix(in srgb,var(--bad) 46%,var(--line))}
   .bg-spot{margin-top:3px;font-size:12px;color:var(--muted);letter-spacing:.04em}
   .bg-seized{margin-top:12px;display:flex;align-items:center;gap:7px;padding:9px 12px;
-    border-radius:10px;font-size:13px;line-height:1.6;color:var(--bad);
+    border-radius:2px;font-size:13px;line-height:1.6;color:var(--bad);
     background:color-mix(in srgb,var(--bad) 11%,transparent);
     border:1px solid color-mix(in srgb,var(--bad) 34%,transparent)}
   .bg-seized svg{width:15px;height:15px;flex:0 0 auto}
   .bg-who{margin-top:12px;display:flex;align-items:center;gap:10px}
-  .bg-w{flex:1 1 auto;min-width:0;font-size:13px;font-weight:800;color:var(--rc,var(--gold))}
+  .bg-w{flex:1 1 auto;min-width:0;font-size:13px;font-weight:800;color:var(--rc,var(--cold))}
   .bg-w i{font-style:normal;font-size:10.5px;font-weight:400;color:var(--muted);margin-left:6px}
   .bg-s{flex:0 0 auto;font-size:11.5px;color:var(--muted)}
   .bg-tx{margin-top:13px}
-  .bigcard.k-belong .bg-tx{border-left-color:var(--rc,var(--gold))}
+  .bigcard.k-belong .bg-tx{border-left-color:var(--rc,var(--cold))}
   .bg-note{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);
     font-size:12.5px;line-height:1.8;color:var(--muted);white-space:pre-wrap;word-break:keep-all}
   /* 아직 아무것도 안 쌓인 자리. 채워질 자리라는 게 보이되 읽을 것이 있는 척은 안 한다. */
@@ -950,40 +1115,40 @@
     font-size:14.5px;line-height:1.75;color:#ddd9d7;word-break:keep-all}
   .hideitem:first-child{border-top:0}
   .hideitem::before{counter-increment:hd;content:counter(hd);position:absolute;left:0;top:12px;
-    width:20px;height:20px;border-radius:50%;border:1px solid var(--ember-b);color:var(--ember-b);
+    width:20px;height:20px;border-radius:0;border:1px solid var(--ember-b);color:var(--ember-b);
     font-size:11px;display:grid;place-items:center;font-variant-numeric:tabular-nums}
-  .knownote{margin-top:14px;padding:10px 12px;border:1px dashed var(--line);border-radius:9px;
+  .knownote{margin-top:14px;padding:10px 12px;border:1px dashed var(--line);border-radius:2px;
     font-size:12.5px;line-height:1.7;color:var(--sub)}
-  .knownote b{color:var(--gold-b)}
+  .knownote b{color:var(--ink)}
   /* 해석 노트 — 카드가 무슨 뜻인지 한 줄로 짚어준다(결론은 말하지 않는다) */
-  .cnote{margin-top:12px;padding:9px 11px;border-left:2px solid #5a4a2c;background:rgba(200,160,80,.07);
-    border-radius:0 8px 8px 0;color:#cbbf9f;font-size:13px;line-height:1.7}
-  .cnote b{color:var(--gold-b);font-weight:700;font-size:11.5px;letter-spacing:.06em;display:block;margin-bottom:2px}
+  .cnote{margin-top:12px;padding:9px 11px;border-left:2px solid var(--case-line);background:rgba(235,230,220,.05);
+    border-radius:0 2px 2px 0;color:#cfc9c0;font-size:13px;line-height:1.7}
+  .cnote b{color:var(--cold);font-weight:700;font-size:11.5px;letter-spacing:.06em;display:block;margin-bottom:2px}
   /* 같은 카드를 봐도 사람마다 다른 것이 보인다. 이 칸은 그 배역의 화면에만 있다. */
-  .mynote{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13.5px;line-height:1.75;
-    border:1px solid rgba(120,190,220,.28);background:linear-gradient(180deg,rgba(90,170,205,.13),rgba(90,170,205,.05))}
+  .mynote{margin-top:10px;padding:10px 12px;border-radius:2px;font-size:13.5px;line-height:1.75;
+    border:1px solid rgba(195,186,176,.28);background:linear-gradient(180deg,rgba(195,186,176,.13),rgba(195,186,176,.05))}
   .mynote .lb{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.07em;font-weight:800;
-    color:#9fd4e8;margin-bottom:5px}
+    color:#cbc2b6;margin-bottom:5px}
   .mynote .lb::after{content:"나에게만 보입니다";margin-left:auto;font-weight:600;letter-spacing:0;
-    font-size:10.5px;color:#7fa8bb;opacity:.9}
-  .mynote .tx{color:#dce9ef}
-  .mynote.keep{border-color:rgba(214,176,96,.42);background:linear-gradient(180deg,rgba(214,176,96,.15),rgba(214,176,96,.05))}
-  .mynote.keep .lb{color:var(--gold-b)} .mynote.keep .lb::after{color:#a5906a} .mynote.keep .tx{color:#f0e6d2}
+    font-size:10.5px;color:#9a938a;opacity:.9}
+  .mynote .tx{color:#e2dbd2}
+  .mynote.keep{border-color:rgba(195,186,176,.34);background:linear-gradient(180deg,rgba(195,186,176,.10),rgba(195,186,176,.04))}
+  .mynote.keep .lb{color:var(--cold)} .mynote.keep .lb::after{color:#9a938a} .mynote.keep .tx{color:#e2dbd2}
   .bc-avwrap{display:flex;align-items:center;gap:14px;margin-bottom:6px}
-  .bc-av{font-size:34px;width:60px;height:60px;display:grid;place-items:center;background:var(--bg);border-radius:15px;flex:0 0 60px;border:1px solid var(--line);overflow:hidden}
+  .bc-av{font-size:34px;width:60px;height:60px;display:grid;place-items:center;background:var(--bg);border-radius:2px;flex:0 0 60px;border:1px solid var(--line);overflow:hidden}
   .bc-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
-  .bc-hidden{margin-top:14px;background:#2a1412;border:1px solid #6a2a26;border-radius:10px;padding:10px 13px;color:#f0b8b0;font-size:13.5px;font-weight:600}
+  .bc-hidden{margin-top:14px;background:#2a1412;border:1px solid #6a2a26;border-radius:2px;padding:10px 13px;color:#f0b8b0;font-size:13.5px;font-weight:600}
   /* 옛일 연표 — 배역이 아는 만큼만 적힌 줄들. 산문 한 덩어리로 읽으면 눈이 미끄러지는데
      날짜를 왼쪽에 세워두면 훑어보고 필요한 줄에서만 멈출 수 있다. */
   .tl{position:relative;margin-top:16px;padding-left:15px}
   .tl::before{content:"";position:absolute;left:3px;top:6px;bottom:6px;width:1px;
-    background:linear-gradient(180deg,transparent,var(--rc,var(--gold)) 12%,var(--rc,var(--gold)) 88%,transparent);opacity:.45}
+    background:linear-gradient(180deg,transparent,var(--rc,var(--cold)) 12%,var(--rc,var(--cold)) 88%,transparent);opacity:.45}
   .tl-r{position:relative;padding:0 0 15px 0}
   .tl-r:last-child{padding-bottom:0}
-  .tl-r::before{content:"";position:absolute;left:-15px;top:7px;width:7px;height:7px;border-radius:50%;
-    background:var(--bg2);border:1.5px solid var(--rc,var(--gold))}
-  .tl-r.last::before{background:var(--rc,var(--gold));box-shadow:0 0 0 3px color-mix(in srgb,var(--rc,var(--gold)) 22%,transparent)}
-  .tl-w{font-size:12px;letter-spacing:.06em;color:var(--rc,var(--gold-b));font-weight:700;
+  .tl-r::before{content:"";position:absolute;left:-15px;top:7px;width:7px;height:7px;border-radius:0;
+    background:var(--bg2);border:1.5px solid var(--rc,var(--cold))}
+  .tl-r.last::before{background:var(--rc,var(--cold));box-shadow:1px 1px 0 rgba(0,0,0,.6)}
+  .tl-w{font-size:12px;letter-spacing:.06em;color:var(--rc,var(--cold));font-weight:700;
     margin-bottom:3px;word-break:keep-all}
   .tl-t{font-size:15px;line-height:1.75;color:#dddcdb;word-break:keep-all;text-wrap:pretty}
   #sheetModal .tl-w{font-size:13px}
@@ -1009,7 +1174,7 @@
   #sheetModal .bc-title{font-size:24px;line-height:1.3}
   #sheetModal .bc-sub{font-size:14.5px;margin-top:5px}
   #sheetModal .bc-body{font-size:17px;line-height:1.92;margin-top:17px;max-width:60ch}
-  #sheetModal .bc-av{font-size:38px;width:66px;height:66px;flex:0 0 66px;border-radius:16px}
+  #sheetModal .bc-av{font-size:38px;width:66px;height:66px;flex:0 0 66px;border-radius:2px}
   #sheetModal .bc-hidden{font-size:14.5px;padding:12px 15px;margin-top:16px}
   #sheetModal .bc-goal{font-size:16.5px;padding:12px 0;line-height:1.6}
   #sheetModal .frag{font-size:14.5px;line-height:1.75;padding:11px 14px}
@@ -1017,11 +1182,11 @@
   /* 남의 차례 대기 — 점 하나라도 움직여야 «멈춘 화면»으로 안 읽힌다. */
   .tb-tick{display:inline-flex;align-items:center;gap:6px;margin-left:8px;font-size:11.5px;
     color:var(--muted);font-variant-numeric:tabular-nums}
-  .tb-tick i{width:6px;height:6px;border-radius:50%;background:var(--cold);animation:tbpulse 1s ease-in-out infinite}
+  .tb-tick i{width:6px;height:6px;border-radius:0;background:var(--cold);animation:tbpulse 1s ease-in-out infinite}
   @keyframes tbpulse{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
   @media (prefers-reduced-motion:reduce){.tb-tick i{animation:none;opacity:.8}}
   .tb-wait .btn.sm{margin-left:8px}
-  .turnbar{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:9px 11px;margin-bottom:10px}
+  .turnbar{background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:9px 11px;margin-bottom:10px}
   /* 진행바와 같은 좌표계 — 지금 차례가 늘 한가운데 서고 레일이 밀린다.
      옆으로 굴리게 두니 여섯 명 중 끝사람이 잘려 안 보였다. */
   .tb-order{position:relative;overflow:hidden;margin:0 -11px;padding:1px 0;touch-action:none;
@@ -1029,16 +1194,19 @@
     mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent)}
   .tb-rail{display:flex;gap:6px;width:max-content;
     transition:transform .42s cubic-bezier(.22,.9,.24,1);will-change:transform}
-  .tb-chip{display:flex;align-items:center;gap:5px;font-size:12px;padding:4px 10px 4px 8px;border-radius:999px;
+  .tb-chip{display:flex;align-items:center;gap:5px;font-size:12px;padding:4px 10px 4px 8px;border-radius:2px;
     white-space:nowrap;flex:0 0 auto;
     border:1px solid var(--line);background:var(--bg);color:var(--sub);opacity:.55;transition:.2s}
   .tb-chip .tg{font-family:"SF Mono",Consolas,monospace;font-size:9px;letter-spacing:.1em;
-    text-transform:uppercase;color:var(--gold-b);margin-left:1px}
-  .tb-chip .d{width:8px;height:8px;border-radius:50%;background:var(--tc,#888);flex:0 0 auto}
+    text-transform:uppercase;color:var(--cold);margin-left:1px}
+  .tb-chip .d{width:8px;height:8px;border-radius:0;background:var(--tc,#888);flex:0 0 auto;
+    box-shadow:1px 1px 0 rgba(0,0,0,.65)}
   /* 지금 차례 — 채우지 않고 테두리·발광으로만 짚는다. 글자는 흰색을 지킨다. */
-  .tb-chip.on{opacity:1;color:#fff;border-color:color-mix(in srgb,var(--tc,var(--gold)) 62%,var(--line));
-    background:linear-gradient(180deg,color-mix(in srgb,var(--tc,var(--gold)) 17%,#1b1a19),#141312);
-    box-shadow:0 0 14px -4px var(--tc,var(--gold)),inset 0 1px 0 rgba(255,255,255,.07)}
+  /* ★ 초록 ② — 「지금 차례」는 위치 표시다. 틀만 초록으로 켜고, 칩 안의 점(.d)은
+     그 사람의 배역색 그대로 둔다. 그래서 «지금»과 «누구»가 한 칩 안에서 갈린다. */
+  .tb-chip.on{opacity:1;color:#fff;border-color:var(--gold);
+    background:linear-gradient(180deg,rgba(0,230,147,.14),#141312);
+    box-shadow:0 0 10px -4px var(--gold),2px 2px 0 rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.07)}
   .tb-chip.done{opacity:.4;text-decoration:line-through}
   .turnbar .tb-act{margin-top:9px;display:flex;gap:8px;flex-wrap:wrap}
   .turnbar .tb-act .btn{flex:1;min-width:120px;text-align:center}
@@ -1049,25 +1217,25 @@
   .gm-main{flex:1 1 auto;display:flex;min-height:0}
   .gm-matrix{flex:1.3 1 0;overflow-y:auto;padding:14px 16px 30px;min-width:0}
   .gm-side{flex:1 1 0;max-width:440px;display:flex;flex-direction:column;min-height:0;border-left:1px solid var(--line);background:var(--bg2)}
-  .gm-side-h{padding:10px 14px;font-weight:700;font-size:13px;color:var(--gold-b);border-bottom:1px solid var(--line);flex:0 0 auto}
+  .gm-side-h{padding:10px 14px;font-weight:700;font-size:13px;color:var(--ink);border-bottom:1px solid var(--line);flex:0 0 auto}
   .gm-side #gmChat{flex:1 1 auto;overflow-y:auto;min-height:0}
   .gm-side .composer{flex:0 0 auto;border-top:1px solid var(--line)}
   @media(max-width:820px){ .gm-main{flex-direction:column;overflow-y:auto} .gm-matrix{flex:none;overflow:visible} .gm-side{flex:none;max-width:none;border-left:0;border-top:1px solid var(--line);height:60vh} }
-  .gm-guide{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 15px;margin-bottom:14px}
-  .gm-guide .g{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--gold-b);border:1px solid var(--gold);border-radius:6px;padding:1px 7px;margin-right:8px}
-  .gm-guide .il{margin-top:8px;color:#e8dfb0;font-style:italic;font-size:13px}
+  .gm-guide{background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:12px 15px;margin-bottom:14px}
+  .gm-guide .g{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--case-ink);border:1px solid var(--case-line);border-radius:2px;padding:1px 7px;margin-right:8px}
+  .gm-guide .il{margin-top:8px;color:#ddd6cc;font-style:italic;font-size:13px}
   .gm-note{color:var(--muted);font-size:12px;margin:2px 0 14px}
   /* 진행석으로 모인 종막 답안 — 낭독하며 훑는 자리라 왼쪽에 배역색을 세워 구분한다 */
   .gm-ans{margin-top:22px;text-align:left;display:flex;flex-direction:column;gap:12px}
-  .gm-a{border:1px solid var(--line);border-left:3px solid var(--ac);border-radius:11px;
+  .gm-a{border:1px solid var(--line);border-left:3px solid var(--ac);border-radius:2px;
     padding:13px 15px;background:var(--panel)}
   .gm-a .ah{font-weight:800;font-size:14.5px;color:var(--ac);margin-bottom:8px}
-  .gm-a .aq{font-size:12px;color:var(--gold-b);margin-top:9px}
+  .gm-a .aq{font-size:12px;color:var(--cold);margin-top:9px}
   .gm-a .ab{font-size:13.5px;line-height:1.75;color:#dddcdb;white-space:pre-wrap;word-break:keep-all}
   .gm-pick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0}
   .gm-pick .pl{font-size:11.5px;color:var(--muted);letter-spacing:.06em;margin-right:2px}
   .gm-pick .pk{display:inline-flex;align-items:center;gap:6px;background:var(--panel);
-    border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer}
+    border:1px solid var(--line);border-radius:2px;padding:5px 11px;font-size:12.5px;cursor:pointer}
   .gm-pick .pk.on{border-color:var(--pc);background:color-mix(in srgb,var(--pc) 20%,var(--panel));color:#fff}
   .gm-pick .pk.full{opacity:.5}
   .gm-pick .pk .n{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -1076,28 +1244,28 @@
     padding:0 2px 6px;border-bottom:1px solid var(--line);margin-bottom:8px}
   .gm-zone .zn{margin-left:auto;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
   .gcells{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:7px}
-  .gcell{position:relative;background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+  .gcell{position:relative;background:var(--panel2);border:1px solid var(--line);border-radius:2px;
     padding:9px 8px;min-height:62px;cursor:pointer;transition:.13s;display:flex;flex-direction:column;gap:3px}
-  .gcell:hover{border-color:var(--gold)}
+  .gcell:hover{border-color:var(--case-line)}
   .gcell.nopick{cursor:default;opacity:.75}
   .gcell .cid{font-size:12px;color:var(--sub);line-height:1.35}
   .gcell .cspot{font-size:11.5px;color:var(--sub);line-height:1.35}
   .gcell .cwho{font-size:12px;font-weight:700;color:var(--cc)}
-  .gcell.took{background:linear-gradient(150deg,#3a2c12,#241d0e);border-color:var(--cc)}
-  .gcell.pub{background:linear-gradient(150deg,#16303f,#0f1b23);border-color:var(--cold)}
+  .gcell.took{background:linear-gradient(150deg,#332f2a,#232019);border-color:var(--cc)}
+  .gcell.pub{background:linear-gradient(150deg,#26231d,#1a1815);border-color:var(--cold)}
   .gcell.pub .cwho{color:var(--cold)}
   .gcell .pubtag{margin-left:5px;font-size:9px;color:var(--cold);border:1px solid var(--cold);
-    border-radius:4px;padding:0 3px;font-family:inherit;letter-spacing:.02em}
+    border-radius:2px;padding:0 3px;font-family:inherit;letter-spacing:.02em}
   .gcell .rq{position:absolute;top:5px;right:6px;font-size:9.5px;color:var(--warn);opacity:.8}
   @keyframes gmMarkPop{0%{transform:scale(.9)}60%{transform:scale(1.04)}100%{transform:none}}
   .gcell.justmark{animation:gmMarkPop .35s ease}
   .gm-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--sub);margin-bottom:10px}
-  .gm-legend b{display:inline-block;width:13px;height:13px;border-radius:4px;vertical-align:-2px;margin-right:4px}
-  .cell{width:44px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--sub);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.12s;position:relative}
-  .cell:hover:not(.locked){border-color:var(--gold);color:#fff}
-  .cell.on{background:linear-gradient(150deg,#1f1e1d,#282726);border-color:var(--cc,var(--gold));color:#fff;box-shadow:0 0 13px -3px var(--cc,var(--gold))}
-  .cell.on::after{content:"";position:absolute;top:-5px;right:-4px;background:var(--cc,var(--gold)) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23121110' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.4 9.6 17 19 6.6'/></svg>") center/9px 9px no-repeat;border-radius:50%;width:14px;height:14px;line-height:14px;text-align:center;font-weight:800}
-  @keyframes markPop{0%{transform:scale(1)}28%{transform:scale(1.28);box-shadow:0 0 20px 3px var(--cc,var(--gold))}60%{transform:scale(.96)}100%{transform:scale(1)}}
+  .gm-legend b{display:inline-block;width:13px;height:13px;border-radius:2px;vertical-align:-2px;margin-right:4px}
+  .cell{width:44px;height:34px;border-radius:2px;border:1px solid var(--line);background:var(--panel2);color:var(--sub);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.12s;position:relative}
+  .cell:hover:not(.locked){border-color:var(--case-line);color:#fff}
+  .cell.on{background:linear-gradient(150deg,#1f1e1d,#282726);border-color:var(--cc,var(--case-line));color:#fff;box-shadow:2px 2px 0 rgba(0,0,0,.55)}
+  .cell.on::after{content:"";position:absolute;top:-5px;right:-4px;background:var(--cc,var(--case-ink)) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23121110' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.4 9.6 17 19 6.6'/></svg>") center/9px 9px no-repeat;border-radius:0;width:14px;height:14px;line-height:14px;text-align:center;font-weight:800}
+  @keyframes markPop{0%{transform:scale(1)}28%{transform:scale(1.28);box-shadow:0 0 20px 3px var(--cc,var(--case-ink))}60%{transform:scale(.96)}100%{transform:scale(1)}}
   .cell.justmark{animation:markPop .75s cubic-bezier(.2,.8,.2,1)}
   .cell.dim{opacity:.4}
   /* GM 시네마틱 낭독 패널 */
@@ -1120,21 +1288,21 @@
   /* 조사카드 모달 공개 */
   @keyframes boxReveal{0%{transform:perspective(1200px) rotateX(14deg) translateY(24px) scale(.94);opacity:0;filter:blur(6px)}100%{transform:none;opacity:1;filter:none}}
   .modal .box.reveal{animation:boxReveal .5s cubic-bezier(.16,.8,.24,1) both}
-  @keyframes glowPulse{0%{box-shadow:var(--shadow),0 0 0 0 rgba(201,162,74,.0)}30%{box-shadow:var(--shadow),0 0 34px 4px rgba(201,162,74,.45)}100%{box-shadow:var(--shadow),0 0 0 0 rgba(201,162,74,0)}}
+  @keyframes glowPulse{0%{box-shadow:var(--shadow),0 0 0 0 rgba(240,235,225,0)}30%{box-shadow:var(--shadow),0 0 34px 4px rgba(240,235,225,.32)}100%{box-shadow:var(--shadow),0 0 0 0 rgba(240,235,225,0)}}
   .modal .box.reveal.clue{animation:boxReveal .5s cubic-bezier(.16,.8,.24,1) both,glowPulse 1.5s ease .3s 1}
   /* 충격 단서(A5류) — 붉은 섬광 + 흔들림 */
   @keyframes shockFlash{0%{transform:none}8%{transform:translateX(-5px)}16%{transform:translateX(5px)}24%{transform:translateX(-4px)}32%{transform:translateX(3px)}40%{transform:none}}
   @keyframes shockTint{0%{box-shadow:var(--shadow),inset 0 0 0 0 rgba(200,68,47,0)}20%{box-shadow:var(--shadow),inset 0 0 60px 6px rgba(200,68,47,.5)}100%{box-shadow:var(--shadow),inset 0 0 0 0 rgba(200,68,47,0)}}
   .modal .box.reveal.shock{animation:boxReveal .4s ease both,shockFlash .5s ease .35s 1,shockTint 1.6s ease .35s 1}
   /* 미끼 단서 — 금빛 어른거림 */
-  @keyframes baitShimmer{0%,100%{box-shadow:var(--shadow)}50%{box-shadow:var(--shadow),0 0 26px 2px rgba(201,162,74,.32)}}
+  @keyframes baitShimmer{0%,100%{box-shadow:var(--shadow)}50%{box-shadow:var(--shadow),0 0 26px 2px rgba(240,235,225,.24)}}
   .modal .box.reveal.bait{animation:boxReveal .5s ease both,baitShimmer 2.2s ease .3s 2}
 
   /* 기억의 파편 떠오름 */
   @keyframes fragSurface{0%{opacity:0;filter:blur(8px);transform:translateY(10px)}100%{opacity:1;filter:blur(0);transform:none}}
   .frag{animation:fragSurface .7s ease both}
-  .frag.newfrag{border-color:#4d7ea6;box-shadow:0 0 22px -4px rgba(127,180,214,.55)}
-  @keyframes fragPing{0%,100%{box-shadow:0 0 0 0 rgba(127,180,214,0)}40%{box-shadow:0 0 26px 2px rgba(127,180,214,.6)}}
+  .frag.newfrag{border-color:#6e675e;box-shadow:0 0 22px -4px rgba(195,186,176,.55)}
+  @keyframes fragPing{0%,100%{box-shadow:0 0 0 0 rgba(195,186,176,0)}40%{box-shadow:0 0 26px 2px rgba(195,186,176,.6)}}
   .frag.newfrag{animation:fragSurface .7s ease both,fragPing 1.8s ease .5s 2}
 
   /* ── 오프닝 비주얼노벨 ──────────────────────────────────────────
@@ -1151,11 +1319,25 @@
     transition:opacity .55s ease, transform 7s linear;opacity:0;transform:scale(1.07);
     will-change:transform,opacity}
   #vn .vn-bg.show{opacity:1;transform:scale(1)}
-  /* 이미지가 없을 때의 폴백 — 컷 분위기를 색으로만 낸다 */
-  #vn .vn-bg.calm{background-image:radial-gradient(120% 90% at 50% 35%,#1b2733,#0a0f16 60%,#05070a)}
-  #vn .vn-bg.bg{background-image:radial-gradient(120% 90% at 50% 40%,#2a0f10,#12060a 60%,#05070a)}
-  #vn .vn-bg.body{background-image:radial-gradient(110% 80% at 50% 60%,#24080b,#0d0508 60%,#050403)}
-  #vn .vn-bg.scene{background-image:radial-gradient(120% 90% at 45% 40%,#231017,#0c0b0a 62%,#05070a)}
+  /* 그림이 아직 없을 때의 폴백 — 컷마다 바탕색만 다르게 두고, 그 위에 8비트 격자와
+     빗금을 깐다. 「여기에 그림이 들어온다」가 보이되 글은 그대로 읽힌다.
+     그림을 찾으면 JS 가 인라인 background-image 로 덮으므로 이 층은 자동으로 가려진다. */
+  #vn .vn-bg.calm,#vn .vn-bg.bg,#vn .vn-bg.body,#vn .vn-bg.scene{
+    background-image:
+      repeating-linear-gradient(45deg,rgba(235,230,220,.045) 0 9px,transparent 9px 18px),
+      repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 1px,transparent 1px 12px),
+      repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0 1px,transparent 1px 12px),
+      radial-gradient(120% 90% at 50% 40%,var(--vnk,#1a1a17),#0a0a09 62%,#060505);
+    image-rendering:pixelated}
+  #vn .vn-bg.calm{--vnk:#16211d}
+  #vn .vn-bg.bg{--vnk:#2a0f10}
+  #vn .vn-bg.body{--vnk:#24080b}
+  #vn .vn-bg.scene{--vnk:#231017}
+  /* 「그림 없음」 표 — 그림을 실제로 찾은 컷(인라인 url 이 붙은 컷)에는 안 뜬다 */
+  #vn .vn-bg:not([style*="url"])::after{content:"그림 없음";position:absolute;
+    left:50%;top:32%;transform:translateX(-50%);
+    font-family:var(--mono);font-size:1.5cqw;letter-spacing:.34em;line-height:1;
+    color:rgba(235,230,220,.42);border:1px solid rgba(235,230,220,.22);padding:.8cqw 1.6cqw}
   #vn .vn-vig{position:absolute;inset:0;pointer-events:none;
     box-shadow:inset 0 0 14cqw 5cqw rgba(0,0,0,.85);
     background:linear-gradient(0deg,rgba(5,4,3,.95) 0%,rgba(5,4,3,.6) 26%,transparent 52%)}
@@ -1163,18 +1345,26 @@
   /* 인물 컷 — 인물 이미지는 배경이 딸린 완성 일러스트라 누끼 스프라이트처럼 쓸 수 없다.
      그래서 극화 만화의 인물 컷처럼 테두리를 준 패널로 세우고, 아랫단은 텍스트박스 뒤로 물린다.
      말하는 동안은 뒷배경을 눌러 인물이 앞으로 나오게 한다. */
-  #vn .vn-sprite{position:absolute;right:5cqw;bottom:20cqw;height:52%;width:auto;
-    object-fit:cover;border-radius:.5cqw;
-    border:.12cqw solid color-mix(in srgb,var(--spk,#c9c2b4) 55%,transparent);
-    box-shadow:0 1cqw 4.5cqw rgba(0,0,0,.75), 0 0 0 .5cqw rgba(5,4,3,.55);
+  #vn .vn-sprite{position:absolute;right:5cqw;bottom:15cqw;height:56%;width:auto;
+    object-fit:cover;border-radius:0;
+    border:.16cqw solid color-mix(in srgb,var(--spk,#c3bab0) 62%,transparent);
+    box-shadow:.6cqw .6cqw 0 rgba(0,0,0,.75), 0 0 0 .25cqw rgba(5,4,3,.85);
     opacity:0;transform:translate(1.6cqw,1.2cqw) scale(.985);
     transition:opacity .42s ease, transform .42s cubic-bezier(.2,.7,.3,1)}
   #vn .vn-sprite.show{opacity:1;transform:none}
-  /* 이미지가 없는 배역은 이모지로 대신한다 */
-  #vn .vn-emo{position:absolute;right:11cqw;bottom:24cqw;font-size:14cqw;line-height:1;
+  /* 초상이 아직 없는 배역 — 이모지(또는 이름 첫 글자)를 8비트 픽셀 액자에 넣어 세운다.
+     스프라이트가 들어올 자리를 미리 잡아두는 셈이라, 그림이 붙어도 화면이 안 흔들린다. */
+  #vn .vn-emo{position:absolute;right:5cqw;bottom:15cqw;width:26cqw;height:56%;
+    display:grid;place-items:center;font-size:11cqw;line-height:1;
+    background:var(--ph);image-rendering:pixelated;
+    border:.16cqw solid color-mix(in srgb,var(--spk,#c3bab0) 45%,transparent);
+    box-shadow:.6cqw .6cqw 0 rgba(0,0,0,.7);
     opacity:0;transform:translateY(1.2cqw);transition:opacity .42s ease,transform .42s ease;
-    filter:drop-shadow(0 0 2cqw rgba(0,0,0,.9)) saturate(.7)}
-  #vn .vn-emo.show{opacity:.9;transform:none}
+    filter:drop-shadow(.2cqw .2cqw 0 rgba(0,0,0,.9)) saturate(.75)}
+  #vn .vn-emo.show{opacity:.92;transform:none}
+  #vn .vn-emo::after{content:"그림 없음";position:absolute;left:50%;bottom:1.2cqw;
+    transform:translateX(-50%);font-family:var(--mono);font-size:1.2cqw;letter-spacing:.24em;
+    color:rgba(235,230,220,.45);white-space:nowrap}
   /* 말하는 동안 뒤를 눌러 인물을 앞으로 낸다. 예전엔 .vn-bg 에 filter:brightness 를 걸었는데,
      같은 레이어가 7초짜리 확대를 동시에 돌고 있어서 브라우저가 매 프레임 배경 전체를
      필터링해 다시 그렸다. 어둡게 하는 일은 겹쳐놓은 검은 판의 불투명도로 옮긴다 —
@@ -1183,22 +1373,24 @@
     opacity:0;transition:opacity .5s ease}
   #vn.speak .vn-dim{opacity:.52}
 
-  /* 텍스트박스 */
-  #vn .vn-box{position:absolute;left:0;right:0;bottom:0;padding:0 6cqw 5cqw;
+  /* 텍스트박스 — 컷은 «적은 글 + 큰 그림» 이 원칙이다. 그래서 글상자는 무대 한가운데로
+     떠 있지 않고 바닥에 딱 붙어 화면 폭을 다 쓴다. 위쪽은 통째로 그림 자리가 된다.
+     예전엔 좌우 6cqw · 아래 5cqw 를 띄운 «떠 있는 판» 이라 그림이 사방에서 잘려 보였다.
+     칸 자체는 두 줄 남짓만 잡는다(min-height) — 글이 길어지면 그만큼만 아래로 자란다. */
+  #vn .vn-box{position:absolute;left:0;right:0;bottom:0;padding:0;
     display:flex;flex-direction:column;align-items:flex-start}
-  #vn .vn-name{display:none;align-self:flex-start;margin:0 0 -.35cqw 1.2cqw;
-    padding:.75cqw 2.2cqw;border-radius:.6cqw .6cqw 0 0;
-    font-size:1.85cqw;letter-spacing:.06em;font-weight:700;color:#0b0a09;
-    background:var(--spk,#c9c2b4);box-shadow:0 -.2cqw 1.2cqw rgba(0,0,0,.5)}
+  #vn .vn-name{display:none;align-self:flex-start;margin:0 0 0 4cqw;
+    padding:.75cqw 2.2cqw;border-radius:0;
+    font-family:var(--mono);font-size:1.75cqw;letter-spacing:.14em;font-weight:700;color:#0b0a09;
+    background:var(--spk,#c3bab0);box-shadow:.25cqw .25cqw 0 rgba(0,0,0,.6)}
   #vn.speak .vn-name{display:block}
-  #vn .vn-panel{width:100%;min-height:15cqw;padding:2.6cqw 3cqw;
-    background:linear-gradient(180deg,rgba(10,9,8,.9),rgba(7,6,5,.96));
-    border:1px solid rgba(255,255,255,.13);border-radius:.9cqw;
-    box-shadow:0 .6cqw 4cqw rgba(0,0,0,.6)}
-  #vn.speak .vn-panel{border-left:.35cqw solid var(--spk,#c9c2b4)}
+  #vn .vn-panel{width:100%;min-height:11cqw;padding:2.2cqw 4cqw 2.4cqw;
+    background:linear-gradient(180deg,rgba(8,10,9,.94),rgba(4,6,5,.985));
+    border:0;border-top:.22cqw solid rgba(235,230,220,.30);border-radius:0}
+  #vn.speak .vn-panel{border-top-color:var(--spk,#c3bab0)}
   #vn .vn-line{font-family:"PIMM Myeongjo","Nanum Myeongjo","AppleMyungjo",serif;color:#f2ecdf;
-    font-size:2.5cqw;line-height:1.78;letter-spacing:-.005em;
-    text-shadow:0 .2cqw 1.2cqw rgba(0,0,0,.95);
+    font-size:2.4cqw;line-height:1.78;letter-spacing:-.005em;
+    text-shadow:.12cqw .12cqw 0 rgba(0,0,0,.95);
     word-break:keep-all;text-wrap:balance;min-height:1.78em}
   #vn .vn-line+.vn-line{margin-top:.7cqw}
   #vn.speak .vn-line{color:#fff}
@@ -1213,12 +1405,12 @@
 
   #vn .vn-bar{display:flex;align-items:center;gap:1.4cqw;margin-top:1.8cqw;width:100%}
   #vn .vn-dots{display:flex;gap:.55cqw;flex:1;flex-wrap:wrap}
-  #vn .vn-dot{width:.62cqw;height:.62cqw;border-radius:50%;background:rgba(255,255,255,.22)}
-  #vn .vn-dot.on{background:var(--ember-b);width:2cqw;border-radius:.31cqw}
+  #vn .vn-dot{width:.62cqw;height:.62cqw;border-radius:0;background:rgba(255,255,255,.22)}
+  #vn .vn-dot.on{background:var(--ember-b);width:2cqw;border-radius:2px}
   #vn .vn-hint{font-size:1.4cqw;color:rgba(255,255,255,.5);letter-spacing:.04em;white-space:nowrap}
   #vn .vn-tools{position:absolute;top:2.2cqw;right:2.2cqw;z-index:4;display:flex;gap:1cqw}
   #vn .vn-tool{background:rgba(6,5,4,.62);border:1px solid rgba(255,255,255,.18);
-    color:rgba(255,255,255,.72);border-radius:999px;padding:.8cqw 1.9cqw;
+    color:rgba(255,255,255,.72);border-radius:2px;padding:.8cqw 1.9cqw;
     font-size:1.5cqw;font-family:inherit;cursor:pointer;line-height:1.3}
   #vn .vn-tool:hover{color:#fff;border-color:var(--ember-b)}
 
@@ -1236,7 +1428,7 @@
     animation:vnRise 1.9s ease-out 1}
   /* 밤이 내려앉는다 — 그림이 천천히 꺼지고 그대로 어둠에 머문다.
      글자는 위 칸(.vn-box)에 있어서 안 덮인다. 읽을 것은 계속 읽혀야 한다. */
-  #vn .vn-stage.fx-nightfall .vn-flash{background:#04060b;animation:vnNightfall 3.4s cubic-bezier(.35,0,.5,1) forwards}
+  #vn .vn-stage.fx-nightfall .vn-flash{background:#050404;animation:vnNightfall 3.4s cubic-bezier(.35,0,.5,1) forwards}
   /* .show 가 붙은 스프라이트만 꺼진다. 화자 없는 컷에도 걸어놨더니
      앞 컷 사람이 opacity:1 로 되살아났다가 사라졌다 — 깜빡이는 것처럼 보였다. */
   #vn .vn-stage.fx-nightfall .vn-sprite.show{animation:vnFadeOut 3.4s cubic-bezier(.35,0,.5,1) forwards}
@@ -1244,7 +1436,7 @@
      하면 매 프레임 다시 굽는다 — 폰에서 눈에 띄게 버벅였다. 위의 어둠막(.vn-flash)이
      94% 를 덮으므로 색을 죽인 것과 보이는 결과가 거의 같다. */
   /* 이미 어두워진 다음 컷 — 애니메이션 없이 그 자리에 머문다 */
-  #vn .vn-stage.fx-night .vn-flash{background:#04060b;opacity:.94}
+  #vn .vn-stage.fx-night .vn-flash{background:#050404;opacity:.94}
   @keyframes vnNightfall{0%{opacity:0}14%{opacity:.12}55%{opacity:.62}100%{opacity:.94}}
   @keyframes vnFadeOut{0%{opacity:1}100%{opacity:0}}
   @media(prefers-reduced-motion:reduce){
@@ -1271,17 +1463,20 @@
     #vn .vn-stage{width:100vw;height:100dvh}
     #vn .vn-line{font-size:5.2cqw}
     #vn .vn-line+.vn-line{margin-top:1.6cqw}
-    #vn .vn-name{font-size:3.9cqw;margin-left:2.5cqw;padding:1.5cqw 4cqw;border-radius:1.4cqw 1.4cqw 0 0}
+    #vn .vn-name{font-size:3.4cqw;margin-left:5cqw;padding:1.5cqw 4cqw;border-radius:0}
     #vn .vn-hint{font-size:3.1cqw}
-    #vn .vn-tool{font-size:3.4cqw;padding:1.6cqw 3.8cqw;border-radius:999px}
+    #vn .vn-tool{font-size:3.4cqw;padding:1.6cqw 3.8cqw;border-radius:2px}
     #vn .vn-tools{top:4cqw;right:4cqw;gap:2cqw}
-    #vn .vn-box{padding:0 5cqw 7cqw}
-    #vn .vn-panel{min-height:30cqw;padding:5cqw;border-radius:2cqw}
+    /* 세로 폰에서도 원칙은 같다 — 그림이 위를 다 쓰고, 글은 바닥에 붙은 띠로만 얹힌다 */
+    #vn .vn-box{padding:0}
+    #vn .vn-panel{min-height:24cqw;padding:4.5cqw 5cqw 5cqw;border-radius:0}
     #vn .vn-bar{margin-top:4cqw;gap:3cqw}
     #vn .vn-dot{width:1.4cqw;height:1.4cqw}
-    #vn .vn-dot.on{width:4.2cqw;border-radius:.7cqw}
-    #vn .vn-sprite{height:38%;bottom:36cqw;right:6cqw;border-radius:1.4cqw}
-    #vn .vn-emo{font-size:22cqw;bottom:42cqw;right:12cqw}
+    #vn .vn-dot.on{width:4.2cqw;border-radius:0}
+    #vn .vn-sprite{height:40%;bottom:30cqw;right:6cqw;border-radius:0}
+    #vn .vn-emo{font-size:20cqw;width:52cqw;height:40%;bottom:30cqw;right:6cqw}
+    #vn .vn-emo::after{font-size:2.6cqw;bottom:2.5cqw}
+    #vn .vn-bg:not([style*="url"])::after{font-size:3.2cqw;top:26%;padding:1.6cqw 3cqw}
     #vn .vn-vig{box-shadow:inset 0 0 28cqw 10cqw rgba(0,0,0,.85)}
   }
   @media(prefers-reduced-motion:reduce){
@@ -1295,23 +1490,23 @@
      '누가 무엇을 쥐었나'는 그 줄을 열어봐야 알았고, 그게 이 화면의 존재 이유였다.
      조사카드를 전부 펼쳐놓고 카드마다 임자를 붙인다(관리자 훑어보기와 같은 결).
      남의 손패는 임자만 보인다 — 제목·본문은 전체공개된 것만 나온다. */
-  .dashhead{margin:16px 0 8px;font-size:13.5px;font-weight:700;color:var(--gold-b)}
+  .dashhead{margin:16px 0 8px;font-size:13.5px;font-weight:700;color:var(--ink)}
   .dash{display:flex;flex-direction:column;gap:14px}
   .dz-h{display:flex;align-items:baseline;gap:8px;width:100%;text-align:left;cursor:pointer;
     background:none;border:0;padding:0 0 7px;margin-bottom:8px;border-bottom:1px solid var(--line);
     font-family:inherit;color:var(--ink);font-size:14px;font-weight:700}
-  .dz-h:hover{color:var(--gold-b)}
+  .dz-h:hover{color:#fff}
   .dz-h .n{margin-left:auto;font-size:11.5px;font-weight:400;color:var(--muted);font-variant-numeric:tabular-nums}
   .dz-h .go{font-size:12px;color:var(--muted)}
   /* 칸은 제 내용만큼만 높다 — 늘려 맞추면 전체공개 한 장 때문에 한 줄이 통째로 길어진다 */
   .dcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,214px),1fr));gap:8px;align-items:start}
   .dc{--wc:var(--line);display:flex;flex-direction:column;gap:5px;text-align:left;font-family:inherit;
     background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--wc);
-    border-radius:10px;padding:10px 12px;color:var(--ink);transition:.13s}
+    border-radius:2px;padding:10px 12px;color:var(--ink);transition:.13s}
   .dc.act{cursor:pointer}
   .dc.act:hover{border-color:var(--wc)}
   .dc .sp{font-size:12.5px;font-weight:700;word-break:keep-all;line-height:1.45}
-  .dc .ti{font-size:13.5px;font-weight:800;color:var(--gold-b);word-break:keep-all;line-height:1.45}
+  .dc .ti{font-size:13.5px;font-weight:800;color:var(--ink);word-break:keep-all;line-height:1.45}
   /* 요약 한 줄까지만 — 여기는 훑는 판이고, 전문은 카드를 눌러 읽는다.
      네 줄씩 펼쳐두니 카드 열두 장이 화면 열 개 분량이 됐다. */
   .dc .tx{font-size:12px;color:var(--sub);line-height:1.65;word-break:keep-all;
@@ -1319,13 +1514,13 @@
   .dc .st{font-size:11.5px;color:var(--muted)}
   /* 이튿날 새로 생긴 자리 — 첫날에 없던 것이라 한눈에 갈라져야 한다.
      칸을 차게 틴팅하고 이름 옆에 「이튿날」을 붙인다. */
-  .dc.fresh{--wc:var(--cold);background:linear-gradient(180deg,rgba(60,110,150,.14),rgba(60,110,150,.04))}
-  .fr{display:inline-block;margin-left:6px;padding:0 5px;border-radius:20px;vertical-align:1px;
+  .dc.fresh{--wc:var(--cold);background:linear-gradient(180deg,rgba(180,170,158,.14),rgba(180,170,158,.04))}
+  .fr{display:inline-block;margin-left:6px;padding:0 5px;border-radius:2px;vertical-align:1px;
     font-size:9.5px;font-weight:800;letter-spacing:.06em;
     color:var(--cold);border:1px solid color-mix(in srgb,var(--cold) 55%,transparent);
-    background:rgba(60,110,150,.14)}
+    background:rgba(180,170,158,.14)}
   .zcard.fresh{border-color:color-mix(in srgb,var(--cold) 45%,var(--line));
-    background:linear-gradient(180deg,rgba(60,110,150,.14),rgba(60,110,150,.04))}
+    background:linear-gradient(180deg,rgba(180,170,158,.14),rgba(180,170,158,.04))}
   /* 그 아침에 «벌어진 일» 자체를 적은 카드 — 판을 뒤집는 자리라 붉게 세운다 */
   .dc.hot,.zcard.hot{--wc:var(--ember);border-color:color-mix(in srgb,var(--ember) 50%,var(--line));
     background:linear-gradient(180deg,rgba(170,60,40,.17),rgba(170,60,40,.05))}
@@ -1342,19 +1537,19 @@
   body.hasback .dc.none::before{content:"";position:absolute;left:12px;top:50%;
     width:44px;height:59px;transform:translateY(-50%);
     background:var(--cardback) center/contain no-repeat;
-    filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
+    filter:drop-shadow(2px 2px 0 rgba(0,0,0,.6))}
   /* 아직 열 수 없는 자리는 뒷면도 같이 잠긴다 — 색이 빠지면 못 뒤진다는 게 한눈에 읽힌다 */
   body.hasback .dc.none.lock::before{filter:grayscale(.75) brightness(.5)}
   /* 여기서 바로 조사할 수 있다는 표시 — 잠긴 자리에는 붙이지 않는다 */
   /* 전원이 아는 소문 — 시트가 아니라 인물정보에 붙는다. 여기 적힌 건 전부 밖에서 온 말이다. */
-  .wknown{margin-top:6px;padding:7px 10px;border-radius:4px;font-size:12px;line-height:1.65;
-    color:var(--sub);background:rgba(255,255,255,.03);border-left:2px solid #2c465a;word-break:keep-all}
+  .wknown{margin-top:6px;padding:7px 10px;border-radius:2px;font-size:12px;line-height:1.65;
+    color:var(--sub);background:rgba(255,255,255,.03);border-left:2px solid #4b453d;word-break:keep-all}
   .wknown .k{display:block;font-size:10px;letter-spacing:.14em;color:var(--cold);margin-bottom:2px}
   /* 한 달을 같이 산 사람의 눈 — 밖에서 온 말(.wknown)과 색을 달리 둔다 */
-  .wimp{margin-top:6px;padding:7px 10px;border-radius:4px;font-size:12px;line-height:1.65;
+  .wimp{margin-top:6px;padding:7px 10px;border-radius:2px;font-size:12px;line-height:1.65;
     color:var(--sub);background:rgba(255,255,255,.03);
-    border-left:2px solid color-mix(in srgb,var(--me,var(--gold)) 60%,transparent);word-break:keep-all}
-  .wimp .k{display:block;font-size:10px;letter-spacing:.14em;color:var(--me,var(--gold-b));margin-bottom:2px}
+    border-left:2px solid color-mix(in srgb,var(--me,var(--cold)) 60%,transparent);word-break:keep-all}
+  .wimp .k{display:block;font-size:10px;letter-spacing:.14em;color:var(--me,var(--cold));margin-bottom:2px}
   /* 앉을 수 없는 인물 — 배역 줄과 같은 판인데 한 톤 물러나 있어야 한다 */
   .npch{margin:18px 0 8px;padding-top:14px;border-top:1px dashed var(--line);
     font-size:10.5px;letter-spacing:.16em;color:var(--sub)}
@@ -1362,25 +1557,25 @@
   .npcrow{opacity:.82}
   .npcrow .ava{filter:grayscale(.5)}
   .pill.npcp{color:var(--sub);border-color:var(--line)}
-  .wnote{margin-top:6px;padding:7px 10px;border-radius:4px;font-size:12px;line-height:1.65;
+  .wnote{margin-top:6px;padding:7px 10px;border-radius:2px;font-size:12px;line-height:1.65;
     color:var(--sub);background:rgba(255,255,255,.03);border-left:2px solid #4a4136;word-break:keep-all}
   .wnote .k{display:block;font-size:10px;letter-spacing:.14em;color:#9a8a72;margin-bottom:2px}
-  .dc-go{align-self:flex-end;margin-top:-16px;font-size:11px;font-weight:700;color:var(--gold-b);white-space:nowrap}
+  .dc-go{align-self:flex-end;margin-top:-16px;font-size:11px;font-weight:700;color:var(--cold);white-space:nowrap}
   .dc.none.lock .dc-go{display:none}
   /* 누가 쥐고 있다 — 그 사람의 키컬러가 카드 옆구리에 선다 */
   .dc.held{background:var(--panel2)}
   /* 내가 쥔 카드 — 금색이 아니라 내 배역의 색이다(--me) */
-  .dc.mine{--wc:var(--me,var(--gold));border-color:color-mix(in srgb,var(--me,var(--gold)) 44%,var(--line));
-    background:linear-gradient(160deg,color-mix(in srgb,var(--me,var(--gold)) 13%,#151413),#151413)}
-  .dc.mine .ti{color:var(--me,var(--gold-b))}
+  .dc.mine{--wc:var(--me,var(--cold));border-color:color-mix(in srgb,var(--me,var(--cold)) 44%,var(--line));
+    background:linear-gradient(160deg,color-mix(in srgb,var(--me,var(--cold)) 13%,#151413),#151413)}
+  .dc.mine .ti{color:var(--me,var(--ink))}
   /* 전체공개 — 제목도 본문도 나온다. 여기만 읽을 것이 있다. */
-  .dc.pub{--wc:var(--cold);background:linear-gradient(160deg,#111a22,#0e1620)}
+  .dc.pub{--wc:var(--cold);background:linear-gradient(160deg,#201e1a,#171613)}
   .dc.pub .ti{color:var(--cold)}
   .dc.lock{opacity:.5}
   /* 구역 점 — 시나리오 선택창 사람표시와 같은 읽는 법 */
   .zpips{display:flex;gap:3px}
-  .zp{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.18)}
-  .zp.hand{background:var(--gold)}
+  .zp{width:7px;height:7px;border-radius:0;background:rgba(255,255,255,.18);box-shadow:1px 1px 0 rgba(0,0,0,.5)}
+  .zp.hand{background:var(--me,var(--case-ink))}
   .zp.pub{background:var(--cold)}
   .zp.taken{background:var(--sub)}
   .zp.lock{background:rgba(255,255,255,.1)}
@@ -1394,52 +1589,52 @@
   #cardModal{z-index:70}
   /* 확대해 끌어보는 배치도 — 넘치는 만큼은 이 틀이 물고 있어야 한다.
      여태 전용 규칙이 없어서 확대하면 그림이 팝업 밖으로 삐져나갔다. */
-  .mzoom{overflow:hidden;border:1px solid var(--line);border-radius:11px;background:#0b1016;touch-action:none}
+  .mzoom{overflow:hidden;border:1px solid var(--line);border-radius:2px;background:#100f0d;touch-action:none}
   .mzoom .mvp{transform-origin:0 0;will-change:transform}
   /* 배치도의 구역이 곧 버튼이다 — 위에 무엇도 얹지 않는다 */
   /* 지도 위에 머리줄은 하나뿐이다 — 이름·수치·규칙·확대가 한 줄에 다 있다. */
   .mapbar{display:flex;align-items:center;gap:7px;margin:0 0 8px;overflow-x:auto;scrollbar-width:none}
   .mapbar::-webkit-scrollbar{display:none}
   .mapbar>*{flex:0 0 auto}
-  .mapbar .mh{font-size:13.5px;font-weight:700;color:var(--gold-b)}
+  .mapbar .mh{font-size:13.5px;font-weight:700;color:var(--ink)}
   .mapbar .mspace{flex:1 1 auto;min-width:4px}
-  .mrule{flex:0 0 auto;width:21px;height:21px;border-radius:50%;border:1px solid var(--line);background:none;
+  .mrule{flex:0 0 auto;width:21px;height:21px;border-radius:0;border:1px solid var(--line);background:none;
     color:var(--muted);font-size:11px;line-height:1;cursor:pointer;padding:0}
-  .mrule:hover{border-color:var(--gold);color:var(--gold-b)}
+  .mrule:hover{border-color:var(--case-line);color:var(--ink)}
   .mapwrap.live svg .z-live{cursor:pointer}
-  .mapwrap.live svg .z-live:hover .zone-fill{fill:#1b3648;stroke:var(--gold)}
-  .mapwrap.live svg .z-live .z-cnt{fill:var(--gold-b)}
-  .mapwrap.live svg .z-done .zone-fill{stroke:#4e8a6a}
-  .mapwrap.live svg .z-done .z-cnt{fill:#7ee0a8}
+  .mapwrap.live svg .z-live:hover .zone-fill{fill:#2a2721;stroke:var(--case-ink)}
+  .mapwrap.live svg .z-live .z-cnt{fill:var(--cold)}
+  .mapwrap.live svg .z-done .zone-fill{stroke:#3a8a80}
+  .mapwrap.live svg .z-done .z-cnt{fill:#3fdfc4}
   .mapwrap.live svg .z-empty{opacity:.35}
   /* 밖에서 잠근 칸 — 누를 수 없고, 그렇게 보여야 한다 */
-  svg .z-sealed .zone-fill{fill:#0d1218;stroke:#3a4a56;stroke-dasharray:5 4}
-  svg .z-sealed .z-name{fill:#5d6b76}
-  svg .z-sealed .z-cnt{fill:#5d6b76;font-size:12px}
+  svg .z-sealed .zone-fill{fill:#131210;stroke:#454039;stroke-dasharray:5 4}
+  svg .z-sealed .z-name{fill:#6b655c}
+  svg .z-sealed .z-cnt{fill:#6b655c;font-size:12px}
 
   /* ── 침수 대응 퍼즐 ─────────────────────────────────────────
      조사 화면 맨 위를 차지한다. 이걸 넘기고 조사부터 하면 안 되니까 눈에 걸리게. */
   /* 위에서 내려왔다 올라가는 알림 */
   .dropnote{position:fixed;left:50%;top:0;transform:translate(-50%,-130%);z-index:70;
     display:flex;align-items:center;gap:10px;max-width:min(92vw,420px);
-    padding:11px 14px;border:1px solid var(--gold-b);border-radius:0 0 12px 12px;
-    border-top:0;background:rgba(20,16,10,.97);box-shadow:0 10px 30px rgba(0,0,0,.5);
+    padding:11px 14px;border:1px solid var(--case-line);border-radius:0 0 2px 2px;
+    border-top:0;background:rgba(20,16,10,.97);box-shadow:4px 4px 0 rgba(0,0,0,.5);
     cursor:pointer;transition:transform .38s cubic-bezier(.22,1,.32,1),opacity .3s;opacity:0}
   .dropnote.on{transform:translate(-50%,0);opacity:1}
-  .dropnote .dn-i{color:var(--gold-b);display:flex}
+  .dropnote .dn-i{color:var(--cold);display:flex}
   .dropnote .dn-i svg{width:18px;height:18px}
   .dropnote .dn-t{display:flex;flex-direction:column;gap:2px;min-width:0}
   .dropnote .dn-t b{font-size:13.5px;color:#fff;font-weight:700}
   .dropnote .dn-t i{font-style:normal;font-size:11.5px;color:var(--sub);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .dropnote .dn-go{margin-left:auto;font-size:12px;color:var(--gold-b);font-weight:700;white-space:nowrap}
+  .dropnote .dn-go{margin-left:auto;font-size:12px;color:var(--case-ink);font-weight:700;white-space:nowrap}
   /* 지금은 안 볼 사람을 위한 자리. 알림은 누를 때까지 안 사라지니까 나갈 문이 있어야 한다. */
   .dropnote .dn-x{flex:0 0 auto;width:26px;height:26px;padding:0;display:grid;place-items:center;
     background:none;border:0;border-left:1px solid var(--line);margin-left:2px;color:var(--muted);cursor:pointer}
   .dropnote .dn-x svg{width:14px;height:14px}
   .dropnote .dn-x:hover{color:var(--ink)}
   /* 알림이 내려와 있는 동안 뒤를 한 겹 죽인다 — 눌러야 하는 건 알림이 아니라서 통과시킨다 */
-  .dropdim{position:fixed;inset:0;z-index:69;pointer-events:none;background:#05060a;
+  .dropdim{position:fixed;inset:0;z-index:69;pointer-events:none;background:#060505;
     opacity:0;transition:opacity .34s ease}
   .dropdim.on{opacity:.42}
   @media(prefers-reduced-motion:reduce){ .dropnote{transition:opacity .2s} .dropdim{transition:opacity .15s} }
@@ -1447,22 +1642,22 @@
   .dashhead .dh-t{flex:0 0 auto}
   /* 거르개 — 「필터」라고 적어둔다. 상자 하나만 놓아뒀더니 그게 거르개인 줄을 몰랐다. */
   .dfilt{margin-left:auto;display:inline-flex;align-items:center;gap:6px;max-width:62%;
-    background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;
+    background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:2px;
     padding:6px 10px;color:var(--sub);font-family:inherit;font-size:11.5px;cursor:pointer;transition:.13s}
   .dfilt:hover{border-color:var(--cold);color:var(--ink)}
   .dfilt .fi{display:flex;color:var(--muted)}
   .dfilt .fi svg{width:13px;height:13px}
   .dfilt .fk{font-weight:800;letter-spacing:.08em;color:var(--muted);flex:0 0 auto}
   .dfilt .fv{font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .dfilt.on{border-color:var(--cold);background:rgba(60,110,150,.14)}
+  .dfilt.on{border-color:var(--cold);background:rgba(180,170,158,.14)}
   .dfilt.on .fi,.dfilt.on .fk{color:var(--cold)}
   /* 하나 고르는 창 — 안내창과 같은 틀 안에 줄로 세운다 */
   .pickone{display:flex;flex-direction:column;gap:6px;margin-top:4px}
   .po{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font-family:inherit;
-    background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;
+    background:var(--bg2);border:1px solid var(--line);border-radius:2px;padding:11px 12px;
     color:var(--ink);cursor:pointer;transition:.13s}
   .po:hover{border-color:var(--cold)}
-  .po.on{border-color:var(--cold);background:rgba(60,110,150,.16)}
+  .po.on{border-color:var(--cold);background:rgba(180,170,158,.16)}
   .po .po-k{flex:0 0 18px;display:flex;color:var(--muted)}
   .po.on .po-k{color:var(--cold)}
   .po .po-k svg{width:15px;height:15px}
@@ -1472,89 +1667,93 @@
   .po .po-n{flex:0 0 auto;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
   .po.on .po-n{color:var(--cold)}
   .nqlist{margin-top:12px;display:flex;flex-direction:column;gap:7px}
-  .nq{border:1px solid var(--line);border-left-width:3px;border-radius:8px;padding:10px 12px;
+  .nq{border:1px solid var(--line);border-left-width:3px;border-radius:2px;padding:10px 12px;
     background:rgba(255,255,255,.02)}
-  .nq .nq-q{font-size:13.5px;line-height:1.6;color:#eef2f6;word-break:keep-all}
+  .nq .nq-q{font-size:13.5px;line-height:1.6;color:#f0ebe4;word-break:keep-all}
   .nq .nq-a{margin-top:6px;display:flex;align-items:center;gap:8px;font-size:12.5px}
   .nq .nq-a .by{margin-left:auto;color:var(--sub);font-size:11.5px}
-  .nq.nod{border-left-color:#4e8a6a}   .nq.nod .nq-a b{color:#8fd6ae}
+  .nq.nod{border-left-color:#3a8a80}   .nq.nod .nq-a b{color:#6fded0}
   .nq.shake{border-left-color:#8a5a4e} .nq.shake .nq-a b{color:#e8a89b}
   .nq.off{border-left-color:var(--line);opacity:.5}
   .nq.off .nq-q{color:var(--sub)}
   .nq-sep{margin-top:16px;font-size:11px;letter-spacing:.2em;font-weight:700;color:var(--sub)}
   .asklist{margin-top:12px;display:flex;flex-direction:column;gap:8px}
   .ask-q{display:block;width:100%;text-align:left;padding:12px 13px;cursor:pointer;font:inherit;color:inherit;
-    border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.02)}
+    border:1px solid var(--line);border-radius:2px;background:rgba(255,255,255,.02)}
   .ask-q:disabled{cursor:default}
-  .ask-q .ask-t{font-size:14px;line-height:1.6;color:#eef2f6;word-break:keep-all}
+  .ask-q .ask-t{font-size:14px;line-height:1.6;color:#f0ebe4;word-break:keep-all}
   .ask-q .ask-a{margin-top:7px;font-size:13px;color:var(--sub);display:flex;align-items:center;gap:8px}
   .ask-q .ask-a .by{margin-left:auto;font-size:11.5px;opacity:.75}
-  .ask-q .ask-a.wait{color:var(--gold-b);font-weight:700}
+  .ask-q .ask-a.wait{color:var(--cold);font-weight:700}
   .ask-q:disabled .ask-a.wait{color:var(--sub);font-weight:400}
-  .ask-q.on{border-color:var(--gold-b);background:rgba(180,140,60,.10)}
+  .ask-q.on{border-color:var(--case-line);background:var(--case-off);box-shadow:inset 0 1px 0 rgba(0,0,0,.4)}
   .ask-q.on .ask-t{color:#fff}
-  .ask-q.on .ask-a.wait{color:var(--gold-b)}
+  .ask-q.on .ask-a.wait{color:var(--case-ink)}
   .ask-q.done{background:rgba(255,255,255,.04)}
   .ask-q.done .ask-t{color:var(--sub)}
-  .ask-q.nod{border-color:#4e8a6a}   .ask-q.nod .ask-a{color:#8fd6ae}
+  .ask-q.nod{border-color:#3a8a80}   .ask-q.nod .ask-a{color:#6fded0}
   .ask-q.shake{border-color:#8a5a4e} .ask-q.shake .ask-a{color:#e8a89b}
-  .nightcard,.accusecard{border:1px solid var(--line);border-radius:13px;padding:15px 16px}
-  .nightcard{background:linear-gradient(168deg,rgba(9,12,20,.96),rgba(12,14,18,.98))}
+  .nightcard,.accusecard{border:1px solid var(--line);border-radius:2px;padding:15px 16px}
+  .nightcard{background:linear-gradient(168deg,rgba(18,17,15,.96),rgba(13,12,11,.98))}
   .nt-kick{font-size:11px;letter-spacing:.26em;color:var(--cold);font-weight:700;margin-bottom:5px}
   .nightcard h2,.accusecard h2{margin:0 0 9px;font-size:17px;color:#fff}
-  .nt-intro{font-size:13.5px;line-height:1.85;color:#cfd6df;white-space:pre-line;word-break:keep-all}
-  .nt-prompt{margin-top:11px;font-size:13px;color:var(--gold-b);font-weight:700;word-break:keep-all}
+  .nt-intro{font-size:13.5px;line-height:1.85;color:#d5cec5;white-space:pre-line;word-break:keep-all}
+  .nt-prompt{margin-top:11px;font-size:13px;color:var(--ink);font-weight:700;word-break:keep-all}
   .nt-why{margin-top:14px;padding:11px 13px;border-left:2px solid var(--ember-b,#e0663c);
     background:rgba(224,102,60,.08);font-size:13px;line-height:1.85;color:#ecd3ca;
     white-space:pre-line;word-break:keep-all}
   .nt-why .w{font-size:11px;letter-spacing:.2em;color:var(--ember-b,#e0663c);font-weight:700;margin-bottom:6px}
   .nt-opt{display:block;width:100%;text-align:left;margin-top:9px;padding:11px 13px;cursor:pointer;
-    border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.02);color:inherit;font:inherit}
-  .nt-opt .nt-h{display:flex;align-items:center;gap:8px;font-size:14px;color:#eef2f6}
-  .nt-opt .mk{flex:0 0 auto;width:11px;height:11px;border-radius:50%;border:1px solid var(--sub)}
-  .nt-opt.on{border-color:var(--gold-b);background:rgba(180,140,60,.10)}
-  .nt-opt.on .mk{background:var(--gold-b);border-color:var(--gold-b)}
+    border:1px solid var(--line);border-radius:2px;background:rgba(255,255,255,.02);color:inherit;font:inherit}
+  .nt-opt .nt-h{display:flex;align-items:center;gap:8px;font-size:14px;color:#f0ebe4}
+  .nt-opt .mk{flex:0 0 auto;width:11px;height:11px;border-radius:0;border:1px solid var(--sub)}
+  .nt-opt.on{border-color:var(--case-line);background:var(--case-off);box-shadow:inset 0 1px 0 rgba(0,0,0,.4)}
+  .nt-opt.on .mk{background:var(--case-ink);border-color:var(--case-ink)}
   .nt-opt.locked{opacity:.55}
   .nt-opt .at{margin-left:auto;display:inline-flex;align-items:center;gap:6px;
     font-size:11.5px;color:var(--cold);font-variant-numeric:tabular-nums}
   .nt-opt .at i{font-style:normal;font-size:9.5px;letter-spacing:.14em;font-weight:700;
-    color:var(--sub);border:1px solid var(--line);border-radius:3px;padding:2px 5px}
+    color:var(--sub);border:1px solid var(--line);border-radius:2px;padding:2px 5px}
   .nt-opt .at.skip{color:var(--sub)}
   .nt-opt .nt-d{margin-top:6px;font-size:12.5px;line-height:1.75;color:var(--sub);white-space:pre-line;word-break:keep-all}
   .nt-foot{display:flex;align-items:center;gap:10px;margin-top:13px;padding-top:11px;border-top:1px solid var(--line)}
   .nt-foot .tally{font-size:12px;color:var(--sub)}
   .nt-foot .btn{margin-left:auto}
-  .nightcard.done{border-color:#4e6a8a}
-  .nt-out{margin-top:8px;font-size:13.5px;line-height:1.8;color:#dfe7ef;white-space:pre-line;word-break:keep-all}
-  .nt-mine{margin-top:13px;padding:11px 13px;border-left:2px solid var(--gold-b);background:rgba(180,140,60,.07);
-    font-size:13px;line-height:1.85;color:#ecd9bd;white-space:pre-line;word-break:keep-all}
-  .nt-mine .w{font-size:11px;letter-spacing:.2em;color:var(--gold-b);font-weight:700;margin-bottom:6px}
+  .nightcard.done{border-color:#5a544c}
+  .nt-out{margin-top:8px;font-size:13.5px;line-height:1.8;color:#e2dbd2;white-space:pre-line;word-break:keep-all}
+  .nt-mine{margin-top:13px;padding:11px 13px;border-left:2px solid var(--me,var(--cold));background:rgba(195,186,176,.06);
+    font-size:13px;line-height:1.85;color:#e2dbd2;white-space:pre-line;word-break:keep-all}
+  .nt-mine .w{font-size:11px;letter-spacing:.2em;color:var(--me,var(--cold));font-weight:700;margin-bottom:6px}
   .ac-opt{display:flex;align-items:center;gap:9px;width:100%;text-align:left;margin-top:9px;padding:11px 13px;
-    cursor:pointer;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.02);color:inherit;font:inherit}
-  .ac-opt .mk{width:11px;height:11px;border-radius:50%;border:1px solid var(--rc,var(--sub))}
+    cursor:pointer;border:1px solid var(--line);border-radius:2px;background:rgba(255,255,255,.02);color:inherit;font:inherit}
+  .ac-opt .mk{width:11px;height:11px;border-radius:0;border:1px solid var(--rc,var(--sub))}
   .ac-opt.on{border-color:var(--rc);background:color-mix(in srgb,var(--rc) 12%,transparent)}
   .ac-opt.on .mk{background:var(--rc)}
-  .ac-opt b{font-size:14px;color:#eef2f6}
+  .ac-opt b{font-size:14px;color:#f0ebe4}
   .ac-opt .jb{margin-left:auto;font-size:11.5px;color:var(--sub)}
   .ac-tally{margin-top:14px;padding-top:11px;border-top:1px solid var(--line)}
   .ac-tally .w{font-size:11px;letter-spacing:.2em;color:var(--sub);font-weight:700;margin-bottom:7px}
-  .ac-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#dfe7ef}
-  .crisis{border:1px solid var(--ember);border-radius:13px;padding:15px 16px;margin-bottom:12px;
+  .ac-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#e2dbd2}
+  .crisis{border:1px solid var(--ember);border-radius:2px;padding:15px 16px;margin-bottom:12px;
     background:linear-gradient(165deg,rgba(40,12,10,.92),rgba(13,12,11,.96));
-    box-shadow:0 0 0 1px rgba(200,68,47,.16), 0 10px 34px -18px rgba(200,68,47,.7)}
+    box-shadow:0 0 0 1px rgba(200,68,47,.34),3px 3px 0 rgba(0,0,0,.5)}
   .crisis .cr-kick{font-size:11px;letter-spacing:.26em;color:var(--ember-b);font-weight:700;margin-bottom:5px}
   .crisis h3{margin:0 0 8px;font-size:17px;color:#fff}
   .crisis .cr-intro{font-size:13.5px;line-height:1.8;color:#e8d8d4;white-space:pre-line;word-break:keep-all}
-  .crisis .cr-prompt{margin-top:11px;font-size:13px;color:var(--gold-b);font-weight:700;word-break:keep-all}
-  /* 퍼즐 판 — 문제에 필요한 것은 전부 이 그림 안에 있다 */
-  .cr-board{margin-top:13px;border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#0b1016}
+  .crisis .cr-prompt{margin-top:11px;font-size:13px;color:var(--ink);font-weight:700;word-break:keep-all}
+  /* 퍼즐 판 — 문제에 필요한 것은 전부 이 그림 안에 있다.
+     이 아래 파랑은 남겨 둔다. 시스템 블루(--cold)를 웜그레이로 내릴 때 같이 훑었지만,
+     여기 파랑은 「판이 하는 말」이 아니라 «물» 그 자체다 — 새는 자리·수위·잠긴 칸이
+     파랗지 않으면 문제가 안 읽힌다. 이 블록은 침수 시나리오 전용이라 이번 사건에는
+     아예 뜨지 않는다. */
+  .cr-board{margin-top:13px;border:1px solid var(--line);border-radius:2px;overflow:hidden;background:#100f0d}
   .cr-board svg{width:100%;height:auto;display:block}
   .cr-board #m-floodwater,.cr-board #m-pod,.cr-board #m-doors,.cr-board .trim{display:none}
   .cr-board .zone-fill{fill:#101c26;stroke:#456b83}
   .cr-board .z-leak .zone-fill{fill:#12303f;stroke:#5aa6cd;stroke-width:2.4}
   .cr-key{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;
     font-size:11.5px;color:var(--muted)}
-  .cr-key span{width:11px;height:11px;border-radius:3px;display:inline-block;margin-left:9px}
+  .cr-key span{width:11px;height:11px;border-radius:2px;display:inline-block;margin-left:9px}
   .cr-key span:first-child{margin-left:0}
   .cr-key .k-leak{background:#12303f;border:1.5px solid #5aa6cd}
   /* 물건 그림 — 선지를 눈으로 비교하게 만드는 게 이 문제의 전부다.
@@ -1580,27 +1779,28 @@
   .cr-q .qt{font-size:14px;font-weight:700;color:#f3ece2;margin-bottom:7px;word-break:keep-all}
   .cr-opts{display:flex;flex-direction:column;gap:6px}
   .cr-opt{display:flex;align-items:center;gap:9px;text-align:left;width:100%;
-    background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:2px;padding:10px 12px;
     color:var(--ink);font-size:13.5px;font-family:inherit;cursor:pointer;transition:.13s;word-break:keep-all}
   .cr-opt:hover{border-color:var(--ember-b)}
-  .cr-opt .mk{flex:0 0 auto;width:17px;height:17px;border-radius:50%;border:1.5px solid var(--muted)}
+  .cr-opt .mk{flex:0 0 auto;width:17px;height:17px;border-radius:0;border:1.5px solid var(--muted)}
   .cr-opt.on{border-color:var(--ember-b);background:rgba(200,68,47,.14);color:#fff}
   .cr-opt.on .mk{border-color:var(--ember-b);background:var(--ember-b);box-shadow:inset 0 0 0 3px rgba(13,12,11,.9)}
   .cr-foot{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
   .cr-foot .tally{font-size:12.5px;color:var(--muted);flex:1;font-variant-numeric:tabular-nums}
   .crisis.done{border-color:var(--line)}
-  .crisis.done.ok{border-color:#4e8a6a;background:linear-gradient(165deg,rgba(14,32,24,.92),rgba(12,14,18,.96))}
+  .crisis.done.ok{border-color:#3a8a80;background:linear-gradient(165deg,rgba(14,32,24,.92),rgba(13,12,11,.96))}
   .cr-out{font-size:13.5px;line-height:1.85;color:#e4e3e2;word-break:keep-all;text-wrap:pretty}
-  .cr-after{margin-top:10px;padding:9px 12px;border:1px dashed var(--gold);border-radius:9px;
-    background:rgba(201,162,74,.09);color:var(--gold-b);font-size:12.5px;line-height:1.6;word-break:keep-all}
+  /* ★ 초록 ④ — 열렸다. 성공 계열이라 --good 을 쓴다. */
+  .cr-after{margin-top:10px;padding:9px 12px;border:1px dashed var(--good);border-radius:2px;
+    background:color-mix(in srgb,var(--good) 10%,transparent);color:var(--good);font-size:12.5px;line-height:1.6;word-break:keep-all}
   /* 지도 위 수위 — 잡으면 그 자리에서 멈춘다 */
   .floodbar{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted);margin:0 0 7px}
-  .floodbar .fb{flex:1;height:5px;border-radius:3px;background:#16202a;overflow:hidden}
-  .floodbar .fb i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#2f6f96,#5aa6cd);
+  .floodbar .fb{flex:1;height:5px;border-radius:2px;background:#16202a;overflow:hidden}
+  .floodbar .fb i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,#2f6f96,#5aa6cd);
     transition:width .8s ease}
-  .floodbar.held .fb i{background:linear-gradient(90deg,#2f6f5a,#4e8a6a)}
+  .floodbar.held .fb i{background:linear-gradient(90deg,#2f6f5a,#3a8a80)}
   .floodbar b{color:var(--cold);font-variant-numeric:tabular-nums}
-  .floodbar.held b{color:#7ee0a8}
+  .floodbar.held b{color:#3fdfc4}
 
   /* 이 기기 설정 — GM 진행석도 배역처럼 여기서 켜고 끈다.
      예전엔 'GM으로 진행' 버튼이 따로 있어서 진행과 참가가 배타적으로 보였다. */
@@ -1609,43 +1809,43 @@
   .setnote{margin-top:7px;font-size:12px;line-height:1.65;color:var(--muted);word-break:keep-all}
   .setnote b{color:var(--sub)}
   .swt{display:inline-flex;align-items:center;gap:9px;background:var(--panel2);
-    border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 7px;
+    border:1px solid var(--line);border-radius:2px;padding:6px 14px 6px 7px;
     color:var(--sub);cursor:pointer;font-size:13.5px;transition:.15s}
-  .swt:hover{border-color:var(--gold)}
-  .swt .swk{width:34px;height:19px;border-radius:999px;background:#2a2928;
+  .swt:hover{border-color:var(--case-line)}
+  .swt .swk{width:34px;height:19px;border-radius:2px;background:#2a2928;
     border:1px solid var(--line);position:relative;flex:0 0 auto;transition:.18s}
   .swt .swk::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;
-    border-radius:50%;background:var(--muted);transition:.18s}
-  .swt[aria-checked="true"]{border-color:var(--gold);color:#fff;background:rgba(201,162,74,.12)}
-  .swt[aria-checked="true"] .swk{background:var(--gold);border-color:var(--gold)}
-  .swt[aria-checked="true"] .swk::after{left:17px;background:#1a1509}
+    border-radius:0;background:var(--muted);transition:.18s}
+  .swt[aria-checked="true"]{border-color:var(--case-line);color:#fff;background:var(--case-off)}
+  .swt[aria-checked="true"] .swk{background:var(--case-ink);border-color:var(--case-e)}
+  .swt[aria-checked="true"] .swk::after{left:17px;background:#14120f}
 
   /* 구역 안 — 카드를 마주하는 자리.
      머리에 약식 지도를 붙여 "지금 배 어디에 서 있는지"를 글자 없이 색으로만 말한다. */
   /* 약식 지도는 팝업 머리 안에 든다 — 제목과 같은 줄에서 위아래 가운데를 맞춘다 */
   .mhead .minimap{align-self:center}
-  .minimap{flex:0 0 auto;width:208px;border:1px solid var(--line);border-radius:9px;
-    overflow:hidden;background:#0b1016}
+  .minimap{flex:0 0 auto;width:208px;border:1px solid var(--line);border-radius:2px;
+    overflow:hidden;background:#100f0d}
   .minimap svg{width:100%;height:auto;display:block}
   /* 동선 토글 — 지도 위 오른쪽 아래 구석에 작게 앉는다 */
   .mapways{position:absolute;right:8px;bottom:8px;z-index:3;
     font:600 11px/1 inherit;letter-spacing:.02em;
-    background:rgba(10,13,18,.82);color:var(--sub);
-    border:1px solid var(--line);border-radius:3px;padding:6px 9px;cursor:pointer}
+    background:rgba(12,11,9,.82);color:var(--sub);
+    border:1px solid var(--line);border-radius:2px;padding:6px 9px;cursor:pointer}
   .mapways.on{color:var(--ember-b,#e0663c);border-color:currentColor}
   .mapways:focus-visible{outline:2px solid var(--cold);outline-offset:2px}
   .minimap text{display:none}
   .minimap .trim,.minimap #m-floodwater,.minimap #m-pod,.minimap #m-doors,.minimap #m-leak{display:none}
   .minimap.podon #m-pod{display:block}
-  .minimap .hull{stroke:#4c748f;stroke-width:2}
-  .minimap .zone-fill{fill:#121d27;stroke:#2b4557;stroke-width:1.2}
+  .minimap .hull{stroke:#6b655c;stroke-width:2}
+  .minimap .zone-fill{fill:#1c1a17;stroke:#403b34;stroke-width:1.2}
   .minimap .z-here .zone-fill{fill:var(--gold);fill-opacity:.88;stroke:var(--gold-b);stroke-width:2.6}
   /* 좁은 화면에서는 폭을 줄여 제목 옆에 세운다 — 칸 여섯 개는 이 크기에서도 읽힌다 */
   @media(max-width:560px){ .minimap{width:112px} }
 
   .zgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));gap:9px}
   .zcard{display:flex;flex-direction:column;gap:7px;background:var(--panel2);
-    border:1px solid var(--line);border-radius:11px;padding:13px}
+    border:1px solid var(--line);border-radius:2px;padding:13px}
   .zcard .zc-spot{font-size:13px;font-weight:700;color:var(--ink);word-break:keep-all}
   .zcard .zc-body{font-size:12.5px;color:var(--sub);flex:1}
   .zcard .zc-q{color:var(--muted)}
@@ -1656,30 +1856,34 @@
   .zcard.lock{opacity:.55}
 
   /* 배치도 — 인라인 SVG. plain은 글자를 지운 레이아웃, nopod은 포드를 감춘다. */
+  /* 초상이 아직 없는 자리 — 8비트 플레이스홀더(위 .imgslot 규칙) 위에 이름 첫 글자를
+     픽셀 간판처럼 세운다. 배역색이 있으면 그 색으로 물든다. */
   .por.noimg::after{content:attr(data-emo);position:absolute;inset:0;display:grid;place-items:center;
-    font-family:"PIMM Myeongjo","Nanum Myeongjo","AppleMyungjo",serif;font-size:52px;font-weight:600;color:var(--rc,var(--gold));opacity:.42}
+    font-family:var(--mono);font-size:46px;font-weight:700;letter-spacing:.06em;
+    color:var(--rc,var(--cold));opacity:.5;text-shadow:2px 2px 0 rgba(0,0,0,.7)}
   .rc .por img.pt{width:100%;height:100%;object-fit:cover;display:block}
   .por img.pt.flip,.bc-av img.pt.flip,img.pt.flip{transform:scaleX(-1)}
-  .unlocknote{margin-top:10px;padding:9px 12px;border:1px dashed var(--gold);border-radius:9px;
-    background:rgba(201,162,74,.09);color:var(--gold-b);font-size:12.5px;line-height:1.55}
+  /* ★ 초록 ④ — 해금 */
+  .unlocknote{margin-top:10px;padding:9px 12px;border:1px dashed var(--good);border-radius:2px;
+    background:color-mix(in srgb,var(--good) 10%,transparent);color:var(--good);font-size:12.5px;line-height:1.55}
   .unlocknote b{color:#fff}
   /* 지도 위 포드 포인터 — 누르면 인증코드를 넣는다 */
-  .podmark .pm-halo{fill:rgba(201,162,74,.16);stroke:var(--gold);stroke-width:1.2}
-  .podmark .pm-dot{fill:var(--gold);opacity:.9}
+  .podmark .pm-halo{fill:color-mix(in srgb,var(--good) 16%,transparent);stroke:var(--good);stroke-width:1.2}
+  .podmark .pm-dot{fill:var(--good);opacity:.9}
   .podmark .pm-tick{display:none}
   .podmark .pm-halo{animation:podPing 2.4s ease-in-out infinite}
   @keyframes podPing{0%,100%{opacity:.5;r:13}50%{opacity:1;r:17}}
-  .podmark.ok .pm-halo{fill:rgba(80,180,130,.18);stroke:#5abe8c;animation:none;opacity:1}
-  .podmark.ok .pm-dot{fill:#0f1a14;stroke:#5abe8c;stroke-width:1.4}
-  .podmark.ok .pm-tick{display:block;fill:none;stroke:#5abe8c;stroke-width:1.8;
+  .podmark.ok .pm-halo{fill:rgba(63,200,185,.18);stroke:#3fbfae;animation:none;opacity:1}
+  .podmark.ok .pm-dot{fill:#0d1a19;stroke:#3fbfae;stroke-width:1.4}
+  .podmark.ok .pm-tick{display:block;fill:none;stroke:#3fbfae;stroke-width:1.8;
     stroke-linecap:round;stroke-linejoin:round}
   /* 마지막 10초 — 다른 건 아무것도 못 하게 화면을 덮는다 */
   .podrush{position:fixed;inset:0;z-index:95;display:grid;place-items:center;
     background:rgba(20,4,3,.86);backdrop-filter:blur(4px);animation:prIn .18s ease}
   @keyframes prIn{from{opacity:0}to{opacity:1}}
   .podrush .pr-box{width:min(88vw,340px);text-align:center;padding:26px 22px;
-    border:1px solid var(--ember-b);border-radius:16px;background:linear-gradient(170deg,#2a100d,#160a09);
-    box-shadow:0 24px 60px -20px #000}
+    border:1px solid var(--ember-b);border-radius:2px;background:linear-gradient(170deg,#2a100d,#160a09);
+    box-shadow:4px 4px 0 rgba(0,0,0,.6)}
   .podrush .pr-k{font-size:11px;letter-spacing:.24em;color:var(--ember-b);font-weight:800}
   .podrush .pr-t{font-family:"PIMM Myeongjo","Nanum Myeongjo",serif;font-size:21px;font-weight:800;
     color:#fff;margin-top:9px}
@@ -1705,9 +1909,9 @@
   .nt-r.gap .nt-l{color:var(--ember-b)}
   .nt-r.gap .nt-w{color:#e8c4be}
   .podwarn{margin-top:10px;padding:9px 12px;border:1px solid rgba(200,68,47,.45);
-    border-radius:9px;background:rgba(200,68,47,.1);color:#f2d7d1;font-size:12.5px;line-height:1.55}
+    border-radius:2px;background:rgba(200,68,47,.1);color:#f2d7d1;font-size:12.5px;line-height:1.55}
   .podwarn b{color:var(--ember-b)}
-  .mapwrap{position:relative;width:100%;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#0b1016}
+  .mapwrap{position:relative;width:100%;border:1px solid var(--line);border-radius:2px;overflow:hidden;background:#100f0d}
   .mapwrap svg{width:100%;height:auto;display:block}
   .mapwrap.plain text{display:none}
   .mapwrap.nopod #pod{display:none}
@@ -1728,11 +1932,11 @@
   /* 페이즈별 결 */
   #phaseFx.k-open{--fxdur:3.2s}
   #phaseFx.k-invest .fx-kick{color:var(--cold)}
-  #phaseFx.k-invest .fx-name{color:#dfe9f2}
+  #phaseFx.k-invest .fx-name{color:#e6dfd6}
   #phaseFx.k-talk .fx-kick{color:var(--gold-b)}
   /* 교내방송(인터루드가 있는 페이즈) — 방송 라벨 + 스캔라인 깜빡임 */
   #phaseFx.pa .fx-kick::after{content:"  ·  " attr(data-pa);opacity:.85}
-  #phaseFx.pa .fx-line{color:#e8dfb0;font-style:normal;letter-spacing:.04em}
+  #phaseFx.pa .fx-line{color:#bff5dd;font-style:normal;letter-spacing:.04em}
   @keyframes paFlicker{0%,100%{opacity:1}42%{opacity:.62}44%{opacity:1}70%{opacity:.5}72%{opacity:1}}
   #phaseFx.pa.play .fx-line{animation:paFlicker 2.4s steps(1) both}
   #phaseFx.pa::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
@@ -1742,13 +1946,107 @@
   #phaseFx.k-final .fx-kick,#phaseFx.k-final .fx-name{color:#f0c9c2}
   #phaseFx.k-final .fx-name{text-shadow:0 0 40px rgba(200,68,47,.5)}
   /* 진상 공개 — 여명 */
-  #phaseFx.k-reveal{background:linear-gradient(0deg,rgba(60,52,30,.5),rgba(7,6,5,.96) 60%)}
-  #phaseFx.k-reveal .fx-kick{color:var(--gold-b)}
-  #phaseFx.k-reveal .fx-name{color:#f3ecd6;text-shadow:0 0 50px rgba(201,162,74,.55)}
+  #phaseFx.k-reveal{background:linear-gradient(0deg,rgba(0,60,38,.5),rgba(7,6,5,.96) 60%)}
+  #phaseFx.k-reveal .fx-kick{color:var(--cold)}
+  #phaseFx.k-reveal .fx-name{color:#f0ebe4;text-shadow:0 0 50px rgba(235,230,220,.4)}
+
+  /* ══ 게임기 케이스의 «구조» ═══════════════════════════════════════
+     버튼과 제목에서 색을 걷어내면 화면이 허전해진다. 그 자리를 색이 아니라
+     구조로 채운다 — 아케이드 캐비닛이나 휴대용 게임기의 «케이스» 를 떠올리면 맞다.
+     전부 CSS 한 겹이고 그림 파일이 늘지 않는다(오프라인 배포).
+     이 블록은 스타일시트 맨 끝에 둔다 — 앞의 규칙 위에 한 겹 얹는 성격이라
+     순서로 이기게 두는 편이 나중에 읽기도 쉽다. */
+
+  /* ① 판마다 안쪽 실선 한 줄 — 케이스 뚜껑의 «단» 이다. 바깥은 어두운 테,
+        안쪽은 아주 옅은 밝은 선. 두 줄이 겹치면 판이 두께를 가진 것처럼 선다. */
+  .card,.turnbar,.gm-guide,.zcard,.gcell,.dc,.nq,.ask-q,.nt-opt,.cr-opt,.po{
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.045),inset 0 0 0 1px rgba(0,0,0,.28)}
+  /* 창은 바탕에서 떠 있어야 하니 바깥 오프셋 그림자를 함께 남긴다 */
+  .modal .box{box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.05),inset 0 0 0 1px rgba(0,0,0,.3)}
+  /* ② 네 귀의 픽셀 코너 — 케이스에 박힌 나사머리 자리. 가상요소를 안 쓴다
+        (.bigcard.role::before 처럼 이미 임자가 있는 자리가 많다). 배경 레이어 넷이면 된다. */
+  .card,.turnbar,.modal .box,.gm-guide{
+    background-image:
+      linear-gradient(var(--case-line),var(--case-line)),
+      linear-gradient(var(--case-line),var(--case-line)),
+      linear-gradient(var(--case-line),var(--case-line)),
+      linear-gradient(var(--case-line),var(--case-line));
+    background-size:2px 2px;background-repeat:no-repeat;
+    background-position:4px 4px,calc(100% - 4px) 4px,4px calc(100% - 4px),calc(100% - 4px) calc(100% - 4px)}
+  /* 전체화면 탭으로 열리는 창은 «판» 이 아니라 화면 그 자체다 — 코너도 단도 없다 */
+  .modal.overdock .box{background-image:none;box-shadow:none}
+  /* ③ 위아래 띠 = 케이스의 위판·아래판. 안쪽으로 밝은 실선 한 줄을 물려
+        본문이 띠 «사이» 에 끼워진 것처럼 보이게 한다. */
+  .chead{box-shadow:inset 0 -1px 0 rgba(255,255,255,.05)}
+  .dock{box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+  /* ④ 눈금 — 띠 아래에 8px 자국을 아주 옅게 새긴다. 계기판의 스케일 자국이다. */
+  .chead::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;pointer-events:none;
+    background:repeating-linear-gradient(90deg,rgba(255,255,255,.055) 0 1px,transparent 1px 8px)}
+  .chead{position:relative}
+  /* ⑤ 눈썹라벨 앞의 픽셀 블록 — 색을 안 쓰고도 «여기서 한 덩이가 시작된다» 를 말한다 */
+  .bc-eyebrow::before,.mh-eb::before,.nt-kick::before,.cr-kick::before{
+    content:"";display:inline-block;width:6px;height:6px;margin-right:7px;vertical-align:1px;
+    background:currentColor;opacity:.55}
+  /* ⑥ 알약·칩은 케이스에 새긴 홈이다 — 채우지 않고 한 줄 파낸 것처럼 */
+  .pill{box-shadow:inset 0 1px 0 rgba(0,0,0,.35)}
 
   @media (prefers-reduced-motion: reduce){
     .modal .box.reveal,.frag,#phaseFx.play,#phaseFx.play .fx-in{animation-duration:.01ms!important}
   }
+
+  /* ── 나이 적기 ─────────────────────────────────────────────────────
+     이 칸은 「그 배역을 맡은 사람」의 화면에만 뜬다. 남의 화면에는 자리도 없다.
+     8bit 톤 — 파낸 홈처럼 안쪽 그림자만 주고 둥글리지 않는다. */
+  .agebox{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:9px;
+    padding:8px 10px;border:1px solid var(--gold);background:rgba(201,154,78,.08)}
+  .agebox .k{font-size:11px;color:var(--gold-b);letter-spacing:.04em;flex:0 0 auto}
+  .agebox .d{flex:1 0 100%;font-size:11px;color:var(--sub);line-height:1.5}
+  .agein{width:74px;padding:5px 7px;font-family:inherit;font-size:14px;text-align:center;
+    color:var(--ink);background:#0e0d0c;border:1px solid var(--line);border-radius:0;
+    box-shadow:inset 0 2px 0 rgba(0,0,0,.45)}
+  .agein:focus{outline:none;border-color:var(--gold)}
+  .agebtn{padding:5px 11px;font-family:inherit;font-size:12px;cursor:pointer;
+    color:#1a1512;background:var(--gold);border:1px solid var(--gold-b);border-radius:0;
+    box-shadow:inset 0 -2px 0 rgba(0,0,0,.28)}
+  .agebtn:active{box-shadow:inset 0 2px 0 rgba(0,0,0,.28)}
+
+  /* ── QA 검수 모드 ─────────────────────────────────────────────────
+     실제 판에서 이게 보이면 사고다. 그래서 게임의 어느 색과도 안 겹치는 자홍색 경고띠로
+     세우고, 「지금 누구로 보고 있는가」를 늘 켜 둔다 — 검수하다 헷갈리는 게 제일 위험하다. */
+  .qabar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+    padding:6px 10px;background:#2a0d22;border-bottom:2px solid #d13a86;
+    font-size:11px;letter-spacing:.02em}
+  .qabar[hidden]{display:none}
+  .qabar .qa-tag{flex:0 0 auto;padding:2px 7px;border:1px solid #d13a86;color:#ff8ecb;
+    background:#450f34;font-weight:700;letter-spacing:.08em;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+  .qabar .qa-lbl{flex:0 0 auto;color:#e39fc8;opacity:.85}
+  .qabar .qa-r{flex:0 0 auto;padding:3px 9px;border:1px solid #6d3457;background:#1b0a16;
+    color:#c9a6ba;font-family:inherit;font-size:11px;cursor:pointer;line-height:1.2}
+  .qabar .qa-r.on{border-color:var(--rc,#d13a86);color:#fff;background:var(--rc,#7a1f4f);
+    box-shadow:inset 0 -2px 0 rgba(0,0,0,.35)}
+  .qabar .qa-r:disabled{opacity:.45;cursor:default}
+  .qabar .qa-sp{flex:1 1 auto}
+  .qabar .qa-x{flex:0 0 auto;padding:3px 8px;border:1px solid #6d3457;background:transparent;
+    color:#e39fc8;font-family:inherit;font-size:11px;cursor:pointer}
+  /* 로비 쪽 안내판 — 세 자리를 한 기기가 쥐는 문이 여기 하나뿐이다 */
+  .qapanel{margin:10px 0;padding:11px 12px;border:2px solid #d13a86;background:#22091b}
+  .qapanel .qp-t{color:#ff8ecb;font-weight:700;font-size:13px;margin-bottom:4px}
+  .qapanel .qp-d{color:#c9a6ba;font-size:12px;line-height:1.6}
+  .qapanel .qp-b{margin-top:9px;display:flex;gap:7px;flex-wrap:wrap}
+  /* 현황판 칸에 붙는 엿보기 딱지 */
+  .dc{position:relative}
+  .dc .dc-qa{position:absolute;right:6px;top:6px;padding:1px 5px;font-size:10px;
+    border:1px solid #d13a86;color:#ff8ecb;background:#2a0d22;z-index:2}
+  .qa-peek{margin-top:10px;padding:10px;border:1px dashed #d13a86;background:#1d0a18}
+  .qa-peek .qk{color:#ff8ecb;font-size:11px;letter-spacing:.08em;margin-bottom:5px}
+  .qa-peek .qh{color:#c9a6ba;font-size:12px;margin-top:7px;line-height:1.6}
+  .qa-list .qz{margin-top:12px}
+  .qa-list .qz>h4{color:#ff8ecb;font-size:12px;margin:0 0 6px;letter-spacing:.06em}
+  .qa-list .qc{border:1px solid #4a2138;background:#170a13;padding:8px 10px;margin-bottom:6px}
+  .qa-list .qc b{color:#f0d7e6;font-size:13px}
+  .qa-list .qc .qi{color:#8d6a7d;font-size:10px;margin-left:5px}
+  .qa-list .qc .qt{color:#c6b4bf;font-size:12px;line-height:1.6;margin-top:4px}
 </style>
 </head>
 <body>
@@ -1781,6 +2079,8 @@
     <div class="tline" id="tline"></div>
     <button class="btn sm" id="menuBtn" onclick="openHMenu()" aria-label="메뉴"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
+  <!-- QA 검수 모드 전용 띠. 평소 판에서는 그리지도 않는다(qaOn 이 아니면 hidden 그대로). -->
+  <div class="qabar" id="qabar" hidden></div>
   <div class="banner" id="banner"></div>
   <div class="ppanel" id="ppanel"></div>
   <nav class="dock" id="dock">
@@ -1973,7 +2273,10 @@ function checkRoomSwitch(){
 
 async function poll(){
   // clientId를 넘겨야 서버가 isHost를 판별한다(호스트 전용 UI가 여기에 달려 있다)
-  try{ STATE=await (await fetch("/api/state?clientId="+encodeURIComponent(clientId)+(gmOn?"&gm=1":""))).json(); }catch(e){ return; }
+  // QA 검수 모드에서만 「어느 배역의 시점인가」를 얹는다. 세 좌석을 한 clientId가 쥐고 있으면
+  // 서버는 첫 자리밖에 못 고르기 때문이다. 열쇠가 없으면 서버가 이 두 값을 그냥 무시한다.
+  const qaQ=(qaOn&&qaRole)?("&roleId="+encodeURIComponent(qaRole)+"&key="+encodeURIComponent(gmKey)):"";
+  try{ STATE=await (await fetch("/api/state?clientId="+encodeURIComponent(clientId)+(gmOn?"&gm=1":"")+qaQ)).json(); }catch(e){ return; }
   if(checkRoomSwitch()) return;
   // 다른 사람이 시나리오를 바꿨으면(허브에서) 이 기기도 새 시나리오로 갱신
   if(STATE&&SCEN&&STATE.scenarioId&&STATE.scenarioId!==SCEN.scenarioId){ try{ await loadScenario(); }catch(e){} }
@@ -2021,6 +2324,158 @@ function applyGM(){
   const tp=$("gmToPlay"); if(tp) tp.style.display=myRoleValid()?"":"none";
 }
 
+/* ── QA 검수 모드 ──────────────────────────────────────────────────
+   좌석이 전부 사람이라 원고를 쓰는 사람은 혼자서 판을 못 본다 — 셋이 다 앉아야 시작되고,
+   앉은 뒤에도 자기 배역 하나만 열린다. 그래서 관리자 열쇠(AGENT_KEY, 진행석과 같은 것)로
+   들어오면 한 기기가 세 좌석을 동시에 쥐고, 시점을 갈아끼우며 「내 정보」·「내 단서」까지
+   그 배역 것으로 통째로 갈아본다.
+
+   실제 판에 이게 켜져 있으면 사고다. 그래서 문은 하나뿐이다 — 주소에 ?qa=1 로 들어올 때만
+   켜지고(허브의 관리자 패널이 그 링크를 만든다), 켜져 있는 동안은 화면에 자홍색 띠가
+   늘 박혀 있어 눈에 걸린다. */
+let qaOn=false, qaRole=null, qaCards=null, qaBusy=false;
+try{
+  const _qp=new URLSearchParams(location.search);
+  if(_qp.get("qa")==="1") localStorage.setItem("pmb.qa","1");
+  if(_qp.get("qa")==="0") localStorage.removeItem("pmb.qa");
+  qaOn=localStorage.getItem("pmb.qa")==="1";
+  qaRole=localStorage.getItem("pmb.qarole")||null;
+}catch(e){}
+/* 이 판의 배역 id 세 개. 사건마다 수가 달라서 시나리오에서 그대로 읽는다. */
+function qaSeats(){ return ((SCEN&&SCEN.characters)||[]).map(c=>c.id); }
+/* 세 자리를 한 기기가 쥔다. 서버는 qa 신고 + 열쇠가 맞을 때만 「앞자리 놓기」를 건너뛴다. */
+async function qaClaimAll(){
+  if(qaBusy) return; qaBusy=true;
+  try{
+    for(const id of qaSeats()){
+      const r=await post("/api/claim",{roleId:id,clientId,qa:true,key:gmKey});
+      if(r&&r.error){ banner("QA 좌석 확보 실패 — "+r.error); return; }
+    }
+    // 열쇠가 안 맞으면 서버는 「앞자리 놓기」를 그대로 해서, 셋을 잡아도 마지막 하나만 남는다.
+    // 조용히 실패하면 원인을 찾는 데 한참 걸리므로 여기서 세어보고 말해준다.
+    await poll();
+    const held=qaSeats().filter(id=>((STATE.roles||{})[id]||{}).mode==="human").length;
+    if(held<qaSeats().length){
+      banner("QA 좌석 확보 실패 — GM 키가 맞지 않습니다. 「키」로 다시 넣어보세요.");
+      return;
+    }
+    await qaSee(qaSeats()[0]);
+    banner("QA — 세 자리를 모두 쥐었습니다. 이대로 시작할 수 있습니다.");
+  } finally { qaBusy=false; }
+}
+/* 시점 갈아끼우기 — 이 기기가 들고 있던 「앞 배역의 것」을 전부 버리고 처음부터 다시 그린다.
+   손패도, 어디까지 읽었나도, 퍼즐에 찍어둔 답도 앞 배역 것이 남으면 그 자리에서 검수가 틀어진다. */
+async function qaSee(id){
+  if(!id) return;
+  qaRole=id;
+  try{ localStorage.setItem("pmb.qarole",id); localStorage.setItem("pmb.role",id); }catch(e){}
+  myRoleId=id;
+  myHand=[]; handSeen=null; sheetSeenSeq=null; lobbyBuilt="";
+  crAns=[]; askSel=""; acSel=""; belongKeep=[]; trimPick=null; sharePick=null;
+  chatDrawn={}; renderPanel._sig=null; lastRev=-1; fxSeq=STATE?STATE.seq:null;
+  closeTabs(); document.querySelectorAll(".modal.on").forEach(m=>m.classList.remove("on"));
+  await poll();
+  if(scr==="lobby") renderLobby(true);
+}
+/* 끄기 — 흔적을 지우고 새로 연다. 남겨두면 다음 판에 켜진 채로 들어간다. */
+function qaOff(){
+  try{ localStorage.removeItem("pmb.qa"); localStorage.removeItem("pmb.qarole"); }catch(e){}
+  location.href="/play";
+}
+/* 상단 띠 — 「QA 모드다」와 「지금 누구로 보고 있다」를 한 줄에 같이 박는다. */
+function paintQA(){
+  const b=$("qabar"); if(!b) return;
+  if(!qaOn||!SCEN){ b.hidden=true; b.innerHTML=""; return; }
+  b.hidden=false;
+  const seats=(SCEN.characters||[]);
+  const chips=seats.map(c=>{
+    const held=((STATE&&STATE.roles)||{})[c.id];
+    const mine=(myRoleId===c.id);
+    const has=!!(held&&held.mode==="human");
+    return `<button class="qa-r${mine?" on":""}" style="--rc:${c.color}"${has?"":" disabled"}
+      title="${has?esc(c.name)+" 시점으로 보기":"아직 이 자리를 안 쥐었습니다"}"
+      onclick="qaSee('${c.id}')">${esc(c.name)}</button>`;
+  }).join("");
+  const holds=seats.filter(c=>(((STATE&&STATE.roles)||{})[c.id]||{}).mode==="human").length;
+  b.innerHTML=`<span class="qa-tag">QA</span><span class="qa-lbl">시점</span>${chips}
+    <span class="qa-sp"></span>
+    <button class="qa-x" onclick="qaAllCards()">카드 전부</button>
+    ${holds<seats.length?`<button class="qa-x" onclick="qaClaimAll()">자리 마저 쥐기</button>`:""}
+    <button class="qa-x" onclick="qaAskKey()">키</button>
+    <button class="qa-x" onclick="qaOff()">QA 끄기</button>`;
+}
+/* 열쇠 다시 넣기 — QA는 이 열쇠 하나로 서는 모드라, 안 맞으면 아무것도 안 된다. */
+async function qaAskKey(){ if(await askGMKey()){ qaCards=null; await poll(); } }
+/* 로비 안내판 — 세 자리를 쥐는 문은 여기 하나뿐이다. */
+function qaLobbyHTML(){
+  if(!qaOn) return "";
+  const seats=(SCEN&&SCEN.characters)||[];
+  const held=seats.filter(c=>(((STATE&&STATE.roles)||{})[c.id]||{}).mode==="human").length;
+  const started=!!(STATE&&STATE.started);
+  return `<div class="qapanel"><div class="qp-t">QA 검수 모드 — 혼자서 세 배역을 다 봅니다</div>
+    <div class="qp-d">한 기기가 좌석 <b>${held}/${seats.length}</b>을 쥐고 있습니다.
+      ${started?"판이 시작됐습니다 — 상단 띠에서 시점을 갈아끼우세요."
+               :"세 자리를 다 쥐면 「이대로 진행하기」가 열립니다."}</div>
+    <div class="qp-b">
+      ${started?"":`<button class="btn ember sm" onclick="qaClaimAll()">세 자리 모두 쥐기</button>`}
+      <button class="btn quiet sm" onclick="qaAllCards()">카드 전부 훑어보기</button>
+      <button class="btn quiet sm" onclick="qaAskKey()">GM 키</button>
+      <button class="btn quiet sm" onclick="qaOff()">QA 끄기</button></div></div>`;
+}
+/* 카드 전문 — /api/admin/cards 를 그대로 쓴다. 검수용으로 이미 있는 창구라 새로 만들지 않는다.
+   한 판에 조사할 수 있는 건 절반뿐이라, 원고를 보려면 결국 여기로 와야 한다. */
+async function qaLoadCards(){
+  if(qaCards) return qaCards;
+  const sid=(STATE&&STATE.scenarioId)||(SCEN&&SCEN.scenarioId)||"";
+  let d; try{ d=await (await fetch(`/api/admin/cards?scenarioId=${encodeURIComponent(sid)}&key=${encodeURIComponent(gmKey)}`)).json(); }
+  catch(e){ d={error:"network"}; }
+  if(!d||d.error){ banner("카드 전문을 못 읽었습니다 — GM 키를 확인하세요"+(d&&d.error?` (${d.error})`:"")); return null; }
+  qaCards={by:{}, map:d.map||[], cards:d.cards||[]};
+  (d.cards||[]).forEach(c=>{ qaCards.by[c.id]=c; });
+  return qaCards;
+}
+async function qaAllCards(){
+  const d=await qaLoadCards(); if(!d) return;
+  const byLoc={}; d.cards.forEach(c=>{ (byLoc[c.loc]=byLoc[c.loc]||[]).push(c); });
+  const zones=d.map.map(z=>{
+    const cs=(byLoc[z.loc]||[]).slice().sort((a,b)=>(a.round-b.round)||a.id.localeCompare(b.id));
+    if(!cs.length) return "";
+    return `<div class="qz"><h4>${esc(z.name||z.loc)} · ${cs.length}장</h4>${cs.map(qaCardHTML).join("")}</div>`;
+  }).join("");
+  const loose=d.cards.filter(c=>!d.map.some(z=>z.loc===c.loc));
+  const m=document.createElement("div");
+  m.className="modal on"; m.onclick=e=>{ if(e.target===m) m.remove(); };
+  m.innerHTML=`<div class="box" onclick="event.stopPropagation()">
+    <div class="mhead"><div class="mh-t"><span class="mh-eb">QA · 조사턴을 쓰지 않습니다</span>
+      <h2>조사카드 전부</h2><span class="mh-sub">${d.cards.length}장 · 본문·힌트까지</span></div>
+      <button class="mh-x" onclick="this.closest('.modal').remove()">${ICO.close}</button></div>
+    <div class="mbody qa-list">${zones}${loose.length?`<div class="qz"><h4>구역 밖</h4>${loose.map(qaCardHTML).join("")}</div>`:""}</div>
+    <div class="mfoot"><span class="mf-note">이 창은 손패에도, 조사 기록에도 아무것도 남기지 않습니다.</span>
+      <button class="btn" onclick="this.closest('.modal').remove()">닫기</button></div></div>`;
+  document.body.appendChild(m);
+}
+function qaCardHTML(c){
+  return `<div class="qc"><b>${esc(c.title||"")}</b><span class="qi">${esc(c.id)} · R${c.round}${c.spot?" · "+esc(c.spot):""}${c.auto?" · 자동공개":""}${c.bait?" · 미끼":""}</span>
+    <div class="qt">${esc(c.text||"")}</div>${c.hint?`<div class="qt" style="opacity:.72">힌트 — ${esc(c.hint)}</div>`:""}</div>`;
+}
+/* 한 장 엿보기 — 현황판에서 아직 아무도 안 연 자리를 눌렀을 때 그 자리에 펴 준다. */
+async function qaPeek(id){
+  const d=await qaLoadCards(); if(!d) return;
+  const c=d.by[id]; if(!c){ banner("그런 카드가 없습니다"); return; }
+  const m=document.createElement("div");
+  m.className="modal on"; m.onclick=e=>{ if(e.target===m) m.remove(); };
+  m.innerHTML=`<div class="box" onclick="event.stopPropagation()">
+    <div class="mhead"><div class="mh-t"><span class="mh-eb">QA 엿보기 · ${esc(c.locName||"")}</span>
+      <h2>${esc(c.title||"")}</h2><span class="mh-sub">${esc(c.id)} · R${c.round}${c.spot?" · "+esc(c.spot):""}</span></div>
+      <button class="mh-x" onclick="this.closest('.modal').remove()">${ICO.close}</button></div>
+    <div class="mbody"><div class="qa-peek"><div class="qk">본문</div>${esc(c.text||"")}
+      ${c.hint?`<div class="qh">힌트 — ${esc(c.hint)}</div>`:""}
+      ${(c.knownBy||[]).length?`<div class="qh">미리 아는 사람 — ${c.knownBy.map(esc).join(", ")}</div>`:""}</div></div>
+    <div class="mfoot"><span class="mf-note">조사턴을 쓰지 않았고, 손패에도 안 들어갔습니다.</span>
+      <button class="btn" onclick="this.closest('.modal').remove()">닫기</button></div></div>`;
+  document.body.appendChild(m);
+}
+
 function applyState(){
   if(!STATE)return;
   // 내 배역은 서버 말을 따른다. 로컬 기억과 어긋나면 서버가 맞다 —
@@ -2033,7 +2488,10 @@ function applyState(){
     myRoleId=null; localStorage.removeItem("pmb.role");
   }
   if(myRoleId!==wasRole||sheetSeenSeq===null) loadSheetSeen();   // 배역이 바뀌면 '어디까지 읽었나'도 그 배역 것으로
+  // QA 모드에서 아직 시점을 안 고른 채로 자리를 쥐고 있으면, 서버가 잡아준 첫 자리를 시점으로 삼는다.
+  if(qaOn&&!qaRole&&myRoleId){ qaRole=myRoleId; try{ localStorage.setItem("pmb.qarole",qaRole); }catch(e){} }
   applyGM();   // 배역이 바뀌면 진행석 쪽 '내 자리' 버튼도 따라 바뀐다
+  paintQA();   // 「지금 누구로 보고 있는가」는 폴링마다 다시 박는다
   // 오프닝은 화면에도 배역에도 매이지 않는다.
   // 예전엔 플레이 화면의 오프닝 패널이 그릴 때만 열렸는데, 거기로 넘어가는 조건에
   // myRoleValid()가 붙어 있어서 '배역 없는 GM'은 로비에 남고 영영 못 봤다 —
@@ -2176,6 +2634,13 @@ function playPhaseFx(ph){
 }
 
 /* AI 배역 진행 (서버 Claude API가 연기) — GM이 눌러 AI 턴 진행 */
+/* 종막 답안이 어디까지 왔나. 내 기기에 남긴 것과 서버가 들고 있는 것을 같이 본다 —
+   한 기기에서 여럿이 돌려 쓰는 판도 있어서, 로컬만 보면 남의 제출을 못 읽는다. */
+function serverAnswersOf(id){ const m=(STATE&&STATE.finalAnswers)||null; return (m&&m[id])||null; }
+function finalSubmitted(id){ return !!(id&&(localStorage.getItem("pmb.final."+id)!=null||serverAnswersOf(id))); }
+function finalAnswersOf(id){ const sv=serverAnswersOf(id); if(sv) return sv;
+  try{ return JSON.parse(localStorage.getItem("pmb.final."+id)||"null"); }catch(e){ return null; } }
+
 /* 오프닝은 읽고 나면 끝이다 — 그 자리에서 바로 다음 막으로 넘어갈 수 있게 한다.
    머리띠의 「다음 막」과 같은 단추이고, 같은 금색 그라데이션을 쓴다. */
 function nextPhaseBlock(){
@@ -2712,7 +3177,8 @@ function showSpot(id){
       <span class="mh-sub">조사 R${c.round}${st.who?" · "+esc(st.who.name)+" 소지":""}</span></div>
       <button class="mh-x" onclick="this.closest('.modal').remove()">${ICO.close}</button></div>
     <div class="mbody">${body}</div>
-    <div class="mfoot">${st.act
+    <div class="mfoot">${(qaOn&&!full)?`<button class="btn quiet" onclick="this.closest('.modal').remove();qaPeek('${c.id}')">QA 엿보기</button>`:""}
+      ${st.act
       ? `<button class="btn ${st.k==="open"?"primary":"quiet"}" onclick="this.closest('.modal').remove();${st.act}">${esc(st.label)}</button>`
       : `<span class="mf-note">${esc(st.label)}</span>`}
       <button class="btn" onclick="this.closest('.modal').remove()">닫기</button></div></div>`;
@@ -2863,6 +3329,17 @@ function roleCardState(c){
   const r=(STATE.roles||{})[c.id]||{}; const mine=myRoleId===c.id;
   const otherHuman=!mine&&r.mode==="human";
   const locked=!!(STATE&&STATE.started);
+  // QA 검수 모드에서는 세 자리가 전부 내 것이다 — 「참여 중」이 아니라 「갈아탈 시점」으로 읽혀야 한다.
+  if(qaOn){
+    const held=r.mode==="human";
+    const badge=mine?`<span class="badge me">${ICO.dot} 보는 중</span>`
+                    :(held?`<span class="badge hu">QA</span>`:"");
+    const btn=mine?`<span class="rc-go done">${ICO.check} 이 시점</span>`
+                  :(held?`<span class="rc-go pick">이 시점으로</span>`
+                        :(locked?`<span class="rc-go off">-</span>`:`<span class="rc-go pick">자리 쥐기</span>`));
+    const tap=mine?"":(held?`qaSee('${c.id}')`:(locked?"":`qaClaim('${c.id}')`));
+    return {cls:"rc"+(mine?" mine":"")+(tap?" tap":""), badge, btn, tap};
+  }
   // 카드의 버튼은 '고르는 일'만 한다. 내 정보 보기는 아래 바에 따로 있다.
   let badge="", btn="";
   if(mine){ badge=`<span class="badge me">${ICO.dot} 나</span>`; btn=`<span class="rc-go done">${ICO.check} 선택함</span>`; }
@@ -2885,10 +3362,11 @@ function renderLobby(force){
       const st=roleCardState(c);
       return `<div class="${st.cls}" data-rc="${c.id}" style="--rc:${c.color}"${st.tap?` role="button" tabindex="0" onclick="${st.tap}"`:""}>
         <div class="por" data-emo="${esc(c.avatar||(c.name||"?").slice(0,1))}">${portraitHTML(c)}<span class="badgeslot">${st.badge}</span>
-          <div class="scrim"><div class="nm">${esc(c.name)}</div><div class="jb">${esc(c.age)} · ${esc(c.job)}</div></div>
+          <div class="scrim"><div class="nm">${esc(c.name)}</div><div class="jb">${esc([c.age,c.job].filter(Boolean).join(" · "))}</div></div>
         </div>
         <div class="tg">${esc(c.look||c.tagline)}</div><span class="btnslot">${st.btn}</span></div>`;
-    }).join("")}</div><div class="startslot">${startBoxHTML()}</div><div class="rolebar">${roleBarHTML()}</div>`;
+    }).join("")}</div><div class="startslot">${startBoxHTML()}</div><div class="rolebar">${roleBarHTML()}</div>
+      <div class="qaslot">${qaLobbyHTML()}</div>`;
     return;
   }
   // 이미 있는 카드에 상태만 덧입힌다 — 사진은 손대지 않는다
@@ -2906,6 +3384,8 @@ function renderLobby(force){
   if(sb&&sb.innerHTML!==nb) sb.innerHTML=nb;
   const rb=host.querySelector(".rolebar"), nr=roleBarHTML();
   if(rb&&rb.innerHTML!==nr) rb.innerHTML=nr;
+  const qs=host.querySelector(".qaslot"), nq=qaLobbyHTML();
+  if(qs&&qs.innerHTML!==nq) qs.innerHTML=nq;
 }
 /* 모두 정해지면 호스트에게 확정을 묻는다 — 확정 순간부터 배역은 고정된다 */
 function startBoxHTML(){
@@ -2913,7 +3393,8 @@ function startBoxHTML(){
   const opens=SCEN.characters.filter(c=>(STATE.roles[c.id]||{}).mode==="open");
   if(opens.length) return "";
   // 시작 버튼은 하나다 — 진행석을 켠 기기이거나 호스트면 누를 수 있다.
-  if(!(STATE.isHost||gmOn)) return `<div class="startbox wait">모든 배역이 정해졌습니다. 호스트가 시작하기를 기다리는 중…</div>`;
+  // QA 검수 모드는 혼자 도는 판이라 「누가 호스트인가」를 기다릴 사람이 없다.
+  if(!(STATE.isHost||gmOn||qaOn)) return `<div class="startbox wait">모든 배역이 정해졌습니다. 호스트가 시작하기를 기다리는 중…</div>`;
   return `<div class="startbox"><div class="sb-t">모든 배역이 정해졌습니다</div>
     <div class="sb-d">시작하면 배역을 더는 바꿀 수 없습니다.${gmOn?" 시작과 함께 진행석이 열립니다.":""}</div>
     <button class="btn ember" onclick="startGame()">이대로 진행하기 ›</button></div>`;
@@ -3020,13 +3501,14 @@ function buildGMBody(ph,cur,ap,k,checked,used,fresh){
       const done=d.picks&&d.picks[seat.roleId];
       const opt=(seat.options||[]).find(o=>o.id===done);
       const bar=(seat.roleId===d.barred);
-      return `${i+1}. ${seat.seat}란 · ${nameOf(seat.roleId)}${bar?" (결재권 상실 — 표로 채움)":""}\n   ${done?opt.line:"— 대기 중"}`;
+      return `${i+1}. ${seat.seat||nameOf(seat.roleId)} · ${nameOf(seat.roleId)}${bar?" (제 칸을 잃음 — 표로 채움)":""}\n   ${done?decL(opt):"— 대기 중"}`;
     }).join("\n");
-    return gmCinematic("결재 · 노인정리국 결정문", rows || (SCEN.decisionIntro||""),
-      d.barred?`결재권을 잃은 사람 — ${nameOf(d.barred)}`:"결재권을 잃은 사람 없음 (표가 갈렸습니다)",
+    // 진행석의 이름표도 사건이 정한다 — 여기에도 「노인정리국 결정문」이 박혀 있었다.
+    return gmCinematic(decTitle(), rows || (STATE.decision&&STATE.decision.intro)||"",
+      d.barred?`제 칸을 잃은 사람 — ${nameOf(d.barred)}`:"",
       d.done&&d.report
-        ? `<b>완성됐습니다.</b> ${d.report.note}<div style="margin-top:8px">이 종이를 낭독한 뒤 <b>다음 페이즈 ›</b>로 진상을 여세요.</div>`
-        : "각자 자기 칸에 서명합니다. 잃은 칸은 남은 사람들이 표로 채웁니다. 네 칸이 다 차야 종이가 완성됩니다.");
+        ? `<b>다 정해졌습니다.</b> ${esc(d.report.note||"")}<div style="margin-top:8px">이대로 낭독한 뒤 <b>다음 페이즈 ›</b>로 진상을 여세요.</div>`
+        : "각자 자기 칸을 고릅니다. 모든 칸이 차야 다음으로 넘어갑니다.");
   }
   if(k==="reveal") return gmCinematic("진상 공개", (STATE.ending?STATE.ending.desc:"전원이 이름을 적으면 엔딩이 열립니다."), (STATE.ending?("— "+STATE.ending.name):""),
     "이 세션이 진상과 엔딩을 전해주면, 낭독으로 밤을 닫으세요.");
@@ -3057,7 +3539,7 @@ function buildGMBody(ph,cur,ap,k,checked,used,fresh){
     }).join("")}</div>`;
 
   h+=`<div class="gm-legend"><span><b style="background:var(--panel2)"></b>미조사</span>
-    <span><b style="background:linear-gradient(150deg,#3a2c12,#6a5320)"></b>조사됨 — 이름 표시</span></div>`;
+    <span><b style="background:linear-gradient(150deg,#0c3a2b,#6a5320)"></b>조사됨 — 이름 표시</span></div>`;
 
   // 구역별로 카드 한 벌
   const zones=(SCEN.map&&SCEN.map.length)?SCEN.map:[...new Set(cat.map(c=>c.loc))].map(l=>({loc:l,name:l}));
@@ -3138,6 +3620,8 @@ function gmBanner(m){ const b=$("gmBanner"); if(m){b.textContent=m;b.classList.a
 /* 배역을 맡아도 바로 입장시키지 않는다 — 카드 전체가 탭 영역이라 오탭 비용이 크고,
    무엇보다 들어가기 전에 '내 정보'를 읽을 기회를 줘야 한다. 입장은 하단 액션바에서. */
 async function claim(id){ const r=await post("/api/claim",{roleId:id,clientId}); if(r&&r.error){banner(r.error);return;} await setMy(id); }
+/* QA — 자리를 하나 더 쥔다. qa 신고를 얹어야 서버가 앞자리를 안 놓는다. */
+async function qaClaim(id){ const r=await post("/api/claim",{roleId:id,clientId,qa:true,key:gmKey}); if(r&&r.error){banner(r.error);return;} await qaSee(id); }
 async function claimRandom(){ const r=await post("/api/claim-random",{clientId}); if(r&&r.error){banner(r.error);return;} if(r&&r.roleId){ await setMy(r.roleId); } }
 async function setMy(id){ myRoleId=id; localStorage.setItem("pmb.role",id); await poll(); }
 async function releaseRole(){ if(myRoleId){ await post("/api/release",{roleId:myRoleId,clientId}); myRoleId=null; localStorage.removeItem("pmb.role"); await poll(); } }
@@ -3145,8 +3629,13 @@ async function releaseRole(){ if(myRoleId){ await post("/api/release",{roleId:my
    방을 새로 열어도 이게 남아 있으면 지난 판이 그대로 이어져 보인다. gmKey만 남긴다(다시 치기 번거로우니). */
 function wipeLocal(keepKey){
   const keep=keepKey?localStorage.getItem("pmb.gmkey"):null;
+  // QA 검수 모드는 방이 갈려도 유지한다 — 방을 새로 열어가며 처음부터 다시 도는 게 검수의 일이라,
+  // 여기서 꺼지면 매번 허브로 돌아가 다시 켜야 한다. 끄는 문은 QA 띠의 「QA 끄기」 하나다.
+  const qa=localStorage.getItem("pmb.qa");
   Object.keys(localStorage).filter(k=>k.indexOf("pmb.")===0).forEach(k=>localStorage.removeItem(k));
   if(keep!=null) localStorage.setItem("pmb.gmkey",keep);
+  if(qa!=null) localStorage.setItem("pmb.qa",qa);
+  qaRole=null;
   myRoleId=null; sheetSeenSeq=null; myHand=[]; handSeen=null; lobbyBuilt="";
   chatDrawn={}; renderPanel._sig=null; lastRev=-1;
 }
@@ -3242,7 +3731,7 @@ function renderPanel(ph){
     const pubc=(STATE.revealed||[]).filter(c=>!mineIds.has(c.id));
     const hcards=(myRoleValid()?myHand:[]).map(c=>({...c,_pub:false})).concat(pubc.map(c=>({...c,_pub:true})));
     p.innerHTML=`${handWarn()}<div class="clue-h"><h3>토론</h3><span class="pill" style="color:var(--me,var(--gold-b))">내 손패 ${myHand.length}</span>${pubc.length?`<span class="pill" style="color:var(--cold)">전체공개 ${pubc.length}</span>`:""}<span class="mspace"></span><button class="mrule" onclick="showTalkRule()" aria-label="토론 규칙">?</button></div>
-    <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px">${hcards.map(c=>`<div class="card" style="margin:0;padding:10px 12px;border-color:${c._pub?"#2f4a5c":"color-mix(in srgb,var(--me,var(--gold)) 42%,var(--line))"};background:${c._pub?"linear-gradient(160deg,#141d24,#111319)":"linear-gradient(160deg,color-mix(in srgb,var(--me,var(--gold)) 12%,#151413),#151413)"};cursor:pointer" onclick="openCard('${c.id}')"><span class="pill" style="color:${c._pub?"var(--cold)":"var(--me,var(--gold-b))"}">${c._pub?"전체공개":"내 손패"}</span> <b style="color:${c._pub?"var(--cold)":"var(--me,var(--gold-b))"}">${esc(c.title)}</b> <span class="pill">${esc(c.locName)}${c.spot?"·"+esc(c.spot):""}·R${c.round}</span>${comboBadge(c.id)}${pairsOf(c.id).map(k=>{
+    <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px">${hcards.map(c=>`<div class="card" style="margin:0;padding:10px 12px;border-color:${c._pub?"#4b453d":"color-mix(in srgb,var(--me,var(--gold)) 42%,var(--line))"};background:${c._pub?"linear-gradient(160deg,#141d24,#111319)":"linear-gradient(160deg,color-mix(in srgb,var(--me,var(--gold)) 12%,#151413),#151413)"};cursor:pointer" onclick="openCard('${c.id}')"><span class="pill" style="color:${c._pub?"var(--cold)":"var(--me,var(--gold-b))"}">${c._pub?"전체공개":"내 손패"}</span> <b style="color:${c._pub?"var(--cold)":"var(--me,var(--gold-b))"}">${esc(c.title)}</b> <span class="pill">${esc(c.locName)}${c.spot?"·"+esc(c.spot):""}·R${c.round}</span>${comboBadge(c.id)}${pairsOf(c.id).map(k=>{
         const rd=pairReady(k,c.id);
         return `<button class="pill pair${rd?" rdy":""}" title="${rd?"짝이 지금 나와 있습니다 — 눌러서 맞춰보세요":"같은 조각을 단 카드를 찾으세요"}" onclick="event.stopPropagation();showPairHint('${c.id}',${k.i})">${pairChip(k,c.id,rd)}${rd?"맞물림":"조각"}</button>`;
       }).join("")}<div class="lead clip1">${esc(oneLine(c.text))}</div></div>`).join("")||'<div class="panel-note">아직 조사한 단서가 없어요. (조사 페이즈에 카드를 여세요.)</div>'}</div>`
@@ -3574,6 +4063,9 @@ function dashCard(c){
   const st=cardState(c), full=cardOpen(c.id);
   const spot=esc(c.spot||c.locName||"")+(isFresh(c)?`<span class="fr">이튿날</span>`:"");
   const fr=(isFresh(c)?" fresh":"")+(c.hot?" hot":"");
+  // QA — 아직 안 열린 자리는 여기서 바로 본문을 편다. 조사턴을 쓰지도, 손패에 넣지도 않는다.
+  // 한 판에 열 수 있는 건 절반뿐인데 원고를 보려면 서른아홉 장을 다 읽어야 한다.
+  const qk=(qaOn&&!full)?`<span class="dc-qa" role="button" tabindex="0" title="조사턴을 쓰지 않고 본문만 봅니다" onclick="event.stopPropagation();qaPeek('${c.id}')">엿보기</span>`:"";
   if(st.k==="pub") return `<button class="dc pub act${fr}" onclick="openCard('${c.id}')">
     <span class="sp">${spot}</span><span class="ti">${esc((full&&full.title)||"")}${comboBadge(c.id)}</span>
     ${full&&full.text?`<span class="tx clip1">${esc(oneLine(full.text))}</span>`:""}
@@ -3584,7 +4076,7 @@ function dashCard(c){
   if(st.k==="taken"){ const w=st.who||{};
     // 남이 쥔 카드는 임자만 말한다 — 제목이 새면 그 사람이 감출 것이 없어진다
     return `<button class="dc held act${fr}" style="--wc:${w.color||"var(--line)"}" onclick="showSpot('${c.id}')">
-      <span class="sp">${spot}</span>
+      ${qk}<span class="sp">${spot}</span>
       <span class="wh">${avaHTML(w,"xs")}${esc(w.name||"")} 쥐고 있음</span></button>`; }
   // cardState 의 잠김 사유에는 '내 차례 아님'처럼 내 사정이 섞여 있다. 현황판은 판 전체를
   // 읽는 자리라 카드 쪽 사정만 적는다 — 나머지는 그냥 아직 아무도 안 본 카드다.
@@ -3598,7 +4090,7 @@ function dashCard(c){
     why=`먼저 찾아야 한다 — ${miss.join(", ")}`; dim=true; }
   // 아직 아무도 안 본 자리는 여기서 바로 조사한다. 지도를 눌러 들어가는 것과 같은 창이 뜬다.
   return `<button class="dc none act${fr}${dim?" lock":""}" onclick="showSpot('${c.id}')">
-    <span class="sp">${spot}</span><span class="st">${esc(why)}</span>
+    ${qk}<span class="sp">${spot}</span><span class="st">${esc(why)}</span>
     ${dim?"":`<span class="dc-go">조사하기 ›</span>`}</button>`;
 }
 /* 지금까지 누구든 꺼낸 카드 — 선행 조건이 풀렸는지 보는 데 쓴다 */
@@ -4205,6 +4697,44 @@ function impressionHTML(rid){
   if(!t) return "";
   return `<div class="wimp"><span class="k">내가 본 이 사람</span>${esc(t)}</div>`;
 }
+/* ── 나이 ──────────────────────────────────────────────────────────
+   서버가 「그 칸에 그대로 뜰 글자」까지 만들어 내려보낸다. 화면이 「이 배역은 나이를
+   스스로 적는 자리인가」를 스스로 가르려면 결국 그 명단을 받아야 하는데, 그 명단이 곧
+   이 판의 답이다 — 셋 중 하나만 자기 나이를 댈 수 있다. 그래서 여기서는 글자만 읽는다. */
+function ageShown(){ const a=(STATE&&STATE.ages)||{}; return Object.keys(a).some(k=>a[k]); }
+/* 아직 아무도 안 적었으면 그 칸은 「—」다. 나이를 아예 안 쓰는 사건에서는 칸 자체가 없다. */
+function ageOf(rid){ const v=((STATE&&STATE.ages)||{})[rid]||""; return v||(ageShown()?"—":""); }
+/* 나이 입력칸 — 「내가 적을 수 있는 자리」에만 뜬다. 서버가 그 사실을 나에게만 알려준다.
+   남의 화면에는 이 칸이 있다는 흔적도 안 남는다 — 그게 새면 그 자리에서 정체가 드러난다. */
+function ageBoxHTML(rid){
+  const ask=STATE&&STATE.ageAsk;
+  if(!ask||!rid||rid!==myRoleId) return "";
+  const cur=ask.mine||"";
+  // 이 칸은 인물정보와 롤카드 두 군데에 동시에 뜬다 — id 로 찾으면 둘 중 아무거나 잡힌다.
+  // 그래서 누른 단추에서 제 칸을 거슬러 찾는다.
+  return `<div class="agebox">
+    <span class="k">${cur?"내 나이":"당신의 나이를 적으세요"}</span>
+    <input class="agein" inputmode="numeric" maxlength="3" autocomplete="off"
+      value="${esc(cur)}" placeholder="숫자" onkeydown="if(event.key==='Enter')saveAge(this)">
+    <button class="agebtn" onclick="saveAge(this)">${cur?"고치기":"적기"}</button>
+    <span class="d">${cur?"인물정보에서 모두가 봅니다 — 고칠 수 있어요."
+                        :"당신 자신의 나이입니다. 적으면 인물정보에서 모두가 봅니다."}</span></div>`;
+}
+async function saveAge(el){
+  const box=el&&el.closest?el.closest(".agebox"):null;
+  const i=(box&&box.querySelector(".agein"))||document.querySelector(".modal.on .agein");
+  if(!i) return;
+  const v=(i.value||"").trim();
+  if(!v){ banner("나이를 적어주세요"); return; }
+  const r=await post("/api/age",{roleId:myRoleId,clientId,age:v});
+  if(r&&r.error){ banner(r.error); return; }
+  await poll();
+  // 열려 있는 창을 그 자리에서 다시 그린다 — 적자마자 자기 칸이 채워져야 한다.
+  if($("whoModal").classList.contains("on")) showWho(true);
+  if($("sheetModal")&&$("sheetModal").classList.contains("on")) showMySheet();
+  banner("나이를 적었습니다.");
+}
+
 function showWho(keepTab){
   const lim=handLimit();
   const rows=(SCEN.characters||[]).map(c=>{
@@ -4223,7 +4753,8 @@ function showWho(keepTab){
     }).join("");
     return `<div class="whorow">${avaHTML(c,"sm")}
       <div class="wi">
-        <div class="wn" style="color:${c.color}">${esc(c.name)}<span class="sub">${esc(c.age)}·${esc(c.job)}</span>${seat}</div>
+        <div class="wn" style="color:${c.color}">${esc(c.name)}<span class="sub">${esc([ageOf(c.id),c.job].filter(Boolean).join(" · "))}</span>${seat}</div>
+        ${ageBoxHTML(c.id)}
         ${c.id===myRoleId?"":`<div class="wt">${esc(c.tagline||"")}</div>`}
         ${(c.id!==myRoleId&&c.known)?`<div class="wknown"><span class="k">여기 사람들이 아는 것</span>${esc(c.known)}</div>`:""}
         ${impressionHTML(c.id)}
@@ -4234,7 +4765,7 @@ function showWho(keepTab){
      이들의 말은 조사 카드로만 들어오지만, 「이 집에 누가 있나」에는 보여야 한다. */
   const npcs=(SCEN.npcs||[]).map(c=>`<div class="whorow npcrow">${avaHTML(c,"sm")}
       <div class="wi">
-        <div class="wn" style="color:${c.color}">${esc(c.name)}<span class="sub">${esc(c.age)}·${esc(c.job)}</span>
+        <div class="wn" style="color:${c.color}">${esc(c.name)}<span class="sub">${esc([c.age,c.job].filter(Boolean).join(" · "))}</span>
           <span class="pill npcp">배역 없음</span></div>
         <div class="wt">${esc(c.tagline||"")}</div>
         ${c.known?`<div class="wknown"><span class="k">여기 사람들이 아는 것</span>${esc(c.known)}</div>`:""}
@@ -4567,7 +5098,7 @@ function showPic(url, title, note){
   m.innerHTML=`<div class="box" onclick="event.stopPropagation()">
     <div class="mhead"><div class="mh-t"><h2>${esc(title||"")}</h2></div>
       <button class="mh-x" onclick="this.closest('.modal').remove()">${ICO.close}</button></div>
-    <div class="mbody"><img src="${url}" style="display:block;width:100%;border-radius:4px">
+    <div class="mbody"><img src="${url}" style="display:block;width:100%;border-radius:2px">
       ${note?`<div class="piccap">${esc(note)}</div>`:""}</div></div>`;
   document.body.appendChild(m);
 }
@@ -4684,22 +5215,36 @@ function timelineHTML(){
     <div class="panel-note" style="margin-bottom:10px">조사카드는 전부 이 표에 맞춰져 있었습니다. 굵은 줄이 사건의 마디입니다.</div>
     <div class="rv-tl">${body}</div></div>`;
 }
-/* 결재 결정문 — 네 칸을 순서대로 채운다. 지목당한 사람은 결재권을 잃고,
-   그 칸은 남은 사람들이 표로 채운다. 대리 서명은 무효라 칸을 비울 수는 없다.
+/* 자리마다 한 문장씩 고르는 막 — 사건마다 이름이 다르다(「결재」이기도 하고
+   「마지막 질문」이기도 하다). 그래서 이 화면은 이름도 물음도 선택지 문구도
+   전부 시나리오에서 받아 그린다. 코드에 박아두면 다음 사건에서 남의 이름이 뜬다.
 
-   행선지와 달리 «가리지» 않는다. 결재란은 원래 앞사람 도장을 보고 찍는 자리고,
-   마지막 전략란은 앞의 셋을 보고 따를지 뒤집을지 정하는 자리라 순서가 곧 규칙이다. */
+   시나리오가 그 규칙을 켰을 때만(DECISION_BAR_ACCUSED) 지목당한 사람이 제 칸을 잃고,
+   그 칸은 남은 사람들이 표로 채운다. 안 켜면 셋이 각자 제 칸을 고른다.
+
+   행선지와 달리 «가리지» 않는다 — 앞사람이 무엇을 골랐는지 보고 따를지 뒤집을지
+   정하는 자리라서 순서가 곧 규칙이다. */
+/* 이 막의 이름은 사건이 정한다 — 「결재」인 사건도 있고 「마지막 질문」인 사건도 있다.
+   여태 「노인정리국 결재」가 코드에 박혀 있어서, 어느 사건을 올려도 그 이름이 떴다. */
+function decTitle(){
+  const d=(STATE&&STATE.decision)||{};
+  return d.title || ((STATE&&STATE.phase)||{}).name || "마지막 선택";
+}
+/* 자리 하나의 물음과 선택지 문구. 시나리오마다 이름이 갈려서(prompt/q · line/label)
+   양쪽을 다 받는다 — 한쪽만 읽으면 그 사건에서 물음이 통째로 빈칸으로 뜬다. */
+const decQ=seat=>(seat&&(seat.prompt||seat.q))||"";
+const decL=o=>(o&&(o.line||o.label))||"";
 function renderDecision(p){
   const d=STATE.decision;
-  if(!d){ p.innerHTML=`<div class="card"><h2>결재</h2><div class="panel-note">이 사건에는 결재가 없습니다.</div></div>`; return; }
+  if(!d){ p.innerHTML=`<div class="card"><h2>${esc(decTitle())}</h2><div class="panel-note">이 사건에는 이 막의 선택지가 없습니다.</div></div>`; return; }
   const mine=myRoleValid()?myRoleId:"";
   const myPick=STATE.myDecision||"";
   const myVotes=STATE.myDecisionVotes||{};
-  let h=`<div class="card"><h2>노인정리국 결재</h2>
+  let h=`<div class="card"><h2>${esc(decTitle())}</h2>
     <div class="mlead" style="white-space:pre-wrap">${esc(d.intro||"")}</div>`;
   if(d.barred){
-    h+=`<div class="dc-barred">${ICO.lock} <b>${esc(nameOf(d.barred))}</b>는 범인으로 지목돼 결재권을 잃었습니다.
-      그 칸은 남은 사람들이 표로 채웁니다 — 대리 서명은 무효라 비워둘 수 없어요.</div>`;
+    h+=`<div class="dc-barred">${ICO.lock} <b>${esc(nameOf(d.barred))}</b>는 범인으로 지목돼 제 칸을 잃었습니다.
+      그 칸은 남은 사람들이 표로 채웁니다 — 비워둘 수는 없어요.</div>`;
   }
   h+=`</div>`;
 
@@ -4712,24 +5257,27 @@ function renderDecision(p){
     const nvote=(d.votes&&d.votes[rid])||0;
     h+=`<div class="card dseat${done?" sealed":""}">
       <div class="ds-h"><span class="ds-n">${i+1}</span>
-        <div><h2 style="margin:0">${esc(seat.seat)}란</h2>
-        <div class="ds-who">${esc(nameOf(rid))}${isBarred?" · 결재권 상실":(isMine?" · 내 칸":"")}</div></div>
-        ${done?`<span class="pill ok">서명됨</span>`:(isBarred?`<span class="pill">${nvote}/${d.voters} 표</span>`:`<span class="pill">대기</span>`)}
+        <div><h2 style="margin:0">${esc(seat.seat||nameOf(rid))}</h2>
+        ${/* 칸 이름이 곧 사람 이름인 사건이 있다 — 그때 이름을 두 번 적으면 군더더기다 */""}
+        <div class="ds-who">${esc(seat.seat===nameOf(rid)?"":nameOf(rid))}${isBarred?" · 제 칸을 잃음":(isMine?" · 내 칸":"")}</div></div>
+        ${done?`<span class="pill ok">정함</span>`:(isBarred?`<span class="pill">${nvote}/${d.voters} 표</span>`:`<span class="pill">대기</span>`)}
       </div>
-      <div class="ds-q">${esc(seat.prompt||"")}</div>`;
+      <div class="ds-q">${esc(decQ(seat))}</div>`;
     if(done){
       const opt=(seat.options||[]).find(o=>o.id===done);
-      h+=`<div class="ds-line">${esc(opt?opt.line:"")}</div>`;
+      h+=`<div class="ds-line">${esc(decL(opt))}</div>`;
     } else if(isMine||canVote){
       h+=`<div class="ds-opts">`+(seat.options||[]).map(o=>
         `<button class="ds-o${chosen===o.id?" on":""}" onclick="sendDecision('${rid}','${o.id}')">
-           <div class="ds-ol">${esc(o.line)}</div>
+           <div class="ds-ol">${esc(decL(o))}</div>
            ${o.note&&isMine?`<div class="ds-on">${esc(o.note)}</div>`:""}</button>`).join("")+`</div>`;
       h+=`<div class="panel-note" style="margin-top:8px">${
         canVote?(chosen?"표를 던졌습니다. 전원이 던지면 칸이 찹니다.":"이 칸은 표로 채웁니다.")
-               :(chosen?"고쳐 쓸 수 있습니다. 다 차면 그대로 상신됩니다.":"이 칸은 당신 자리입니다.")}</div>`;
+               :(chosen?"고쳐 고를 수 있습니다. 전원이 정하면 그대로 넘어갑니다.":"이 칸은 당신 자리입니다.")}</div>`;
     } else {
-      h+=`<div class="panel-note">${isBarred?"남은 사람들이 표로 채우는 중입니다.":esc(nameOf(rid))+"가 쓰는 칸입니다."}</div>`;
+      // 「데이먼가」가 아니라 「데이먼이」 — 받침에 따라 조사가 갈린다
+      h+=`<div class="panel-note">${isBarred?"남은 사람들이 표로 채우는 중입니다."
+            :esc(nameOf(rid))+subjP(nameOf(rid))+" 고르는 칸입니다."}</div>`;
     }
     h+=`</div>`;
   });
@@ -4751,13 +5299,14 @@ function renderDecision(p){
 
   if(d.done&&d.report){
     const r=d.report;
-    h+=`<div class="card"><h2>완성된 결정문</h2>
+    // 이 묶음의 이름도 사건이 정한다(decision_report 의 title). 안 주면 막 이름을 쓴다.
+    h+=`<div class="card"><h2>${esc(r.title||decTitle())}</h2>
       <div class="ds-paper">${(r.lines||[]).map(l=>`<div class="ds-pl">${esc(l)}</div>`).join("")}</div>
-      <div class="ds-note${r.flipped?" flip":""}">${esc(r.note||"")}</div>
-      <div class="panel-note" style="margin-top:10px">이 종이가 그대로 나갑니다. 다음 막에서 무엇이 됐는지 봅니다.</div>
+      ${r.note?`<div class="ds-note${r.flipped?" flip":""}">${esc(r.note)}</div>`:""}
+      <div class="panel-note" style="margin-top:10px">이대로 그대로 남습니다. 다음 막에서 무엇이 됐는지 봅니다.</div>
     </div>`;
   } else {
-    h+=`<div class="card"><div class="panel-note">아직 채워지지 않은 칸이 있습니다. 다 차야 종이가 완성됩니다.</div></div>`;
+    h+=`<div class="card"><div class="panel-note">아직 정하지 않은 칸이 있습니다. 다 차야 넘어갑니다.</div></div>`;
   }
   p.innerHTML=h+nextPhaseBlock();
 }
@@ -5339,6 +5888,7 @@ async function showMySheet(){
         ${s.persona?`<div class="cov-per"><span class="k">이렇게 말한다</span>${esc(s.persona)}</div>`:""}
       </div>
     </div>
+    ${ageBoxHTML(s.id)}
     ${s.hook?`<div class="cov-hook">${esc(s.hook)}</div>`:""}
     ${s.hidden?`<div class="bc-hidden">${ICO.flag} 스포일러 배역 — 정체를 들키지 마세요</div>`:``}</div>`});
   // 2) 나의 이야기 — 줄글. 요약을 두 번 겹치면 어디서도 안 풀린다.
