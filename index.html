@@ -392,7 +392,11 @@
        높이에 맞춰 너비를 깎기 때문이다 — 사진 칸만 좁아져 카드 왼쪽에 붙어 보였다.
        폭을 100% 로 못박아 두면 비율이 깨지는 쪽으로 풀리고, 그때 object-fit:cover 가
        위아래를 잘라낸다. 그게 우리가 바라는 것이다(잘려도 좋으니 칸을 꽉 채운다). */
-    #s-lobby .rc .por{width:100%;max-height:calc(100dvh - 356px)}
+    /* ★ 접힌 목록(.slim)에는 걸면 안 된다. 거기서는 초상이 40×40 아바타인데
+       width:100% 가 그걸 덮어써서 «가로로 눌린 띠» 가 된다 — 맥북 창처럼 낮고
+       좁은 화면에서 배역이 다 차면 카드 셋이 통째로 그렇게 됐다.
+       고르는 중(안 접힌 상태)에만 칸을 늘린다. */
+    #s-lobby .role-swipe:not(.slim) .rc .por{width:100%;max-height:calc(100dvh - 356px)}
   }
   @media(min-width:620px){
     .role-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
@@ -455,7 +459,9 @@
   .rc.mine{border-color:var(--rc,var(--case-line));
     box-shadow:0 0 0 1px var(--rc,var(--case-line)) inset,3px 3px 0 rgba(0,0,0,.55)}
   /* 인물 자리 — 사진이 있으면 사진, 없으면 이모지로 폴백(그 사이에도 안 깨진다) */
-  .rc .por{position:relative;aspect-ratio:3/4;display:grid;place-items:center;overflow:hidden;
+  /* 폭을 명시한다 — 안 적으면 aspect-ratio 에서 폭이 거꾸로 계산되는 길이 열리고
+     그 계산은 엔진마다 다르다(사파리에서 칸만 좁아지던 자리). */
+  .rc .por{position:relative;width:100%;aspect-ratio:3/4;display:grid;place-items:center;overflow:hidden;
     background:linear-gradient(158deg,color-mix(in srgb,var(--rc,#555) 30%,#171615),#0f0e0d)}
   .rc .por .emo{font-size:64px;opacity:.92;filter:drop-shadow(3px 3px 0 rgba(0,0,0,.65))}
   .rc .por img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
@@ -7375,13 +7381,17 @@ function chatRow(m){
 
    한 박자는 두 토막이다 — «앞줄이 머무는 시간» 다음에 «다음 사람이 치고 있는 시간»이
    붙고, 그러고서 다음 줄이 뜬다. 사람이 채팅을 치는 순서 그대로다.
-     머무는 시간 = 글자수 ÷ 5초 (글자당 200ms)
-     말풍선     = 다음 줄 글자수 ÷ 10초 (글자당 100ms)
-   상한을 남겨 둔다. 두 줄짜리 증언(50자 남짓)이면 머무는 시간만 10초라 판이 선다.
-   여기 대사는 길어야 마흔 자 안팎이라 8초로 잡으면 규칙대로 흐르면서도 사고는 막는다. */
+     머무는 시간 = 글자수 ÷ 8.3초 (글자당 120ms)
+     말풍선     = 다음 줄 글자수 ÷ 16.7초 (글자당 60ms)
+   상한을 남겨 둔다. 두 줄짜리 증언(50자 남짓)이면 머무는 시간만 6초라 판이 선다.
+   여기 대사는 길어야 마흔 자 안팎이라 4.8초로 잡으면 규칙대로 흐르면서도 사고는 막는다.
+
+   ★ 한 번 늦췄다가 도로 당긴 자리다. 5글자=1초로 잡아 봤더니 세 사람이 다 읽고도
+     한참을 기다리는 판이 됐다. 지금은 그 «60%» — 8글자에 1초쯤이다. 규칙은 그대로
+     두고 계수만 곱했으므로, 다시 손볼 일이 있으면 여기 여섯 숫자만 같은 비로 만진다. */
 const DRIP_TICK=120;                 // 재는 간격. 아래 시간들이 이보다 성기게 걸린다
-const DRIP_PER=200, DRIP_MIN=600, DRIP_CAP=8000;   // 머무는 시간 — 5글자 = 1초
-const TYPE_PER=100, TYPE_MIN=400, TYPE_CAP=4000;   // 「치고 있다」 — 10글자 = 1초
+const DRIP_PER=120, DRIP_MIN=360, DRIP_CAP=4800;   // 머무는 시간 — 8글자 ≒ 1초
+const TYPE_PER=60,  TYPE_MIN=240, TYPE_CAP=2400;   // 「치고 있다」 — 16글자 ≒ 1초
 /* 밀린 것을 다 흘리는 데 이보다 오래 걸리면 앞엣것은 한 번에.
    배수가 열 배로 늘어 예전 30초로는 네댓 줄만 남고 나머지가 통째로 튀어나왔다.
    한 박자가 대략 7~8초니 2분이면 열대여섯 줄 — 예전과 비슷한 «끝자락»이 남는다. */

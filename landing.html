@@ -262,7 +262,7 @@
   .rail{display:grid;gap:var(--gap);padding:14px 0 18px;align-items:stretch;
     --gap:clamp(9px,2.2vw,18px);
     grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr))}
-  .poster{scroll-snap-align:none;width:100%;height:100%;text-align:left;padding:0;color:inherit;
+  .poster{scroll-snap-align:none;width:100%;min-width:0;height:100%;text-align:left;padding:0;color:inherit;
     display:flex;flex-direction:column;
     background:var(--case);border:1px solid var(--ink);
     box-shadow:inset 1px 1px 0 var(--case-hi),inset -1px -1px 0 var(--case-lo),3px 3px 0 var(--ink)}
@@ -274,7 +274,10 @@
      칸을 3:4 로 잡아 두어서, cover 가 위아래를 11% 씩 잘라 먹고 있었다 —
      상자 그림의 위 테두리와 아래 테두리가 통째로 날아가 있었다.
      비율을 맞추면 자를 것이 없으므로 background-position 도 가운데로 되돌린다. */
-  .art{position:relative;aspect-ratio:2/3;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;
+  /* ★ width:100% 를 «명시» 한다. 안 적으면 폭이 aspect-ratio 에서 거꾸로 계산되는
+     길이 열리고, 그 계산은 엔진마다 다르다 — 사파리에서 그림칸만 좁아지고 오른쪽에
+     베이지가 남는 일이 있었다. 폭을 못박으면 비율은 «높이» 로만 풀린다. */
+  .art{position:relative;width:100%;aspect-ratio:2/3;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;
     border:1px solid var(--ink);background:var(--ph);box-shadow:inset 2px 2px 0 rgba(0,0,0,.5)}
   .art .artimg{position:absolute;inset:0;z-index:1;background-size:cover;background-position:center center}
   .art::after{content:"NO IMAGE";position:absolute;left:50%;top:40%;transform:translateX(-50%);z-index:0;
