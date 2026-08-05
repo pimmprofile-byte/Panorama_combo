@@ -428,30 +428,53 @@
     .role-grid>.rc{flex:none}
     .role-nav{display:none}
   }
-  /* ── 다 차면 접힌다 ─────────────────────────────────────────────
-     초상 40px + 이름 한 줄 + 단추. 「누가 무엇을 맡았는지」는 그대로 읽히고,
-     세로 500px 가까이를 「이대로 진행하기」에 돌려준다.
-     3열 그리드 규칙(@media 620px)보다 뒤에 둔다 — 넓은 화면에서도 접혀야 한다. */
+  /* ── 다 차면 «가로 목록» 이 된다 ─────────────────────────────────
+     고르는 중에는 초상이 커야 한다 — 셋을 가르는 건 이름표가 아니라 얼굴이다.
+     다 고르고 나면 그 큰 칸 셋이 세로를 다 먹으므로, 한 사람이 한 줄을 통째로
+     쓰는 가로 목록으로 바꾼다. 판을 «좁히는» 게 아니라 «눕히는» 것이 요점이다.
+
+     ★ 한 번 40px 아바타 한 줄로 접었다가 물렀다 — 그건 눕힌 게 아니라 구겨넣은
+       것이라, 얼굴도 설명도 안 남고 셋이 그냥 회색 막대가 됐다. 지금은 초상을
+       읽을 수 있는 크기로 두고, 이름·역할·설명·단추가 한 줄에 나란히 선다.
+
+     자리를 잡는 건 grid 다. 카드 안의 순서가 초상 → 이름줄 → 설명 → 단추라,
+     flex 로는 이름줄과 설명을 한 덩이로 묶을 수 없다(마크업을 안 건드린다는 뜻).
+     3열 그리드 규칙(@media 620px)보다 뒤에 둔다 — 넓은 화면에서도 눕는다. */
   .rc .rc-line{display:none}
-  .role-swipe.slim .role-grid{display:flex;flex-direction:column;gap:6px;
+  .role-swipe.slim .role-grid{display:flex;flex-direction:column;gap:8px;
     overflow:visible;scroll-snap-type:none;padding:0}
-  .role-swipe.slim .role-grid>.rc{flex:0 0 auto;display:flex;align-items:center;gap:10px;
-    padding:6px 9px}
-  .role-swipe.slim .rc .por{width:40px;height:40px;aspect-ratio:auto;flex:0 0 auto;
-    border:1px solid var(--line)}
+  .role-swipe.slim .role-grid>.rc{flex:0 0 auto;width:100%;padding:10px 12px;
+    display:grid;align-items:center;gap:1px 13px;
+    grid-template-columns:auto minmax(0,1fr) auto;
+    grid-template-areas:"por line btn" "por tg btn"}
+  .role-swipe.slim .rc .por{grid-area:por;width:74px;height:99px;aspect-ratio:auto;
+    border:1px solid var(--case-e);box-shadow:inset 1px 1px 0 rgba(255,255,255,.05)}
   .role-swipe.slim .rc .por .scrim{display:none}
-  .role-swipe.slim .rc .por .emo{font-size:22px}
-  .role-swipe.slim .rc .badge{position:static;flex:0 0 auto;backdrop-filter:none;background:none;
-    border:0;padding:0 2px}
-  .role-swipe.slim .rc .badgeslot{position:absolute;right:9px;top:4px;font-size:9px}
-  .role-swipe.slim .rc .tg{display:none}
-  .role-swipe.slim .rc .rc-line{display:flex;flex:1 1 auto;min-width:0;flex-direction:column;gap:1px}
-  .role-swipe.slim .rc .rc-line .nm{font-size:14px;font-weight:800;color:var(--rc,var(--ink));
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .role-swipe.slim .rc .rc-line .jb{font-size:10.5px;color:var(--sub)}
-  .role-swipe.slim .rc .btnslot{flex:0 0 auto}
-  .role-swipe.slim .rc-go{display:inline-block;width:auto;margin:0;padding:7px 12px;white-space:nowrap}
+  .role-swipe.slim .rc .por .emo{font-size:34px}
+  /* 상태 딱지 — 큰 카드에서는 초상 오른쪽 위 구석이었는데, 74px 짜리 초상에서는
+     그게 얼굴 한복판을 덮는다. 눕힌 판에서는 초상 아래에 «자막 띠» 로 붙인다. */
+  .role-swipe.slim .rc .badgeslot .badge{position:absolute;top:auto;right:0;left:0;bottom:0;
+    display:block;text-align:center;padding:2px 0;font-size:9px;border:0;
+    border-top:1px solid var(--case-e);border-radius:0;background:rgba(6,5,4,.82);
+    backdrop-filter:none}
+  .role-swipe.slim .rc .rc-line{grid-area:line;display:flex;min-width:0;align-items:baseline;
+    gap:8px;flex-wrap:wrap}
+  .role-swipe.slim .rc .rc-line .nm{font-size:17px;font-weight:800;color:var(--rc,var(--ink))}
+  .role-swipe.slim .rc .rc-line .jb{font-size:11.5px;color:var(--sub)}
+  .role-swipe.slim .rc .tg{grid-area:tg;display:block;margin:0;padding:0;font-size:12px;
+    line-height:1.6;color:var(--sub);word-break:keep-all;
+    display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+  .role-swipe.slim .rc .btnslot{grid-area:btn}
+  .role-swipe.slim .rc-go{display:inline-block;width:auto;margin:0;padding:9px 15px;white-space:nowrap}
   .role-swipe.slim .role-nav{display:none}
+  /* 좁은 화면에서는 설명이 먼저 자리를 내준다 — 얼굴과 이름과 단추가 먼저다 */
+  @media(max-width:399px){
+    .role-swipe.slim .role-grid>.rc{grid-template-areas:"por line btn" "por line btn";gap:0 10px;padding:9px 10px}
+    .role-swipe.slim .rc .tg{display:none}
+    .role-swipe.slim .rc .por{width:60px;height:80px}
+    .role-swipe.slim .rc .rc-line{flex-direction:column;align-items:flex-start;gap:2px}
+    .role-swipe.slim .rc-go{padding:8px 12px}
+  }
 
   /* 카드는 컨테이너, 실제 동작은 카드 안 '선택' 버튼이 맡는다 */
   /* 테는 평소에 «안 보인다». 자리는 잡아둬야 고를 때 칸이 안 튀므로 투명으로 둔다.
@@ -4943,16 +4966,15 @@ function allSeated(){
   if(!STATE||!SCEN||!SCEN.characters||!SCEN.characters.length) return false;
   return !SCEN.characters.some(c=>((STATE.roles||{})[c.id]||{}).mode==="open");
 }
-/* ── 배역 칸은 이제 안 접는다 ────────────────────────────────────────
-   한동안 자리가 다 차는 순간 초상을 40px 로 줄이고 한 줄짜리 목록으로 접었다.
-   그럴 이유가 있었다 — 큰 칸 셋이 「이대로 진행하기」를 화면 밖으로 밀어내서,
-   다 골라놓고 «다음이 없다»고 여기는 자리가 생겼기 때문이다.
+/* ── 다 차면 «눕는다» ────────────────────────────────────────────────
+   고르는 중에는 초상이 커야 한다. 다 고르고 나면 그 큰 칸 셋이 세로를 다 먹으므로,
+   한 사람이 한 줄을 통째로 쓰는 가로 목록으로 바꾼다(.slim).
 
-   그 이유가 없어졌다. 단추는 머리줄 오른쪽으로 올라가 늘 보인다(startNowHTML).
-   그런데 접는 규칙만 남아서, 특히 QA 검수처럼 세 자리가 «시작하자마자» 차는
-   판에서는 배역 카드를 한 번도 못 본 채 가로 막대 셋만 뜨고 있었다.
-   고르는 중이든 다 골랐든 사람은 얼굴로 읽는다. 접지 않는다.
-   .slim 규칙(CSS)은 남겨 둔다 — 좁은 화면에서 다시 쓸 일이 생기면 그때 건다. */
+   ★ 한 번 40px 아바타 한 줄로 «접었다가» 물렀다. 접는 것과 눕히는 것은 다르다 —
+     접으면 얼굴도 설명도 안 남아 셋이 그냥 회색 막대가 되고, 특히 QA 검수처럼
+     세 자리가 시작하자마자 차는 판에서는 배역 카드를 한 번도 못 본 채 그 막대만
+     보게 된다. 지금은 초상을 읽을 수 있는 크기로 눕히고 화면 폭을 다 쓴다.
+   다시 그리지 않고 클래스만 토글하므로 폴링(1.5초)마다 깜빡이지 않는다. */
 /* 머리줄 오른쪽의 시작 단추. 배역 목록을 다시 그리든 안 그리든 늘 같이 손본다 —
    이 자리는 #lobbyList 밖(머리줄)이라 목록의 갱신 경로에 얹혀 가지 않는다. */
 function paintStartNow(){
@@ -4961,7 +4983,7 @@ function paintStartNow(){
 }
 function paintLobbyFold(host){
   const sw=host.querySelector(".role-swipe"); if(!sw) return;
-  sw.classList.remove("slim");
+  sw.classList.toggle("slim", allSeated());
 }
 function renderLobby(force){
   const shape=((STATE&&STATE.scenarioId)||"")+"|"+SCEN.characters.map(c=>c.id).join(",");
