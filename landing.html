@@ -94,11 +94,37 @@
   .vhs .noise{position:absolute;inset:-60%;opacity:.07;mix-blend-mode:screen;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     animation:grain .5s steps(3) infinite}
-  .vhs .rollbar{position:absolute;left:0;right:0;height:120px;opacity:.4;
-    background:linear-gradient(180deg,transparent,rgba(124,240,176,.06) 50%,transparent);animation:roll 9s linear infinite}
+  /* 굵은 플리커선 — 창 안쪽(브라운관)을 아래에서 위로 훑는다. 팝업의 .crt-flick 과
+     같은 물건이고, 여기서는 붙일 자리가 이미 있어서(.vhs 안) 그 층에 얹는다.
+     ※ 예전 값은 rgba(...,.06) 에 opacity .4 라 실효 0.024 였다 — 화면에 있으나마나였다.
+       밝히는 방식도 흰색 덧칠이 아니라 backdrop-filter:brightness 다. 덧칠은 «더하기»라
+       어두운 판 위 인광 글자의 대비를 깎아먹는데, 곱하기는 글자와 바탕이 같은 비율로
+       밝아져 대비가 남는다. 어두운 칸은 곱해도 거의 안 밝아지니 아주 옅은 흰색을
+       한 겹 같이 얹는다. */
+  .vhs .rollbar{position:absolute;left:0;right:0;top:0;height:64px;opacity:1;
+    background:rgba(255,255,255,.05);
+    backdrop-filter:brightness(1.18) contrast(1.04);
+    -webkit-backdrop-filter:brightness(1.18) contrast(1.04);
+    /* 가운데 한 칸은 딱 끊고 위아래 가장자리만 두 계단으로 푼다 — 전부 딱 끊으면
+       CRT 가 아니라 그냥 흰 사각형이다. */
+    --crt-mask:linear-gradient(180deg,
+      rgba(0,0,0,0)     0%,
+      rgba(0,0,0,.26)   9%, rgba(0,0,0,.26) 17%,
+      rgba(0,0,0,.60)  17%, rgba(0,0,0,.60) 28%,
+      rgba(0,0,0,1)    28%, rgba(0,0,0,1)   72%,
+      rgba(0,0,0,.60)  72%, rgba(0,0,0,.60) 83%,
+      rgba(0,0,0,.26)  83%, rgba(0,0,0,.26) 91%,
+      rgba(0,0,0,0)   100%);
+    -webkit-mask-image:var(--crt-mask);mask-image:var(--crt-mask);
+    animation:roll 9s linear infinite}
   @keyframes grain{0%,100%{transform:translate(0,0)}33%{transform:translate(-6%,4%)}66%{transform:translate(4%,-5%)}}
-  @keyframes roll{0%{top:-14%}100%{top:114%}}
-  @media (prefers-reduced-motion:reduce){ .vhs .noise,.vhs .rollbar,.emblem,h1.title,.cursor{animation:none!important} }
+  /* 9초에 한 번, 1.17초 동안 훑고 나머지는 화면 위쪽 밖에 서서 쉰다.
+     계속 돌면 눈이 아프고 글을 못 읽는다 — 「이따금」이 이 연출의 전부다. */
+  @keyframes roll{0%{top:100%}13%{top:-64px}100%{top:-64px}}
+  /* 동작을 줄이는 사람에게는 아예 안 보인다. animation:none 만으로는 띠가 0% 자리에
+     «멈춰 선 채로» 남아서, 화면 아래쪽에 밝은 줄이 그어진 것처럼 보인다. */
+  @media (prefers-reduced-motion:reduce){ .vhs .noise,.emblem,h1.title,.cursor{animation:none!important}
+    .vhs .rollbar{display:none} }
 
   .wrap{position:relative;z-index:2;max-width:1000px;margin:0 auto;
     padding:clamp(12px,3vw,34px) clamp(10px,3vw,24px) 60px;min-height:100vh;
