@@ -48,14 +48,14 @@ COMBO — 이 패키지의 둘째 판. **아직 원고가 없습니다.**
 
 ID = "combo"
 TITLE = "COMBO"
-SUBTITLE = "COMBO · 준비 중"
+SUBTITLE = "두 번째 판"      # 라벨에서 제목 아래 한 줄. 제목을 되풀이하지 않습니다
 META = {
     "title": TITLE, "subtitle": SUBTITLE,
     # 잠긴 카드에서도 이 한 줄은 보입니다. 다음 판이 무엇인지 궁금해질 만큼만 적습니다 —
     # 기믹도 진상도 여기서 말하지 않습니다.
     "blurb": "같은 세계, 다른 판. 아직 열리지 않았습니다.",
     "players": "3인",
-    "tone": "준비 중",
+    "tone": "세계관 퍼즐 · 협동 방탈출",
     "difficulty": "★★",
     "tagline": "곧 열립니다",
     "locked": True,          # 사건 선택창에서 회색으로 뜨고 고를 수 없습니다

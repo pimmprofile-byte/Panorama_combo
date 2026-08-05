@@ -329,10 +329,28 @@ def _my_notes(role_id: str, card_ids) -> dict:
 
     공개 카드 목록은 모두가 같은 것을 받으므로 여기에 섞을 수 없다 — 별도로 내려보내고
     클라이언트가 카드 위에 얹는다. 배역이 없으면(관전·진행석) 빈 손이다.
+
+    ★ 시나리오는 이걸 «문자열 목록»으로 적고, 화면은 «{kind, text} 객체»를 읽는다.
+      그 사이를 아무도 안 맞춰 줘서, 여태 카드 위에 이름표(「내 눈에만 걸리는 것」)만
+      뜨고 «글은 통째로 비어» 있었다. 모양을 맞추는 자리는 여기다 — 시나리오마다
+      객체를 적게 하면 원고 쓰는 사람이 엔진 사정을 알아야 하고, 화면에서 두 모양을
+      다 받게 하면 그 분기가 화면마다 늘어난다.
     """
     fn = getattr(SC, "private_notes", None)
     if not role_id or not fn:
         return {}
+
+    def _shape(n):
+        # 원고가 그냥 한 줄로 적은 것 — 이 판의 기본이다.
+        if isinstance(n, str):
+            return {"kind": "eye", "text": n}
+        if isinstance(n, dict):
+            row = {"kind": n.get("kind") or "eye", "text": n.get("text") or ""}
+            if n.get("points"):
+                row["points"] = n["points"]
+            return row
+        return {"kind": "eye", "text": str(n)}
+
     out = {}
     for cid in card_ids:
         try:
@@ -340,7 +358,8 @@ def _my_notes(role_id: str, card_ids) -> dict:
         except Exception:              # noqa: BLE001 — 시나리오가 안 갖췄어도 판은 돌아야 한다
             ns = None
         if ns:
-            out[cid] = ns
+            rows = [_shape(n) for n in ns]
+            out[cid] = [r for r in rows if r["text"]]
     return out
 
 
@@ -564,6 +583,13 @@ class AgentCard(BaseModel):
 
 class KeyOnly(BaseModel):
     key: str = ""
+
+
+class AutoSweep(BaseModel):
+    """QA 자동조사 — 「이 배역이 이번 라운드에 할 수 있는 것을 알아서 다 한다」."""
+    roleId: str = ""            # 비우면 좌석에 앉은 배역 전부
+    key: str = ""
+    puzzles: bool = True        # 수수께끼도 대신 풀어줄 것인가
 
 
 class SelectScenario(BaseModel):
@@ -878,7 +904,10 @@ def select_scenario(b: SelectScenario):
         if not running and held is None and b.clientId:
             ROOM["host"] = b.clientId
             held = b.clientId
-    mine = (held in (None, b.clientId)) or _gm_key_ok(b.key)
+    # 호스트를 쥔 기기이거나, 열쇠를 «실제로 들고 온» 요청(진행석·QA 검수)이다.
+    # 여기서만은 빈 키를 안 받는다 — AGENT_KEY를 안 건 로컬 판에서 그걸 통과시키면
+    # 가드가 아예 없는 것과 같아서 아무 기기나 남의 방을 갈아엎게 된다(_gm_key_ok 주석).
+    mine = (held in (None, b.clientId)) or _gm_key_ok(b.key) or _key_host(b.key)
     # 같은 사건을 다시 고른 것뿐이면 방을 건드리지 않는다. 예전엔 이것도 초기화라
     # 호스트가 뒤로 가기로 로비에 들렀다 돌아오기만 해도 판이 통째로 날아갔다.
     if same:
@@ -1054,15 +1083,23 @@ def state(clientId: str = "", gm: int = 0, roleId: str = "", key: str = ""):
         if st.get("myRole"):
             st["podMarked"] = _pod_marked(st["myRole"])
             st["podCodeOk"] = bool(ROOM["podCode"].get(st["myRole"]))
-        st["isHost"] = bool(clientId) and ROOM.get("host") == clientId
-        if st["isHost"]:
+        # 호스트 자리를 지키는 신호는 «진짜» 호스트만 남긴다. 열쇠로 서 있는 사람이
+        # 이걸 갱신하면, 정작 사라진 호스트의 자리가 영영 안 비어서 아무도 못 이어받는다.
+        _real_host = bool(clientId) and ROOM.get("host") == clientId
+        if _real_host:
             ROOM["hostSeen"] = time.time()
+        # QA 검수 모드는 열쇠로 호스트 권한을 빌린다. 클라이언트의 진행 UI가 이 한 값에
+        # 걸려 있어서, 여기서 안 세워주면 세 좌석을 다 쥐고도 페이즈를 못 넘긴다.
+        # ROOM["host"] 는 안 건드린다 — 빌리는 것이지 빼앗는 것이 아니다(_host_ok 참고).
+        st["isHost"] = _real_host or _key_host(key)
         # 호스트를 쥔 기기가 사라지면(창을 닫았거나, 저장소를 지웠거나, 다른 폰으로 옮겼거나)
         # 아무도 판을 못 굴린다. 그 자리는 잠깐 비면 남이 이어받을 수 있어야 한다.
         st["hostStale"] = bool(ROOM.get("host")) and not st["isHost"] and _host_stale()
         # 호스트를 아무도 안 잡은 방도 있다. 그때는 '호스트 전용' 연출을 아무도 못 보게 되므로
         # 클라이언트가 그 사정을 알 수 있게 해준다(다른 엔드포인트도 같은 규칙으로 통과시킨다).
-        st["hasHost"] = ROOM.get("host") is not None
+        # 열쇠로 서 있는 사람에게는 «호스트가 있다»로 답한다 — 자기가 그 호스트인데
+        # 「호스트를 기다립니다」가 뜨면 앞뒤가 안 맞는다.
+        st["hasHost"] = (ROOM.get("host") is not None) or st["isHost"]
     return st
 
 
@@ -1106,7 +1143,7 @@ def _seed_alibi() -> None:
 def start_game(b: HostReq):
     """호스트가 배역 확정 — 이후 배역은 바꿀 수 없고, 모두가 오프닝으로 들어간다."""
     with LOCK:
-        if ROOM.get("host") is not None and not (_is_host(b.clientId) or _agent_ok(b.key)):
+        if ROOM.get("host") is not None and not _host_ok(b.clientId, b.key):
             return JSONResponse({"error": "호스트만 시작할 수 있습니다"}, status_code=403)
         opens = [rid for rid, r in ROOM["roles"].items() if r["mode"] == "open"]
         if opens:
@@ -1297,14 +1334,20 @@ def set_age(b: AgeReq):
     ★ 되돌아오는 말은 두 갈래 다 똑같은 403이다. 「그 자리가 아니다」와 「적을 수 있는
       배역이 아니다」를 갈라 말하면, 남의 배역 id를 넣어보는 것만으로 누가 적을 수 있는
       자리인지가 드러난다 — 그게 이 판의 답이다.
-    ★ 한 번 적어도 고칠 수 있게 둔다. 오타 하나가 판 끝까지 가는데 되돌릴 길이 없으면
-      그 숫자를 근거로 도는 판이 통째로 어긋난다. 감출 것은 숫자가 아니라
-      「댈 수 있다」는 사실이고, 그건 고쳐도 새지 않는다.
+    ★ **한 번 적으면 끝이다.** 예전에는 고칠 수 있게 두었는데(오타 걱정), 고칠 수
+      있으면 그 숫자가 판 위의 사실이 안 된다 — 남이 「몇 살이냐」고 물어 몰린 뒤에
+      슬쩍 바꿔 대는 길이 열린다. 이 판에서 나이는 심문의 대상이라 흔들리면 안 된다.
+      그래서 화면에서도 「고치기」를 없앴고, 여기서도 두 번째 요청은 안 받는다.
+      화면만 막으면 저장소를 지우거나 다른 기기로 들어와 다시 적을 수 있다.
+    ★ 여기서 돌아가는 409 는 「내가 이미 적었다」는 말뿐이라, 적을 수 있는 자리인지를
+      모르는 사람에게는 아무것도 안 알려준다 — 그 앞의 403 을 먼저 맞기 때문이다.
     """
     with LOCK:
         r = ROOM["roles"].get(b.roleId)
         if b.roleId not in _age_inputs() or not r or r["clientId"] != b.clientId:
             return JSONResponse({"error": "권한 없음"}, status_code=403)
+        if (ROOM.get("ages") or {}).get(b.roleId):
+            return JSONResponse({"error": "나이는 한 번만 적을 수 있습니다"}, status_code=409)
         v = re.sub(r"\s+", " ", str(b.age or "")).strip()[:12]
         if not v:
             return JSONResponse({"error": "나이를 적어주세요"}, status_code=400)
@@ -1347,6 +1390,30 @@ def _gm_key_ok(key: str) -> bool:
 
 def _is_host(client_id: str) -> bool:
     return bool(client_id) and ROOM.get("host") == client_id
+
+
+def _key_host(key: str) -> bool:
+    """열쇠를 «실제로 들고 온» 요청인가 — QA 검수 모드가 이 길로 들어온다.
+
+    QA 검수는 한 사람이 세 좌석을 다 쥐고 혼자 판을 굴려보는 모드다. 그 사람이
+    호스트까지 쥐고 있으리란 보장이 없어서, 여태 페이즈를 넘길 수가 없었다.
+    열쇠(AGENT_KEY)는 진행석·관리자 창구와 같은 것을 쓴다 — 새 인증을 만들지 않는다.
+
+    _agent_ok 를 그냥 쓰지 않는 이유: 그건 AGENT_KEY를 안 건 서버에서 «빈 키»에도
+    True를 준다. 그래서 키를 안 보낸 평범한 참가자까지 호스트가 돼버린다.
+    여기서는 빈 키를 먼저 잘라내므로, 열쇠 없는 요청의 길은 한 톨도 안 바뀐다.
+    """
+    return bool(key) and _agent_ok(key)
+
+
+def _host_ok(client_id: str, key: str) -> bool:
+    """이 요청을 호스트 권한으로 볼 것인가 — 진행 계열 엔드포인트가 전부 이 하나를 본다.
+
+    호스트를 쥔 기기이거나, 열쇠를 맞춘 요청(진행석·QA 검수)이다. 어디까지나
+    「이 요청은 호스트 권한으로 본다」일 뿐 ROOM["host"] 자체는 건드리지 않는다 —
+    QA가 진짜 호스트의 자리를 빼앗으면 그쪽 화면에 «권한이 넘어갔습니다»가 뜬다.
+    """
+    return _is_host(client_id) or _agent_ok(key)
 
 
 def _ap_for(seq: int) -> int:
@@ -1943,7 +2010,18 @@ class PuzzleTry(BaseModel):
     answer: str = ""
 
 
-PUZZLE_HINT_AFTER = 3        # 이만큼 틀리면 그 사람에게만 힌트 한 줄이 열린다
+PUZZLE_HINT_AFTER = 2        # 이만큼 틀리면 그 사람에게만 힌트 한 줄이 열린다
+# ── 세 번이면 끝 ──────────────────────────────────────────────────
+# 틀려도 아무 일이 안 일어나면 답을 «찍는» 것이 제일 싼 수가 된다. 세 번으로 끊으면
+# 한 번 넣기 전에 카드를 다시 읽게 된다 — 그게 이 판이 바라는 행동이다.
+#
+# ★ **잠기는 것은 그 사람에게만이다.** 판 전체에서 잠그면 F1(피아노 아래)·D4(계기반)
+#   처럼 구역을 여는 수수께끼가 영영 안 열려서 하늘 끝·바다 끝에 아무도 못 들어가고,
+#   열쇠 반쪽이 안 모여 방탈출 막이 통째로 사라진다. 사람마다 세 번이니 한 수수께끼에
+#   판 전체로는 아홉 번이 있고, 못 푼 사람은 옆사람에게 넘겨야 한다 — 3인 판에서
+#   「이거 좀 대신 풀어봐」가 오가는 것 자체가 이 게임의 자리다.
+# ※ 그래도 셋이 다 태워버리면 그 수수께끼는 죽는다. 구역 해금 두 장은 지켜봐야 한다.
+PUZZLE_MAX_TRIES = 3
 
 
 def _puzzle_open_now() -> tuple[bool, str]:
@@ -1991,12 +2069,16 @@ def puzzle_list(role_id: str, clientId: str = ""):
         n = int(tries.get(c["id"], 0))
         row = {"id": c["id"], "spot": c.get("spot", ""), "locName": c.get("locName", ""),
                "prompt": p.get("prompt", ""), "tries": n,
+               # 세 번 틀린 자리는 목록에서 «지우지 않고» 잠긴 채로 둔다. 사라지면
+               # 「내가 태웠다」는 사실까지 같이 사라져서, 옆사람에게 넘길 생각을 못 한다.
+               "locked": n >= PUZZLE_MAX_TRIES,
                # 무엇이 나오는지는 미리 안 말한다 — 「도구가 나온다」까지만.
                "gives": bool(_is_gear(c) or _is_gear(SC.get_card(p.get("grants") or "") or {}))}
         if n >= PUZZLE_HINT_AFTER:
             row["hint"] = SC.puzzle_hint(c["id"]) if hasattr(SC, "puzzle_hint") else p.get("hint", "")
         out.append(row)
-    return {"open": ok, "why": why, "hintAfter": PUZZLE_HINT_AFTER, "items": out}
+    return {"open": ok, "why": why, "hintAfter": PUZZLE_HINT_AFTER,
+            "maxTries": PUZZLE_MAX_TRIES, "items": out}
 
 
 @app.post("/api/puzzle")
@@ -2024,30 +2106,65 @@ def puzzle_answer(b: PuzzleTry):
         if _holder_of(b.cardId) or b.cardId in ROOM["revealed"]:
             return JSONResponse({"error": "이미 누군가 풀었습니다"}, status_code=409)
 
-        good = SC.check_puzzle(b.cardId, b.answer) if hasattr(SC, "check_puzzle") else False
         tries = ROOM.setdefault("puzzleTries", {}).setdefault(b.roleId, {})
+        # 세 번 틀린 사람은 이 카드 앞에 다시 못 선다. 답을 받기 «전에» 막아야
+        # 네 번째 답이 우연히 맞아버리는 일이 없다.
+        if int(tries.get(b.cardId, 0)) >= PUZZLE_MAX_TRIES:
+            return JSONResponse(
+                {"error": f"{PUZZLE_MAX_TRIES}번 틀려서 이 카드는 당신에게 잠겼습니다 — 다른 사람에게 넘기세요",
+                 "locked": True, "tries": int(tries.get(b.cardId, 0))}, status_code=409)
+
+        good = SC.check_puzzle(b.cardId, b.answer) if hasattr(SC, "check_puzzle") else False
         if not good:
             tries[b.cardId] = int(tries.get(b.cardId, 0)) + 1
             n = tries[b.cardId]
-            out = {"ok": False, "tries": n}
+            out = {"ok": False, "tries": n, "locked": n >= PUZZLE_MAX_TRIES,
+                   "maxTries": PUZZLE_MAX_TRIES}
             if n >= PUZZLE_HINT_AFTER:
                 out["hint"] = SC.puzzle_hint(b.cardId) if hasattr(SC, "puzzle_hint") else ""
             bump()
             return out
 
-        # 푼 값이 «그 카드 자체» 가 아닐 수 있다. A9(메모리칩)는 풀면 A10(그 날 밤의 녹취)이
-        # 나오고, 그건 손패가 아니라 테이블에 펴진다 — 원고가 그렇게 적혀 있다.
+        # ── 무엇이 나오는가 ────────────────────────────────────────────
+        # 예전에는 수수께끼 카드 «자신» 이 푼 사람 손패로 들어갔다. 그래서 계기반
+        # 눈금자를 풀면 손에 계기반 눈금자가 들어왔다 — 푼 보람이 없고, 손패 한 칸만
+        # 먹는다. 수수께끼는 «자물쇠» 지 «상품» 이 아니다.
+        #
+        # 그래서 둘로 나눈다.
+        #   ① 자물쇠(그 수수께끼 카드) — 풀린 자물쇠는 숨길 것이 없으니 테이블에 편다.
+        #      무엇을 풀었는지는 셋이 다 본다.
+        #   ② 상품(grants) — 푼 사람이 가져간다. 원고가 publish 를 달아 두었으면
+        #      상품도 테이블로 간다(그 날 밤의 녹취처럼 다 같이 봐야 하는 것들).
+        #
+        # ★ 다만 **그 카드 자체가 도구인 경우는 예외다**(C1 회색조작기·C5 전기·
+        #   H0 게임팩). 거기서는 자물쇠와 상품이 한 몸이라, 테이블에 펴 버리면
+        #   아무도 그 도구를 «가진» 것이 안 되고 방탈출 조합이 성립하지 않는다.
+        #
+        # ★ **상품은 언제나 푼 사람 손패로 간다.** 원고의 `puzzle.publish` 는 여기서
+        #   더 안 본다 — 풀어서 얻은 것이 곧바로 테이블에 펴지면 푼 사람이 쥐는 것이
+        #   없고, 「내가 풀었으니 내가 들고 협상한다」가 사라진다.
+        #   상품이 조사카드면 손패 상한을 그대로 받는다(넘치면 내려놓아야 한다).
+        #   도구면 인벤토리로 가서 상한 밖이다 — 그 가름은 _split_hand 가 한다.
         pz = c.get("puzzle") or {}
-        give = pz.get("grants") or b.cardId
-        if pz.get("publish"):
-            # 테이블 전체공개. 푼 사람만 아는 것이 아니라 다 같이 보는 것이 된다.
-            _publish(give, by=b.roleId)
-            err = _try_investigate(b.roleId, b.cardId, enforce_ap=False, _puzzle_bypass=True) \
-                if give != b.cardId else None
+        give = pz.get("grants") or ""
+        if c.get("item"):
+            err = _try_investigate(b.roleId, b.cardId, enforce_ap=False, _puzzle_bypass=True)
         else:
+            _publish(b.cardId, by=b.roleId)
+            err = None
+        if not err and give and give != b.cardId:
             err = _try_investigate(b.roleId, give, enforce_ap=False, _puzzle_bypass=True)
         if err:
             return JSONResponse({"error": err}, status_code=409)
+        # 구역이 열리는 수수께끼는 그 사실을 판에 알린다. 여태 조용히 열려서,
+        # 지도를 다시 열어보기 전에는 새 구역이 생긴 줄 아무도 몰랐다.
+        zone = c.get("unlockZone") or ""
+        if zone:
+            zn = next((z.get("name") for z in (getattr(SC, "MAP", []) or [])
+                       if z.get("loc") == zone), "") or zone
+            ROOM["table"].append({"kind": "system", "broadcast": True,
+                                  "text": f"— 「{zn}」 구역이 열렸습니다."})
+        give = give or b.cardId
         # 조사턴을 안 쓴다. _try_investigate 는 열어준 카드에 «이번 라운드» 도장을 찍는데,
         # 남은 조사 수는 그 도장을 세어 구한다 — 그대로 두면 수수께끼가 조사턴을 먹는다.
         # 묶음 형제들과 같은 방식으로 0라운드로 눕힌다.
@@ -2757,7 +2874,7 @@ def night_pick(b: NightPick):
 @app.post("/api/night/close")
 def night_close(b: HostReq):
     with LOCK:
-        if ROOM.get("host") not in (None, b.clientId) and not _agent_ok(b.key):
+        if ROOM.get("host") is not None and not _host_ok(b.clientId, b.key):
             return JSONResponse({"error": "host"}, status_code=403)
         _night_resolve()
         return {"ok": True, "night": _night_public()}
@@ -3961,6 +4078,105 @@ def escape_answer(b: EscapeAct):
     return {"ok": True, "escape": _escape_public(b.roleId)}
 
 
+def _auto_sweep_one(role_id: str, do_puzzles: bool) -> list:
+    """그 배역이 «지금 할 수 있는 조사»를 알아서 다 한다. 무슨 일이 있었는지 되돌려준다.
+
+    QA 전용이다. 3인 판을 혼자 검수할 때 한 사람이 스물한 번을 손으로 눌러야 조사
+    페이즈가 끝나는데, 그걸 다 누르고 나면 정작 보려던 다음 막까지 못 간다.
+
+    ★ 순서가 있다. **수수께끼를 먼저 푼다** — 구역을 여는 수수께끼(F1·D4)가 풀려야
+      하늘 끝·바다 끝의 카드가 후보에 들어온다. 뒤에 풀면 그 구역은 이번 라운드를
+      통째로 건너뛴다.
+    ★ 조사턴(ap)은 그대로 쓴다. 자동이라고 예산을 무시하면 검수한 것이 실제 판이
+      아니게 된다 — 「몇 장까지 열리는가」가 이 게임의 뼈대다.
+    """
+    log = []
+    cur = current_round(ROOM["seq"])
+    if do_puzzles:
+        # 한 번 풀면 구역이 열리고 후보가 늘어난다. 더 못 풀 때까지 돈다.
+        for _ in range(len(getattr(SC, "CARDS", []) or [])):
+            did = False
+            held = set(ROOM["revealed"])
+            for cids in ROOM["hands"].values():
+                held.update(cids)
+            for c in SC.CARDS:
+                p = c.get("puzzle")
+                if not p or c["id"] in held or c.get("round", 1) > cur:
+                    continue
+                if _zone_lock(c.get("loc", ""), cur):
+                    continue
+                if [r for r in _card_needs(c) if r not in held]:
+                    continue
+                ans = (p.get("answer") or [""])[0]
+                if not SC.check_puzzle(c["id"], ans):
+                    log.append(f"{c['id']} 수수께끼 — 정답이 안 맞습니다(원고 확인 필요)")
+                    continue
+                give = p.get("grants") or ""
+                if c.get("item"):
+                    err = _try_investigate(role_id, c["id"], enforce_ap=False, _puzzle_bypass=True)
+                else:
+                    _publish(c["id"], by=role_id)
+                    err = None
+                if not err and give and give != c["id"]:
+                    err = _try_investigate(role_id, give, enforce_ap=False, _puzzle_bypass=True)
+                if err:
+                    log.append(f"{c['id']} 수수께끼 — {err}")
+                    continue
+                for _x in {c["id"], give or c["id"]}:
+                    ROOM["checkedRound"].setdefault(role_id, {})[_x] = 0
+                zone = c.get("unlockZone") or ""
+                if zone:
+                    zn = next((z.get("name") for z in (getattr(SC, "MAP", []) or [])
+                               if z.get("loc") == zone), "") or zone
+                    ROOM["table"].append({"kind": "system", "broadcast": True,
+                                          "text": f"— 「{zn}」 구역이 열렸습니다."})
+                log.append(f"{c['id']} 「{c.get('title', '')}」 풀었습니다"
+                           + (f" → {give}" if give and give != c['id'] else ""))
+                did = True
+                break
+            if not did:
+                break
+    # 남은 조사턴을 쓴다. 후보가 라운드 안에서 계속 줄어드니 한 장씩 다시 고른다.
+    guard = 0
+    while guard < 40:
+        guard += 1
+        left = _ap_for(ROOM["seq"]) - _round_checks(role_id, cur)
+        if left <= 0:
+            break
+        cands = _openable_cards(role_id)
+        if not cands:
+            log.append("더 열 자리가 없습니다")
+            break
+        pick = cands[0]["id"]
+        err = _try_investigate(role_id, pick)
+        if err:
+            log.append(f"{pick} — {err}")
+            break
+        log.append(f"{pick} 「{cands[0].get('title', '')}」 조사")
+    return log
+
+
+@app.post("/api/qa/auto")
+def qa_auto(b: AutoSweep):
+    """QA 자동조사. **열쇠가 있어야 한다** — 평소 판에서는 존재하지도 않는 길이다."""
+    if not _agent_ok(b.key):
+        return JSONResponse({"error": "key"}, status_code=403)
+    with LOCK:
+        ph = SC.phase_by_seq(ROOM["seq"]) or {}
+        if ph.get("key") != "invest":
+            return JSONResponse({"error": "조사 페이즈에서만 씁니다"}, status_code=409)
+        ids = [b.roleId] if b.roleId else [rid for rid, r in ROOM["roles"].items()
+                                           if r.get("mode") == "human"]
+        out = {}
+        for rid in ids:
+            if rid not in ROOM["roles"]:
+                out[rid] = ["없는 배역"]
+                continue
+            out[rid] = _auto_sweep_one(rid, b.puzzles)
+        bump()
+    return {"ok": True, "log": out}
+
+
 @app.get("/api/hand/{role_id}")
 def get_hand(role_id: str, clientId: str = ""):
     with LOCK:
@@ -4007,7 +4223,7 @@ def turn_next(b: TurnReq):
         role = ROOM["roles"].get(b.roleId) or {}
         allowed = _agent_ok(b.key) or (b.roleId and b.roleId == ROOM.get("turn") and role.get("clientId") == b.clientId)
         if ROOM.get("host") is not None:
-            allowed = allowed or _is_host(b.clientId)
+            allowed = allowed or _host_ok(b.clientId, b.key)
         else:
             allowed = True
         if not allowed:
@@ -4136,7 +4352,7 @@ def crisis_answer(b: CrisisAnswer):
 @app.post("/api/crisis/close")
 def crisis_close(b: HostReq):
     """기다리다 말고 지금 판정한다 — 답 안 낸 배역은 틀린 것으로 친다."""
-    if ROOM.get("host") is not None and not (_is_host(b.clientId) or _agent_ok(b.key)):
+    if ROOM.get("host") is not None and not _host_ok(b.clientId, b.key):
         return JSONResponse({"error": "host"}, status_code=403)
     with LOCK:
         _crisis_resolve()
@@ -4147,8 +4363,8 @@ def crisis_close(b: HostReq):
 
 @app.post("/api/advance")
 def advance(b: HostReq):
-    # 호스트가 지정돼 있으면 호스트나 GM 진행석만, 없으면 누구나(현행 앱 호환)
-    if ROOM.get("host") is not None and not (_is_host(b.clientId) or _agent_ok(b.key)):
+    # 호스트가 지정돼 있으면 호스트나 GM 진행석(열쇠)만, 없으면 누구나(현행 앱 호환)
+    if ROOM.get("host") is not None and not _host_ok(b.clientId, b.key):
         return JSONResponse({"error": "host"}, status_code=403)
     return _advance()
 
@@ -4379,7 +4595,7 @@ def final_answers(b: FinalAnswers):
 def reset(b: HostReq):
     global ROOM
     with LOCK:
-        if ROOM.get("host") not in (None, b.clientId) and not _agent_ok(b.key):
+        if ROOM.get("host") is not None and not _host_ok(b.clientId, b.key):
             return JSONResponse({"error": "host"}, status_code=403)
         ROOM = fresh_room()
         # 호스트도 함께 푼다. 붙들고 있으면 그 브라우저가 사라졌을 때 방이 영영 잠긴다 —

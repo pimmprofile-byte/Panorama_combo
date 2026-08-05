@@ -234,11 +234,45 @@
   .head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
   .head .t{font-size:22px;font-weight:700;letter-spacing:.04em}
   .lead{color:var(--sub);font-size:13.5px;line-height:1.8;margin:2px 0 18px}
-  /* ── 배역 선택: 2열 포스터 그리드 ──────────────────────────────
-     세로 목록은 6명을 한눈에 못 비교하고 아바타도 작다. 카드를 포스터로 세워
-     인물 사진(3:4)이 주인공이 되게 하고, 버튼은 카드에서 빼 아래 액션바로 모은다. */
-  .role-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  @media(min-width:620px){ .role-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px} }
+  /* ── 배역 선택: 폰은 좌우 스와이프, 넓은 화면은 3열 ──────────────
+     세로 목록은 여럿을 한눈에 못 비교하고 아바타도 작다. 카드를 포스터로 세워
+     인물 사진(3:4)이 주인공이 되게 하고, 버튼은 카드에서 빼 아래 액션바로 모은다.
+     2열 그리드였을 때, 세 사람짜리 판에서는 마지막 한 명만 아랫줄에 혼자 남아
+     «그 자리가 덜 중요한 자리»처럼 읽혔다. 폰에서는 아예 한 명씩 크게 보여주고
+     좌우로 넘긴다 — 셋이면 세 장, 여섯이면 여섯 장이라 인원수에 늘 맞는다.
+     넓은 화면은 세 명이 딱 떨어지는 3열을 그대로 쓴다. */
+  .role-swipe{position:relative}
+  .role-grid{display:flex;gap:10px;overflow-x:auto;overscroll-behavior-x:contain;
+    scroll-snap-type:x mandatory;
+    /* 좌우 여백만큼 옆 카드가 비쳐야 «더 있다»가 보인다. 카드는 남은 폭을 꽉 채운다.
+       다만 폭이 넓어지면 3:4 포스터가 화면보다 길어져 이름이 접힌 아래로 내려간다 —
+       420px에서 멈추고 남는 폭은 옆 카드에 준다. */
+    padding:2px max(7%,calc((100% - 420px) / 2)) 6px;
+    scrollbar-width:none;-ms-overflow-style:none}
+  .role-grid::-webkit-scrollbar{display:none}
+  .role-grid>.rc{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always}
+  /* 점과 화살표 — 8비트라 삼각형도 도트로 계단을 밟는다 */
+  .role-nav{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px}
+  .rn-a{width:34px;height:30px;display:grid;place-items:center;cursor:pointer;
+    background:var(--panel2);border:1px solid var(--line);border-radius:0;
+    box-shadow:2px 2px 0 rgba(0,0,0,.5)}
+  .rn-a:active{transform:translate(2px,2px);box-shadow:none}
+  .rn-a:disabled{opacity:.35;cursor:default;box-shadow:none;transform:none}
+  .rn-a svg{width:14px;height:14px;display:block;fill:var(--sub);shape-rendering:crispEdges}
+  .rn-a.prev svg{transform:scaleX(-1)}
+  .rn-a:not(:disabled):hover svg{fill:var(--ink)}
+  .role-dots{display:flex;align-items:center;gap:7px}
+  .rn-d{width:9px;height:9px;padding:0;border:1px solid var(--line);border-radius:0;
+    background:transparent;cursor:pointer}
+  .rn-d.on{background:var(--rd,var(--case-b));border-color:var(--rd,var(--case-b));
+    box-shadow:0 0 0 2px rgba(0,0,0,.45)}
+  .rn-d.held{border-color:var(--rd,var(--case-line))}
+  @media(min-width:620px){
+    .role-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+      overflow:visible;scroll-snap-type:none;padding:0}
+    .role-grid>.rc{flex:none}
+    .role-nav{display:none}
+  }
   /* 카드는 컨테이너, 실제 동작은 카드 안 '선택' 버튼이 맡는다 */
   .rc{position:relative;display:block;padding:0 0 10px;overflow:hidden;text-align:left;
     background:var(--panel);border:1px solid var(--line);border-radius:2px;transition:border-color .16s,box-shadow .16s}
@@ -428,11 +462,14 @@
   /* 오프닝 — 아직 자기 이야기를 안 펼친 사람에게. 하단바의 그 칸만 남기고 나머지를 덮는다. */
   .coach{position:fixed;inset:0;z-index:55;background:rgba(4,3,3,.72);
     backdrop-filter:blur(1.5px);animation:fade .35s ease both}
-  .dock .dk.callout{z-index:56;color:#fff}
-  .dock .dk.callout .i{stroke:#fff}
+  /* 밝은 케이스 판 위에 흰 글자·흰 아이콘을 얹어 두었더니 둘 다 판에 묻혔다.
+     판을 말풍선과 같은 --case-h 로 맞추고, 글자와 아이콘을 차콜(--case-fg)로 뒤집는다 —
+     이 파일에서 «베이지 위의 글자»는 늘 그 색이다. 아래 .coach-tip 과 같은 조합이 된다. */
+  .dock .dk.callout{z-index:56;color:var(--case-fg)}
+  .dock .dk.callout .i{stroke:var(--case-fg)}
   .dock .dk.callout::before{content:"";position:absolute;inset:-3px -1px;border-radius:2px;
-    background:var(--case-b);border:1px solid var(--case-e);z-index:-1;
-    box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.12)}
+    background:var(--case-h);border:1px solid var(--case-e);z-index:-1;
+    box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.5)}
   .coach-tip{position:fixed;z-index:57;transform:translateX(-50%);
     box-shadow:2px 2px 0 var(--case-e);
     background:var(--case-h);color:var(--case-fg);font-size:12.5px;font-weight:800;letter-spacing:.01em;
@@ -457,6 +494,11 @@
   .whorow .wc.mine{border-color:color-mix(in srgb,var(--me,var(--cold)) 42%,transparent);
     background:color-mix(in srgb,var(--me,var(--cold)) 11%,transparent);color:var(--me,var(--cold));cursor:pointer}
   .whorow .wc.pub{border-color:rgba(195,186,176,.34);background:rgba(195,186,176,.1);color:#ddd6cc;cursor:pointer}
+  /* 남이 쥔 카드 — 눌리긴 하지만 나오는 건 «갖고 있는 것으로 보인다» 한 줄뿐이다.
+     button 이라 글꼴이 브라우저 것으로 돌아간다. 다시 이 판의 글꼴로 되돌린다. */
+  .whorow button.wc{font-family:inherit;letter-spacing:inherit}
+  .whorow .wc.held{cursor:pointer;border-style:dashed}
+  .whorow .wc.held:hover{border-color:var(--case-line);color:var(--ink)}
   .whorow .wnone{font-size:11.5px;color:var(--muted);margin-top:7px}
   /* 조사가 다 끝난 턴바 — 차례 안내가 있던 자리에 다음 페이즈가 들어선다 */
   .turnbar.done{border-color:rgba(63,200,185,.35)}
@@ -531,6 +573,18 @@
   /* 내 말풍선 — 케이스 회색 판. 누가 말했는지는 위의 이름표(배역색)가 말한다. */
   .msg.own .bub{background:linear-gradient(180deg,var(--case-h),var(--case-b));
     border-color:var(--case-e);color:var(--case-fg);border-radius:2px 0 2px 2px}
+  /* 「치고 있다」 — 다음 줄을 말할 사람 자리에 점 세 개가 튄다. 색은 그 사람의 것이라
+     이름표를 안 봐도 누구인지 읽힌다. 도트가 부드럽게 오르내리면 8비트가 아니게 되므로
+     steps() 로 두 칸만 밟는다. */
+  .msg.typing .bub.tybub{display:inline-flex;align-items:center;gap:5px;padding:11px 13px;
+    background:var(--panel);border:1px solid var(--tc,var(--line));border-radius:0 2px 2px 2px}
+  .msg.typing.own .bub.tybub{border-radius:2px 0 2px 2px}
+  .msg.typing .bub.tybub i{width:4px;height:4px;display:block;background:var(--tc,var(--sub));
+    animation:tydot .78s steps(2,end) infinite}
+  .msg.typing .bub.tybub i:nth-child(2){animation-delay:.13s}
+  .msg.typing .bub.tybub i:nth-child(3){animation-delay:.26s}
+  @keyframes tydot{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-4px);opacity:1}}
+  @media (prefers-reduced-motion:reduce){.msg.typing .bub.tybub i{animation:none;opacity:.8}}
   .tag-me{font-size:9px;color:var(--me,var(--cold));border:1px solid currentColor;border-radius:0;padding:0 4px;margin-left:4px}
   /* 결말이 모두에게 얹어주는 몫 — 맞히고 틀린 것과는 다른 축이라 색을 가른다 */
   /* ★ 초록 ④ — 결말이 얹어주는 몫. 「얻었다」는 성공 계열이라 --good 을 쓴다. */
@@ -1918,6 +1972,18 @@
     color:var(--rc,var(--cold));opacity:.5;text-shadow:2px 2px 0 rgba(0,0,0,.7)}
   .rc .por img.pt{width:100%;height:100%;object-fit:cover;display:block}
   .por img.pt.flip,.bc-av img.pt.flip,img.pt.flip{transform:scaleX(-1)}
+  /* 초상 크롭 — 원본(765×1024) 오른쪽 아래에 생성기 워터마크(별)가 박혀 있다.
+     네 장 모두 같은 자리다: 가로 83.9~89.2%, 세로 88.0~91.9%. 액자와 원본의 비율이
+     거의 같아서(3:4 대 0.747) object-position 만으로는 그 모서리가 안 잘린다 —
+     확대해서 밖으로 밀어낸다. --pz 는 배율, --pf 는 «잘라낸 창의 위 가장자리가 원본의
+     어느 높이(%)인가». 보이는 세로 구간은 [f(1−1/z), f+(1−f)/z] 이고 값은 cropVars()가
+     배역마다 실어 준다(아래 PORTRAIT_CROP). 좌우 뒤집기는 --pfx 로 같이 태운다 —
+     위 .flip 규칙이 transform 을 통째로 덮어써서 확대가 날아가던 자리다.
+     이 규칙은 .flip 줄보다 뒤에 와야 한다(같은 특정도라 순서로 이긴다). */
+  .rc .por img.pt,.ava.cover img.pt,.ava.lg img.pt{
+    transform:scaleX(var(--pfx,1)) scale(var(--pz,1.55));
+    transform-origin:50% calc(var(--pf,12) * 1%)}
+  .rc .por img.pt.flip,.ava.cover img.pt.flip,.ava.lg img.pt.flip{--pfx:-1}
   /* ★ 초록 ④ — 해금 */
   .unlocknote{margin-top:10px;padding:9px 12px;border:1px dashed var(--good);border-radius:2px;
     background:color-mix(in srgb,var(--good) 10%,transparent);color:var(--good);font-size:12.5px;line-height:1.55}
@@ -2705,7 +2771,10 @@ async function poll(){
   // clientId를 넘겨야 서버가 isHost를 판별한다(호스트 전용 UI가 여기에 달려 있다)
   // QA 검수 모드에서만 「어느 배역의 시점인가」를 얹는다. 세 좌석을 한 clientId가 쥐고 있으면
   // 서버는 첫 자리밖에 못 고르기 때문이다. 열쇠가 없으면 서버가 이 두 값을 그냥 무시한다.
-  const qaQ=(qaOn&&qaRole)?("&roleId="+encodeURIComponent(qaRole)+"&key="+encodeURIComponent(gmKey)):"";
+  // 열쇠는 QA 모드면 늘 싣는다. 예전엔 「어느 배역으로 보는가」가 정해진 뒤에만 실어서,
+  // 좌석을 쥐기 전 로비에서는 서버가 이 요청을 열쇠 없는 참가자로 보고 isHost를 안 줬다 —
+  // 호스트 UI(시작·다음 막)가 그때만 사라졌다. roleId 는 정해졌을 때만 얹는다.
+  const qaQ=qaOn?((qaRole?("&roleId="+encodeURIComponent(qaRole)):"")+"&key="+encodeURIComponent(hostKey())):"";
   try{ STATE=await (await fetch("/api/state?clientId="+encodeURIComponent(clientId)+(gmOn?"&gm=1":"")+qaQ)).json(); }catch(e){ return; }
   if(checkRoomSwitch()) return;
   // 다른 사람이 시나리오를 바꿨으면(허브에서) 이 기기도 새 시나리오로 갱신
@@ -2726,6 +2795,13 @@ function go(name){ if(name==="gm"&&!gmOn)name="lobby"; scr=name; ["lobby","play"
    '들어가는 화면'이 아니라 이 기기에 켜두는 스위치고, 켜져 있으면 두 화면을 오간다. */
 let seated=false;   // 시작 직후 자기 화면으로 한 번만 밀어주기 위한 빗장
 let gmKey=localStorage.getItem("pmb.gmkey")||"";
+/* 호스트 권한이 필요한 창구에 실어 보내는 열쇠.
+   QA 검수는 «혼자 세 좌석을 쥐고 판을 굴려보는» 모드라 진행 권한이 늘 있어야 하는데,
+   서버는 열쇠가 «비어 있지 않을 때만» 그 요청을 호스트로 본다(_key_host). GM 키를 따로
+   안 넣고 들어온 로컬 검수판에서 여기가 빈 문자열이라 시작·다음 막 단추가 통째로 안 떴다.
+   AGENT_KEY를 건 배포본에서는 이 대체값이 그냥 틀린 열쇠라 아무것도 안 열린다 —
+   지금과 똑같다. 열쇠 없는 평범한 판(qaOn=false)은 이 함수를 지나가지도 않는다. */
+function hostKey(){ return gmKey || (qaOn?"qa":""); }
 let gmOn=localStorage.getItem("pmb.gm")==="1";
 async function askGMKey(){
   const k=await askText({title:"GM 키", body:"로컬에서 인터넷 없이 진행하면 비워둔 채로 확인을 누르세요.\n클라우드 배포본이면 배포 때 넣은 AGENT_KEY를 적습니다.",
@@ -3022,7 +3098,7 @@ async function leaveRoom(isHost){
     if(!await ask({title:"방을 삭제합니다",
                    body:"진행 중인 판이 끝나고, 배역·조사 기록·종막 답안이 모두 지워집니다.\n다른 사람들도 함께 나가집니다.",
                    warn:"되돌릴 수 없습니다.", ok:"삭제하고 나가기", cancel:"그만두기", tone:"danger"})) return;
-    await post("/api/reset",{clientId,key:gmKey||localStorage.getItem("pmb.gmkey")||""});
+    await post("/api/reset",{clientId,key:hostKey()||localStorage.getItem("pmb.gmkey")||""});
   }else{
     if(!await ask({title:"방에서 나갑니다",
                    body:"내 배역을 놓고 사건 목록으로 돌아갑니다.\n판은 남은 사람들끼리 계속됩니다.",
@@ -3761,6 +3837,23 @@ function wireZoom(){
 
 
 const FLIP_PORTRAIT={submarine:["yutaeo"]};
+/* ── 초상 크롭 표 ────────────────────────────────────────────────
+   생성기가 오른쪽 아래 모서리에 별 워터마크를 박아 넣는다. 《데이의 규칙》 네 장은
+   전부 같은 자리다 — 원본 765×1024 기준 x 642~682(83.9~89.2%), y 901~941(88.0~91.9%).
+   [배율, 창의 위 가장자리]로 적는다. 보이는 세로 구간은 [f(1−1/z), f+(1−f)/z] 이고,
+   여기 값은 아래끝이 전부 0.75 언저리라 그 모서리가 화면 밖으로 나간다.
+   배율을 하나로 통일하지 않은 이유: 데이지는 전신이 작게 그려져 있어 같은 배율로는
+   얼굴이 안 잡히고, 데이비드는 머리가 화면 맨 위에 붙어 있어 크게 당기면 정수리가 잘린다. */
+const PORTRAIT_CROP={
+  rule_the_day:{ david:[1.43,6.6], damon:[1.43,16.6], daisy:[1.82,15.5], victim:[1.49,9.1] }
+};
+/* 표에 없는 사건도 별은 잘려 나가야 한다 — 보이는 구간이 세로 4~69%인 안전값 */
+const PORTRAIT_CROP_DEF=[1.55,12];
+function cropVars(c){
+  const sid=(STATE&&STATE.scenarioId)||"";
+  const t=((PORTRAIT_CROP[sid]||{})[(c&&c.id)||""])||PORTRAIT_CROP_DEF;
+  return `--pz:${t[0]};--pf:${t[1]}`;
+}
 /* 초상을 얼굴 쪽으로 잘라 동그랗게 쓴다.
    사진을 못 찾으면 .noimg가 붙고 data-emo(이름 첫 글자)가 CSS로 드러난다. 규약은 portraitHTML과 같다. */
 function avaHTML(c,cls){
@@ -3769,7 +3862,7 @@ function avaHTML(c,cls){
   const emo=esc(c.avatar||(c.name||"?").slice(0,1));
   if(!sid) return `<span class="ava noimg ${cls||""}" data-emo="${emo}">${emo}</span>`;
   const flip=(FLIP_PORTRAIT[sid]||[]).includes(c.id)?" flip":"";
-  return `<span class="ava ${cls||""}" data-emo="${emo}" style="--ac:${c.color||"var(--line)"}">`
+  return `<span class="ava ${cls||""}" data-emo="${emo}" style="--ac:${c.color||"var(--line)"};${cropVars(c)}">`
     +`<img class="pt${flip}" src="/assets/${sid}_portrait_${c.id}.webp" alt="" decoding="async"`
     +` onerror="if(this.dataset.f){this.closest('.ava').classList.add('noimg');this.remove()}`
     +`else{this.dataset.f=1;this.src='/assets/${sid}_portrait_${c.id}.png'}"></span>`;
@@ -3825,15 +3918,17 @@ function renderLobby(force){
   const host=$("lobbyList");
   if(force||shape!==lobbyBuilt||!host.querySelector(".role-grid")){
     lobbyBuilt=shape;
-    host.innerHTML=`<div class="role-grid">${SCEN.characters.map(c=>{
+    host.innerHTML=`<div class="role-swipe"><div class="role-grid">${SCEN.characters.map(c=>{
       const st=roleCardState(c);
-      return `<div class="${st.cls}" data-rc="${c.id}" style="--rc:${c.color}"${st.tap?` role="button" tabindex="0" onclick="${st.tap}"`:""}>
+      return `<div class="${st.cls}" data-rc="${c.id}" style="--rc:${c.color};${cropVars(c)}"${st.tap?` role="button" tabindex="0" onclick="${st.tap}"`:""}>
         <div class="por" data-emo="${esc(c.avatar||(c.name||"?").slice(0,1))}">${portraitHTML(c)}<span class="badgeslot">${st.badge}</span>
           <div class="scrim"><div class="nm">${esc(c.name)}</div><div class="jb">${esc([c.age,c.job].filter(Boolean).join(" · "))}</div></div>
         </div>
         <div class="tg">${esc(c.look||c.tagline)}</div><span class="btnslot">${st.btn}</span></div>`;
-    }).join("")}</div><div class="startslot">${startBoxHTML()}</div><div class="rolebar">${roleBarHTML()}</div>
+    }).join("")}</div>${roleNavHTML()}</div>
+      <div class="startslot">${startBoxHTML()}</div><div class="rolebar">${roleBarHTML()}</div>
       <div class="qaslot">${qaLobbyHTML()}</div>`;
+    wireRoleSwipe();
     return;
   }
   // 이미 있는 카드에 상태만 덧입힌다 — 사진은 손대지 않는다
@@ -3853,6 +3948,86 @@ function renderLobby(force){
   if(rb&&rb.innerHTML!==nr) rb.innerHTML=nr;
   const qs=host.querySelector(".qaslot"), nq=qaLobbyHTML();
   if(qs&&qs.innerHTML!==nq) qs.innerHTML=nq;
+  // 점은 innerHTML을 갈아끼우지 않고 class만 건드린다 — 다시 그리면 스크롤이 처음으로 튄다
+  paintRoleNav();
+}
+/* ── 배역 카드 좌우 넘기기 ──────────────────────────────────────────
+   폰에서는 카드가 한 장씩 뜨니 «몇 명이고 지금 몇째인가»를 따로 말해줘야 한다.
+   점은 그 사람의 색으로 켜지고, 이미 앉은 자리는 테두리로 표가 난다.
+   여기서 제일 나기 쉬운 버그는 폴링(1.5초)마다 스크롤이 처음으로 튕기는 것이다.
+   그래서 뼈대를 다시 만들 때 말고는 이 자리의 innerHTML을 건드리지 않는다. */
+let roleAt=0;
+const PIX_TRI=`<svg viewBox="0 0 7 7" aria-hidden="true">`
+  +`<rect x="2" y="0" width="1" height="7"/><rect x="3" y="1" width="1" height="5"/>`
+  +`<rect x="4" y="2" width="1" height="3"/><rect x="5" y="3" width="1" height="1"/></svg>`;
+function roleNavHTML(){
+  const cs=SCEN.characters||[];
+  if(cs.length<2) return "";
+  const dots=cs.map((c,i)=>`<button class="rn-d" data-rd="${i}" style="--rd:${c.color||"var(--case-b)"}"
+      onclick="roleGo(${i})" aria-label="${esc(c.name||"")}"></button>`).join("");
+  return `<div class="role-nav">
+      <button class="rn-a prev" onclick="roleStep(-1)" aria-label="이전 인물">${PIX_TRI}</button>
+      <div class="role-dots">${dots}</div>
+      <button class="rn-a next" onclick="roleStep(1)" aria-label="다음 인물">${PIX_TRI}</button>
+    </div>`;
+}
+function roleTrack(){ return document.querySelector("#lobbyList .role-grid"); }
+/* 카드 한 장이 차지하는 가로 폭(간격 포함). 3열 그리드일 때는 0이 되어 넘길 것이 없다. */
+function roleSpan(g){
+  const a=g.children[0], b=g.children[1];
+  if(!a) return 0;
+  if(g.scrollWidth-g.clientWidth<4) return 0;      // 다 보인다 = 넘길 것이 없다
+  return b?(b.getBoundingClientRect().left-a.getBoundingClientRect().left)
+          :a.getBoundingClientRect().width;
+}
+function roleGo(i){
+  const g=roleTrack(); if(!g) return;
+  const sp=roleSpan(g); if(!sp) return;
+  roleAt=Math.max(0,Math.min(g.children.length-1,i));
+  // 화살표·점으로 옮길 때만 미끄러진다. 처음 자리를 잡을 때는 그냥 앉힌다(아래).
+  if(g.scrollTo) g.scrollTo({left:roleAt*sp,behavior:"smooth"}); else g.scrollLeft=roleAt*sp;
+  paintRoleNav();
+}
+function roleStep(d){ roleGo(roleAt+d); }
+function paintRoleNav(){
+  const g=roleTrack(); if(!g) return;
+  const wrap=g.parentElement&&g.parentElement.querySelector(".role-nav"); if(!wrap) return;
+  const n=g.children.length, sp=roleSpan(g);
+  if(sp) roleAt=Math.max(0,Math.min(n-1,Math.round(g.scrollLeft/sp)));
+  wrap.querySelectorAll(".rn-d").forEach((d,i)=>{
+    const c=(SCEN.characters||[])[i]||{};
+    const held=((STATE&&STATE.roles)||{})[c.id];
+    d.classList.toggle("on",i===roleAt);
+    d.classList.toggle("held",!!(held&&held.mode!=="open"));
+    d.setAttribute("aria-current",i===roleAt?"true":"false");
+  });
+  const p=wrap.querySelector(".rn-a.prev"), x=wrap.querySelector(".rn-a.next");
+  if(p) p.disabled=(roleAt<=0);
+  if(x) x.disabled=(roleAt>=n-1);
+}
+/* 뼈대를 새로 만든 직후에는 아직 폭이 안 잡혀 있을 수 있다(화면이 숨어 있는 사이,
+   사진이 붙기 전). 그때 자리를 잡으면 0으로 앉고, 뒤늦게 폭이 생기면서 점만 첫 장으로
+   되돌아간다 — 잴 수 있을 때까지 몇 프레임 기다렸다 앉힌다. 그 사이에 손으로 넘겼으면
+   그만둔다(사람이 보고 있는 자리를 빼앗지 않는다). */
+function roleSeat(i,tries){
+  const g=roleTrack(); if(!g||g.scrollLeft>0) return;
+  const sp=roleSpan(g);
+  if(sp){ g.scrollLeft=i*sp; paintRoleNav(); return; }
+  if((tries||0)<10) setTimeout(()=>roleSeat(i,(tries||0)+1),60);
+}
+function wireRoleSwipe(){
+  const g=roleTrack(); if(!g) return;
+  let raf=0;
+  g.addEventListener("scroll",()=>{ if(raf) return;
+    raf=requestAnimationFrame(()=>{ raf=0; paintRoleNav(); }); },{passive:true});
+  // 내가 이미 고른(QA면 지금 보고 있는) 자리가 있으면 거기서 시작한다 — 없으면 첫 장
+  const cs=SCEN.characters||[];
+  const i=myRoleId?cs.findIndex(c=>c.id===myRoleId):-1;
+  roleAt=i>0?i:0;
+  // 앉히는 것이 먼저다 — paintRoleNav 는 스크롤 위치에서 «지금 몇째인가»를 되읽으므로,
+  // 앉기 전에 부르면 방금 정한 자리를 0으로 되돌려 놓는다.
+  roleSeat(roleAt);
+  paintRoleNav();
 }
 /* 모두 정해지면 호스트에게 확정을 묻는다 — 확정 순간부터 배역은 고정된다 */
 function startBoxHTML(){
@@ -3869,7 +4044,7 @@ function startBoxHTML(){
 async function startGame(){
   if(!await ask({title:"이 배역으로 시작합니다", body:"모두 자리를 잡았습니다. 오프닝이 시작됩니다.",
                  warn:"시작한 뒤에는 배역을 바꿀 수 없습니다.", ok:"시작", cancel:"아직", tone:"gold"})) return;
-  const r=await post("/api/start",{clientId,key:gmKey});
+  const r=await post("/api/start",{clientId,key:hostKey()});
   if(r&&r.error){ banner(r.error); return; }
   await poll();
 }
@@ -4112,7 +4287,7 @@ async function resetRoom(){
                  warn:"되돌릴 수 없습니다. 진행 중인 판이 있다면 그 판도 끝납니다.",
                  ok:"지우고 새로 열기", cancel:"그만두기", tone:"danger"})) return;
   // clientId를 실어야 호스트로 인정된다. 안 보내면 403인데 예전엔 조용히 삼켰다.
-  const r=await post("/api/reset",{clientId,key:gmKey});
+  const r=await post("/api/reset",{clientId,key:hostKey()});
   if(r&&r.error){
     banner(r.error==="host"
       ? "다른 기기가 호스트예요. 그 기기에서 초기화하거나, 주소 끝에 ?new=1 을 붙여 여세요."
@@ -4127,7 +4302,7 @@ async function resetRoom(){
    호스트를 쥔 브라우저가 사라져 아무도 초기화하지 못하는 상황이 실제로 나온다. */
 (async function(){
   if(!/[?&]new=1/.test(location.search)) return;
-  try{ await post("/api/reset",{clientId,key:localStorage.getItem("pmb.gmkey")||""}); }catch(e){}
+  try{ await post("/api/reset",{clientId,key:hostKey()||localStorage.getItem("pmb.gmkey")||""}); }catch(e){}
   try{ const keep=localStorage.getItem("pmb.gmkey");
     Object.keys(localStorage).filter(k=>k.indexOf("pmb.")===0).forEach(k=>localStorage.removeItem(k));
     if(keep!=null) localStorage.setItem("pmb.gmkey",keep); }catch(e){}
@@ -4316,7 +4491,7 @@ async function crClose(){
   if(!await ask({title:"지금 판정합니다", body:"제출된 답안으로 채점하고 엔딩을 엽니다.",
                  warn:"답을 내지 않은 배역은 틀린 것으로 칩니다.",
                  ok:"판정", cancel:"기다리기", tone:"danger"})) return;
-  const r=await post("/api/crisis/close",{clientId,key:gmKey});
+  const r=await post("/api/crisis/close",{clientId,key:hostKey()});
   if(r&&r.error){ banner(r.error); return; }
   await poll();
 }
@@ -4888,7 +5063,7 @@ function gmTurnBar(){
   return `<div class="turnbar"><div class="tb-order"><div class="tb-rail">${chips}</div></div>
     <div class="tb-act"><button class="btn" onclick="turnNext()">다음 차례 ›</button></div></div>`;
 }
-async function turnNext(){ const bn=(scr==="gm")?gmBanner:banner; const r=await post("/api/turn/next",{clientId,roleId:myRoleId,key:gmKey}); if(r&&r.error)bn(r.error); await poll(); }
+async function turnNext(){ const bn=(scr==="gm")?gmBanner:banner; const r=await post("/api/turn/next",{clientId,roleId:myRoleId,key:hostKey()}); if(r&&r.error)bn(r.error); await poll(); }
 
 /* 이 카드가 짝을 이루는가. 어떤 카드와 짝인지는 절대 알려주지 않는다 —
    그걸 알려주면 추리가 아니라 심부름이 된다. 「혼자서는 반쪽」이라는 것까지만. */
@@ -5289,7 +5464,7 @@ function victimCardHTML(){
     +` onerror="if(this.dataset.f){this.closest('.por').classList.add('noimg');this.remove()}`
     +`else{this.dataset.f=1;this.src='/assets/${sid}_portrait_victim.png'}">`:"";
   return `<div class="viccard">
-    <div class="rc vic-rc" style="--rc:${v.color||"var(--ember-b)"}">
+    <div class="rc vic-rc" style="--rc:${v.color||"var(--ember-b)"};${cropVars({id:"victim"})}">
       <div class="por" data-emo="${esc((v.name||"?").slice(0,1))}">${img}
         <span class="badge">피해자</span>
         <div class="scrim"><div class="nm">${esc(v.name||"")}</div>
@@ -5389,6 +5564,13 @@ async function saveAge(el){
   banner("나이를 적었습니다.");
 }
 
+/* 남의 손패를 눌렀을 때 — 무엇을 쥐었는지는 절대 말하지 않는다.
+   이 판의 비밀은 «남이 무엇을 들고 있는가»라서, 여기서 새면 판이 끝난다.
+   말해줄 수 있는 것은 «들고 있는 것으로 보인다»까지다. */
+function whoHandNote(id){
+  const c=roleById(id)||{}; const nm=c.name||"그 사람";
+  banner(`${nm}${subjP(nm)} 소지하고 있는 도구로 보인다.`);
+}
 function showWho(keepTab){
   const lim=handLimit();
   const rows=(SCEN.characters||[]).map(c=>{
@@ -5403,7 +5585,9 @@ function showWho(keepTab){
         const t=((STATE.revealed||[]).concat(myHand||[])).find(x=>x.id===id);
         return `<button class="wc ${canSeeCard(id)&&c.id!==myRoleId?"pub":"mine"}" onclick="openCard('${id}')">${ICO.doc} ${esc(t?t.title:where)}</button>`;
       }
-      return `<span class="wc">${ICO.lock} ${where}</span>`;
+      // 남이 쥔 카드 — 자리만 안다. 눌러도 «무엇인가»는 끝내 안 나온다.
+      // 눌리는 줄 모르고 지나치는 사람이 많아서, 여기서 한 줄만 말해준다.
+      return `<button class="wc held" onclick="whoHandNote('${c.id}')">${ICO.lock} ${where}</button>`;
     }).join("");
     return `<div class="whorow">${avaHTML(c,"sm")}
       <div class="wi">
@@ -5586,7 +5770,7 @@ async function nightSend(){
   if(r&&r.error){ banner(r.error); return; }
   banner(""); nightPick=""; await poll();
 }
-async function nightClose(){ await post("/api/night/close",{clientId,key:gmKey}); await poll(); }
+async function nightClose(){ await post("/api/night/close",{clientId,key:hostKey()}); await poll(); }
 
 /* 1차 지목 — 비밀투표다. 고르고, 확인을 눌러야 던져진다.
    전원이 던지기 전에는 누가 무엇을 적었는지도 몇 표인지도 안 보인다 —
@@ -6180,17 +6364,39 @@ function chatRow(m){
    붙잡힌 줄까지 세니까(chatLines 는 원본을 본다) 알림은 도착하는 즉시 뜬다. */
 /* 한 줄이 머무는 시간은 그 줄의 길이를 따라간다. 전부 0.5초로 두면 세 줄짜리 증언이
    1.5초 만에 지나가서, 읽는 사람 입장에서는 결국 «와르르»다. 짧은 표시줄은 스치고
-   긴 증언은 오래 머문다. 위는 막아둔다 — 아무리 길어도 두 초 남짓이면 다음이 온다. */
+   긴 증언은 오래 머문다.
+
+   한 박자는 두 토막이다 — «앞줄이 머무는 시간» 다음에 «다음 사람이 치고 있는 시간»이
+   붙고, 그러고서 다음 줄이 뜬다. 사람이 채팅을 치는 순서 그대로다.
+     머무는 시간 = 글자수 ÷ 5초 (글자당 200ms)
+     말풍선     = 다음 줄 글자수 ÷ 10초 (글자당 100ms)
+   상한을 남겨 둔다. 두 줄짜리 증언(50자 남짓)이면 머무는 시간만 10초라 판이 선다.
+   여기 대사는 길어야 마흔 자 안팎이라 8초로 잡으면 규칙대로 흐르면서도 사고는 막는다. */
 const DRIP_TICK=120;                 // 재는 간격. 아래 시간들이 이보다 성기게 걸린다
-const DRIP_BASE=360, DRIP_PER=20, DRIP_CAP=1900;
-const DRIP_BUDGET=30000;             // 밀린 것을 다 흘리는 데 이보다 오래 걸리면 앞엣것은 한 번에
+const DRIP_PER=200, DRIP_MIN=600, DRIP_CAP=8000;   // 머무는 시간 — 5글자 = 1초
+const TYPE_PER=100, TYPE_MIN=400, TYPE_CAP=4000;   // 「치고 있다」 — 10글자 = 1초
+/* 밀린 것을 다 흘리는 데 이보다 오래 걸리면 앞엣것은 한 번에.
+   배수가 열 배로 늘어 예전 30초로는 네댓 줄만 남고 나머지가 통째로 튀어나왔다.
+   한 박자가 대략 7~8초니 2분이면 열대여섯 줄 — 예전과 비슷한 «끝자락»이 남는다. */
+const DRIP_BUDGET=120000;
 let dripUntil=null;                  // 이 번호까지 풀었다. null이면 아직 첫 폴링 전
-let dripAt=0;                        // 다음 줄을 풀어도 되는 시각
+let dripTypeAt=0;                    // 앞줄이 머무는 시간이 끝나는 시각 = 말풍선이 뜨는 시각
+let dripReadyAt=0;                   // 다음 줄이 뜨는 시각. 0이면 아직 안 쟀다
 let dripPaused=false;                // 「계속」을 누를 때까지 멈춰 선 자리
+let dripTyping=null;                 // 지금 말풍선을 세워둔 줄의 표식(roleId|번호)
 const nOf=m=>(m.n==null?0:m.n);
-function dripDelay(m){
+/* 사람이 말하는 줄인가 — 판이 적는 줄(system·gm·cardref)에는 말풍선을 안 붙인다.
+   아무도 치고 있지 않은 줄에 「치고 있다」가 뜨면 그건 거짓말이다. */
+const SAY_KIND={ai:1,human:1,alibi:1};
+function isSayLine(m){ return !!(m&&m.roleId&&SAY_KIND[m.kind||""]); }
+function dripHold(m){
   const t=String((m&&(m.text||m.line))||"");
-  return Math.min(DRIP_CAP, DRIP_BASE+t.length*DRIP_PER);
+  return Math.min(DRIP_CAP, Math.max(DRIP_MIN, t.length*DRIP_PER));
+}
+function dripType(m){
+  if(!isSayLine(m)) return 0;
+  const t=String((m&&(m.text||m.line))||"");
+  return Math.min(TYPE_CAP, Math.max(TYPE_MIN, t.length*TYPE_PER));
 }
 function dripHeld(){
   const rows=(STATE&&STATE.table)||[];
@@ -6218,29 +6424,66 @@ function repaintChat(){
 /* 「계속」 — 한 대목이 끝나는 자리에서 판이 스스로 멈춰 선다. 알리바이 한 바퀴가
    끝나고 자기소개로 넘어가는 자리처럼, 성격이 다른 대목이 이어 붙으면 어디서
    끊겼는지가 안 보인다. 누르기 전에는 다음 줄이 안 온다. */
-function dripGo(){ dripPaused=false; dripAt=0; repaintChat(); }
+function dripGo(){ dripPaused=false; dripTypeAt=0; dripReadyAt=0; repaintChat(); }
+/* 말풍선을 거둔다. 실제로 서 있었을 때만 다시 그린다 — 매 tick마다 그리면 안 된다. */
+function dripUntype(){ if(dripTyping===null) return; dripTyping=null; repaintChat(); }
 function dripTick(){
   const rows=(STATE&&STATE.table)||[];
   if(dripUntil===null){              // 들어오자마자 밀려 있던 것은 흘리지 않는다
     if(rows.length) dripUntil=Math.max(...rows.map(nOf));
     return;
   }
-  let m=dripHeld(); if(!m||dripPaused||!chatWatching()||Date.now()<dripAt) return;
-  // 한참 만에 열었으면 밀린 것이 삼십 초를 넘을 수 있다. 그걸 다 흘리면 지난
+  let m=dripHeld();
+  if(!m||dripPaused||!chatWatching()){ dripUntype(); return; }
+  const now=Date.now();
+  if(now<dripTypeAt){ dripUntype(); return; }          // 앞줄이 아직 머무는 중
+  // 여기서부터가 「다음 사람이 치고 있는」 구간이다. 줄이 늦게 도착했으면 지금부터 잰다 —
+  // 앞줄 시간이 이미 지나갔다고 말풍선을 건너뛰면 그 줄만 불쑥 튀어나온다.
+  if(!dripReadyAt) dripReadyAt=Math.max(now,dripTypeAt)+dripType(m);
+  if(now<dripReadyAt){
+    const sig=isSayLine(m)?(m.roleId+"|"+nOf(m)):null;
+    if(dripTyping!==sig){ dripTyping=sig; repaintChat(); }
+    return;
+  }
+  // 한참 만에 열었으면 밀린 것이 예산을 넘을 수 있다. 그걸 다 흘리면 지난
   // 이야기만 보고 앉아 있게 된다 — 앞엣것은 한 번에 풀고 끝자락만 흘린다.
   const i=rows.indexOf(m);
   if(i>=0){
     let tot=0, cut=-1;
-    for(let k=rows.length-1;k>=i;k--){ tot+=dripDelay(rows[k]); if(tot>DRIP_BUDGET){ cut=k; break; } }
-    if(cut>=0){ dripUntil=nOf(rows[cut]); m=dripHeld(); if(!m){ repaintChat(); return; } }
+    for(let k=rows.length-1;k>=i;k--){ tot+=dripHold(rows[k])+dripType(rows[k]);
+      if(tot>DRIP_BUDGET){ cut=k; break; } }
+    if(cut>=0){ dripUntil=nOf(rows[cut]); m=dripHeld();
+      if(!m){ dripTyping=null; repaintChat(); return; } }
   }
   dripUntil=nOf(m);
-  dripAt=Date.now()+dripDelay(m);
+  dripTypeAt=now+dripHold(m);        // 이 줄이 머무는 시간이 끝나면 다음 사람이 치기 시작한다
+  dripReadyAt=0;
+  dripTyping=null;
   if(m.stop&&dripHeld()) dripPaused=true;   // 끊는 자리 — 뒤에 더 있을 때만 멈춘다
   if(m.roleId!==myRoleId) sfx("chat");
   repaintChat();
 }
 setInterval(dripTick, DRIP_TICK);
+
+/* 「치고 있다」 말풍선 — 다음 줄을 말할 사람의 자리에, 채팅 줄과 같은 정렬·같은 아바타로
+   선다. 그래야 «저 사람이 지금 치고 있다»로 읽힌다. 내용은 점 세 개뿐이고 그 사람의
+   키컬러를 쓴다. 이 줄은 통 번호가 없어서 chatDrawn 셈에 안 들어간다 — 그릴 때마다
+   지웠다 다시 붙인다(아래 renderChat). */
+function dripTypingMsg(){
+  if(dripTyping===null) return null;
+  const m=dripHeld();
+  return (m&&isSayLine(m)&&(m.roleId+"|"+nOf(m))===dripTyping)?m:null;
+}
+function typingRow(m){
+  const c=roleById(m.roleId)||{};
+  const d=document.createElement("div");
+  d.className="msg typing"+(m.roleId===myRoleId?" own":"");
+  d.innerHTML=`<div class="av">${avaHTML(c,"sm")}</div><div>`
+    +`<div class="nm" style="color:${c.color||"#999"}">${esc(m.speaker||c.name||"")}</div>`
+    +`<div class="bub tybub" style="--tc:${c.color||"var(--sub)"}" aria-label="입력 중">`
+    +`<i></i><i></i><i></i></div></div>`;
+  return d;
+}
 
 function renderChat(boxId){
   const id=boxId||"chatFull", box=$(id); if(!box) return;
@@ -6248,6 +6491,7 @@ function renderChat(boxId){
   // 흘리려고 붙잡아 둔 것뿐이면 아직 그릴 게 없는 것이지 창이 빈 게 아니다 — 지우면 안 된다
   if(!rows.length&&((STATE&&STATE.table)||[]).length) return;
   const near=box.scrollHeight-box.scrollTop-box.clientHeight<120;
+  const ty=box.querySelector(":scope > .typing"); if(ty) ty.remove();   // 새 줄은 말풍선 앞에 붙는다
   const go=box.querySelector(":scope > .dripgo"); if(go) go.remove();   // 새 줄은 단추 앞에 붙는다
   let last=chatDrawn[id];
   const first=rows.length?(rows[0].n||0):0, tail=rows.length?(rows[rows.length-1].n||0):-1;
@@ -6259,12 +6503,14 @@ function renderChat(boxId){
   if(added) box.appendChild(frag);
   chatDrawn[id]=last;
   while(box.children.length>CHAT_KEEP) box.removeChild(box.firstChild);
+  const tym=dripTypingMsg();
+  if(tym) box.appendChild(typingRow(tym));
   if(dripPaused){
     const d=document.createElement("div"); d.className="dripgo";
     d.innerHTML=`<button class="btn gold sm" onclick="dripGo()">계속 ›</button>`;
     box.appendChild(d);
   }
-  if((near&&added)||dripPaused) box.scrollTop=box.scrollHeight;
+  if((near&&(added||tym))||dripPaused) box.scrollTop=box.scrollHeight;
 }
 /* 키보드가 올라오면 화면이 줄어든다(dvh). 그때 대화창이 읽던 자리에 그대로 있으면
    방금 온 말이 위로 밀려 사라진 것처럼 보인다 — 바닥에 붙어 있었으면 계속 바닥에 붙인다. */
@@ -6342,7 +6588,7 @@ async function advance(){
                  warn: left&&left.length?`손패가 넘치는 배역이 있습니다 — ${left.join(", ")}`:"",
                  ok:`${nx.name} 시작`, cancel:"조금 더", tone:"cold"})) return;
   // clientId를 실어야 서버가 호스트로 알아본다. 안 보내면 403인데 예전엔 조용히 삼켰다.
-  const r=await post("/api/advance",{clientId,key:gmKey});
+  const r=await post("/api/advance",{clientId,key:hostKey()});
   if(r&&r.error){ banner(r.error==="host"?"호스트만 페이즈를 넘길 수 있습니다":"진행 실패: "+r.error); return; }
   banner(""); await poll();
 }
