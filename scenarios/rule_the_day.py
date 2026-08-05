@@ -1027,7 +1027,7 @@ CARDS = [
              "마지막 위치가 지도 밖에 위치한 것으로 기록되어 있다.",
      "hint": "지도 밖이 어디인지 묻는다."},
     # ★ 옛날얘기 패턴의 다른 한쪽. B5 와 겹쳐야 뜻이 선다.
-    {"id": "D4", "loc": "D", "locName": "잠수함", "round": 2, "vein": "tool",
+    {"id": "D4", "loc": "D", "locName": "잠수함", "round": 1, "vein": "tool", "unlockZone": "G",
      "item": True, "itemName": "다이어리", "spot": "계기반",
      "title": "계기반 눈금자",
      "text": "계기반의 눈금자가 홀로 작동한다. 눈금자의 위치가 시시각각 변한다.\n"
@@ -1047,7 +1047,7 @@ CARDS = [
      "hint": "누가 여기를 깨물어 봤는지 묻는다."},
 
     # ── E 하늘 끝 (관리자실에서 이어짐) ───────────────────────────
-    {"id": "E0", "loc": "E", "locName": "하늘 끝", "round": 2, "vein": "tool",
+    {"id": "E0", "loc": "E", "locName": "하늘 끝", "round": 1, "requires": "F1", "vein": "tool",
      "item": True, "itemName": "하늘 열쇠 반쪽", "hot": True, "spot": "하늘 끝",
      "title": "하늘 끝",
      "text": "하늘의 구름이 마치 그린 것처럼 아름답게 떠 있다.\n"
@@ -1057,13 +1057,13 @@ CARDS = [
      "puzzle": {"prompt": "[자리표시자] 하늘 끝 — 걸린 것을 빼내려면?",
                 "answer": ["하늘"],
                 "hint": "[자리표시자]"}},
-    {"id": "E1", "loc": "E", "locName": "하늘 끝", "round": 2, "vein": "glitch",
+    {"id": "E1", "loc": "E", "locName": "하늘 끝", "round": 1, "requires": "F1", "vein": "glitch",
      "gone": 3, "vanish": 6, "hot": True, "spot": "일렁이는 자리",
      "title": "일렁임의 잔상",
      "text": "허공 한 자리가 계속 일렁인다. 구름이 마치 상자처럼 보이기도 한다.\n"
              "이상함을 느끼면 다시 멀쩡해진다.",
      "hint": "언제 그 일렁임을 봤는지 묻는다."},
-    {"id": "E2", "loc": "E", "locName": "하늘 끝", "round": 2, "vein": "glitch",
+    {"id": "E2", "loc": "E", "locName": "하늘 끝", "round": 1, "requires": "F1", "vein": "glitch",
      "spot": "오로라",
      "title": "오로라 하늘",
      "text": "이 마을의 하늘에는 언제나 오로라가 가득하다.\n"
@@ -1072,7 +1072,7 @@ CARDS = [
      "hint": "언제나 같은 하늘이라는 것이 무엇을 뜻하는지 묻는다."},
 
     # ── F 규칙시험실 (관리자실에서 이어짐) ────────────────────────
-    {"id": "F0", "loc": "F", "locName": "규칙시험실", "round": 2, "vein": "glitch",
+    {"id": "F0", "loc": "F", "locName": "규칙시험실", "round": 1, "vein": "glitch",
      "auto": True, "spot": "규칙시험실",
      "title": "규칙시험실",
      "text": "규칙을 하나씩 확인하는 방이다.\n"
@@ -1081,13 +1081,16 @@ CARDS = [
              "오직 관리자만이 드나들 수 있는 공간인 듯한데,\n"
              "여기저기 주황색 머리카락이 떨어져 있다.",
      "hint": "누가 여기 들어왔었는지 묻는다."},
-    {"id": "F1", "loc": "F", "locName": "규칙시험실", "round": 2, "vein": "glitch",
-     "hot": True, "spot": "피아노 아래",
+    {"id": "F1", "loc": "F", "locName": "규칙시험실", "round": 1, "vein": "glitch",
+     "hot": True, "spot": "피아노 아래", "unlockZone": "E",
      "title": "폐기된 규칙들",
      "text": "버려진 규칙이 피아노 아래에 떨어져 있다.\n"
              "[하늘은 빨갛다] · [하늘은 어둡다] · [하늘은 뿌옇다]\n"
              "지금의 하늘은 아름다운 에메랄드빛처럼 파랗다.",
-     "hint": "누가 하늘을 골랐는지 묻는다."},
+     "hint": "누가 하늘을 골랐는지 묻는다.",
+     "puzzle": {"prompt": "[자리표시자] 버려지지 않고 남은 규칙은 — 하늘은 어떻다?",
+                "answer": ["파랗다", "파랑", "에메랄드"],
+                "hint": "[자리표시자] 지금 고개를 들면 보이는 것이 답이다."}},
     # ★ 몸 교환이 «급조»였다는 흔적. 데이먼이 왜 그렇게까지 껍데기인지의 근거다.
     {"id": "F3", "loc": "F", "locName": "규칙시험실", "round": 2, "vein": "tool",
      "item": True, "itemName": "짝대기(-)", "hot": True, "spot": "시험대",
@@ -1108,7 +1111,7 @@ CARDS = [
      "hint": "누가 누구를 대체하기로 되어 있었는지 묻는다."},
 
     # ── G 바다 끝 (잠수함에서 이어짐) ─────────────────────────────
-    {"id": "G0", "loc": "G", "locName": "바다 끝", "round": 2, "vein": "tool",
+    {"id": "G0", "loc": "G", "locName": "바다 끝", "round": 1, "vein": "tool",
      "item": True, "itemName": "바다 열쇠 반쪽", "hot": True,
      "requires": "D4", "spot": "바다 끝",
      "title": "바다 끝",
@@ -1120,7 +1123,7 @@ CARDS = [
      "puzzle": {"prompt": "[자리표시자] 바다 끝 — 뱃머리에 박힌 것을 빼내려면?",
                 "answer": ["바다"],
                 "hint": "[자리표시자]"}},
-    {"id": "G1", "loc": "G", "locName": "바다 끝", "round": 2, "requires": "D4", "vein": "case",
+    {"id": "G1", "loc": "G", "locName": "바다 끝", "round": 1, "requires": "D4", "vein": "case",
      "spot": "경계 앞",
      "title": "돌아선 발자국",
      "text": "경계 바로 앞에 발자국이 두 쌍 남아 있다.\n"
