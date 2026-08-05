@@ -116,11 +116,12 @@
       rgba(0,0,0,.26)  83%, rgba(0,0,0,.26) 91%,
       rgba(0,0,0,0)   100%);
     -webkit-mask-image:var(--crt-mask);mask-image:var(--crt-mask);
-    animation:roll 9s linear infinite}
+    animation:roll 10s linear infinite}
   @keyframes grain{0%,100%{transform:translate(0,0)}33%{transform:translate(-6%,4%)}66%{transform:translate(4%,-5%)}}
-  /* 9초에 한 번, 1.17초 동안 훑고 나머지는 화면 아래쪽 밖에 서서 쉰다.
+  /* 10초에 한 번, 2.3초 동안 훑고 나머지는 화면 아래쪽 밖에 서서 쉰다.
+     띠가 지나가는 «속도» 를 절반으로 낮췄다 — 빠르면 눈에 남는 것이 없다.
      계속 돌면 눈이 아프고 글을 못 읽는다 — 「이따금」이 이 연출의 전부다. */
-  @keyframes roll{0%{top:-64px}13%{top:100%}100%{top:100%}}
+  @keyframes roll{0%{top:-64px}23%{top:100%}100%{top:100%}}
   /* 동작을 줄이는 사람에게는 아예 안 보인다. animation:none 만으로는 띠가 0% 자리에
      «멈춰 선 채로» 남아서, 화면 아래쪽에 밝은 줄이 그어진 것처럼 보인다. */
   @media (prefers-reduced-motion:reduce){ .vhs .noise,.emblem,h1.title,.cursor{animation:none!important}
@@ -671,13 +672,13 @@
     -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
     transform:translateY(calc(var(--crt-band) * -1));
     will-change:transform;
-    animation:crtFlick 9s linear infinite}
-  /* 9초에 한 번, 1.17초 동안 창을 위에서 아래로 가로지르고 나머지 7.8초는 창 아래쪽
+    animation:crtFlick 10s linear infinite}
+  /* 10초에 한 번, 2.3초 동안 창을 위에서 아래로 가로지르고 나머지 7.7초는 창 아래쪽
      밖에 서서 쉰다. 계속 돌면 눈이 아프고 글을 못 읽는다 — 「이따금」이 이 연출의
      전부다. 긴 주기 하나에 쉬는 구간을 물려 두는 게 제일 싸다. 타이머도 JS 도 없다. */
   @keyframes crtFlick{
     0%{transform:translateY(calc(var(--crt-band) * -1))}
-    13%{transform:translateY(100%)}
+    23%{transform:translateY(100%)}
     100%{transform:translateY(100%)}
   }
   @media(prefers-reduced-motion:reduce){ .crt-flick::after{display:none} }
