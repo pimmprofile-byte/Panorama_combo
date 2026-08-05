@@ -11,6 +11,12 @@
      그건 보는 사람 기기에 그 폰트가 깔려 있을 때만 먹는다 — 아이폰은 애플고딕,
      안드로이드는 로보토, 윈도우는 굴림으로 제각각 나왔다.
      KS X 1001 상용 2350자로 잘라 셋이 합쳐 700KB. swap이라 폰트가 늦어도 글은 바로 보인다. */
+  /* 이 패키지의 글꼴은 Neo둥근모 한 벌이다 — DOS 시절 비트맵 글꼴 「둥근모꼴」을
+     트루타입으로 옮긴 것(SIL OFL 1.1, assets/fonts/neodgm-OFL.txt).
+     로비(landing.html)와 같은 글꼴을 써야 두 화면이 한 물건으로 읽힌다.
+     비트맵이라 안티에일리어싱을 끄고, 16px 배수에서 가장 또렷하다. */
+  @font-face{font-family:"NeoDunggeunmo";src:url("/assets/fonts/neodgm.woff2") format("woff2");
+    font-weight:400;font-style:normal;font-display:block}
   @font-face{font-family:"PIMM Myeongjo";src:url("/assets/fonts/NanumMyeongjo-400.woff2") format("woff2");
     font-weight:400;font-style:normal;font-display:swap}
   @font-face{font-family:"PIMM Sans";src:url("/assets/fonts/NotoSansKR-400.woff2") format("woff2");
@@ -67,15 +73,18 @@
     --signal:#00ff99;
     --good:#3fdfc4;--bad:#ff8f8f;--warn:#ffd479;
     /* 게임기 케이스 — 눌리는 판(b)·손이 닿은 판(h)·파인 테(e)·못 누르는 판(off) */
-    --case-b:#46423b;--case-h:#575148;--case-e:#0e0d0b;--case-off:#211f1c;
-    --case-ink:#efece5;--case-line:#5f594f;
+    /* 90년대 매킨토시의 베이지 플라스틱. 로비(landing.html)와 같은 값이다 —
+       케이스 밖은 베이지, 화면 안은 인광 초록. 이 규칙을 두 화면이 같이 쓴다. */
+    --case-b:#d7d0ba;--case-h:#f4efe3;--case-e:#12130f;--case-off:#8f8a78;
+    --case-ink:#efece5;--case-fg:#12130f;--case-line:#6d6656;
     /* 8비트에 부드러운 blur 그림자는 없다. 한 칸 밀린 «오프셋 그림자» 가 그 자리를 맡는다. */
     --shadow:4px 4px 0 rgba(0,0,0,.55);
     --shadow-sm:2px 2px 0 rgba(0,0,0,.5);
     /* 네온은 위 ②③ 자리에만. 남발하면 상징이 소모된다. */
     --neon:0 0 0 1px rgba(0,230,147,.5),0 0 12px -4px var(--gold);
     /* 숫자·라벨·눈금 — 짧은 자리만 게임기 글꼴로. 본문은 한글 가독성이 먼저다. */
-    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"PIMM Sans",monospace;
+    --pix:"NeoDunggeunmo","Neo둥근모","DungGeunMo",monospace;
+    --mono:var(--pix);
     /* 그림이 아직 없는 자리에 까는 8비트 플레이스홀더.
        격자 + 대각선 빗금 + 바닥색. 웹폰트도 이미지도 안 쓴다(오프라인 배포).
        빗금을 초록으로 두었더니 배역 카드 여섯 장이 통째로 초록 판이 됐다 —
@@ -95,13 +104,15 @@
      본문 위로 올라와 글을 덮는 기기가 있었다. 배경이면 무슨 일이 있어도 맨 뒤다.
      세기는 .022 — 이보다 세면 본문 글자와 격자가 서로 갉아먹는다.
      fixed 라 화면을 굴려도 눈금이 따라 흐르지 않는다(게임기 화면은 고정된 판이다). */
-  body{background-color:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;
+  body{background-color:var(--bg);color:var(--ink);line-height:1.6;
+    /* 비트맵 글꼴은 갈아 뭉개면 안 된다 — 안티에일리어싱을 끈다 */
+    -webkit-font-smoothing:none;text-rendering:optimizeSpeed;
     background-image:
       repeating-linear-gradient(0deg,rgba(235,230,220,.028) 0 1px,transparent 1px 8px),
       repeating-linear-gradient(90deg,rgba(235,230,220,.028) 0 1px,transparent 1px 8px);
     background-attachment:fixed;
-    font-family:"PIMM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo",sans-serif}
-  .serif{font-family:"PIMM Myeongjo","Nanum Myeongjo","AppleMyungjo",serif}
+    font-family:var(--pix)}
+  .serif{font-family:var(--pix)}
   /* 숫자·라벨·눈금 — 짧은 자리만 게임기 글꼴로 세운다. 본문은 지금 글꼴 그대로다(한글 가독성).
      .mono 는 새로 쓰는 자리에, 아래 선택자들은 이미 숫자만 서 있던 자리에 얹는다. */
   .mono,.rmid,.pill,.alb-t,.rv-t,.keeprow .rs,.tb-chip .tg,.sw-dots,.vd-n,.vd-cnt,
@@ -124,14 +135,14 @@
      회색은 --bg 의 온기에 맞춰 잡았다(R+2,B-2). 순회색을 얹으면 이 바탕에서 푸르게 뜬다.
      transition 에 transform 을 넣지 않는다 — 눌림은 즉시 떨어져야 손맛이 난다. */
   .btn{background:linear-gradient(180deg,var(--case-h),var(--case-b));
-    border:1px solid var(--case-e);color:var(--case-ink);
+    border:1px solid var(--case-e);color:var(--case-fg);
     padding:8px 14px;border-radius:2px;cursor:pointer;font-size:13.5px;font-weight:600;
     box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.09);
     transition:background .12s,color .12s,border-color .12s}
-  .btn:hover{background:linear-gradient(180deg,#665f54,var(--case-h));color:#fff;border-color:var(--case-e)}
+  .btn:hover{background:var(--case-h);color:var(--case-fg);border-color:var(--case-e)}
   /* 눌린 판은 어두워진다 — 그림자가 사라지고 내려앉는 것만으로는 «들어갔다» 가 약하다 */
-  .btn:active{transform:translate(2px,2px);box-shadow:inset 0 1px 0 rgba(0,0,0,.4);
-    background:linear-gradient(180deg,#3b372f,var(--case-b))}
+  .btn:active{transform:translate(2px,2px);box-shadow:inset 1px 1px 0 rgba(0,0,0,.22);
+    background:linear-gradient(180deg,var(--case-b),var(--case-h))}
   .btn:focus-visible{outline:2px solid var(--case-line);outline-offset:2px}
   /* 「이 판을 지운다」처럼 되돌릴 수 없는 붉은 문 — 케이스 위의 빨간 버튼 하나 */
   .btn.ember{background:linear-gradient(180deg,#b3382a,#8a2418);border-color:#3a0f0a;color:#fff;font-weight:700;
@@ -162,12 +173,14 @@
      그래서 데이비드의 초록과 화면의 초록이 나란히 서도 서로를 갉아먹지 않는다:
      하나는 «사람이 붙은 각진 칩», 다른 하나는 «지금 여기» 나 «확정» 한 군데뿐이다. */
   /* 위계 — 한 화면에 primary는 하나. 색을 더 쓰지 않고 판을 한 단계 더 밝게 세운다. */
-  .btn.gold,.btn.primary{background:linear-gradient(180deg,#6e6759,var(--case-h));
-    border-color:var(--case-e);color:#fff;font-weight:800;
-    box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.14)}
-  .btn.gold:hover,.btn.primary:hover{background:linear-gradient(180deg,#7d7565,#615a4f);color:#fff}
-  .btn.gold:active,.btn.primary:active{transform:translate(2px,2px);box-shadow:inset 0 1px 0 rgba(0,0,0,.4);
-    background:linear-gradient(180deg,#4f4a41,var(--case-h))}
+  /* 위계는 색이 아니라 테로 준다 — 매킨토시의 기본 단추는 테가 한 겹 더 둘러 있었다 */
+  .btn.gold,.btn.primary{background:var(--case-h);
+    border-color:var(--case-e);color:var(--case-fg);font-weight:800;
+    box-shadow:0 0 0 2px var(--case-e),2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.5)}
+  .btn.gold:hover,.btn.primary:hover{background:#fff;color:var(--case-fg)}
+  .btn.gold:active,.btn.primary:active{transform:translate(2px,2px);
+    box-shadow:0 0 0 2px var(--case-e),inset 1px 1px 0 rgba(0,0,0,.22);
+    background:var(--case-b)}
   /* ★ 초록 ③ — 되돌릴 수 없는 확정 둘. 클래스가 아니라 «무슨 일을 하는가» 로 잡는다.
      .btn.gold 는 전송·계속·코드넣기까지 아홉 군데가 나눠 쓰고 있어서, 클래스로 칠하면
      초록이 화면마다 떠 버린다. 실제로 판을 넘기는 advance() 와 이름을 적는 acSend()
@@ -244,10 +257,10 @@
     font-family:inherit;font-size:12.5px;font-weight:800;text-align:center;border:1px solid var(--line);
     background:var(--panel2);color:var(--sub);cursor:pointer;transition:.14s}
   .rc-go.pick{background:linear-gradient(180deg,var(--case-h),var(--case-b));border-color:var(--case-e);
-    color:#fff;box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.09)}
-  .rc-go.pick:hover{background:linear-gradient(180deg,#665f54,var(--case-h))}
-  .rc-go.pick:active{transform:translate(2px,2px);box-shadow:inset 0 1px 0 rgba(0,0,0,.4);
-    background:linear-gradient(180deg,#3b372f,var(--case-b))}
+    color:var(--case-fg);box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.5)}
+  .rc-go.pick:hover{background:var(--case-h)}
+  .rc-go.pick:active{transform:translate(2px,2px);box-shadow:inset 1px 1px 0 rgba(0,0,0,.22);
+    background:linear-gradient(180deg,var(--case-b),var(--case-h))}
   .rc-go.done{background:linear-gradient(180deg,#22301f,#1a2418);border-color:#2f6b62;
     color:var(--good);cursor:default;font-weight:700}
   .rc-go:not(.pick):not(.done):not(.off):hover{border-color:var(--case-line);color:var(--ink)}
@@ -275,7 +288,7 @@
     padding:8px 12px calc(8px + env(safe-area-inset-top));border-bottom:1px solid var(--line);
     background:linear-gradient(180deg,rgba(17,16,15,.97),rgba(17,16,15,.85));flex-wrap:nowrap;overflow:hidden}
   .chead .ch-id{flex:0 1 auto;min-width:0;max-width:44%;display:flex;flex-direction:column;gap:1px}
-  .chead .ch-me{font-family:"PIMM Pretendard","PIMM Sans",sans-serif;font-size:15.5px;font-weight:700;
+  .chead .ch-me{font-family:var(--pix);font-size:15.5px;font-weight:700;
     line-height:1.3;letter-spacing:-.01em;color:#fff;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
   /* 이름이 흰색이 됐으니 키컬러는 점 하나로만 남는다 — 판 전체에서 나를 가리키는 색이다. */
@@ -406,11 +419,11 @@
     box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.12)}
   .coach-tip{position:fixed;z-index:57;transform:translateX(-50%);
     box-shadow:2px 2px 0 var(--case-e);
-    background:var(--case-ink);color:#14120f;font-size:12.5px;font-weight:800;letter-spacing:.01em;
+    background:var(--case-h);color:var(--case-fg);font-size:12.5px;font-weight:800;letter-spacing:.01em;
     padding:8px 14px;border-radius:2px;white-space:nowrap;box-shadow:2px 2px 0 rgba(0,0,0,.55);
     animation:bob 1.9s ease-in-out infinite}
   .coach-tip::after{content:"";position:absolute;left:50%;bottom:-5px;transform:translateX(-50%) rotate(45deg);
-    width:10px;height:10px;background:var(--case-ink)}
+    width:10px;height:10px;background:var(--case-h)}
   @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-4px)}}
   /* 전체화면 대화 */
   .modal.full .box{max-width:920px;width:100%;height:100%;max-height:100%;border-radius:0;display:flex;flex-direction:column}
@@ -501,7 +514,7 @@
   .msg .bub{background:var(--panel);border:1px solid var(--line);border-radius:0 2px 2px 2px;padding:8px 12px;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
   /* 내 말풍선 — 케이스 회색 판. 누가 말했는지는 위의 이름표(배역색)가 말한다. */
   .msg.own .bub{background:linear-gradient(180deg,var(--case-h),var(--case-b));
-    border-color:var(--case-e);color:#fff;border-radius:2px 0 2px 2px}
+    border-color:var(--case-e);color:var(--case-fg);border-radius:2px 0 2px 2px}
   .tag-me{font-size:9px;color:var(--me,var(--cold));border:1px solid currentColor;border-radius:0;padding:0 4px;margin-left:4px}
   /* 결말이 모두에게 얹어주는 몫 — 맞히고 틀린 것과는 다른 축이라 색을 가른다 */
   /* ★ 초록 ④ — 결말이 얹어주는 몫. 「얻었다」는 성공 계열이라 --good 을 쓴다. */
@@ -551,7 +564,7 @@
   .gcard .rb{font-size:9.5px;color:var(--muted)}
   .gcard .t{font-size:12px;font-weight:700;margin-top:auto;line-height:1.3}
   .gcard.face{align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,#181716,#181716 6px,#151413 6px,#151413 12px)}
-  .gcard.face .q{font-size:26px;font-family:"PIMM Myeongjo","Nanum Myeongjo",serif;color:#3b3a39}
+  .gcard.face .q{font-size:26px;font-family:var(--pix);color:#3b3a39}
   /* 뒤집힌 카드는 '어디를 뒤지는지'로 고른다 — 라벨 번호 대신 자리 이름 */
   .gcard.face{padding:20px 6px 22px}
   .gcard.face .sp{font-size:11.5px;font-weight:700;line-height:1.35;color:#999897;text-align:center;
@@ -2249,6 +2262,13 @@ async function boot(){
   try{ await loadScenario(); }
   catch(e){ banner("서버 연결 실패"); return; }
   await poll();
+  // QA 모드로 막 들어왔으면 좌석을 저절로 쥔다. 예전엔 「세 자리 모두 쥐기」를 손으로
+  // 눌러야 해서, 들어와도 평소와 똑같은 배역 선택 화면이 떠 있었다 —
+  // 「관리자 모드 켜고 들어갔는데 달라진 게 없다」로 읽히던 자리다.
+  if(qaOn && !(STATE&&STATE.started)){
+    const held=qaSeats().filter(id=>(((STATE&&STATE.roles)||{})[id]||{}).mode==="human").length;
+    if(held<qaSeats().length) await qaClaimAll();
+  }
   setInterval(poll,1500);
   // 마지막 10초 동안에는 1.5초가 너무 길다 — 그때만 촘촘히 본다.
   setInterval(()=>{ const pl=STATE&&STATE.podLaunch; if(pl&&!pl.closed) poll(); },700);

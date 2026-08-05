@@ -412,7 +412,7 @@ def public_state() -> dict:
         }
 
 
-app = FastAPI(title="PIMMmurderboard")
+app = FastAPI(title="GAME DAY")
 
 # GM 콘솔(다른 출처의 board.html)이 라이브 서버를 호출할 수 있게 CORS 개방
 try:
@@ -3159,6 +3159,32 @@ def reset(b: HostReq):
 _NOCACHE = {"Cache-Control": "no-cache, must-revalidate"}
 
 
+# 「고친 게 왜 안 보이지」에 화면이 스스로 답하게 한다. 저장소만 봐서는 배포가
+# 실제로 붙었는지 알 수 없다 — 서버가 자기가 어떤 판인지 말해야 한다.
+# Render 는 RENDER_GIT_COMMIT 을 넣어주고, 로컬은 .git 에서 읽는다.
+def _build_stamp() -> dict:
+    sha = os.getenv("RENDER_GIT_COMMIT") or ""
+    if not sha:
+        try:
+            head = (_HERE / ".git" / "HEAD").read_text().strip()
+            sha = (_HERE / ".git" / head[5:]).read_text().strip() if head.startswith("ref: ") else head
+        except Exception:
+            sha = ""
+    try:
+        at = time.strftime("%y-%m-%d %H:%M", time.gmtime((_HERE / "server.py").stat().st_mtime))
+    except Exception:
+        at = ""
+    return {"sha": sha[:7] or "local", "at": at}
+
+
+_BUILD = _build_stamp()
+
+
+@app.get("/api/build")
+def api_build():
+    return _BUILD
+
+
 @app.get("/")
 def landing():
     # 노아르 허브(로고·포스터·호스트/참가자) — 여기서 사건을 골라 /play 로 진입
@@ -3186,7 +3212,7 @@ if __name__ == "__main__":
     import uvicorn
     ip = lan_ip()
     print("=" * 56)
-    print(f"  {SC.TITLE} — 사람 셋이서 하는 머더미스터리")
+    print(f"  GAME DAY · {SC.TITLE} — 사람 셋이서 하는 머더미스터리")
     print("  브라우저에서 열기:")
     print(f"    이 컴퓨터    →  http://127.0.0.1:{PORT}")
     print(f"    같은 와이파이 →  http://{ip}:{PORT}   (폰·다른 PC는 이 주소로)")

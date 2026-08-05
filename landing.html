@@ -1,309 +1,317 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>PIMM MURDERMYSTERY BOARD</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' fill='%23050c09' stroke='%2300ff99' stroke-width='2'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='monospace' font-size='17' font-weight='700' fill='%2300ff99'%3EP%3C/text%3E%3C/svg%3E">
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>GAME DAY</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a130e'/%3E%3Crect x='2' y='2' width='28' height='28' fill='none' stroke='%2300ff99' stroke-width='2'/%3E%3Crect x='7' y='9' width='7' height='3' fill='%2300ff99'/%3E%3Crect x='7' y='9' width='3' height='14' fill='%2300ff99'/%3E%3Crect x='7' y='20' width='7' height='3' fill='%2300ff99'/%3E%3Crect x='11' y='15' width='3' height='8' fill='%2300ff99'/%3E%3Crect x='18' y='9' width='7' height='3' fill='%2300ff99'/%3E%3Crect x='22' y='9' width='3' height='14' fill='%2300ff99'/%3E%3Crect x='18' y='9' width='3' height='14' fill='%2300ff99'/%3E%3Crect x='18' y='20' width='7' height='3' fill='%2300ff99'/%3E%3C/svg%3E">
 <style>
-  /* 한글 웹폰트 자체 호스팅 — 이름만 적어두면 보는 기기에 그 폰트가 있을 때만 먹는다.
-     KS X 1001 상용 2350자 서브셋. swap이라 폰트가 늦어도 글은 먼저 보인다. */
-  @font-face{font-family:"PIMM Myeongjo";src:url("/assets/fonts/NanumMyeongjo-400.woff2") format("woff2");
-    font-weight:400;font-style:normal;font-display:swap}
-  @font-face{font-family:"PIMM Sans";src:url("/assets/fonts/NotoSansKR-400.woff2") format("woff2");
-    font-weight:400;font-style:normal;font-display:swap}
-  @font-face{font-family:"PIMM Sans";src:url("/assets/fonts/NotoSansKR-700.woff2") format("woff2");
-    font-weight:700;font-style:normal;font-display:swap}
+  /* ═══════════════════════════════════════════════════════════════
+     GAME DAY — 1990년대 베이지 매킨토시가 회로기판 위에 서 있다.
+     ═══════════════════════════════════════════════════════════════
+     바탕 사진이 이 화면의 설계도다. 거기엔 색이 딱 두 벌 있다 —
+     케이스의 «베이지 플라스틱» 과 화면 안의 «인광 초록». 그 둘만 쓴다.
 
-  /* 8비트 게임기 팔레트.
-     ★ 프레임은 무채색, 색은 사람이 쓴다 — 플레이 화면과 같은 규칙이다.
-     패미컴이든 게임보이든 인터페이스는 회색 케이스고, 색은 화면 위의 캐릭터가 쓴다.
-     --brass 는 이름만 남았다. 값은 네온그린이었다가 지금은 «뼈색 회색» 이다 —
-     버튼·라벨·테마다 초록이 뜨면 그 초록이 상징이 아니라 그냥 UI 색으로 값이 떨어진다.
-     이름을 바꾸면 인라인 스타일까지 흩어진 자리를 다 쫓아야 해서 값만 갈았다.
-     --signal(#00FF99, 오리지널 로고색이자 데이비드의 키컬러)이 켜지는 자리는 넷뿐:
-       ① P 로고(마스트·상단바·파비콘)  ② 지금 고른 사건 · 진행 중인 판
-       ③ 「나는 호스트다」 표시          ④ 없음(로비에는 되돌릴 수 없는 확정이 없다)
-     바탕의 보라 기미는 걷었다. 초록 옆에서 보라가 뜨면 화면이 두 갈래로 찢어진다. */
+     그래서 규칙이 셋으로 줄어든다:
+       ① 케이스 밖(창틀·단추·라벨)은 베이지에 1px 검정 테
+       ② 화면 안(내용)은 어두운 초록 바탕에 인광 글자
+       ③ 그림자는 blur 가 없다. 2px 밀린 검정 한 칸이 전부다
+     둥근 모서리는 한 곳도 없다. 1비트 GUI 에는 원이 없었다.
+
+     글꼴은 Neo둥근모 — DOS 시절 비트맵 글꼴 「둥근모꼴」을 트루타입으로 옮긴
+     것이다(SIL OFL 1.1, assets/fonts/neodgm-OFL.txt). 비트맵이라 안티에일리어싱을
+     꺼야 제 모습이 나온다. 16px 배수에서 가장 또렷하다. */
+  @font-face{font-family:"NeoDunggeunmo";src:url("/assets/fonts/neodgm.woff2") format("woff2");
+    font-weight:400;font-style:normal;font-display:block}
+
   :root{
-    --bg:#0a0a09; --bg2:#111110; --panel:#171716; --panel2:#201f1e;
-    --bone:#ece4d3; --bone-dim:#b7ad9a; --faint:#847c76;   /* 대비 3.34 → 4.9 */
-    --line:#2a2825; --line2:#3a3733;
-    --blood:#c8392b; --blood-bri:#e0503f; --brass:#c9c2b6; --signal:#00ff99;
-    --blood-bg:rgba(200,57,43,.14); --brass-bg:rgba(201,194,182,.10);
-    /* 게임기 케이스 — 눌리는 판 · 손이 닿은 판 · 파인 테 · 못 누르는 판 */
-    --case-b:#46423b; --case-h:#575148; --case-e:#0e0d0b; --case-off:#211f1c;
-    --case-ink:#efece5; --case-line:#5f594f;
-    --serif:"Playfair Display","PIMM Myeongjo","Nanum Myeongjo",Georgia,serif;
-    --sans:"PIMM Sans","Pretendard","Apple SD Gothic Neo",system-ui,sans-serif;
-    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"PIMM Sans",monospace;
-    /* PIMM 의 기울어진 P — 플레이 화면 .pmark 와 같은 윤곽을 오리지널 색으로 담았다 */
-    --plogo:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 264 343'%3E%3Cpath fill='%2300ff99' d='M41 3 L226 3 L238 6 L247 11 L257 22 L262 35 L261 55 L249 90 L245 108 L242 113 L238 131 L234 139 L230 157 L227 162 L213 213 L211 215 L206 233 L201 241 L188 253 L177 256 L97 258 L90 275 L87 290 L76 322 L66 333 L49 340 L30 339 L20 334 L11 326 L3 309 L3 291 L19 236 L23 228 L27 210 L31 202 L35 184 L38 179 L42 161 L46 153 L58 109 L63 103 L137 104 L141 113 L126 158 L125 170 L129 175 L139 175 L146 161 L147 153 L165 97 L165 90 L159 84 L43 84 L28 80 L21 76 L13 68 L8 59 L6 51 L7 31 L10 23 L20 11 L26 7 Z'/%3E%3C/svg%3E");
-    /* 8비트는 blur 그림자가 없다 — 한 칸 밀린 오프셋이 그 자리를 맡는다 */
-    --shadow:4px 4px 0 rgba(0,0,0,.55);
-    --neon:0 0 0 1px rgba(0,255,153,.45),0 0 12px -4px var(--signal);
-    /* 포스터 그림이 아직 없을 때 깔리는 8비트 플레이스홀더 */
-    --ph:repeating-linear-gradient(45deg,rgba(235,230,220,.05) 0 7px,transparent 7px 14px),
-         repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 8px),
-         repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 1px,transparent 1px 8px),
-         linear-gradient(180deg,#16150f,#0c0b09);
-  }
-  *{box-sizing:border-box} html,body{margin:0}
-  body{background:var(--bg);color:var(--bone);font-family:var(--sans);word-break:keep-all;overflow-wrap:break-word;text-wrap:pretty;-webkit-font-smoothing:antialiased;min-height:100vh}
-  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-  button{font-family:inherit;cursor:pointer;color:inherit}
-  ::-webkit-scrollbar{height:10px;width:10px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px}::-webkit-scrollbar-track{background:transparent}
+    /* 화면 안 — 브라운관 */
+    --void:#060b08; --screen:#0a130e; --screen2:#0f1d15; --screen3:#14281d;
+    --phos:#7cf0b0; --phos-dim:#4aa87a; --phos-deep:#1c5a3c;
+    --signal:#00ff99;                    /* 로고색. 아껴 쓴다 */
+    /* 화면 밖 — 베이지 케이스 */
+    --case:#d7d0ba; --case-hi:#f4efe3; --case-lo:#a89e86; --case-sh:#6d6656;
+    --ink:#12130f; --ink2:#4b4a3c;
+    --alert:#c8392b; --alert-bri:#e0503f;
 
-  /* shared noir stage — 전 화면 동일 무드 */
+    /* ── 옛 이름들. 관리자 화면 CSS 가 아직 이 이름으로 읽는다 ── */
+    --bg:var(--void); --bg2:var(--screen); --panel:var(--screen2); --panel2:var(--screen3);
+    --bone:#e6e0cc; --bone-dim:#a8b8ac; --faint:#7d8f82;
+    --line:#1e3327; --line2:#2c4a38;
+    --blood:var(--alert); --blood-bri:var(--alert-bri); --brass:#c9c2b6;
+    --blood-bg:rgba(200,57,43,.14); --brass-bg:rgba(201,194,182,.10);
+    --case-b:var(--case); --case-h:var(--case-hi); --case-e:var(--ink);
+    --case-off:#8f8a78; --case-ink:var(--ink); --case-line:var(--case-sh);
+
+    /* 글꼴은 한 벌뿐이다. 비트맵 글꼴 옆에 다른 결이 서면 그 순간 90년대가 깨진다. */
+    --pix:"NeoDunggeunmo","Neo둥근모","DungGeunMo",monospace;
+    --serif:var(--pix); --sans:var(--pix); --mono:var(--pix);
+
+    --plogo:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 264 343'%3E%3Cpath fill='%2300ff99' d='M41 3 L226 3 L238 6 L247 11 L257 22 L262 35 L261 55 L249 90 L245 108 L242 113 L238 131 L234 139 L230 157 L227 162 L213 213 L211 215 L206 233 L201 241 L188 253 L177 256 L97 258 L90 275 L87 290 L76 322 L66 333 L49 340 L30 339 L20 334 L11 326 L3 309 L3 291 L19 236 L23 228 L27 210 L31 202 L35 184 L38 179 L42 161 L46 153 L58 109 L63 103 L137 104 L141 113 L126 158 L125 170 L129 175 L139 175 L146 161 L147 153 L165 97 L165 90 L159 84 L43 84 L28 80 L21 76 L13 68 L8 59 L6 51 L7 31 L10 23 L20 11 L26 7 Z'/%3E%3C/svg%3E");
+    --shadow:2px 2px 0 var(--ink);
+    --neon:0 0 0 1px rgba(0,255,153,.45),0 0 12px -4px var(--signal);
+    /* 그림이 아직 없는 자리 — 1비트 디더(체커) 무늬. 90년대 GUI 의 «빈 칸» 이다. */
+    --dither:repeating-conic-gradient(rgba(124,240,176,.10) 0% 25%,transparent 0% 50%) 0 0/6px 6px;
+    --ph:var(--dither),linear-gradient(180deg,var(--screen2),var(--screen));
+  }
+
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--void);color:var(--bone);font-family:var(--pix);font-size:16px;line-height:1.55;
+    word-break:keep-all;overflow-wrap:break-word;min-height:100vh;
+    /* 비트맵 글꼴은 갈아 뭉개면 안 된다 — 안티에일리어싱을 끈다 */
+    -webkit-font-smoothing:none;-moz-osx-font-smoothing:unset;text-rendering:optimizeSpeed}
+  .mono{font-variant-numeric:tabular-nums}
+  button{font-family:inherit;font-size:inherit;cursor:pointer;color:inherit}
+  ::-webkit-scrollbar{height:12px;width:12px}
+  ::-webkit-scrollbar-thumb{background:var(--case-lo);border:1px solid var(--ink);border-radius:0}
+  ::-webkit-scrollbar-track{background:var(--screen2)}
+  ::selection{background:var(--phos);color:var(--ink)}
+  :focus-visible{outline:2px solid var(--phos);outline-offset:2px}
+
+  /* ── 무대 ─────────────────────────────────────────────────────
+     바탕 사진(회로기판 위의 브라운관)은 그대로 두되 밝기를 눌러 «뒤에 있는 기계» 로
+     물러나게 한다. 우리가 띄우는 창이 그 앞에서 켜져 있는 화면이 된다. */
   .stage{position:relative;min-height:100vh;overflow:hidden}
-  /* 로비 바탕 사진은 「낡은 저택」 결이라 8비트 게임기 화면과 정면으로 부딪힌다.
-     사진을 갈아끼우는 건 에셋 일이니 여기서는 «브라운관에 남은 잔상» 정도까지 눌러 둔다 —
-     채도를 거의 빼고 밝기를 절반으로 내린다. 사진은 질감으로만 남는다.
-     filter 는 그 요소의 가상요소까지 같이 먹으므로, 색을 내는 층(어둠막·초록 한 겹·
-     8비트 격자·스캔라인)은 필터가 안 걸리는 .vig 로 통째로 옮겼다. */
-  /* 이 판의 로비 그림은 «회로기판 위에 선 브라운관»이라, 예전처럼 채도를 다 빼면
-     초록 회로가 통째로 사라진다. 세계관이 곧 배경인 그림이라 색을 살려 둔다 —
-     대신 밝기만 눌러서 글자가 위에 얹힐 자리를 만든다. */
-  .bg{position:fixed;inset:-3%;z-index:0;
-    background:url("/assets/rule_the_day_lobby.webp") center 22%/cover no-repeat;
-    filter:saturate(.72) contrast(1.04) brightness(.42)}
-  /* 격자는 8px 눈금, 세기 .03 — 이보다 세면 마스트 글자가 격자에 갉힌다. */
+  .bg{position:fixed;inset:0;z-index:0;
+    background:url("/assets/rule_the_day_lobby.webp") center 26%/cover no-repeat;
+    filter:saturate(.85) brightness(.62) contrast(1.02)}
+  /* 격자와 비네트. 사진 위에 인광 눈금을 한 겹 더 얹어 «전원이 들어와 있다» 를 만든다. */
   .vig{position:fixed;inset:0;z-index:1;pointer-events:none;image-rendering:pixelated;
-    box-shadow:inset 0 0 240px 40px rgba(0,0,0,.82);
+    box-shadow:inset 0 0 220px 40px rgba(0,0,0,.72);
     background:
-      repeating-linear-gradient(0deg,rgba(235,230,220,.032) 0 1px,transparent 1px 8px),
-      repeating-linear-gradient(90deg,rgba(235,230,220,.032) 0 1px,transparent 1px 8px),
-      repeating-linear-gradient(0deg,rgba(255,255,255,.028) 0 1px,transparent 1px 3px),
-      linear-gradient(180deg,rgba(6,10,8,.70),rgba(5,8,7,.80) 55%,rgba(4,6,5,.94)),
-      radial-gradient(900px 480px at 50% -8%,rgba(235,230,220,.05),transparent 60%)}
-  /* VHS / 노이즈 — 엔트리 전용(#scr-entry 안에 있어 사건선택 화면엔 안 뜸) */
-  .vhs{position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+      repeating-linear-gradient(0deg,rgba(124,240,176,.05) 0 1px,transparent 1px 16px),
+      repeating-linear-gradient(90deg,rgba(124,240,176,.05) 0 1px,transparent 1px 16px),
+      linear-gradient(180deg,rgba(4,9,7,.34),rgba(3,7,5,.46) 60%,rgba(2,5,4,.66))}
+  /* VHS — 엔트리 창 안에서만 돈다 */
+  .vhs{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:hidden}
   .vhs .scan{position:absolute;inset:0;opacity:.5;background:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px)}
-  .vhs .noise{position:absolute;inset:-60%;opacity:.10;mix-blend-mode:screen;
+  .vhs .noise{position:absolute;inset:-60%;opacity:.07;mix-blend-mode:screen;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     animation:grain .5s steps(3) infinite}
-  .vhs .rollbar{position:absolute;left:0;right:0;height:120px;opacity:.55;
-    background:linear-gradient(180deg,transparent,rgba(255,255,255,.05) 45%,rgba(0,255,153,.03) 50%,transparent);animation:roll 8s linear infinite}
-  @keyframes grain{0%{transform:translate(0,0)}33%{transform:translate(-6%,4%)}66%{transform:translate(4%,-5%)}100%{transform:translate(0,0)}}
+  .vhs .rollbar{position:absolute;left:0;right:0;height:120px;opacity:.4;
+    background:linear-gradient(180deg,transparent,rgba(124,240,176,.06) 50%,transparent);animation:roll 9s linear infinite}
+  @keyframes grain{0%,100%{transform:translate(0,0)}33%{transform:translate(-6%,4%)}66%{transform:translate(4%,-5%)}}
   @keyframes roll{0%{top:-14%}100%{top:114%}}
-  .wrap{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:clamp(16px,4vw,40px) clamp(14px,4vw,40px) 70px;min-height:100vh}
+  @media (prefers-reduced-motion:reduce){ .vhs .noise,.vhs .rollbar,.emblem,h1.title,.cursor{animation:none!important} }
 
-  .screen{display:none;animation:fade .5s ease}
-  .screen.on{display:block}
-  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .wrap{position:relative;z-index:2;max-width:1000px;margin:0 auto;
+    padding:clamp(12px,3vw,34px) clamp(10px,3vw,24px) 60px;min-height:100vh;
+    display:flex;flex-direction:column;justify-content:center}
 
-  /* top rail */
-  .toprail{display:flex;align-items:center;gap:12px;padding:6px 2px 0;min-height:40px}
-  .toprail .mini{display:flex;align-items:center;gap:9px;font-family:var(--serif);font-weight:800;letter-spacing:.02em}
-  /* 상단바의 P — 오리지널 로고색(--signal)으로 되돌린다. 세리프 'P' 글자 대신 로고
-     윤곽을 얹어, 마스트의 엠블럼·플레이 화면의 .pmark 와 같은 물건이 되게 했다.
-     8비트라 원이 아니라 네모, 그림자는 blur 없는 한 칸 오프셋. */
-  .toprail .mini .dot{width:24px;height:24px;border-radius:0;border:1px solid var(--signal);
-    display:grid;place-items:center;font-size:0;color:transparent;image-rendering:pixelated;
-    box-shadow:2px 2px 0 rgba(0,255,153,.20);
-    background:var(--plogo) center/auto 12px no-repeat,linear-gradient(180deg,#06231a,#040e0b)}
-  .toprail .sp{flex:1}
-  /* ── 버튼 = 게임기 케이스의 «물리 버튼» ────────────────────────
-     색이 아니라 형태로 말한다: 밝은 회색 판 + 어두운 테 + 한 칸 오프셋 그림자.
-     누르면 그림자가 사라지고 그만큼 내려앉는다. 못 쓰면 판이 케이스에 파묻힌다. */
-  .back,.adclose,.adcp,.adform button{
-    background:linear-gradient(180deg,var(--case-h),var(--case-b));
-    border:1px solid var(--case-e);color:var(--case-ink);
-    box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.09)}
-  .back:hover,.adclose:hover,.adcp:hover{background:linear-gradient(180deg,#665f54,var(--case-h));color:#fff;border-color:var(--case-e)}
-  .back:active,.adclose:active,.adcp:active,.adform button:active{
-    transform:translate(2px,2px)!important;box-shadow:inset 0 1px 0 rgba(0,0,0,.4);
-    background:linear-gradient(180deg,#3b372f,var(--case-b))}
-  .back{border-radius:2px;padding:7px 13px;font-size:.82rem;font-weight:600}
-  .hostpill{display:inline-flex;align-items:center;gap:6px;font-family:var(--serif);font-weight:800;font-size:.74rem;letter-spacing:.03em;
-    color:var(--signal);border:1px solid color-mix(in srgb,var(--signal) 34%,var(--line2));border-radius:2px;padding:4px 12px 4px 9px;
-    background:color-mix(in srgb,var(--signal) 8%,transparent)}
-  .hostpill svg{width:15px;height:15px;flex:0 0 auto}
-  .hostpill.part{color:var(--bone-dim);border-color:var(--line2);background:rgba(255,255,255,.02)}
+  /* ── 창 ───────────────────────────────────────────────────────
+     제목줄에 가로줄이 그어져 있고 제목만 그 줄을 비우고 앉는다. 왼쪽 네모는 닫기
+     상자, 오른쪽은 확대 상자 — 시스템 7 의 창이 정확히 이 모양이었다. */
+  .win{position:relative;background:var(--case);border:1px solid var(--ink);
+    box-shadow:1px 1px 0 var(--case-hi) inset,-1px -1px 0 var(--case-lo) inset,6px 6px 0 rgba(0,0,0,.6)}
+  .titlebar{display:flex;align-items:center;gap:6px;height:28px;padding:0 5px;
+    border-bottom:1px solid var(--ink);
+    background:repeating-linear-gradient(180deg,var(--ink) 0 1px,var(--case) 1px 3px)}
+  .tbox{flex:0 0 auto;width:14px;height:14px;border:1px solid var(--ink);background:var(--case);
+    box-shadow:inset 1px 1px 0 var(--case-hi),inset -1px -1px 0 var(--case-lo)}
+  .tbox.zoom{position:relative}
+  .tbox.zoom::after{content:"";position:absolute;left:1px;top:1px;width:6px;height:6px;border:1px solid var(--ink)}
+  .titlebar .wt{flex:1 1 auto;min-width:0;text-align:center;background:var(--case);
+    padding:0 12px;margin:0 2px;font-size:15px;color:var(--ink);white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .titlebar .sp{flex:1}
+  /* 창 안쪽이 곧 브라운관이다 */
+  .winbody{position:relative;margin:5px;border:1px solid var(--ink);background:var(--screen);
+    box-shadow:inset 2px 2px 0 rgba(0,0,0,.55);overflow:hidden}
+  .winbody::after{content:"";position:absolute;inset:0;z-index:5;pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px);
+    box-shadow:inset 0 0 90px 10px rgba(0,0,0,.55)}
+  .winpad{position:relative;z-index:2;padding:clamp(18px,4vw,34px) clamp(14px,4vw,30px)}
+  /* 창 아래 상태줄 — 지금 무슨 판을 보고 있는지 늘 한 줄로 말해준다 */
+  .statusbar{display:flex;align-items:center;gap:10px;border-top:1px solid var(--ink);
+    padding:5px 9px;font-size:12px;color:var(--ink2);background:var(--case)}
+  .statusbar .sp{flex:1}
+  .statusbar b{color:var(--ink);font-weight:400}
 
-  /* ENTRY */
-  .mast{text-align:center;padding:clamp(30px,10vw,90px) 0 clamp(20px,4vw,36px)}
-  /* 마스트의 P 엠블럼 — 색이 baked-in 된 PNG를 얹고 있어서 붉은 계통으로 굳어 있었다.
-     PNG는 그대로 두고 감춘 뒤(마크업은 건드리지 않는다) 같은 윤곽의 벡터를 오리지널
-     로고색으로 올린다. 8비트라 둥근 테를 네모로 바꾸고, 불꽃 맥동은 네온 맥동이 됐다. */
-  .emblem{width:88px;height:88px;margin:0 auto 22px;position:relative;display:grid;place-items:center;
-    border:2px solid var(--signal);border-radius:0;image-rendering:pixelated;
-    box-shadow:0 0 0 2px rgba(0,255,153,.16), 4px 4px 0 rgba(0,0,0,.5);
-    background:var(--plogo) center/auto 46px no-repeat,linear-gradient(180deg,#06231a,#04100c);
-    animation:emberpulse 4.5s ease-in-out infinite}
-  .emblem span{font-family:var(--mono);font-weight:800;font-size:2.1rem;color:var(--signal);
-    letter-spacing:.08em;text-shadow:0 0 16px rgba(0,255,153,.5), 0 1px 0 #000}
-  @keyframes emberpulse{0%,100%{box-shadow:0 0 0 2px rgba(0,255,153,.14), 4px 4px 0 rgba(0,0,0,.5)}50%{box-shadow:0 0 0 2px rgba(0,255,153,.3), 0 0 26px -6px rgba(0,255,153,.8), 4px 4px 0 rgba(0,0,0,.5)}}
-  /* 색이 굳은 PNG는 감춘다 — 위 벡터가 같은 그림을 오리지널 색으로 대신 그린다 */
-  .emblem img{display:none}
-  .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.42em;color:var(--blood-bri);text-transform:uppercase;margin-bottom:14px}
-  /* 마스트 제목 — 8비트 게임기의 타이틀 화면이다. 세리프에서 게임기 글꼴로 옮기고
-     자간을 벌린다. 본문은 지금 글꼴 그대로다(한글 가독성이 먼저). */
-  h1.title{font-family:var(--mono);font-weight:800;line-height:1.02;margin:0;letter-spacing:.06em;
-    /* 390px(아이폰13)에서 2.3rem 하한이 걸려 "MURDERMYSTERY"가 본문 폭을 꽉 채웠다(354/359px).
-       하한만 낮춰 8.5vw가 먹게 하면 390에서 33px로 떨어져 좌우 여백이 생긴다. 430·1280은 그대로. */
-    /* 게임기 글꼴은 세리프보다 글자 하나가 넓다. 상한을 한 단계 내려야 1280에서 안 넘친다. */
-    font-size:clamp(1.5rem,7vw,3.6rem);text-wrap:balance;color:var(--bone);
-    /* 색수차 — 브라운관에서 RGB가 한 픽셀씩 어긋난 그 자국. blur 없이 1px 씩만. */
-    text-shadow:1px 0 rgba(224,80,63,.55), -1px 0 rgba(0,255,153,.4), 0 2px 0 rgba(0,0,0,.75);
-    animation:vflick 6s steps(1) infinite}
-  /* 게임기 글꼴에는 이탤릭이 없다 — 기울이는 대신 색으로만 가른다 */
-  h1.title .amp{color:var(--blood);font-style:normal}
-  @keyframes vflick{0%,96%,100%{opacity:1}97%{opacity:.72}98%{opacity:1}98.6%{opacity:.85}}
-  .tageline{color:var(--bone-dim);font-size:clamp(.9rem,2.2vw,1.05rem);margin-top:18px;letter-spacing:.02em;
-    /* ch는 숫자 0 기준이라 한글 폭(1em)보다 한참 좁다. 24ch로는 <br>로 나눈 두 문장이
-       각각 또 접혀 4줄이 됐다. 글자를 줄이는 대신 줄 폭을 문장 길이에 맞춰 넓힌다. */
-    line-height:1.6;word-break:keep-all;text-wrap:balance;max-width:27ch;margin-left:auto;margin-right:auto}
+  .screen{display:none}
+  .screen.on{display:block;animation:fadein .18s steps(3)}
+  @keyframes fadein{from{opacity:0}to{opacity:1}}
 
-  .entrybox{max-width:460px;margin:0 auto}
-  .cta-host{width:100%;position:relative;overflow:hidden;text-align:left;border-radius:2px;padding:17px 18px;
-    display:flex;align-items:center;gap:15px;
-    border:1px solid color-mix(in srgb,var(--blood) 55%,var(--line2));
-    background:linear-gradient(180deg,var(--blood-bg),var(--panel));box-shadow:4px 4px 0 rgba(0,0,0,.5)}
-  .cta-host+.cta-host{margin-top:13px}
-  .cta-host:hover{transform:translateY(-2px);border-color:var(--blood);box-shadow:5px 5px 0 rgba(200,57,43,.3)}
-  .cta-host.alt{border-color:var(--line2);background:linear-gradient(180deg,rgba(38,35,31,.72),var(--panel))}
-  .cta-host.alt:hover{border-color:var(--case-line);box-shadow:5px 5px 0 rgba(0,0,0,.5)}
-  .cta-host .eic{flex:0 0 auto;width:46px;height:46px;display:grid;place-items:center;border-radius:2px;color:var(--blood-bri);
-    border:1px solid color-mix(in srgb,var(--blood) 40%,var(--line2));background:rgba(200,57,43,.08)}
-  .cta-host.alt .eic{color:var(--bone);border-color:var(--line2);background:rgba(255,255,255,.03)}
-  .cta-host .eic .ic{width:24px;height:24px}
+  /* ── 단추 = 매킨토시의 눌리는 판 ────────────────────────────────
+     베이지 판 + 1px 검정 테 + 밝은 위·어두운 아래 베벨 + 2px 그림자.
+     누르면 그림자가 사라지고 베벨이 뒤집힌다. 색으로 말하지 않는다. */
+  .mbtn,.back,.adclose,.adcp,.adtab,.adform button,.confirm .go,.cta-host{
+    background:var(--case);color:var(--ink);border:1px solid var(--ink);border-radius:0;
+    box-shadow:inset 1px 1px 0 var(--case-hi),inset -1px -1px 0 var(--case-lo),2px 2px 0 var(--ink);
+    padding:9px 15px;font-family:var(--pix);font-size:15px;line-height:1.3;letter-spacing:0}
+  .mbtn:hover,.back:hover,.adclose:hover,.adcp:hover,.adtab:hover,.confirm .go:hover:not(:disabled),.cta-host:hover{
+    background:var(--case-hi);color:var(--ink)}
+  .mbtn:active,.back:active,.adclose:active,.adcp:active,.adtab:active,.confirm .go:active,.cta-host:active{
+    transform:translate(2px,2px);box-shadow:inset 1px 1px 0 var(--case-lo),inset -1px -1px 0 var(--case-hi)}
+  .adtab.on,.adcp.k{background:var(--ink);color:var(--case-hi);
+    box-shadow:inset 1px 1px 0 rgba(255,255,255,.12),2px 2px 0 var(--ink)}
+  .confirm .go:disabled,.mbtn:disabled{background:var(--case-off);color:var(--case-sh);
+    box-shadow:none;transform:none;cursor:not-allowed}
+
+  /* ── 엔트리 ───────────────────────────────────────────────── */
+  .mast{text-align:center;padding:clamp(10px,3vw,26px) 0 clamp(16px,4vw,30px)}
+  .emblem{width:64px;height:64px;margin:0 auto 18px;position:relative;display:grid;place-items:center;
+    border:1px solid var(--phos-deep);border-radius:0;image-rendering:pixelated;
+    background:var(--plogo) center/auto 34px no-repeat,var(--screen2);
+    box-shadow:0 0 0 1px rgba(0,255,153,.18),2px 2px 0 rgba(0,0,0,.6);
+    animation:emberpulse 4.5s steps(2) infinite}
+  @keyframes emberpulse{0%,100%{box-shadow:0 0 0 1px rgba(0,255,153,.14),2px 2px 0 rgba(0,0,0,.6)}
+    50%{box-shadow:0 0 0 1px rgba(0,255,153,.4),0 0 22px -6px var(--signal),2px 2px 0 rgba(0,0,0,.6)}}
+  .emblem img,.emblem span{display:none}
+  .eyebrow{font-size:12px;letter-spacing:.34em;color:var(--phos-dim);text-transform:uppercase;margin-bottom:14px}
+  /* 제목 — 「GAME」은 인광, 「DAY」는 그 인광을 뒤집은 판. 1비트에서 강조는 반전이다. */
+  h1.title{margin:0;line-height:1.05;font-weight:400;letter-spacing:.06em;
+    font-size:clamp(38px,11.5vw,76px);color:var(--phos);
+    text-shadow:0 0 20px rgba(0,255,153,.30),2px 2px 0 #04120c;
+    animation:vflick 7s steps(1) infinite}
+  h1.title .amp{display:inline-block;background:var(--phos);color:var(--screen);
+    padding:0 .12em;margin-left:.14em;text-shadow:none;font-style:normal}
+  @keyframes vflick{0%,96%,100%{opacity:1}97%{opacity:.74}98%{opacity:1}98.7%{opacity:.86}}
+  .tageline{color:var(--bone-dim);font-size:15px;margin-top:18px;line-height:1.7;
+    max-width:30ch;margin-left:auto;margin-right:auto}
+  /* 깜빡이는 커서 한 칸 — 이 화면이 «켜져 있다» 는 신호다 */
+  .cursor{display:inline-block;width:.6em;height:1em;vertical-align:-2px;background:var(--phos);
+    margin-left:.25em;animation:blink 1.06s steps(1) infinite}
+  @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+
+  .entrybox{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+  .cta-host{width:100%;text-align:left;display:flex;align-items:center;gap:14px;padding:14px 15px}
+  .cta-host .eic{flex:0 0 auto;width:40px;height:40px;display:grid;place-items:center;
+    border:1px solid var(--ink);background:var(--screen);color:var(--phos)}
+  .cta-host .eic .ic{width:22px;height:22px}
   .cta-host .txt{flex:1;min-width:0}
-  .cta-host .k{font-family:var(--mono);font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--blood-bri)}
-  .cta-host.alt .k{color:var(--bone-dim)}
-  .cta-host .nm{font-weight:800;font-size:1.26rem;margin:3px 0 4px;color:var(--bone)}
-  /* balance로 두 줄 길이를 맞춰, "…진행 / 시 꼭 필요한" 처럼 한 글자만 넘어가는 걸 막는다 */
-  .cta-host .ds{font-size:.79rem;color:var(--bone-dim);line-height:1.45;word-break:keep-all;text-wrap:balance}
-  .cta-host .arrow{flex:0 0 auto;font-size:1.4rem;color:var(--blood-bri);opacity:.65}
-  .cta-host.alt .arrow{color:var(--bone-dim)}
+  .cta-host .k{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--case-sh)}
+  .cta-host .nm{font-size:19px;margin:2px 0 3px;color:var(--ink)}
+  .cta-host .ds{font-size:13px;color:var(--ink2);line-height:1.5}
+  .cta-host .arrow{flex:0 0 auto;font-size:18px;color:var(--ink2)}
 
-  /* SCENARIOS */
-  .scr-head{text-align:center;padding:clamp(14px,4vw,34px) 0 6px}
-  .scr-head .eyebrow{margin-bottom:10px}
-  .scr-head h2{font-family:var(--serif);font-weight:800;font-size:clamp(1.7rem,5.5vw,2.8rem);margin:0;letter-spacing:.01em}
-  .scr-head p{color:var(--faint);font-size:clamp(.68rem,2.3vw,.76rem);letter-spacing:.06em;margin:11px auto 0;max-width:26ch;line-height:1.5;word-break:keep-all}
-  /* 포스터 줄은 끝이 없다 — 같은 벌을 여러 번 이어 붙이고 가운데 벌을 벗어나면
-     한 벌 폭만큼 조용히 되돌린다. 그래서 좌우 어느 쪽으로 밀어도 계속 이어진다.
-     끝이 없으니 양옆을 벌려두던 여백(::before/::after)도 필요 없다 — 늘 가운데다.
-     scroll-snap 은 proximity 다. mandatory 로 두면 한 벌씩 되돌릴 때 브라우저가
-     스냅 목표를 다시 잡느라 손가락이 튕겨나간다. */
-  .rail{display:flex;gap:clamp(14px,3vw,22px);overflow-x:auto;padding:26px 2px 30px;
-    scroll-snap-type:x proximity;scrollbar-width:none;overscroll-behavior-x:contain}
-  .rail::-webkit-scrollbar{display:none}
-  .poster{scroll-snap-align:center;flex:0 0 auto;width:clamp(242px,75vw,290px);text-align:left;background:none;border:none;padding:0;transition:.2s;color:inherit}
-  .poster:hover{transform:translateY(-7px)}
-  .frame{position:relative;border-radius:2px;padding:12px;
-    background:linear-gradient(145deg,#3c3830,#1a1815 40%,#2a2721);
-    box-shadow:5px 5px 0 rgba(0,0,0,.62), inset 0 0 0 1px rgba(235,230,220,.16), inset 0 0 22px rgba(0,0,0,.7)}
-  .frame::before{content:"";position:absolute;inset:6px;border:1px solid rgba(235,230,220,.14);border-radius:2px;pointer-events:none;z-index:3}
-  /* 포스터 그림자리 — 사건 그림(SVG/JPG)은 나중에 한 번에 만든다.
-     그때까지 이 칸이 그냥 검게 비어 있으면 「준비중인 사건」과 구분이 안 갔다.
-     그래서 .art 자체를 8비트 플레이스홀더(격자+빗금+「그림 없음」)로 깔고,
-     실제 그림은 그 위에 .artimg 한 겹으로 얹는다. 그림이 없거나 404면 그 한 겹이
-     투명해서 아래 플레이스홀더가 그대로 드러난다 — 자리는 이미 잡혀 있으니
-     나중에 그림을 넣어도 줄이 흔들리지 않는다. */
-  .art{position:relative;aspect-ratio:3/4.2;border-radius:2px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;
-    background:var(--ph);
-    box-shadow:inset 0 0 60px rgba(0,0,0,.78)}
+  /* ── 사건 고르기 ───────────────────────────────────────────── */
+  .toprail{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .toprail .mini{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--phos-dim)}
+  .toprail .mini .dot{width:20px;height:20px;border:1px solid var(--phos-deep);
+    display:grid;place-items:center;font-size:0;color:transparent;image-rendering:pixelated;
+    background:var(--plogo) center/auto 11px no-repeat,var(--screen2)}
+  .toprail .sp{flex:1}
+  .hostpill{display:inline-flex;align-items:center;gap:6px;font-size:12px;
+    color:var(--signal);border:1px solid var(--phos-deep);padding:4px 10px;background:var(--screen2)}
+  .hostpill svg{width:13px;height:13px;flex:0 0 auto}
+  .hostpill.part{color:var(--bone-dim);border-color:var(--line2)}
+
+  .scr-head{text-align:center;padding:0 0 4px}
+  .scr-head h2{font-size:clamp(20px,5vw,28px);margin:0;color:var(--bone);font-weight:400;letter-spacing:.02em}
+  .scr-head p{color:var(--faint);font-size:12px;letter-spacing:.06em;margin:9px auto 0;max-width:30ch}
+
+  /* 사건 카드 — 90년대 소프트웨어 상자다. 베이지 라벨 위에 그림 창이 한 칸 파여 있다.
+     둘뿐인 목록에 무한 캐러셀을 돌리면 같은 그림이 계속 되돌아와 어지럽다. 나란히 편다. */
+  .rail{display:grid;gap:clamp(9px,2.2vw,18px);padding:18px 0 20px;
+    grid-template-columns:repeat(auto-fit,minmax(min(46%,230px),1fr))}
+  .poster{scroll-snap-align:none;width:100%;text-align:left;padding:0;color:inherit;
+    display:flex;flex-direction:column;
+    background:var(--case);border:1px solid var(--ink);
+    box-shadow:inset 1px 1px 0 var(--case-hi),inset -1px -1px 0 var(--case-lo),3px 3px 0 var(--ink)}
+  .poster:hover{background:var(--case-hi)}
+  .poster:active{transform:translate(2px,2px);box-shadow:inset 1px 1px 0 var(--case-lo),inset -1px -1px 0 var(--case-hi)}
+  .frame{position:relative;padding:8px 8px 0}
+  .frame::before{content:none}
+  .art{position:relative;aspect-ratio:3/4;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;
+    border:1px solid var(--ink);background:var(--ph);box-shadow:inset 2px 2px 0 rgba(0,0,0,.5)}
   .art .artimg{position:absolute;inset:0;z-index:1;background-size:cover;background-position:center 56%}
-  .art::after{content:"그림 없음";position:absolute;left:50%;top:38%;transform:translateX(-50%);z-index:0;
-    font-family:var(--mono);font-size:.58rem;letter-spacing:.28em;line-height:1;white-space:nowrap;
-    color:rgba(235,230,220,.5);border:1px solid rgba(235,230,220,.26);padding:5px 9px}
-  .art .ph-ic{position:absolute;inset:0;display:grid;place-items:center;font-size:3.6rem;opacity:.4}
-  .art .gloss{position:absolute;inset:0;background:linear-gradient(150deg,rgba(255,255,255,.10),transparent 42%);z-index:2;pointer-events:none}
-  .hc{position:absolute;top:10px;right:10px;z-index:4;display:flex;align-items:center;gap:6px;
-    background:rgba(6,4,7,.72);border:1px solid var(--line2);border-radius:2px;padding:3px 9px 3px 8px;backdrop-filter:blur(4px)}
-  .hc .pips{display:inline-flex;gap:2px;align-items:center}
-  .hc .pip{display:inline-flex;color:var(--faint);opacity:.45;transition:.2s}
-  .hc .pip svg{width:12px;height:12px;display:block}
-  .hc .pip.host{color:var(--signal);opacity:1}                 /* 호스트 = 초록 */
-  .hc .pip.part{color:#E5A02C;opacity:1}                        /* 참가자 = 노랑(호박) */
-  .hc b{font-family:var(--mono);font-size:.66rem;color:var(--bone-dim);font-weight:700;letter-spacing:.02em}
-  .hc.live{border-color:var(--line2)}
-  /* 스캔라인 — .artimg(z:1) 위에 얹혀야 그림에도 걸린다 */
-  .art .grain{position:absolute;inset:0;z-index:2;opacity:.06;background-image:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
-  .art .cap{position:relative;padding:26px 16px 18px;z-index:2}
-  /* 포그: 블러+어둠을 마스크로 위로 서서히 사라지게 → 경계선 없는 자연 그라데이션 */
-  .art .cap::before{content:"";position:absolute;left:0;right:0;bottom:0;top:-56px;z-index:-1;pointer-events:none;
-    background:linear-gradient(0deg, rgba(3,2,4,.97) 0%, rgba(3,2,4,.74) 42%, rgba(3,2,4,.34) 72%, transparent 100%);
-    backdrop-filter:blur(7px) saturate(.85);-webkit-backdrop-filter:blur(7px) saturate(.85);
-    -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 46%,rgba(0,0,0,.6) 72%,transparent 100%);
-    mask-image:linear-gradient(0deg,#000 0%,#000 46%,rgba(0,0,0,.6) 72%,transparent 100%)}
-  .art .cap .tone{font-family:var(--mono);font-size:.55rem;letter-spacing:.22em;text-transform:uppercase;color:var(--brass);margin-bottom:9px;display:inline-block;padding-bottom:6px;border-bottom:1px solid color-mix(in srgb,var(--brass) 28%,transparent)}
-  .art .cap .pt{font-family:var(--serif);font-weight:800;font-size:clamp(1.9rem,7.6vw,2.25rem);line-height:1.0;letter-spacing:.01em;margin:2px 0 7px;color:#efe4d1;
-    /* 양각(엠보) 릴리프 — 위 하이라이트 + 아래 그림자로 어둠에서 도드라지게 */
-    text-shadow:0 -1px 0 rgba(245,236,220,.16), 0 1px 0 rgba(0,0,0,.92), 0 2px 3px rgba(0,0,0,.8), 0 3px 14px rgba(0,0,0,.7), .5px 0 rgba(226,86,69,.28)}
-  .art .cap .psub{font-size:.82rem;color:var(--bone-dim);letter-spacing:.02em;line-height:1.45}
-  .meta{display:flex;align-items:center;gap:8px;margin-top:12px;padding:0 3px}
-  .chip{font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;color:var(--bone-dim);border:1px solid var(--line2);border-radius:2px;padding:2px 8px}
-  /* 분량은 난이도(추리의 어려움)와 다른 축이다 — 결을 갈라 한눈에 구분되게 한다 */
-  .chip.tx{border-color:rgba(120,170,200,.34);color:rgba(178,210,228,.9);letter-spacing:.02em}
-  .meta .sel{margin-left:auto;font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;color:var(--faint)}
-  /* ★ 초록 ② — 「지금 내가 고른 사건」. 로비에서 초록이 켜지는 자리는 여기와 로고뿐이다. */
-  .poster.on .frame{box-shadow:5px 5px 0 rgba(0,0,0,.72), inset 0 0 0 2px var(--signal), 0 0 22px -8px var(--signal), inset 0 0 26px rgba(0,0,0,.7)}
+  .art::after{content:"NO IMAGE";position:absolute;left:50%;top:40%;transform:translateX(-50%);z-index:0;
+    font-size:11px;letter-spacing:.22em;line-height:1;white-space:nowrap;
+    color:var(--phos-dim);border:1px solid var(--phos-deep);padding:4px 8px}
+  .art .ph-ic{display:none}
+  .art .gloss{position:absolute;inset:0;z-index:3;pointer-events:none;
+    background:linear-gradient(158deg,rgba(255,255,255,.09),transparent 40%)}
+  .art .grain{position:absolute;inset:0;z-index:3;opacity:.22;pointer-events:none;
+    background-image:repeating-linear-gradient(0deg,rgba(0,0,0,.6) 0 1px,transparent 1px 3px)}
+  /* 인쇄 라벨 — 상자 아래에 붙은 종이 한 칸. 제목은 여기서만 말한다. */
+  .plabel{padding:7px 2px 6px}
+  .plabel .tone{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--case-sh);margin-bottom:3px}
+  .plabel .pt{font-size:clamp(13px,3.2vw,16px);line-height:1.25;color:var(--ink)}
+  .plabel .psub{font-size:11px;color:var(--ink2);line-height:1.4;margin-top:2px}
+  .poster.on .plabel .tone{color:var(--phos-dim)}
+  .poster.on .plabel .pt{color:var(--bone)}
+  .poster.on .plabel .psub{color:var(--bone-dim)}
+  /* 폰에서는 라벨이 두 줄로 접히며 카드 높이가 서로 어긋난다 — 곁가지부터 접는다 */
+  @media(max-width:520px){ .chip.tx{display:none} .plabel .psub{display:none} }
+  /* 라벨 띠 — 상자 아래 붙은 인쇄 라벨. 고르면 통째로 반전된다(1비트의 «선택»). */
+  .meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:auto;padding:8px 9px 9px;
+    border-top:1px dotted var(--case-sh)}
+  .chip{font-size:11px;letter-spacing:.02em;color:var(--ink2);border:1px solid var(--case-sh);padding:1px 6px}
+  .chip.tx{border-style:dashed}
+  .meta .sel{margin-left:auto;font-size:12px;color:var(--ink)}
+  .poster.on{background:var(--ink);box-shadow:inset 0 0 0 1px var(--phos),3px 3px 0 var(--ink)}
+  .poster.on .meta{border-top-color:var(--phos-deep)}
+  .poster.on .chip{color:var(--phos-dim);border-color:var(--phos-deep)}
   .poster.on .meta .sel{color:var(--signal)}
-  .poster.locked{opacity:.72;cursor:not-allowed}
-  .poster.locked .frame{filter:grayscale(.55)}
-  /* 지금 판이 돌고 있는 사건. 다른 걸 고르면 그 판을 닫아야 한다는 걸 미리 알려준다. */
-  .livetag{position:absolute;top:9px;right:9px;z-index:5;font-family:var(--mono);font-size:.56rem;
-    letter-spacing:.18em;color:#04150e;background:var(--signal);border-radius:0;padding:3px 9px;font-weight:700}
-  .lockband{position:absolute;top:46%;left:-9px;right:-9px;transform:translateY(-50%) rotate(-7deg);z-index:4;
-    background:repeating-linear-gradient(45deg,#141013 0 14px,#c8392b 14px 28px);border-top:1px solid #000;border-bottom:1px solid #000;box-shadow:3px 3px 0 rgba(0,0,0,.6)}
-  .lockband span{display:block;text-align:center;font-family:var(--mono);font-weight:700;font-size:.7rem;letter-spacing:.3em;color:#fff;padding:6px 0;text-shadow:0 1px 2px #000;background:rgba(20,16,19,.35)}
+  .poster.locked{opacity:.9;cursor:not-allowed}
+  .poster.locked .art{filter:grayscale(.7) brightness(.72)}
+  .livetag{position:absolute;top:8px;right:8px;z-index:6;font-size:11px;letter-spacing:.14em;
+    color:var(--screen);background:var(--signal);border:1px solid var(--ink);padding:2px 7px}
+  .hc{position:absolute;bottom:8px;left:8px;z-index:6;display:flex;align-items:center;gap:5px;
+    background:var(--screen);border:1px solid var(--phos-deep);padding:2px 7px}
+  .hc .pips{display:inline-flex;gap:2px;align-items:center}
+  .hc .pip{display:inline-flex;color:var(--faint);opacity:.5}
+  .hc .pip svg{width:11px;height:11px;display:block}
+  .hc .pip.host{color:var(--signal);opacity:1}
+  .hc .pip.part{color:#e8c46a;opacity:1}
+  .hc b{font-size:11px;color:var(--bone-dim);font-weight:400}
+  .lockband{position:absolute;top:46%;left:-8px;right:-8px;transform:translateY(-50%) rotate(-6deg);z-index:5;
+    background:repeating-linear-gradient(45deg,var(--ink) 0 10px,var(--alert) 10px 20px);
+    border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);box-shadow:2px 2px 0 rgba(0,0,0,.6)}
+  .lockband span{display:block;text-align:center;font-size:12px;letter-spacing:.24em;color:#fff;
+    padding:5px 0;background:rgba(18,19,15,.42)}
 
-  .confirm{display:flex;justify-content:center;margin:14px 0 2px;min-height:52px;align-items:center}
-  .pickhint{margin:0;font-size:.82rem;color:var(--bone-dim)}
-  .confirm .in{display:flex;align-items:center;gap:14px;background:rgba(20,16,22,.94);backdrop-filter:blur(10px);
-    border:1px solid var(--line2);border-radius:2px;padding:10px 12px 10px 18px;box-shadow:4px 4px 0 rgba(0,0,0,.55);max-width:calc(100% - 20px)}
-  .confirm .lbl{font-size:.85rem;color:var(--bone-dim)}.confirm .lbl b{color:var(--bone);font-family:var(--serif)}
-  .confirm .lbl.warn{color:var(--blood-bri)}
-  .confirm .go{background:linear-gradient(180deg,#d8503c,#a02c1e);color:#fff;border:1px solid #3a0f0a;
-    border-radius:2px;padding:11px 20px;font-weight:800;font-size:.92rem;white-space:nowrap;
-    box-shadow:2px 2px 0 #2a0b07,inset 0 1px 0 rgba(255,255,255,.16)}
-  .confirm .go:active{transform:translate(2px,2px)!important;box-shadow:inset 0 1px 0 rgba(0,0,0,.4);
-    background:linear-gradient(180deg,#8f2718,#b03c2a)}
-  .confirm .go:disabled{background:var(--case-off);border-color:#171614;color:var(--faint);box-shadow:none}
-  .confirm .go.alt{background:transparent;border:1px solid var(--blood);color:var(--blood-bri)}
-  .confirm .go:disabled{opacity:.4;cursor:not-allowed}
+  /* 확인 줄 — 창 안의 «대화상자» 한 줄. 늘 같은 자리에 서 있어야 눈이 안 헤맨다. */
+  .confirm{display:flex;justify-content:center;margin:4px 0 0;min-height:48px;align-items:center}
+  .pickhint{margin:0;font-size:13px;color:var(--faint)}
+  .confirm .in{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;
+    background:var(--screen2);border:1px solid var(--line2);padding:9px 11px;max-width:100%}
+  .confirm .lbl{font-size:14px;color:var(--bone-dim)}
+  .confirm .lbl b{color:var(--bone)}
+  .confirm .lbl.warn{color:var(--alert-bri)}
+  .confirm .go{white-space:nowrap}
 
-  /* toast */
-  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(12px);z-index:70;
-    background:rgba(20,16,22,.96);border:1px solid var(--line2);border-radius:2px;padding:11px 18px;
-    font-size:.85rem;color:var(--bone);box-shadow:4px 4px 0 rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:.28s;max-width:88vw;text-align:center;word-break:keep-all}
+  /* 토스트 */
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(10px);z-index:70;
+    background:var(--case);color:var(--ink);border:1px solid var(--ink);padding:9px 16px;font-size:14px;
+    box-shadow:3px 3px 0 var(--ink);opacity:0;pointer-events:none;transition:.2s steps(4);
+    max-width:88vw;text-align:center}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
-  /* 관리자 / 열람(테스트) 모드 */
-  .adminbtn{position:fixed;top:12px;right:12px;z-index:55;font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;
-    background:rgba(20,16,22,.8);border:1px solid var(--line2);color:var(--faint);border-radius:2px;padding:6px 12px;backdrop-filter:blur(6px)}
-  .adminbtn:hover{color:var(--bone);border-color:var(--case-line)}
-  .adminbtn.on{color:var(--bone);border-color:var(--case-line);background:var(--case-off)}
-  .admask{position:fixed;inset:0;z-index:80;background:rgba(4,3,5,.82);backdrop-filter:blur(6px);display:none;place-items:center;padding:20px}
+  /* 관리자 — 제목줄 오른쪽의 작은 상자. 화면 구석에 따로 떠 있으면 창 밖의 물건처럼 보인다. */
+  .adminbtn{flex:0 0 auto;font-size:11px;letter-spacing:.1em;padding:2px 8px;height:16px;
+    display:inline-flex;align-items:center;
+    background:var(--case);color:var(--ink2);border:1px solid var(--ink);border-radius:0;
+    box-shadow:inset 1px 1px 0 var(--case-hi),inset -1px -1px 0 var(--case-lo)}
+  .adminbtn:hover{background:var(--case-hi);color:var(--ink)}
+  .adminbtn.on{background:var(--ink);color:var(--phos);box-shadow:none}
+  .admask{position:fixed;inset:0;z-index:80;background:rgba(3,7,5,.86);backdrop-filter:blur(6px);display:none;place-items:center;padding:20px}
   .admask.on{display:grid}
-  .adcard{width:min(580px,95vw);max-height:86vh;overflow:auto;background:linear-gradient(180deg,var(--panel),#100c12);
-    border:1px solid var(--line2);border-radius:2px;padding:24px;box-shadow:6px 6px 0 rgba(0,0,0,.7)}
+  .adcard{width:min(580px,95vw);max-height:86vh;overflow:auto;background:linear-gradient(180deg,var(--panel),var(--screen));
+    border:1px solid var(--line2);border-radius:0;padding:24px;box-shadow:6px 6px 0 rgba(0,0,0,.7)}
   .adcard h3{font-family:var(--serif);font-weight:800;font-size:1.4rem;margin:0 0 4px}
   .adcard .adsub{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;color:var(--faint);margin-bottom:18px}
   .adform{display:flex;gap:9px;margin-top:6px}
-  .adform input{flex:1;min-width:0;background:#0c0910;border:1px solid var(--line2);color:var(--bone);border-radius:2px;padding:11px 13px;font-size:.95rem;letter-spacing:.2em}
+  .adform input{flex:1;min-width:0;background:var(--screen2);border:1px solid var(--line2);color:var(--bone);border-radius:0;padding:11px 13px;font-size:.95rem;letter-spacing:.2em}
   .adform input:focus{outline:none;border-color:var(--case-line)}
-  .adform button{background:var(--blood);color:#fff;border:none;border-radius:2px;padding:0 18px;font-weight:800}
+  .adform button{background:var(--blood);color:#fff;border:none;border-radius:0;padding:0 18px;font-weight:800}
   .aderr{color:var(--blood-bri);font-size:.78rem;margin-top:10px;min-height:1.1em}
-  .adclose{margin-top:18px;width:100%;background:none;border:1px solid var(--line2);color:var(--bone-dim);border-radius:2px;padding:11px;font-size:.85rem}
+  .adclose{margin-top:18px;width:100%;background:none;border:1px solid var(--line2);color:var(--bone-dim);border-radius:0;padding:11px;font-size:.85rem}
 
   /* 카드 훑어보기 — 검수용. 한 화면에 다 늘어놓고 눈으로 훑는 게 목적이라 넓게 쓴다. */
   .adcard.wide{width:min(1080px,96vw)}
   .adtabs{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 16px}
-  .adtab{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;background:#0c0910;
-    border:1px solid var(--line2);color:var(--bone-dim);border-radius:2px;padding:7px 13px}
+  .adtab{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;background:var(--screen2);
+    border:1px solid var(--line2);color:var(--bone-dim);border-radius:0;padding:7px 13px}
   .adtab.on{color:#14120f;background:var(--case-ink);border-color:var(--case-e);font-weight:800}
   .adzone{margin-top:20px}
   .adzone > h4{font-family:var(--serif);font-size:1.05rem;margin:0 0 9px;color:var(--bone);
     border-bottom:1px solid var(--line2);padding-bottom:7px}
   .adzone > h4 .n{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;color:var(--faint);margin-left:8px}
   .adcards{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr))}
-  .adc{background:#0c0910;border:1px solid var(--line2);border-radius:2px;padding:13px 14px}
+  .adc{background:var(--screen2);border:1px solid var(--line2);border-radius:0;padding:13px 14px}
   .adc.bait{border-color:color-mix(in srgb,var(--blood) 45%,var(--line2))}
   /* 이튿날 새로 나오는 카드 — 몇 장인지 세는 자리라 눈으로 갈라져야 한다 */
-  .adc.fresh{background:linear-gradient(180deg,rgba(96,150,190,.12),#0c0910 70%);
+  .adc.fresh{background:linear-gradient(180deg,rgba(96,150,190,.12),var(--screen2) 70%);
     border-color:color-mix(in srgb,#6096be 42%,var(--line2))}
   /* 카드 갈래 딱지 — 관리자 열람에서 이걸로 분류한다 */
   .adc .cfr{font-family:var(--mono);font-size:.55rem;letter-spacing:.08em;font-weight:700;
-    border-radius:2px;padding:1px 6px;white-space:nowrap;
+    border-radius:0;padding:1px 6px;white-space:nowrap;
     color:var(--faint);border:1px solid var(--line2);background:rgba(255,255,255,.03)}
   .adc .cfr.k1{color:#d9d3c8;border-color:rgba(217,211,200,.42);background:rgba(217,211,200,.10)}
   .adc .cfr.k2{color:#9cc6e0;border-color:rgba(156,198,224,.45);background:rgba(96,150,190,.16)}
@@ -315,7 +323,7 @@
   .adc.sleep{opacity:.82}
   /* 그 아침에 벌어진 일 자체를 적은 카드 — 판을 뒤집는 자리라 붉게 세운다 */
   .adc.hot{border-color:color-mix(in srgb,var(--blood) 60%,var(--line2));
-    background:linear-gradient(180deg,rgba(170,50,40,.16),#0c0910 72%)}
+    background:linear-gradient(180deg,rgba(170,50,40,.16),var(--screen2) 72%)}
   .adc.rulecard{border-color:var(--brass)}
   .adc .ch{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin-bottom:3px}
   .adc .cid{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;color:var(--faint)}
@@ -325,7 +333,7 @@
   .adc .chint{font-size:.75rem;line-height:1.6;color:var(--faint);margin-top:8px;
     border-left:2px solid var(--line2);padding-left:9px;word-break:keep-all}
   /* 하루가 지나면 접히는 카드 — 어제 판본 아래에 오늘 판본을 붙여 같이 검수한다 */
-  .adc .cday2{margin-top:11px;padding:10px 12px;border-radius:2px;
+  .adc .cday2{margin-top:11px;padding:10px 12px;border-radius:0;
     border:1px dashed color-mix(in srgb,#6096be 45%,var(--line2));background:rgba(96,150,190,.07)}
   .adc .cday2>b{display:block;font-family:var(--mono);font-size:.55rem;letter-spacing:.1em;
     color:#9cc6e0;margin-bottom:6px}
@@ -334,7 +342,7 @@
     color:#8e8798;border-left:2px solid rgba(142,135,152,.5);padding-left:8px}
   .adc .ctags{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
   .adc .ctags i{font-style:normal;font-family:var(--mono);font-size:.55rem;letter-spacing:.08em;
-    border:1px solid var(--line2);color:var(--faint);border-radius:2px;padding:2px 6px}
+    border:1px solid var(--line2);color:var(--faint);border-radius:0;padding:2px 6px}
   .adc .ctags i.r{color:var(--brass);border-color:color-mix(in srgb,var(--brass) 40%,var(--line2))}
   .adc .ctags i.b{color:var(--blood-bri);border-color:color-mix(in srgb,var(--blood) 45%,var(--line2))}
   .adpair{font-size:.8rem;line-height:1.7;color:var(--bone-dim);padding:8px 0;border-top:1px solid var(--line2)}
@@ -343,26 +351,26 @@
   /* 에셋 프롬프트 훑어보기 — 읽는 화면이 아니라 «복사하는» 화면이다.
      프롬프트 하나는 앞머리 + 톤 + 본문 세 조각을 이어 붙여야 완성되므로,
      그 셋을 한 번에 붙여주는 버튼을 항목마다 세워 둔다. */
-  .adp{background:#0c0910;border:1px solid var(--line2);border-radius:2px;padding:13px 14px;margin-bottom:10px}
+  .adp{background:var(--screen2);border:1px solid var(--line2);border-radius:0;padding:13px 14px;margin-bottom:10px}
   .adp .ph{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:2px}
   .adp .pti{font-family:var(--serif);font-weight:800;font-size:1rem;color:var(--bone)}
   .adp .pfile{font-family:var(--mono);font-size:.6rem;letter-spacing:.03em;color:var(--brass);word-break:break-all}
   .adp .pmeta{font-size:.72rem;color:var(--faint);margin-bottom:7px;word-break:keep-all}
   .adp .pbody{font-family:var(--mono);font-size:.72rem;line-height:1.8;color:var(--bone-dim);
-    background:#080610;border:1px solid var(--line2);border-radius:2px;padding:11px 12px;
+    background:var(--screen);border:1px solid var(--line2);border-radius:0;padding:11px 12px;
     white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto}
   .adp .pbody b{color:var(--brass);font-weight:700}
   .adp .pacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;align-items:center}
   .adp .pnote{font-size:.74rem;line-height:1.6;margin-top:8px;display:flex;gap:7px;word-break:keep-all}
   .adp .pnote .w{font-family:var(--mono);font-size:.55rem;letter-spacing:.08em;border:1px solid currentColor;
-    border-radius:2px;padding:1px 6px;flex:0 0 auto;align-self:flex-start}
+    border-radius:0;padding:1px 6px;flex:0 0 auto;align-self:flex-start}
   .adp .pnote.m{color:#8fb37f}
   .adp .pnote.r{color:var(--blood-bri)}
   .adp .pnote span.t{color:var(--bone-dim)}
   .adp .phave{font-family:var(--mono);font-size:.55rem;letter-spacing:.08em;margin-left:auto;
-    border:1px solid rgba(143,179,127,.5);color:#8fb37f;border-radius:2px;padding:1px 7px;white-space:nowrap}
-  .adcp{font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;background:#0c0910;
-    border:1px solid var(--line2);color:var(--bone-dim);border-radius:2px;padding:6px 11px}
+    border:1px solid rgba(143,179,127,.5);color:#8fb37f;border-radius:0;padding:1px 7px;white-space:nowrap}
+  .adcp{font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;background:var(--screen2);
+    border:1px solid var(--line2);color:var(--bone-dim);border-radius:0;padding:6px 11px}
 
   .adcp.k{background:var(--case-ink);border-color:var(--case-e);color:#14120f;font-weight:800}
   .adcp.done{background:#2f6b62!important;border-color:#2f6b62!important;color:#fff!important}
@@ -373,16 +381,16 @@
      한 줄에 하나(넓은 화면은 둘)만 놓고, 안에서 소제목으로 갈라 읽는다. */
   .adroles{display:grid;gap:14px;grid-template-columns:1fr}
   @media (min-width:900px){ .adroles{grid-template-columns:1fr 1fr} }
-  .adr{background:#0c0910;border:1px solid var(--line2);border-left:3px solid var(--rk,var(--line2));
-    border-radius:2px;padding:14px 15px}
+  .adr{background:var(--screen2);border:1px solid var(--line2);border-left:3px solid var(--rk,var(--line2));
+    border-radius:0;padding:14px 15px}
   .adr .rh{display:flex;align-items:center;gap:10px;margin-bottom:4px}
-  .adr .rav{flex:0 0 34px;height:34px;border-radius:50%;border:1px solid var(--line2);
+  .adr .rav{flex:0 0 34px;height:34px;border-radius:0;border:1px solid var(--line2);
     display:grid;place-items:center;font-size:1.05rem;background:#0a0710}
   .adr .rnm{font-family:var(--serif);font-weight:800;font-size:1.1rem;color:var(--rk,var(--bone))}
   .adr .rjb{font-size:.72rem;color:var(--faint)}
   .adr .rflag{font-family:var(--mono);font-size:.55rem;letter-spacing:.1em;margin-left:auto;
     border:1px solid color-mix(in srgb,var(--blood) 50%,var(--line2));color:var(--blood-bri);
-    border-radius:2px;padding:2px 7px;white-space:nowrap}
+    border-radius:0;padding:2px 7px;white-space:nowrap}
   .adr .rflag.q{color:var(--brass);border-color:color-mix(in srgb,var(--brass) 40%,var(--line2))}
   .adr .rtag{font-size:.78rem;line-height:1.65;color:var(--bone-dim);word-break:keep-all;margin-bottom:4px}
   .adr h5{font-family:var(--mono);font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;
@@ -413,35 +421,51 @@
   .waiting{text-align:center;color:var(--bone-dim);font-size:.9rem;margin-top:20px}
   .waiting .mono{color:var(--faint);font-size:.66rem;letter-spacing:.16em;display:block;margin-top:8px}
 
-  /* 클릭/프레스 피드백 */
-  .cta-host,.ebtn,.join button,.roombtn,.back,.poster,.confirm .go{transition:transform .13s cubic-bezier(.2,.8,.2,1),box-shadow .18s,border-color .18s,filter .13s}
-  .cta-host:active,.roombtn:active,.back:active,.join button:active{transform:scale(.955)!important;filter:brightness(1.12)}
-  .confirm .go:active{transform:scale(.93)!important;filter:brightness(1.14)}
-  .poster:active{transform:translateY(-4px) scale(.965)!important}
-  .cta-host:active{box-shadow:3px 3px 0 rgba(200,57,43,.4)!important}
-  @keyframes pop{0%{transform:translateY(-6px) scale(.98)}45%{transform:translateY(-8px) scale(1.035)}100%{transform:translateY(-6px) scale(1)}}
-  .poster.on{animation:pop .3s cubic-bezier(.2,.9,.25,1)}
-  /* 탭 하이라이트 제거 + 클릭 물결(엔트리 host) */
+  /* ── 눌림 ─────────────────────────────────────────────────────
+     1비트 GUI 는 커지지도 빛나지도 않는다. 그림자만큼 내려앉고 베벨이 뒤집힌다.
+     그 2px 이 눌림의 전부다 — 위 .mbtn 묶음이 이미 그 일을 한다.
+     여기서는 색이 바뀌는 속도만 계단으로 끊어, 부드럽게 흐르지 않게 한다. */
+  .cta-host,.back,.poster,.confirm .go,.adtab,.adcp,.adclose,.adminbtn{
+    transition:background-color .1s steps(2),color .1s steps(2)}
   button{-webkit-tap-highlight-color:transparent}
-  .cta-host::after{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at var(--rx,50%) var(--ry,50%),rgba(255,255,255,.16),transparent 45%);opacity:0;transition:opacity .5s}
-  .cta-host:active::after{opacity:1;transition:opacity 0s}
-  /* ══ 게임기 케이스의 «구조» ═══════════════════════════════════
-     색을 걷어낸 자리를 구조로 채운다 — 판마다 안쪽 실선 한 줄, 네 귀의 픽셀 코너.
-     플레이 화면(index.html)의 같은 블록과 짝이다. */
-  .cta-host,.adcard,.adc,.adp,.adr,.confirm .in{
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.05),inset 0 0 0 1px rgba(0,0,0,.3),4px 4px 0 rgba(0,0,0,.5)}
-  .adcard,.confirm .in{
-    background-image:
-      linear-gradient(var(--case-line),var(--case-line)),
-      linear-gradient(var(--case-line),var(--case-line)),
-      linear-gradient(var(--case-line),var(--case-line)),
-      linear-gradient(var(--case-line),var(--case-line));
-    background-size:2px 2px;background-repeat:no-repeat;
-    background-position:4px 4px,calc(100% - 4px) 4px,4px calc(100% - 4px),calc(100% - 4px) calc(100% - 4px)}
-  /* 눈썹라벨 앞의 픽셀 블록 — 색 없이 «여기서 한 덩이가 시작된다» 를 말한다 */
+  /* .cta-host 에 붙어 있던 물결(::after)은 걷어냈다 — position:static 인 판에서
+     inset:0 는 제 칸이 아니라 조상 칸을 덮어, 아래 단추가 위 단추를 가로챘다. */
+  @keyframes pick{0%{transform:translate(1px,1px)}100%{transform:none}}
+  .poster.on{animation:pick .16s steps(2)}
+
+  /* 눈썹라벨 앞의 픽셀 한 칸 — 색 없이 「여기서 한 덩이가 시작된다」를 말한다 */
   .scr-head .eyebrow::before,.cta-host .k::before{
     content:"";display:inline-block;width:6px;height:6px;margin-right:7px;vertical-align:1px;
-    background:currentColor;opacity:.6}
+    background:currentColor;opacity:.75}
+
+  /* ── 관리자 창도 같은 창이다 ─────────────────────────────────
+     베이지 케이스 안에 어두운 화면 판들이 들어앉는 구조를 그대로 쓴다. */
+  .admask{background:rgba(3,7,5,.86)}
+  .adcard{background:var(--case);color:var(--ink);border:1px solid var(--ink);
+    box-shadow:inset 1px 1px 0 var(--case-hi),inset -1px -1px 0 var(--case-lo),6px 6px 0 rgba(0,0,0,.6);
+    padding:0}
+  .adcard>*{margin-left:16px;margin-right:16px}
+  .adcard>h3{margin:0;padding:5px 8px;font-size:15px;font-weight:400;color:var(--ink);
+    border-bottom:1px solid var(--ink);
+    background:repeating-linear-gradient(180deg,var(--ink) 0 1px,var(--case) 1px 3px);
+    text-align:center}
+  .adcard>h3 span,.adcard>h3{text-shadow:none}
+  .adcard>.adsub{margin-top:12px;color:var(--case-sh)}
+  .adcard>.adclose{margin-bottom:16px;width:calc(100% - 32px)}
+  .adcard .adsub,.adcard .adphint{font-size:12px;letter-spacing:.08em}
+  .adform input{background:var(--screen);border:1px solid var(--ink);color:var(--phos);
+    box-shadow:inset 1px 1px 0 rgba(0,0,0,.6);font-family:var(--pix);letter-spacing:.2em}
+  .adform input:focus{outline:none;border-color:var(--phos-dim)}
+  .aderr{color:var(--alert)}
+  .adzone>h4{color:var(--ink);border-bottom:1px solid var(--case-sh);font-weight:400}
+  .adzone>h4 .n{color:var(--case-sh)}
+  .adrow{border-color:var(--case-sh)}
+  .adrow .rt{color:var(--ink);font-weight:400}
+  .adrow .rk{color:var(--case-sh)}
+  .adrow .rd{color:var(--ink2)}
+  .adrow .rd b{color:var(--ink)}
+  .adpair{color:var(--ink2);border-top-color:var(--case-sh)}
+
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
   @media(max-width:560px){ .toprail .mini span.full{display:none} .cta-host .arrow{display:none} }
 </style></head><body>
@@ -449,15 +473,25 @@
 <div class="stage">
   <div class="bg" id="bg"></div><div class="vig"></div>
   <div class="wrap">
+   <!-- 창 하나. 제목줄이 지금 어느 판인지 말하고, 그 안이 브라운관이다. -->
+   <div class="win">
+    <div class="titlebar">
+      <span class="tbox" aria-hidden="true"></span>
+      <span class="wt" id="wintitle">GAME DAY</span>
+      <button class="adminbtn" id="adminbtn" onclick="toggleAdmin()">관리자</button>
+      <span class="tbox zoom" aria-hidden="true"></span>
+    </div>
+    <div class="winbody">
+     <div class="vhs" aria-hidden="true"><div class="scan"></div><div class="noise"></div><div class="rollbar"></div></div>
+     <div class="winpad">
 
     <!-- ═══ 1) ENTRY ═══ -->
     <section class="screen on" id="scr-entry">
-      <div class="vhs" aria-hidden="true"><div class="scan"></div><div class="noise"></div><div class="rollbar"></div></div>
       <header class="mast">
         <div class="emblem"><img src="data:image/png;base64,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" alt="PIMM"></div>
         <div class="eyebrow">PIMM Artworks · Presents</div>
-        <h1 class="title">MURDERMYSTERY <span class="amp">BOARD</span></h1>
-        <div class="tageline">각자의 이유로 한 사건에 갇힌다.<br>진실을 찾을 것인가, 감출 것인가.</div>
+        <h1 class="title">GAME <span class="amp">DAY</span></h1>
+        <div class="tageline">두 개의 판이 한 세계에 있다.<br>오늘 여는 판을 고르세요.<span class="cursor"></span></div>
       </header>
       <div class="entrybox">
         <button class="cta-host" onclick="enterHost()">
@@ -484,7 +518,7 @@
     <!-- ═══ 2) SCENARIOS ═══ -->
     <section class="screen" id="scr-scenarios">
       <div class="toprail">
-        <div class="mini"><span class="dot">P</span><span class="full">MURDERMYSTERY BOARD</span></div>
+        <div class="mini"><span class="dot">P</span><span class="full">GAME DAY</span></div>
         <span class="sp"></span>
         <span class="hostpill" id="rolepill"></span>
         <button class="back" onclick="go('entry')">← 나가기</button>
@@ -497,10 +531,16 @@
       <div class="rail" id="rail"></div>
     </section>
 
+     </div>
+    </div>
+    <div class="statusbar">
+      <span id="stmsg">준비됨</span><span class="sp"></span>
+      <span class="mono" id="buildstamp"></span>
+    </div>
+   </div>
   </div>
 </div>
 
-<button class="adminbtn" id="adminbtn" onclick="toggleAdmin()">관리자</button>
 <div class="toast" id="toast"></div>
 <div class="admask" id="admask" onclick="if(event.target===this)closeAdmin()"><div class="adcard" id="adcard"></div></div>
 
@@ -550,6 +590,9 @@ async function loadTextLoads(){
       s.sub=m.subtitle||s.sub||"";
       s.tone=m.tone||s.tone||"";
       s.diff=m.difficulty||s.diff||"";
+      // 사람표시 정원. 「3인」 같은 표기에서 숫자만 뽑는다 — 못 읽으면 예전처럼 4로 둔다.
+      const capn=parseInt(String(m.players||"").replace(/[^0-9]/g,""),10);
+      if(capn>0) CAP[m.id]=capn;
       s.players=m.players||s.players||"";
       s.tagline=m.tagline||s.tagline||"";
       s.locked=!!m.locked;
@@ -628,14 +671,23 @@ function sfxTransit(){ blip(180,0.28,"sine",0.06,90); setTimeout(()=>blip(520,0.
 document.addEventListener("pointerdown",e=>{ if(e.target.closest("button")) sfxClick(); },true);
 
 loadTextLoads();          // 첫 화면에서 관리자를 열어도 목록이 비지 않게, 뜨자마자 한 번 읽는다
+/* 창은 하나뿐이라, 어느 판을 보고 있는지는 제목줄과 상태줄이 말한다.
+   관리자 단추는 제목줄에 붙어 있으므로 화면을 옮겨도 감추지 않는다. */
+const WINTITLE={entry:"GAME DAY", scenarios:"사건 고르기"};
+function status(msg){ const e=$("stmsg"); if(e) e.textContent=msg; }
 function go(name){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
   $("scr-"+name).classList.add("on");
+  const wt=$("wintitle"); if(wt) wt.textContent=WINTITLE[name]||"GAME DAY";
+  status(name==="entry"?"준비됨":(me.mode==="host"?"호스트 — 사건을 고르세요":"참가자 — 호스트를 기다립니다"));
   if(name==="scenarios"){ refreshSeats(); loadTextLoads(); }   // 들어올 때마다 인원과 분량을 다시 읽는다
-  const ab=$("adminbtn"); if(ab) ab.style.display=(name==="entry"?"":"none");  // 관리자 버튼은 메인에만
   sfxTransit();
   window.scrollTo(0,0);
 }
+/* 「고친 게 왜 안 보이지」— 서버가 자기 판을 말하게 해서 화면에서 바로 답한다 */
+fetch("/api/build").then(r=>r.json()).then(b=>{
+  const e=$("buildstamp"); if(e&&b) e.textContent=`빌드 ${b.sha}${b.at?" · "+b.at:""}`;
+}).catch(()=>{});
 function enterHost(){ me.mode="host"; hostPresent=true; go("scenarios"); render(); }
 function enterParticipant(){ me.mode="participant"; go("scenarios"); render(); }
 function becomeHostNow(){ me.mode="host"; hostPresent=true; note("이제 당신이 호스트예요. 사건을 열 수 있어요."); render(); }
@@ -709,15 +761,16 @@ function posterHTML(s,c){
           ${s.locked?`<div class="lockband"><span>COMING SOON</span></div>`:""}
           ${liveId===s.id?`<div class="livetag">진행 중</div>`:""}
           ${pips(s.id)}
-          <div class="cap"><div class="tone">${s.tone}</div><div class="pt">${s.title}</div><div class="psub">${s.sub}</div></div>
         </div>
+        <div class="plabel"><div class="tone">${s.tone}</div><div class="pt">${s.title}</div>
+          <div class="psub">${s.sub}</div></div>
       </div>
       <div class="meta"><span class="chip">${s.diff}</span><span class="chip">${s.players}</span>
         ${s.text?`<span class="chip tx" title="내가 읽게 되는 분량 ${s.text.chars.toLocaleString()}자">${s.text.bar} ${s.text.label} · 읽기 ${s.text.minutes}분</span>`:""}
         <span class="sel">${s.locked?"준비중":(me.pick===s.id?"● 내가 고름":"고르기")}</span></div>
     </button>`;
 }
-let railCopies=5, railJump=false, railSig="", railWant=null, railRedrew=false, railIdle=0;
+let railCopies=1, railJump=false, railSig="", railWant=null, railRedrew=false, railIdle=0;
 /* 한 벌의 폭 — 다음 벌 첫 장까지의 거리다(사이 간격까지 들어간다) */
 function railPeriod(){
   const rail=$("rail"), n=railList().length;
