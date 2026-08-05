@@ -1050,6 +1050,20 @@
   .rdybar{display:flex;align-items:center;gap:9px;margin-top:11px;padding:10px 12px;border-radius:2px;
     border:1px solid var(--line);background:var(--bg)}
   .rdybar .rb-n{font-size:12.5px;color:var(--sub);margin-right:auto;font-variant-numeric:tabular-nums}
+  /* ── 다음 막 — 전원이 눌러야 넘어간다 ────────────────────────────
+     사람 표시가 차오르는 결은 사건 고르는 화면의 정원 표시와 같다. 거기서 이미
+     배운 모양이라 여기서 다시 설명할 필요가 없다. 빈 칸은 테만 있고, 누른 사람은
+     그 사람 «키컬러» 로 채워진다 — 누가 아직 안 눌렀는지가 색으로 바로 보인다. */
+  .advbar{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:10px;padding:10px 12px;
+    border:1px solid var(--line);border-radius:2px;background:var(--bg)}
+  .advbar .ad-l{display:flex;align-items:center;gap:7px;margin-right:auto;
+    font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums}
+  .advbar .ad-l b{color:var(--ink);font-weight:800}
+  .advbar .tb-why{flex-basis:100%;margin:0}
+  .advpips{display:inline-flex;gap:4px;align-items:center}
+  /* 8비트라 동그라미가 아니라 네모다. 채워지는 것도 그라데이션 없이 한 번에 켜진다. */
+  .ap-p{width:10px;height:10px;display:block;border:1px solid var(--line);background:transparent}
+  .ap-p.on{background:var(--rc);border-color:var(--rc);box-shadow:0 0 0 1px rgba(0,0,0,.5)}
   /* 내 단서 / 소지품 탭 */
   /* 도구 칸 머리의 한 줄 — 여기만 상한이 «없다»는 것을 못 박는다. 카드탭에는 안 뜬다. */
   .toolnote{margin:0 0 12px;padding:9px 11px;border-left:2px solid var(--gold);
@@ -3752,11 +3766,37 @@ function finalAnswersOf(id){ const sv=serverAnswersOf(id); if(sv) return sv;
 function nextPhaseBlock(){
   const nx=(SCEN.phases||[]).find(p=>p.seq===(STATE.seq||0)+1);
   if(!nx) return "";
-  const can=STATE.isHost||gmOn||!STATE.hasHost;
-  return `<div class="nextblock">
-    ${can?`<button class="btn gold nextbig" onclick="advance()">다음 페이즈 진행 <b>(${esc(nx.name)}${toP(nx.name)} 이동)</b></button>`
-         :`<div class="nextwait">${ICO.next} 다음은 <b>${esc(nx.name)}</b>입니다 — 호스트가 넘깁니다</div>`}
-  </div>`;
+  return `<div class="nextblock">${advBar(`다음 페이즈 진행 <b>(${esc(nx.name)}${toP(nx.name)} 이동)</b>`,"nextbig")}</div>`;
+}
+/* ── 다음 막으로 — 전원이 눌러야 넘어간다 ─────────────────────────
+   호스트 하나가 넘기던 자리다. 이 판에서 호스트는 「방을 연 사람」일 뿐이고 그
+   사람이 남보다 빨리 읽으라는 법이 없다 — 아직 할 말이 남았는데 막이 넘어가면
+   그 말은 영영 못 한다. 그래서 진행은 «모두 같은 권한» 으로 둔다.
+   서버에는 이미 그 창구가 있었다(/api/ready). 종막에서만 쓰던 것을 모든 막으로
+   올린다 — 전원이 누르면 서버가 그 자리에서 넘긴다.
+   호스트·진행석의 강제 넘기기는 그대로 남겨 둔다(☰ 서랍·진행석). 한 사람이
+   자리를 비우면 판이 서 버리는데, 그때 빠져나갈 문은 있어야 한다. */
+function advPips(){
+  const r=(STATE&&STATE.ready)||null;
+  const seats=(SCEN&&SCEN.characters)||[];
+  if(!r||!seats.length) return "";
+  const done=new Set(r.mine||[]);
+  return `<span class="advpips">${seats.map(c=>
+    `<i class="ap-p${done.has(c.id)?" on":""}" style="--rc:${c.color||"var(--case-line)"}"></i>`).join("")}</span>`;
+}
+function advBar(label,cls){
+  const r=(STATE&&STATE.ready)||null;
+  const cnt=r?`${r.n}/${r.of}`:"";
+  if(!r||!myRoleValid()){
+    // 배역이 없는 기기(관전·진행석)는 세는 데 안 들어간다 — 보기만 한다.
+    return `<div class="advbar"><div class="ad-l">${advPips()}<b>${cnt}</b> 준비됨</div>
+      <div class="tb-why">배역을 맡은 사람이 전부 누르면 넘어갑니다.</div></div>`;
+  }
+  const on=(r.mine||[]).indexOf(myRoleId)>=0;
+  return `<div class="advbar"><div class="ad-l">${advPips()}<b>${cnt}</b> 준비됨</div>
+    <button class="btn ${on?"quiet":"gold"}${cls?" "+cls:""}" onclick="toggleReady()">${on?"기다리는 중 — 취소":label}</button>
+    <div class="tb-why">${on?"남은 사람을 기다립니다. 다시 누르면 취소합니다."
+                           :"전원이 누르면 그 자리에서 넘어갑니다."}</div></div>`;
 }
 /* 대화는 제 탭이 있다 — 조사화면에 미리보기를 겹쳐 두지 않는다.
    대신 안 읽은 말이 몇 마디인지만 하단바에 얹는다. */
@@ -5888,7 +5928,6 @@ function turnBar(){
   const noPlaces = ap>0 && STATE.openLeft===0;
   if(ap>0 && (!investLeft().length || noPlaces)){
     const stuck=overLimitRoles();
-    const canAdv=STATE.isHost||gmOn||!STATE.hasHost;
     const why=(noPlaces&&investLeft().length)
       ? "더 뒤질 곳이 없습니다 — 조사턴이 남았지만 열 카드가 없어요."
       : "모두 조사를 마쳤습니다.";
@@ -5900,11 +5939,8 @@ function turnBar(){
         <div class="tb-why">${mineStuck
           ? `손패가 <b>${myHand.length}장</b>이에요. <b>${handLimit()}장</b>까지만 들 수 있습니다.`
           : `<b>${who}</b>님이 손패를 정리하는 중입니다.`}</div>`;
-    }else if(canAdv){
-      body=`<button class="btn gold" onclick="advance()">다음 페이즈 ›</button>
-        <div class="tb-why">${esc(why)}</div>`;
     }else{
-      body=`<div class="tb-why">${esc(why)} 진행석에서 다음 페이즈로 넘겨줍니다.</div>`;
+      body=`<div class="tb-why">${esc(why)}</div>${advBar("다음 페이즈 ›")}`;
     }
     return `<div class="turnbar done"><div class="tb-order"><div class="tb-rail">${chips}</div></div>
       <div class="tb-act col">${body}</div></div>`;
