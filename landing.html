@@ -213,9 +213,22 @@
      쪼그라들어 그림칸이 155px 이 됐다. 상자 그림이 그 크기면 무슨 판인지 안 읽힌다.
      이제는 «한 장이 설 만한 폭» 을 최소로 잡는다. 그만한 자리가 두 벌 안 나오는
      화면에서는 한 줄에 한 장이 서고, 포스터가 창 폭을 그대로 받는다. */
-  .rail{display:grid;gap:clamp(9px,2.2vw,18px);padding:18px 0 20px;align-items:stretch;
+  /* 카드는 «화면 높이» 로도 묶는다. 폭만 보고 늘리면 상자가 세로로 자라서 라벨이
+     화면 밖으로 밀린다 — 큰 모니터에서 위아래가 잘려 보이던 것이 그것이다.
+     그림칸이 2:3 이라 높이는 폭의 1.5 배쯤이고, 라벨·메타·여백이 그 아래 240px 을
+     더 먹는다. 그래서 「쓸 수 있는 높이에서 240 을 빼고 1.5 로 나눈 폭」이 상한이다.
+     좁은 화면에서는 이 값이 커서 안 걸리고, 낮고 넓은 화면에서만 걸린다. */
+  .rail{display:grid;gap:var(--gap);padding:18px 0 20px;align-items:stretch;
+    justify-content:center;
+    --gap:clamp(9px,2.2vw,18px);
+    --pw:min(360px, max(240px, (100dvh - 240px) / 1.5));
+    /* 칸을 포스터 폭에 딱 맞춰 묶고 레일을 가운데 세운다. 안 그러면 칸이 남은
+       폭을 다 먹고 포스터만 그 안에서 가운데로 서서, «두 장 사이»가 바깥 여백보다
+       넓어진다 — 카드가 서로 떨어져 있는 것처럼 보이고 오른쪽이 비어 보인다. */
+    max-width:calc(var(--pw) * 2 + var(--gap));margin-inline:auto;
     grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
   .poster{scroll-snap-align:none;width:100%;height:100%;text-align:left;padding:0;color:inherit;
+    max-width:var(--pw);justify-self:center;
     display:flex;flex-direction:column;
     background:var(--case);border:1px solid var(--ink);
     box-shadow:inset 1px 1px 0 var(--case-hi),inset -1px -1px 0 var(--case-lo),3px 3px 0 var(--ink)}
@@ -223,9 +236,13 @@
   .poster:active{transform:translate(2px,2px);box-shadow:inset 1px 1px 0 var(--case-lo),inset -1px -1px 0 var(--case-hi)}
   .frame{position:relative;padding:8px 8px 0}
   .frame::before{content:none}
-  .art{position:relative;aspect-ratio:3/4;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;
+  /* 그림칸은 원화와 «같은 비율» 이라야 한다. 포스터 원화는 1024×1535(2:3)인데
+     칸을 3:4 로 잡아 두어서, cover 가 위아래를 11% 씩 잘라 먹고 있었다 —
+     상자 그림의 위 테두리와 아래 테두리가 통째로 날아가 있었다.
+     비율을 맞추면 자를 것이 없으므로 background-position 도 가운데로 되돌린다. */
+  .art{position:relative;aspect-ratio:2/3;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;
     border:1px solid var(--ink);background:var(--ph);box-shadow:inset 2px 2px 0 rgba(0,0,0,.5)}
-  .art .artimg{position:absolute;inset:0;z-index:1;background-size:cover;background-position:center 56%}
+  .art .artimg{position:absolute;inset:0;z-index:1;background-size:cover;background-position:center center}
   .art::after{content:"NO IMAGE";position:absolute;left:50%;top:40%;transform:translateX(-50%);z-index:0;
     font-size:11px;letter-spacing:.22em;line-height:1;white-space:nowrap;
     color:var(--phos-dim);border:1px solid var(--phos-deep);padding:4px 8px}
@@ -472,29 +489,39 @@
      못 따라오는 그 순간이다. steps(1,end) 로 중간값 없이 프레임을 갈아치워
      보간이 없는 8비트 화면처럼 끊어 친다. 무한 반복은 하지 않는다 — 골라둔 카드가
      계속 떨면 제목도 칩도 못 읽는다. */
+  /* ※ 처음 값은 너무 옅어서 «안 지직이는 것으로» 보였다. 카드 밝기가 0.5초 동안
+     255 중 5 남짓 흔들렸을 뿐이고, 반전 프레임이 40ms 씩만 켜져서 눈이 못 잡았다.
+     흔들림 폭을 키우고, 반전은 «한 번에 오래» 켜지도록 다시 잡았다. */
   @keyframes glJolt{
     0%,100%{transform:translate(0,0)}
-    9%{transform:translate(-3px,1px)}
-    21%{transform:translate(2px,-2px)}
-    36%{transform:translate(-2px,0)}
-    52%{transform:translate(3px,1px)}
-    68%{transform:translate(-1px,-1px)}
-    84%{transform:translate(1px,0)}
+    7%{transform:translate(-7px,2px)}
+    18%{transform:translate(5px,-4px)}
+    30%{transform:translate(-4px,1px)}
+    44%{transform:translate(7px,2px)}
+    58%{transform:translate(-3px,-2px)}
+    72%{transform:translate(4px,1px)}
+    86%{transform:translate(-2px,0)}
   }
   /* 주사선 튐 — 잉크판 조각을 difference 로 얹어 그 줄만 순간 반전시킨다.
      조각은 clip-path 로 자른다. 그림 자체를 자르면 아래 깔린 «NO IMAGE» 자리표시자가
      비쳐 보이므로, 덧대는 판만 자른다. */
   @keyframes glTear{
     0%{opacity:0}
-    8%{opacity:1;clip-path:inset(13% 0 76% 0);transform:translateX(-6px)}
-    16%{opacity:0}
-    27%{opacity:1;clip-path:inset(51% 0 35% 0);transform:translateX(5px)}
+    /* 통째로 반전 — 여기서 「지직」이 눈에 잡힌다. 짧게 여러 번보다 한 번을 길게. */
+    6%{opacity:1;clip-path:inset(0 0 0 0);transform:translateX(0)}
+    18%{opacity:1;clip-path:inset(0 0 0 0);transform:translateX(0)}
+    19%{opacity:0}
+    26%{opacity:1;clip-path:inset(11% 0 62% 0);transform:translateX(-9px)}
+    34%{opacity:1;clip-path:inset(11% 0 62% 0);transform:translateX(-9px)}
     35%{opacity:0}
-    47%{opacity:1;clip-path:inset(70% 0 21% 0);transform:translateX(-4px)}
-    55%{opacity:0}
-    64%{opacity:1;clip-path:inset(0 0 0 0);transform:translateX(0)}   /* 한 프레임 통째로 반전 */
-    70%{opacity:0}
-    82%{opacity:1;clip-path:inset(33% 0 58% 0);transform:translateX(3px)}
+    44%{opacity:1;clip-path:inset(56% 0 24% 0);transform:translateX(8px)}
+    52%{opacity:1;clip-path:inset(56% 0 24% 0);transform:translateX(8px)}
+    53%{opacity:0}
+    62%{opacity:1;clip-path:inset(0 0 0 0);transform:translateX(0)}   /* 두 번째 통반전 */
+    72%{opacity:1;clip-path:inset(0 0 0 0);transform:translateX(0)}
+    73%{opacity:0}
+    82%{opacity:1;clip-path:inset(31% 0 55% 0);transform:translateX(6px)}
+    89%{opacity:1;clip-path:inset(31% 0 55% 0);transform:translateX(6px)}
     90%{opacity:0}
     100%{opacity:0}
   }
@@ -512,11 +539,22 @@
   /* 덧대는 판은 늘 깔려 있고 평소엔 안 보인다 — 지직할 때만 켜진다 */
   .art::before{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
     opacity:0;background:var(--bone);mix-blend-mode:difference}
-  .poster.glitch{animation:glJolt .5s steps(1,end) 1}
-  .poster.glitch .art::before{animation:glTear .5s steps(1,end) 1}
+  /* 라벨 판도 같이 튄다 — 그림만 지직이면 베이지 상자는 멀쩡히 서 있어서
+     「화면이 흔들렸다」가 아니라 「그림이 이상하다」로 읽힌다. */
+  @keyframes glCase{
+    0%,100%{background:var(--case);box-shadow:inset 1px 1px 0 var(--case-hi),inset -1px -1px 0 var(--case-lo),3px 3px 0 var(--ink)}
+    12%{background:var(--phos);box-shadow:0 0 0 2px var(--phos),3px 3px 0 var(--ink)}
+    22%{background:var(--case-hi)}
+    46%{background:var(--alert);box-shadow:0 0 0 2px var(--alert),3px 3px 0 var(--ink)}
+    56%{background:var(--case)}
+    68%{background:var(--phos)}
+    78%{background:var(--case-hi)}
+  }
+  .poster.glitch{animation:glJolt .62s steps(1,end) 1, glCase .62s steps(1,end) 1}
+  .poster.glitch .art::before{animation:glTear .62s steps(1,end) 1}
   .poster.glitch .plabel .pt,
-  .poster.glitch .plabel .tone{animation:glRGB .5s steps(1,end) 1}
-  .poster.glitch .meta .sel{animation:glBlink .5s steps(1,end) 1}
+  .poster.glitch .plabel .tone{animation:glRGB .62s steps(1,end) 1}
+  .poster.glitch .meta .sel{animation:glBlink .62s steps(1,end) 1}
 
   /* 눈썹라벨 앞의 픽셀 한 칸 — 색 없이 「여기서 한 덩이가 시작된다」를 말한다 */
   .scr-head .eyebrow::before,.cta-host .k::before{
