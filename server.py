@@ -1,12 +1,14 @@
 """
-PIMMmurderboard · 졸업사진(卒業寫眞) — 로컬 멀티플레이 게임 서버
+panorama_combo — 사람 셋이서 하는 머더미스터리 게임 서버.
 
-각자 자기 PC/폰으로 접속(같은 와이파이). 서버가 '방(room)' 상태를 쥐고 각 기기가 폴링 동기화.
-배역의 비밀은 그 배역을 맡은 기기에만. 사람이 안 맡은 배역은 AI가 대본대로 플레이(조사·거짓말·자백).
-승리 구조: 오승택을 죽인 범인은 없다 — 종막 질문지(서술형)를 AI가 채점, 모두 자기지목 시 진혼 엔딩.
+각자 자기 폰/PC로 접속한다. 서버가 방 상태를 하나 쥐고 각 기기가 폴링으로 따라온다.
+배역의 비밀은 그 배역을 맡은 기기에만 내려간다.
 
-백엔드 교체형: 기본 Claude API(.env ANTHROPIC_API_KEY) / 무료 Ollama(LLM_BACKEND=ollama, qwen2.5).
-실행: pip install -r requirements.txt → cp .env.example .env → python server.py
+**좌석은 전부 사람이다.** AI 배역도, LLM 호출도 없다 — API 키 없이 돈다.
+그래서 심층심문(AI에게서 답을 끌어내는 장치)도 없고, 종막 채점도 없다.
+엔딩은 종막 지목표만으로 갈린다: 진범을 짚었는가.
+
+실행: pip install -r requirements.txt → python server.py
 """
 from __future__ import annotations
 
@@ -39,105 +41,12 @@ import scenarios  # noqa: E402
 # 활성 시나리오(앱 전역) — 모든 함수는 전역 SC를 읽으므로, SC를 재바인딩하면 앱 전체가 그 시나리오로 전환된다.
 SC = scenarios.get(os.getenv("SCENARIO") or scenarios.default_id())
 
-BACKEND = os.getenv("LLM_BACKEND", "claude").lower()
-CLAUDE_MODEL = os.getenv("REUNION_MODEL") or os.getenv("PIMM_MODEL") or "claude-opus-4-8"
-# 배역 대사는 한두 문장짜리 응수라 빠른 게 곧 재미다 — 여기만 작은 모델로 돌린다.
-# 채점은 판마다 한 번뿐이고 정확해야 하므로 CLAUDE_MODEL을 그대로 쓴다.
-CLAUDE_MODEL_FAST = os.getenv("PIMM_MODEL_FAST") or "claude-haiku-4-5-20251001"
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "exaone3.5:7.8b")
-# 배역 프롬프트는 대본·공개카드·규칙까지 합쳐 5천 토큰이 넘는다. Ollama 기본 컨텍스트는
-# 그보다 훨씬 작아서, 안 넘기면 앞쪽(배경·성격·대본)이 조용히 잘린 채로 연기하게 된다 —
-# 모델이 못하는 것처럼 보이지만 실은 대본을 못 받은 것이다.
-OLLAMA_CTX = int(os.getenv("OLLAMA_CTX", "8192"))
 HOST = os.getenv("REUNION_HOST", "0.0.0.0")
 # 호스팅(Render 등)은 PORT를 주입 → 그걸 우선 사용, 로컬은 REUNION_PORT/기본값
 PORT = int(os.getenv("PORT") or os.getenv("REUNION_PORT", "8790"))
-AGENT_KEY = os.getenv("AGENT_KEY", "")  # 에이전트(코드 세션) 원격 조종 키(설정 시 그 키 필요, 미설정 시 개방)
-# 심층심문 — 어떤 카드를 증거로 대는지가 추리다. 증거 없이 60%, 엉뚱한 카드면 오히려 20%로
-# 떨어지고(허를 찔러 얼버무릴 여지를 준다), 정확한 카드(시나리오의 rebuttal)면 100% 실토.
-INTERROGATE_TRUTH_BASE = 0.60
-# 같은 곳을 다시 찌를 때마다 붙는 가산. 얼버무림은 막다른 골목이 아니라 한 걸음이어야 한다.
-INTERROGATE_PRESS_STEP = 0.30
-# 이만큼 찔리면 결국 분다. 심문 횟수가 넉넉하지 않아서, 한 번 얼버무리면 그 다음은 무조건이다.
-INTERROGATE_PRESS_BREAK = 1
-# 엉뚱한 카드를 들이밀면 오히려 허를 찔러 넘어갈 여지를 준다 — 아무 카드나 대면 분다면
-# 「무엇을 들이미는가」가 추리가 아니라 요식이 된다.
-INTERROGATE_TRUTH_WRONG_EVIDENCE = 0.25
-
-try:
-    import anthropic
-except Exception:
-    anthropic = None
-_ac = None
 
 
-def _claude(system: str, user: str, mt: int, model: str = "") -> str:
-    global _ac
-    if anthropic is None:
-        raise RuntimeError("anthropic SDK 미설치 — pip install anthropic")
-    if not ANTHROPIC_API_KEY:
-        raise RuntimeError("ANTHROPIC_API_KEY 미설정 (.env) — 또는 LLM_BACKEND=ollama")
-    if _ac is None:
-        _ac = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-    last = None
-    for i in range(3):
-        try:
-            m = _ac.messages.create(model=model or CLAUDE_MODEL, max_tokens=mt, system=system,
-                                    messages=[{"role": "user", "content": user}])
-            for b in m.content:
-                if getattr(b, "type", None) == "text":
-                    return b.text.strip()
-            return ""
-        except Exception as e:  # noqa: BLE001
-            last = e
-            if i < 2:
-                time.sleep((2 ** i) + random.uniform(0, 0.4))
-    raise RuntimeError(f"Claude 호출 실패: {last}")
-
-
-def _ollama(system: str, user: str, mt: int, model: str = "") -> str:
-    payload = {"model": OLLAMA_MODEL, "stream": False,
-               "options": {"temperature": 0.85, "num_predict": mt, "num_ctx": OLLAMA_CTX},
-               "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
-    req = urllib.request.Request(f"{OLLAMA_URL}/api/chat", data=json.dumps(payload).encode("utf-8"),
-                                 headers={"Content-Type": "application/json"})
-    last = None
-    for i in range(3):
-        try:
-            with urllib.request.urlopen(req, timeout=120) as r:
-                return (json.loads(r.read().decode("utf-8")).get("message", {}).get("content", "") or "").strip()
-        except Exception as e:  # noqa: BLE001
-            last = e
-            if i < 2:
-                time.sleep((2 ** i) + random.uniform(0, 0.4))
-    raise RuntimeError(f"Ollama 호출 실패({OLLAMA_URL}, {OLLAMA_MODEL}): {last}")
-
-
-def llm(system: str, user: str, mt: int = 400, fast: bool = False) -> str:
-    """fast=True면 배역 대사용 작은 모델로. Ollama 백엔드는 모델이 하나뿐이라 무시된다."""
-    model = CLAUDE_MODEL_FAST if fast else CLAUDE_MODEL
-    return _ollama(system, user, mt, model) if BACKEND == "ollama" else _claude(system, user, mt, model)
-
-
-def backend_ready() -> tuple[bool, str]:
-    if BACKEND == "ollama":
-        return True, f"Ollama · {OLLAMA_MODEL}"
-    if not ANTHROPIC_API_KEY:
-        return False, "Claude · API 키 미설정 (.env)"
-    if anthropic is None:
-        return False, "Claude · anthropic SDK 미설치"
-    return True, f"Claude · {CLAUDE_MODEL} (대사 {CLAUDE_MODEL_FAST})"
-
-
-def _parse_json(raw: str) -> dict:
-    try:
-        m = re.search(r"\{.*\}", raw, re.S)
-        return json.loads(m.group(0)) if m else {}
-    except Exception:
-        return {}
-
+AGENT_KEY = os.getenv("AGENT_KEY", "")  # 진행석(코드 세션) 원격 조종 키. 미설정이면 개방
 
 def current_round(seq: int) -> int:
     # 사건이 페이즈에 라운드를 적어두면 그것을 따른다. 막 수가 사건마다 다른데
@@ -172,12 +81,10 @@ def fresh_room() -> dict:
         "roles": {c["id"]: {"mode": "open", "clientId": None} for c in SC.CHARACTERS},
         "table": [{"kind": "system", "text": f'— {SC.PHASES[0]["name"]} —'}],
         "revealed": [],           # 전체공개 card id
-        "aiActs": [],             # AI가 곧 해야 할 액션(카드 해석·추궁). 침묵 대기 없이 바로 나간다
         "cuts": [],               # 조사 중에 튼 짧은 컷(비주얼노벨). 클라이언트가 안 본 것부터 재생한다
         "hands": {},              # roleId -> [cardId] (손패, 비공개 · 조사/마킹 통합)
         "checkedRound": {},       # roleId -> {cardId: round} (턴별 조사 수 제한 계산용)
-        "grades": {},             # roleId -> grade dict (name 포함)
-        "finalAnswers": {},       # roleId -> [answer str] (백엔드 미설정 시 진행자 수동채점용 보관)
+        "finalAnswers": {},       # roleId -> [답변]. 채점은 없다 — 다 같이 읽는 기록이다
         "gmSeats": {},            # clientId -> 마지막으로 진행석을 켜둔 시각. 방에 진행자가 있는지 판단용
         "podVotes": {},           # roleId -> 태울 사람. 최종 토론에서 사람이 던진 표만 담는다
         "accuse": {},             # roleId -> 지목한 사람. 종막의 범인 지목, 사람 표만
@@ -194,7 +101,6 @@ def fresh_room() -> dict:
         # 결재 결정문 — 자리마다 한 문장씩 고른다. 범인으로 지목된 사람은 결재권을 잃고
         # 그 칸은 남은 사람들의 투표로 찬다. picks 는 최종값, votes 는 잃은 칸의 표다.
         "decision": {"picks": {}, "votes": {}, "extra": ""},
-        "itgUsed": [],            # 심층심문에 이미 쓴 카드. 시나리오가 1회성이면 다시 못 쓴다
         "ready": [],              # 「결과 확인」을 누른 배역. 전원이 누르면 판이 다음으로 넘어간다
         "typing": None,
         "events": [],            # 진행 세션이 따라 읽는 사건 기록
@@ -206,7 +112,6 @@ def fresh_room() -> dict:
         "sealed": [],            # 잠긴 구역 — 침수 대응에 실패하면 기관실이 여기 들어간다
         "flood": 0,
         "turn": None,             # 조사 페이즈 현재 차례 roleId (하이브리드 턴)
-        "interrogate": {"seq": None, "used": 0, "votes": [], "bonus": False},  # 토론 페이즈 심층심문 예산
         "press": {},              # "배역:카드" -> 얼버무린 횟수. 판이 끝날 때까지 누적된다
         "started": False,         # 호스트가 '이대로 진행'을 확정하면 True — 이후 배역 변경 불가
     }
@@ -280,7 +185,7 @@ def _crisis_public() -> dict | None:
     if not cr.get("open") and cr.get("solved") is None:
         return None
     pub = SC.crisis_public()
-    assigned = [rid for rid, r in ROOM["roles"].items() if r["mode"] in ("human", "ai")]
+    assigned = [rid for rid, r in ROOM["roles"].items() if r["mode"] == "human"]
     pub.update({"open": bool(cr.get("open")), "solved": cr.get("solved"),
                 "answered": sorted(cr.get("answers", {}).keys()),
                 "total": len(assigned) or len(ROOM["roles"]),
@@ -300,9 +205,6 @@ def _crisis_open():
         return
     cr["open"] = True
     cr["answers"] = {}
-    for rid, r in ROOM["roles"].items():
-        if r["mode"] == "ai":
-            cr["answers"][rid] = SC.crisis_ai_answer(rid)
     ROOM["table"].append({"kind": "system", "broadcast": True,
                           "text": f'{conf["title"]} — 각자 화면에서 판단을 고르세요.'})
     _fire_cut("crisis:open")
@@ -315,7 +217,7 @@ def _crisis_try_resolve():
     cr = ROOM["crisis"]
     if not cr.get("open"):
         return
-    assigned = [rid for rid, r in ROOM["roles"].items() if r["mode"] in ("human", "ai")]
+    assigned = [rid for rid, r in ROOM["roles"].items() if r["mode"] == "human"]
     if assigned and len(cr["answers"]) < len(assigned):
         return
     _crisis_resolve()
@@ -327,7 +229,7 @@ def _crisis_resolve():
     if not conf or not cr.get("open"):
         return
     key = SC.crisis_answer_key()
-    assigned = [rid for rid, r in ROOM["roles"].items() if r["mode"] in ("human", "ai")] or list(ROOM["roles"])
+    assigned = [rid for rid, r in ROOM["roles"].items() if r["mode"] == "human"] or list(ROOM["roles"])
     right = sum(1 for rid in assigned if cr["answers"].get(rid) == key)
     ok = right * 2 > len(assigned)
     cr["open"] = False
@@ -418,8 +320,9 @@ def public_state() -> dict:
     with LOCK:
         seq = ROOM["seq"]
         ph = SC.phase_by_seq(seq)
-        g = ROOM["grades"]
-        ending = SC.compute_ending(g)  # 준비 안 됐으면 시나리오가 None을 반환
+        # 엔딩은 종막 지목표가 정한다 — 채점자가 없는 판이다.
+        # 사건이 아직 준비가 안 됐다고 보면 None을 돌려준다.
+        ending = SC.compute_ending(dict(ROOM["accuse"]))
         # 진상(정답·범인)은 '진상 공개' 페이즈 전까지 클라이언트로 내보내지 않는다(스포일러 방지).
         if ph.get("key") != "reveal":
             ending = None
@@ -440,7 +343,6 @@ def public_state() -> dict:
             "ask": _ask_public(),
             "accuse1": _accuse1_public(),
             "sealed": list(ROOM.get("sealed") or []),
-            "chat": {"on": CHAT["on"], "gap": CHAT["gap"]},
             "phase": {"seq": ph["seq"], "key": ph["key"], "name": ph["name"], "gm": ph["gm"], "ap": ap, "min": ph["min"],
                       "noMap": bool(ph.get("noMap")),
                       "quota": [{"label": b.get("label", ""), "locs": list(b.get("locs") or []),
@@ -453,7 +355,6 @@ def public_state() -> dict:
             "checked": checked,
             "usedAP": used,
             "ready": _ready_state(),
-            "itgUsed": (list(ROOM.get("itgUsed") or []) if getattr(SC, "INTERROGATE_ONCE", False) else []),
             "belongLimit": _belong_limit(),
             # 구역 몫을 쓰는 조사 페이즈에서, 배역별로 어느 구역을 몇 장 열었는지.
             "quotaUsed": {rid: _quota_used(rid, cur) for rid in ROOM["roles"]},
@@ -463,10 +364,6 @@ def public_state() -> dict:
             "arrest": (_arrest_state() if ph.get("key") in ("final", "decision", "reveal") else None),
             "dest": (_dest_state() if ph.get("key") in ("final", "decision", "reveal") else None),
             "decision": (_decision_state() if ph.get("key") in ("decision", "reveal") else None),
-            # 남의 차례일 때 화면이 멈춘 것처럼 보이지 않게, 다음 차례까지 남은 시간을 내려보낸다.
-            "turnWait": (round(max(0.0, AUTO_TURN["delay"] - (time.monotonic() - AUTO_TURN["since"])), 1)
-                         if (AUTO_TURN["on"] and ROOM.get("turn")
-                             and (ROOM["roles"].get(ROOM["turn"]) or {}).get("mode") == "ai") else None),
             "keepGoals": _keep_goal_results() if ph.get("key") in ("final", "reveal") else [],
             "overLimit": {rid: max(0, len(cs) - _hand_limit()) for rid, cs in ROOM["hands"].items() if len(cs) > _hand_limit()},
             "vault": _vault_public(),
@@ -476,10 +373,8 @@ def public_state() -> dict:
             # 카드보다 턴이 많은 판에서 막바지에 화면이 멈춘 것처럼 보이던 자리다.
             "openLeft": (len(_round_open_pool()) if ap > 0 else None),
             "openIds": (_round_open_pool() if (ap > 0 and DEBUG_POOL) else None),
-            "interrogate": _interrogate_budget() if ph.get("key") == "talk" else None,
             "started": bool(ROOM.get("started")),
             "typing": ROOM["typing"],
-            "grades": g,
             "ending": ending,
         }
 
@@ -518,10 +413,6 @@ except Exception:
 class Claim(BaseModel):
     roleId: str
     clientId: str
-
-
-class SetAI(BaseModel):
-    roleId: str
 
 
 class HumanSay(BaseModel):
@@ -579,19 +470,6 @@ class SwapCard(BaseModel):
     clientId: str
 
 
-class Interrogate(BaseModel):
-    askerRoleId: str
-    targetRoleId: str
-    cardId: str = ""       # 비우면 카드가 아니라 사람을 바로 추궁한다
-    evidenceCardId: str = ""
-    clientId: str
-
-
-class InterrogateVote(BaseModel):
-    roleId: str
-    clientId: str
-
-
 class AgentSay(BaseModel):
     roleId: str
     text: str
@@ -644,13 +522,11 @@ class FinalAnswers(BaseModel):
 
 @app.get("/api/scenario")
 def scenario():
-    ok, label = backend_ready()
     d = SC.public_scenario()
     # 클라이언트는 STATE.scenarioId와 이걸 비교해 시나리오가 바뀐 걸 알아챈다.
     # 여태 어느 시나리오도 이 값을 안 실어 보내서, 호스트가 시나리오를 바꿔도
     # 다른 기기는 옛 대본을 그대로 들고 있었다.
     d["scenarioId"] = SC.ID
-    d["backend"] = {"ok": ok, "label": label}
     # 조사카드 카탈로그(제목·본문 제외 — 미공개 슬롯 구조만)
     d["cardCatalog"] = [{"id": c["id"], "loc": c["loc"], "locName": c["locName"], "round": c["round"],
                          "spot": c.get("spot", ""),
@@ -837,8 +713,6 @@ def admin_roles(key: str = "", scenarioId: str = ""):
     hidden = getattr(m, "HIDDEN_ID", "")
     keep = getattr(m, "KEEP_GOALS", {}) or {}
     memory = getattr(m, "MEMORY", {}) or {}
-    interro = getattr(m, "INTERROGATE", {}) or {}
-    plain = getattr(m, "INTERROGATE_PLAIN", {}) or {}
     frag_key = getattr(m, "TALK_FRAGMENT_KEY", {}) or {}
     phases = {p["seq"]: p["name"] for p in getattr(m, "PHASES", [])}
     titles = {c.get("id"): c.get("title", "") for c in getattr(m, "CARDS", [])}
@@ -861,11 +735,6 @@ def admin_roles(key: str = "", scenarioId: str = ""):
             txt = (memory.get(cid) or {}).get(k)
             if txt:
                 frags.append({"seq": seq, "key": k, "phase": phases.get(seq, ""), "text": txt})
-        ig = []
-        for card_id, e in (interro.get(cid) or {}).items():
-            ig.append({"card": card_ref(card_id), "truth": e.get("truth", ""),
-                       "evasive": e.get("evasive", ""),
-                       "rebuttal": card_ref(e["rebuttal"]) if e.get("rebuttal") else None})
         roles.append({
             "id": cid, "name": ch.get("name", ""), "age": ch.get("age", ""),
             "job": ch.get("job", ""), "avatar": ch.get("avatar", ""), "color": ch.get("color", ""),
@@ -883,9 +752,6 @@ def admin_roles(key: str = "", scenarioId: str = ""):
                           "cards": [card_ref(x) for x in kg.get("cards", [])]} if kg else None),
             "knows": [card_ref(x) for x in (ch.get("knows") or [])],
             "fragments": frags,
-            "aiNote": ch.get("ai_note", ""),
-            "interrogate": ig,
-            "interrogatePlain": plain.get(cid, ""),
         })
     return {"scenarioId": sid, "title": getattr(m, "TITLE", sid),
             "fragLabel": getattr(m, "FRAGMENT_LABEL", "") or "기억의 파편",
@@ -1058,7 +924,7 @@ def _seed_alibi() -> None:
 
     예전에는 오프닝 화면 옆의 접힌 패널이었다. 거기 두면 조사 페이즈로 넘어가는 순간
     화면에서 사라져서, 정작 대조가 필요한 토론 때 아무도 다시 못 봤다. 대화 기록으로
-    남겨두면 위로 올려 언제든 다시 읽을 수 있고, AI 배역도 같은 것을 읽는다.
+    남겨두면 위로 올려 언제든 다시 읽을 수 있다.
     """
     log = getattr(SC, "ALIBI_LOG", None) or []
     if not log:
@@ -1208,22 +1074,6 @@ def release(b: Claim):
     return {"ok": True}
 
 
-@app.post("/api/setai")
-def setai(b: SetAI):
-    with LOCK:
-        if _roles_locked():
-            return JSONResponse({"error": "게임이 시작돼 배역을 바꿀 수 없습니다"}, status_code=409)
-        r = ROOM["roles"].get(b.roleId)
-        if not r:
-            return JSONResponse({"error": "없는 배역"}, status_code=404)
-        if r["mode"] == "human":
-            return JSONResponse({"error": "사람이 맡은 배역"}, status_code=409)
-        r["mode"] = "ai" if r["mode"] != "ai" else "open"
-        r["clientId"] = None
-        bump()
-    return {"ok": True}
-
-
 @app.get("/api/sheet/{role_id}")
 def sheet(role_id: str, clientId: str = ""):
     with LOCK:
@@ -1231,7 +1081,7 @@ def sheet(role_id: str, clientId: str = ""):
         seq = ROOM["seq"]
         if not r:
             return JSONResponse({"error": "없는 배역"}, status_code=404)
-        if r["clientId"] != clientId:  # 엄격: 내가 '맡은' 배역만 (빈자리·AI 배역 비밀 열람 차단)
+        if r["clientId"] != clientId:  # 엄격: 내가 '맡은' 배역만 (빈자리 비밀 열람 차단)
             return JSONResponse({"error": "자기 배역만 열람할 수 있습니다"}, status_code=403)
     s = SC.private_sheet(role_id)
     _cs = (ROOM.get("crisis") or {}).get("solved")
@@ -1449,29 +1299,6 @@ def _human_roles() -> list:
     return [rid for rid, r in ROOM["roles"].items() if r["mode"] == "human" and r["clientId"]]
 
 
-def _ensure_interrogate_seq() -> None:
-    """토론 페이즈에 새로 들어오면 심문 예산·투표를 초기화한다(페이즈당 예산)."""
-    seq = ROOM["seq"]
-    ph = SC.phase_by_seq(seq)
-    ig = ROOM["interrogate"]
-    if ph.get("key") == "talk" and ig.get("seq") != seq:
-        ROOM["interrogate"] = {"seq": seq, "used": 0, "votes": [], "bonus": False}
-
-
-def _interrogate_budget() -> dict:
-    """1인당 2회 + 과반수(2인이면 만장일치) 투표로 +1. 토론 페이즈마다 리셋."""
-    _ensure_interrogate_seq()
-    ig = ROOM["interrogate"]
-    n = len(_human_roles())
-    base = 2 * n
-    bonus = 1 if ig["bonus"] else 0
-    total = base + bonus
-    need = (n // 2 + 1) if n else 0
-    return {"base": base, "bonus": bonus, "total": total, "used": ig["used"],
-            "remaining": max(0, total - ig["used"]), "voteNeed": need,
-            "voteHave": len(ig["votes"]), "bonusGranted": ig["bonus"]}
-
-
 def _holder_of(card_id: str) -> str | None:
     """그 카드를 이미 조사한 배역(없으면 None). 조사카드는 한 사람만 가진다."""
     for rid, cids in ROOM["hands"].items():
@@ -1528,35 +1355,7 @@ def _advance_turn() -> None:
     bump()
 
 
-# ── AI 자동 조사 (API 없이 휴리스틱 · 인물답게 + 추리 따라가기) ────────────────
-def _evidence_bites(card_id: str, evid_id: str) -> bool:
-    """들이민 카드가 지금 묻는 카드의 「짝」인가.
-
-    예전에는 시나리오가 지정한 rebuttal 한 장만 통했고, 그 외에는 무엇을 대든
-    확률이 오히려 떨어졌다. 제대로 맞물리는 카드를 찾아내고도 다른 짝을 골랐다는
-    이유로 더 불리해지는 건, 추리를 벌주는 규칙이다.
-    """
-    if not card_id or not evid_id:
-        return False
-    for p in getattr(SC, "CARD_PAIRS", []) or []:
-        cs = p.get("cards") or []
-        if card_id in cs and evid_id in cs:
-            return True
-    for c in getattr(SC, "CARDS", []) or []:
-        cs = c.get("combo") or []
-        if card_id in cs and evid_id in cs:
-            return True
-    return False
-
-
-def _points_at(card_id: str) -> list:
-    """이 카드가 가리키는 사람들. 시나리오의 INTERROGATE 표가 곧 그 태그다 —
-    「이 사람에게 이 카드를 들이밀면 할 말이 있다」가 그 표에 적혀 있다."""
-    if not card_id:
-        return []
-    return [rid for rid, d in (getattr(SC, "INTERROGATE", {}) or {}).items() if card_id in d]
-
-
+# ── 카드가 열리는 조건 (선행 단서 · 라운드 · 구역 잠금) ────────────────
 def _card_needs(c: dict) -> list:
     """이 카드를 열기 전에 먼저 나와 있어야 하는 카드들.
 
@@ -1644,117 +1443,6 @@ def _openable_cards(role_id: str) -> list:
     return untouched or out
 
 
-def _recent_text(n: int = 8) -> str:
-    """최근 '사람과 인물이 한 말'만 모은다. GM 안내와 페이즈 지문은 뺀다 —
-    그 지문에는 이번 라운드에 볼 것들이 미리 적혀 있어서, 걸러내지 않으면
-    아무도 입에 올린 적 없는 물건이 화제인 것처럼 잡힌다."""
-    said = [m for m in ROOM["table"] if m.get("kind") in ("human", "ai")]
-    return " ".join((m.get("text") or "") for m in said[-n:])
-
-
-def _title_tokens(card: dict) -> list[str]:
-    """카드 제목·위치에서 대화에 나올 만한 낱말을 뽑는다.
-
-    형태소 분석기 없이 부분문자열로 맞춘다 — 한국어는 조사가 붙어 늘어나므로
-    '단말기'는 '단말기가/단말기를'에도 걸린다. 짧은 토막은 오탐이 나서 버린다.
-    """
-    out = []
-    for part in (card.get("title", "") + " " + card.get("spot", "")).replace("·", " ").split():
-        w = part.strip("()[],.의를을이가는은도만")
-        if len(w) >= 2 and not w.isdigit():
-            out.append(w)
-    return out
-
-
-def _topic_boost(role_id: str) -> dict:
-    """지금 대화가 향하는 곳을 카드 단위로 환산한다.
-
-    구역만 보던 신호(_hot_locs)로는 '단말기 얘기 중'이나 '지금 유태오가 몰리는 중'
-    같은 흐름을 못 읽는다. 그래서 카드 제목의 낱말과 사람 이름까지 본다.
-    LLM 없이 도는 부분이라 대화가 붙는 만큼만 정확하다 — 그 정도면 충분하다.
-    """
-    txt = _recent_text(8)
-    if not txt:
-        return {}
-    boost = {}
-    for c in SC.CARDS:
-        hit = sum(1 for w in _title_tokens(c) if w in txt)
-        if hit:
-            boost[c["id"]] = boost.get(c["id"], 0) + 2.2 * hit
-    # 지금 몰리고 있는 사람은 자기 구역을 뒤져 방어할 거리를 찾는다
-    me = SC.get_character(role_id)
-    if me and txt.count(me["name"]) >= 2:
-        home = set(((getattr(SC, "INVEST_AI", {}) or {}).get(role_id, {})).get("home", []))
-        for c in SC.CARDS:
-            if c["loc"] in home:
-                boost[c["id"]] = boost.get(c["id"], 0) + 1.8
-    return boost
-
-
-def _hot_locs() -> dict:
-    """최근 대화·공개에서 언급된 구역 = 추리가 향하는 곳."""
-    locs = {}
-    for m in ROOM["table"][-8:]:
-        txt = m.get("text", "") or ""
-        # 한 발언에서 같은 구역은 한 번만 센다 — 구역별로 카드 수만큼 가산되면
-        # 카드가 많은 구역이 과열돼 전원이 그리로 몰린다.
-        for loc in {c["loc"] for c in SC.CARDS if c["locName"] and c["locName"] in txt}:
-            locs[loc] = locs.get(loc, 0) + 1
-    for cid in ROOM["revealed"][-4:]:
-        c = SC.get_card(cid)
-        if c:
-            locs[c["loc"]] = locs.get(c["loc"], 0) + 1
-    return locs
-
-
-def _ai_pick(role_id: str, n: int) -> list:
-    """AI 배역이 성향+합리성에 따라 카드 n장을 자동으로 조사한다(즉시, API 0)."""
-    prof = (getattr(SC, "INVEST_AI", {}) or {}).get(role_id, {})
-    home = set(prof.get("home", []))
-    interest = prof.get("interest", {})   # cardId -> 가중치(음수면 회피)
-    role_kind = prof.get("role", "normal")
-    keepset = set(((getattr(SC, "KEEP_GOALS", {}) or {}).get(role_id) or {}).get("cards", []))
-    hot = _hot_locs()
-    topic = _topic_boost(role_id)          # 대화가 지금 가리키는 카드들
-    cur = current_round(ROOM["seq"])
-    loc_count = {}
-    for cid in ROOM["hands"].get(role_id, []):
-        c = SC.get_card(cid)
-        if c:
-            loc_count[c["loc"]] = loc_count.get(c["loc"], 0) + 1
-    picks = []
-    for _ in range(max(0, n)):
-        cands = [c for c in _openable_cards(role_id) if c["id"] not in picks]
-        if not cands:
-            break
-
-        def score(c):
-            s = 1.0
-            if c["loc"] in home:
-                s += 3.0
-            s += interest.get(c["id"], 0)              # 관심(+)·회피(−)
-            if c["id"] in keepset:
-                s += 6.0                                # 자기 점수가 걸린 카드는 무엇보다 먼저 집는다
-            if c["round"] == cur:
-                s += 1.2                                # 이번 라운드 새 카드
-            s += 0.5 * hot.get(c["loc"], 0)             # 추리 따라가기(과하면 전원이 한 구역에 몰린다)
-            s += topic.get(c["id"], 0)                  # 방금 입에 오른 물건을 직접 보러 간다
-            s -= 0.8 * loc_count.get(c["loc"], 0)       # 같은 구역 과다 회피
-            if role_kind == "troll" and c.get("bait"):
-                s += 2.5                                # 진범: 미끼로 유도
-            # 재현가능 tie-break — 파이썬 str hash()는 프로세스마다 값이 달라 재현이 안 된다.
-            s += (zlib.crc32(f'{ROOM["seq"]}|{role_id}|{c["id"]}'.encode()) % 97) / 970.0
-            return s
-
-        best = max(cands, key=score)
-        if _try_investigate(role_id, best["id"], enforce_turn=False):
-            break
-        picks.append(best["id"])
-        loc_count[best["loc"]] = loc_count.get(best["loc"], 0) + 1
-    _ai_trim_hand(role_id)
-    return picks
-
-
 def _fire_cut(key: str) -> None:
     """조사 중 컷을 하나 띄운다. 같은 키는 판당 한 번만.
 
@@ -1778,117 +1466,7 @@ def _fire_cut(key: str) -> None:
     bump()
 
 
-def _queue_act(role_id: str, kind: str, **fmt) -> None:
-    """AI 배역에게 「지금 이 말을 하라」를 예약한다. 잠금은 부르는 쪽이 쥔다.
 
-    자발 대화는 정적이 흘러야 시작하지만 액션은 사건 직후에 붙어야 뜻이 산다 —
-    카드를 내려놓고 한참 뒤에 해석을 말하면 무슨 카드 얘긴지 아무도 모른다.
-    """
-    q = ROOM.setdefault("aiActs", [])
-    if any(a["roleId"] == role_id and a["kind"] == kind for a in q):
-        return                                  # 같은 배역이 같은 결로 줄 서 있으면 하나면 된다
-    if len(q) >= 4:                             # 밀리면 판이 AI 독백이 된다
-        return
-    q.append({"roleId": role_id, "kind": kind, "fmt": fmt})
-
-
-def _public_suspect(exclude: str = "") -> tuple[str, str, str]:
-    """공개된 카드만으로 지금 가장 많이 지목된 사람과, 그 근거 문장. 손패는 절대 안 센다.
-
-    근거는 카드의 hint(손으로 써둔 해석)를 그대로 쓴다 — 모델이 없는 사실을 지어내는 것보다
-    작가가 적어둔 한 줄을 물려주는 편이 훨씬 낫다.
-    """
-    fn = getattr(SC, "public_suspicion", None)
-    if not fn:
-        return ("", "", "")
-    try:
-        cnt = fn(list(ROOM["revealed"]))
-    except Exception:                           # noqa: BLE001
-        return ("", "", "")
-    cnt = {k: v for k, v in cnt.items() if k != exclude and k in ROOM["roles"]}
-    if not cnt:
-        return ("", "", "")
-    top = max(cnt.values())
-    if top < 2:                                 # 한 장 걸린 정도로 사람을 몰면 근거가 얇다
-        return ("", "", "")
-    tied = sorted(k for k, v in cnt.items() if v == top)
-    who = tied[zlib.crc32(str(len(ROOM["revealed"])).encode()) % len(tied)]
-    pts = getattr(SC, "CARD_POINTS_AT", {}) or {}
-    why = []
-    for cid in ROOM["revealed"]:
-        if who in pts.get(cid, []):
-            c = SC.get_card(cid)
-            if c:
-                why.append(f'「{c["title"]}」 — {(c.get("hint") or "").strip()}')
-    # 모델에는 최근 두 장까지, 대체 대사에는 한 장만 — 두 장을 다 읊으면 대사가 문단이 된다.
-    return (who, " / ".join(why[-2:]), (why[-1] if why else ""))
-
-
-def _act_nudge(kind: str, fmt: dict) -> str:
-    tpl = (getattr(SC, "CHAT_NUDGES", {}) or {}).get(kind, "")
-    try:
-        return tpl.format(**fmt)
-    except Exception:                           # noqa: BLE001 — 자리표시자가 안 맞아도 넘어간다
-        return tpl
-
-
-def _act_fallback(kind: str, fmt: dict, seed: str, role_id: str = "") -> str:
-    """모델이 없을 때 대신 나가는 한 줄.
-
-    예전에는 사건 전체가 세 줄을 돌려썼다. 여섯 사람이 번갈아 「저 혼자 이렇게 읽는 겁니까?」를
-    반복하니 사람이 아니라 장치라는 게 바로 보였다. 배역마다 자기 말투의 문장을 따로 두고,
-    없으면 공용으로 떨어진다.
-    """
-    by_role = (getattr(SC, "CHAT_FALLBACK_BY_ROLE", {}) or {}).get(role_id, {})
-    lines = by_role.get(kind) or (getattr(SC, "CHAT_FALLBACK", {}) or {}).get(kind) or []
-    if not lines:
-        return ""
-    try:
-        return lines[zlib.crc32(seed.encode()) % len(lines)].format(**fmt)
-    except Exception:                           # noqa: BLE001
-        return ""
-
-
-def _ai_trim_hand(role_id: str) -> list:
-    """손패 상한을 넘으면 AI가 알아서 내려놓는다.
-    자기에게 불리한 카드(interest 음수 = 감추고 싶은 것)는 끝까지 쥐고, 무해하거나 공유해도 될 것부터 공개한다."""
-    prof = (getattr(SC, "INVEST_AI", {}) or {}).get(role_id, {})
-    interest = prof.get("interest", {})
-    hide = set(prof.get("hide", []))     # 손에 들어오면 끝까지 감추는 카드
-    # 끝까지 쥐어야 점수가 되는 카드는 무슨 일이 있어도 안 내려놓는다.
-    # 이게 빠져 있어서, 목표 카드가 hide 목록에 우연히 겹치지 않은 배역은
-    # 손패가 차는 순간 자기 목표를 스스로 공개해버렸다 — 달성률이 0이었다.
-    hide |= set(((getattr(SC, "KEEP_GOALS", {}) or {}).get(role_id) or {}).get("cards", []))
-    out = []
-    # 소지품 칸은 «버려서» 맞춘다. 공개할 물건이 아니라 넷이 같이 본 물건이라서다.
-    while _over_belong(role_id) > 0:
-        _, belong = _split_hand(role_id)
-        if not belong:
-            break
-        drop = max(belong, key=lambda cid: (interest.get(cid, 0.0),
-                                            zlib.crc32(f"{role_id}|b|{cid}".encode()) % 97))
-        ROOM["hands"][role_id].remove(drop)
-    while _over_limit(role_id) > 0:
-        hand, _ = _split_hand(role_id)
-        if not hand:
-            break
-        # hide 목록은 마지막까지 쥔다. 그 밖에서는 interest 가 높을수록 먼저 내려놓는다.
-        drop = max(hand, key=lambda cid: (-1 if cid in hide else 0,
-                                          interest.get(cid, 0.0),
-                                          zlib.crc32(f"{role_id}|{cid}".encode()) % 97))
-        _publish_from(role_id, drop)
-        out.append(drop)
-        c = SC.get_card(drop)
-        if c and ROOM["roles"].get(role_id, {}).get("mode") == "ai":
-            # 제목만 넘기면 「이거 어떻게들 보세요」밖에 안 나온다. 본문과 손으로 써둔 해석을 같이 준다.
-            # 그 배역이 이 카드를 볼 줄 아는 사람이면 자기 눈으로 읽은 것을 말하게 한다.
-            # 카드에 딸린 일반 해석(hint)은 누가 말해도 똑같아서 금방 티가 난다.
-            eye = (c.get("insight") or {}).get(role_id) or ""
-            _queue_act(role_id, "reveal", card=c["title"],
-                       body=" ".join((c.get("text") or "").split()),
-                       hint=" ".join((eye or c.get("hint") or "").split()),
-                       eye="1" if eye else "")
-    return out
 
 
 def _crisis_blocking() -> bool:
@@ -1914,7 +1492,7 @@ def _try_investigate(role_id: str, card_id: str, enforce_ap: bool = True, enforc
         return "그 자리는 이제 없습니다 — 어제와 같은 방이 아닙니다"
     if c["round"] > cur:
         return f"아직 조사할 수 없습니다 (조사 R{c['round']}에 열림)"
-    # 선행 카드 검사. 여태 _openable_cards(=화면 표시와 AI 선택)에만 있었고 실제 조사 요청에는
+    # 선행 카드 검사. 여태 _openable_cards(=화면 표시)에만 있었고 실제 조사 요청에는
     # 없었다. 그래서 화면이 잠가둔 카드도 요청만 보내면 그냥 열렸다.
     if card_id not in ROOM["hands"].get(role_id, []):
         seen = set(ROOM["revealed"])
@@ -2034,7 +1612,7 @@ def _auto_combine() -> None:
     맞물린다는 것을 눈으로 보고도 다시 조사 한 장을 써서 열어야 했는데, 그건 발견의
     대가가 아니라 확인 절차다. 둘이 다 테이블에 있으면 테이블에서 열리고, 한 사람 손에
     다 있으면 그 사람 손에 들어온다. 손패 상한은 그대로다 — 넘치면 넘친 채로 들어오고,
-    다른 카드를 내려놓아야 한다(사람은 경고를 보고, AI는 스스로 정리한다).
+    다른 카드를 내려놓아야 한다 — 넘치면 화면이 경고한다.
     """
     for c in getattr(SC, "CARDS", []) or []:
         need = list(c.get("combo") or [])
@@ -2084,22 +1662,6 @@ def _publish(card_id: str, by: str = "") -> None:
                 text=c.get("text", ""), hint=c.get("hint", ""))
         bump()
         _auto_combine()
-
-
-def _ai_take_turn(rid: str) -> list:
-    """AI 배역의 조사 차례를 한 번에 처리한다 — 이번 라운드에 남은 만큼 뽑고 다음 차례로 넘긴다.
-
-    진행석 버튼(/api/ai-investigate)과 배경 스레드(_auto_turn_tick)가 같은 이 함수를 쓴다.
-    잠긴 구역·선행 단서·남이 이미 가져간 카드 판정은 전부 _try_investigate 안에 있으므로
-    여기서 따로 손대지 않는다. LOCK을 쥔 채로 부를 것(LLM 호출 없이 즉시 끝난다).
-    """
-    remaining = _ap_for(ROOM["seq"]) - _round_checks(rid, current_round(ROOM["seq"]))
-    picks = _ai_pick(rid, remaining)
-    # 어디를 살펴봤는지는 _try_investigate가 한 장씩 테이블에 남긴다(사람이든 AI든 같은 길).
-    if ROOM.get("turn") == rid:
-        _advance_turn()
-    bump()
-    return picks
 
 
 @app.post("/api/investigate")
@@ -2270,15 +1832,8 @@ def _pod_launch_public():
 
 
 def _pod_knows_code(rid: str) -> bool:
-    """이 배역이 코드를 넣을 수 있는 상태인가.
-    사람은 제 손으로 넣어야 한다. AI는 넣을 손이 없으므로, 숫자가 적힌 카드가
-    이미 판 위에 공개돼 있으면 아는 것으로 본다 — 아니면 AI가 타는 순간 늘 실패한다."""
-    if ROOM["podCode"].get(rid):
-        return True
-    if (ROOM["roles"].get(rid) or {}).get("mode") != "ai":
-        return False
-    src = getattr(SC, "POD_CODE_SOURCE", "")
-    return bool(src) and src in (ROOM.get("revealed") or [])
+    """이 배역이 코드를 넣었는가. 좌석이 전부 사람이라 제 손으로 넣는 수밖에 없다."""
+    return bool(ROOM["podCode"].get(rid))
 
 
 def _pod_close():
@@ -2655,7 +2210,6 @@ def _vault_public(role_id: str = "") -> dict | None:
     if not v or ROOM["seq"] < int(v.get("seq", 0)):
         return None
     read = list(ROOM.get("vaultRead") or [])
-    # 읽는 건 사람이다. AI 배역은 기다릴 대상이 아니다 — 안 그러면 영영 안 끝난다.
     seats = [rid for rid, r in ROOM["roles"].items() if r.get("clientId")]
     out = {k: v[k] for k in ("kick", "title", "lede", "docs", "foot", "readLabel") if k in v}
     out.update({"open": _vault_open(), "read": read,
@@ -2692,13 +2246,6 @@ def _night_open() -> None:
         return
     n["open"] = True
     n["picks"] = {}
-    # 사람이 안 앉은 배역은 그 자리에서 제 성격대로 고른다. 밤은 기다려주지 않는다.
-    for rid, r in ROOM["roles"].items():
-        if r["mode"] == "ai":
-            try:
-                n["picks"][rid] = SC.night_ai_pick(rid)
-            except Exception:                           # noqa: BLE001
-                pass
     ROOM["table"].append({"kind": "system", "broadcast": True,
                           "text": conf.get("notice", "밤이 되었습니다 — 각자 화면에서 오늘 밤 무엇을 할지 고르세요.")})
     _fire_cut("night:open")
@@ -2711,7 +2258,7 @@ def _night_try_resolve() -> None:
     n = ROOM.get("night") or {}
     if not n.get("open"):
         return
-    assigned = [rid for rid, r in ROOM["roles"].items() if r["mode"] in ("human", "ai")]
+    assigned = [rid for rid, r in ROOM["roles"].items() if r["mode"] == "human"]
     if assigned and any(rid not in n["picks"] for rid in assigned):
         return
     _night_resolve()
@@ -2743,7 +2290,7 @@ def _night_public(role_id: str = "") -> dict | None:
     n = ROOM.get("night") or {}
     if not n.get("open") and not n.get("result"):
         return None
-    assigned = [rid for rid, r in ROOM["roles"].items() if r["mode"] in ("human", "ai")]
+    assigned = [rid for rid, r in ROOM["roles"].items() if r["mode"] == "human"]
     out = {"open": bool(n.get("open")), "seq": int(conf.get("seq", 0) or 0),
            "kick": conf.get("kick", ""), "title": conf.get("title", ""),
            "intro": conf.get("intro", ""), "prompt": conf.get("prompt", ""),
@@ -2818,7 +2365,7 @@ def _ask_conf():
 def _ask_order() -> list:
     return [rid for rid in SC.__dict__.get("CHARACTERS", [])] if False else [
         c["id"] for c in SC.CHARACTERS
-        if (ROOM["roles"].get(c["id"]) or {}).get("mode") in ("human", "ai")]
+        if (ROOM["roles"].get(c["id"]) or {}).get("mode") == "human"]
 
 
 def _ask_open() -> None:
@@ -2839,7 +2386,7 @@ def _ask_open() -> None:
 
 
 def _ask_step() -> None:
-    """차례를 넘긴다. AI 배역이면 그 자리에서 자기 몫을 고른다."""
+    """질문지 차례를 다음 사람에게 넘긴다."""
     conf = _ask_conf()
     a = ROOM.get("ask") or {}
     if not conf or not a.get("open"):
@@ -2856,15 +2403,6 @@ def _ask_step() -> None:
         bump()
         return
     a["turn"] = left[0]
-    if (ROOM["roles"].get(a["turn"]) or {}).get("mode") == "ai":
-        rem = _ask_remaining()
-        try:
-            qid = SC.ask_ai_pick(a["turn"], rem)
-        except Exception:                                # noqa: BLE001
-            qid = rem[0] if rem else ""
-        if qid:
-            _ask_record(a["turn"], qid)
-            return
     bump()
 
 
@@ -2937,13 +2475,6 @@ def ask_pick(b: AskPick):
 
 
 # ── 중간 지목 — 판이 끝나기 전에 한 번 이름을 부른다 ─────────────────
-def _tally(picks: dict) -> dict:
-    out = {}
-    for t in picks.values():
-        out[t] = out.get(t, 0) + 1
-    return out
-
-
 def _person(rid: str) -> dict:
     """이름표 하나. 배역이든 NPC든 상관없이 찾아준다.
 
@@ -3110,194 +2641,6 @@ def accuse_interim(b: VoteReq):
     return {"ok": True, "accuse1": _accuse1_public()}
 
 
-@app.post("/api/interrogate/vote")
-def interrogate_vote(b: InterrogateVote):
-    """토론 페이즈 추가 심문 1회 신청 — 과반수(2인이면 만장일치) 찬성 시 부여된다."""
-    with LOCK:
-        r = ROOM["roles"].get(b.roleId)
-        if not r or r["clientId"] != b.clientId or r["mode"] != "human":
-            return JSONResponse({"error": "그 배역으로 투표할 수 없습니다"}, status_code=403)
-        ph = SC.phase_by_seq(ROOM["seq"])
-        if ph.get("key") != "talk":
-            return JSONResponse({"error": "토론 페이즈에서만 신청할 수 있습니다"}, status_code=409)
-        budget = _interrogate_budget()
-        if budget["bonusGranted"]:
-            return {"ok": True, "budget": budget}
-        votes = ROOM["interrogate"]["votes"]
-        if b.roleId not in votes:
-            votes.append(b.roleId)
-        budget = _interrogate_budget()
-        if budget["voteNeed"] > 0 and len(votes) >= budget["voteNeed"]:
-            ROOM["interrogate"]["bonus"] = True
-            ROOM["table"].append({"kind": "system", "broadcast": True,
-                                  "text": "추가 심문 1회가 승인됐습니다."})
-        bump()
-        return {"ok": True, "budget": _interrogate_budget()}
-
-
-@app.post("/api/interrogate")
-def interrogate(b: Interrogate):
-    """심층심문 — 상대가 지금 손패로 쥔 카드를 지목해 답을 요구한다. 카드 자체는 공개되지
-    않는다 — 대답만 들을 뿐이고, 민감한 카드는 그 대답이 진실이 아닐 수도 있다(캐릭터가
-    거짓/얼버무림으로 넘어간다). 어떤 증거를 대는지가 곧 추리다 — 증거 없이 물으면 기본
-    확률, 엉뚱한 카드를 대면 오히려 확률이 떨어지고(허 찔러 넘어갈 여지를 준다), 시나리오가
-    정한 정확한 카드를 짚으면 반드시 실토한다. 예산(1회)은 성패와 무관하게 소모된다."""
-    with LOCK:
-        r = ROOM["roles"].get(b.askerRoleId)
-        if not r or r["clientId"] != b.clientId or r["mode"] != "human":
-            return JSONResponse({"error": "그 배역으로 심문할 수 없습니다"}, status_code=403)
-        ph = SC.phase_by_seq(ROOM["seq"])
-        if ph.get("key") != "talk":
-            return JSONResponse({"error": "심층심문은 토론 페이즈에서만 할 수 있습니다"}, status_code=409)
-        if b.askerRoleId == b.targetRoleId:
-            return JSONResponse({"error": "자기 자신은 심문할 수 없습니다"}, status_code=409)
-        if b.targetRoleId not in ROOM["roles"]:
-            return JSONResponse({"error": "없는 배역"}, status_code=404)
-        # 사람이 맡은 배역은 심층심문의 대상이 아니다.
-        # 이 기능은 «AI 가 연기하는 배역에게서 대답을 끌어내는» 장치다 —
-        # 사람끼리는 그냥 대화창에서 물으면 되고, 그 자리에서 무엇을 말할지는
-        # 판정이 아니라 그 사람이 정할 몫이다.
-        if (ROOM["roles"][b.targetRoleId] or {}).get("mode") == "human":
-            return JSONResponse({"error": "사람이 맡은 배역은 심층심문할 수 없습니다 — 직접 물어보세요"},
-                                status_code=409)
-        budget = _interrogate_budget()
-        if budget["remaining"] <= 0:
-            return JSONResponse({"error": "이번 토론에서 쓸 수 있는 심문 횟수를 다 썼습니다"}, status_code=409)
-        selfmode = not (b.cardId or "").strip()
-        if not selfmode and b.cardId not in ROOM["hands"].get(b.targetRoleId, []):
-            return JSONResponse({"error": "그 배역이 지금 들고 있는 카드가 아닙니다"}, status_code=409)
-        # 사건에 따라 한 카드는 한 번만 추궁에 쓸 수 있다. 같은 자리를 몇 번이고
-        # 들이대며 갈아 마시는 판을 막는다 — 무엇을 물을지 고르는 것이 곧 심문이다.
-        once = bool(getattr(SC, "INTERROGATE_ONCE", False))
-        used = ROOM.setdefault("itgUsed", [])
-        if once and not selfmode and b.cardId in used:
-            c0 = SC.get_card(b.cardId) or {}
-            return JSONResponse({"error": f'「{c0.get("title", "그 카드")}」는 이미 추궁에 쓴 카드입니다 — 다른 것으로 물으세요'},
-                                status_code=409)
-
-        evid_id = (b.evidenceCardId or "").strip()
-        if evid_id:
-            has_access = evid_id in ROOM["hands"].get(b.askerRoleId, []) or evid_id in ROOM["revealed"]
-            if not has_access:
-                return JSONResponse({"error": "내가 갖고 있지 않은 카드는 증거로 댈 수 없습니다"}, status_code=409)
-            if once and evid_id in used:
-                c0 = SC.get_card(evid_id) or {}
-                return JSONResponse({"error": f'「{c0.get("title", "그 카드")}」는 이미 추궁에 쓴 카드입니다'},
-                                    status_code=409)
-
-        card = None if selfmode else SC.get_card(b.cardId)
-        target = SC.get_character(b.targetRoleId) or {}
-        asker = SC.get_character(b.askerRoleId) or {}
-        # 사람을 찌를 때는 그 배역의 «정체» 항목을 쓴다. 실토해도 한 겹만 벗겨진다.
-        entry = ((getattr(SC, "INTERROGATE_SELF", {}) or {}).get(b.targetRoleId) if selfmode
-                 else (getattr(SC, "INTERROGATE", {}) or {}).get(b.targetRoleId, {}).get(b.cardId))
-        # 사건이 정체 답변을 한 줄로만 적어둔 경우가 있다. 그대로 두면 아래에서
-        # 문자열을 사전처럼 다루다 500 이 나고, 화면에는 「network」만 뜬다.
-        if isinstance(entry, str):
-            entry = {"evasive": entry, "truth": entry, "rebuttal": ""}
-
-        # 같은 자리를 몇 번 찔렸는가. 한 번 얼버무렸다고 그 정보가 닫히면 안 된다 —
-        # 얼버무림은 「여기가 아프다」는 신호이고, 계속 밀면 결국 분다.
-        pk = f'{b.targetRoleId}:{b.cardId or "_self"}'
-        pressed = ROOM.setdefault("press", {}).get(pk, 0)
-
-        # 들이민 증거가 이 사람을 가리키는 카드라면, 실토는 그 증거에 얽힌 진상이 된다.
-        # 「무엇을 묻는가」보다 「무엇을 들이미는가」가 답을 정한다.
-        ev_entry = None
-        # ── 심문은 확률이 아니라 태그로 굴러간다 ──────────────────────────
-        # 카드마다 「이 카드는 누구의 비밀인가」가 INTERROGATE 표에 적혀 있다.
-        #  · 그 사람이 그 카드를 쥐고 있고 그 자리를 지목했다  → 얼버무리고 그 자리에서 분다
-        #  · 내가 그 카드를 쥐고 그 사람에게 들이밀었다        → 마찬가지
-        #  · 그 사람과 상관없는 카드를 들이밀었다              → 정말로 모른다. 아는 척도 안 한다
-        #  · 그 사람이 쥔 카드인데 그의 비밀이 아니다          → 그냥 내용을 사실대로 말한다
-        # 예전엔 아무 카드나 대도 실토가 나왔고(«무엇을 들이미는가»가 무의미했다),
-        # 그 전에는 주사위가 답을 정했다(같은 추리가 판마다 다르게 끝났다).
-        ev_entry = None
-        stumped = False        # 상관없는 카드를 들이밀었나
-        if evid_id and not selfmode:
-            if b.targetRoleId in _points_at(evid_id):
-                ev_entry = (getattr(SC, "INTERROGATE", {}) or {}).get(b.targetRoleId, {}).get(evid_id)
-            if not ev_entry:
-                stumped = True
-        ev_hit = bool(ev_entry)
-        if ev_entry:
-            entry = ev_entry
-            pk = f'{b.targetRoleId}:{evid_id}'
-            pressed = ROOM.setdefault("press", {}).get(pk, 0)
-        # 정체를 찌를 때는 그 사람의 «정체를 벗기는 카드» 한 장만 통한다.
-        elif selfmode and entry and evid_id and evid_id == (entry.get("rebuttal") or ""):
-            ev_hit = True
-
-        if stumped:
-            # 남의 비밀이 든 카드를 엉뚱한 사람에게 들이민 것이다. 아는 척할 이유가 없다.
-            shown = SC.get_card(evid_id) or {}
-            outcome = "unknown"
-            line = f'"「{shown.get("title", "그거")}」요? …그건 제가 아는 게 없습니다. 정말이에요."'
-        elif entry and not selfmode:
-            # 그의 비밀이 든 카드다. 한 번 얼버무렸다가 같은 턴에 분다 —
-            # 아픈 데를 정확히 짚어놓고 턴을 한 번 더 쓰게 만들 이유가 없다.
-            ROOM["press"].pop(pk, None)
-            ev = entry["evasive"]
-            first = ev[0] if isinstance(ev, (list, tuple)) else ev
-            outcome = "truth"
-            line = f'{first}\n\n…{entry["truth"]}'
-        elif entry:
-            # 정체 추궁 — 벗기는 카드를 들이밀지 않는 한 넘어간다. 계속 밀면 결국 분다.
-            ev = entry["evasive"]
-            first = ev[0] if isinstance(ev, (list, tuple)) else ev
-            if ev_hit or pressed >= INTERROGATE_PRESS_BREAK:
-                ROOM["press"].pop(pk, None)
-                outcome = "truth"
-                line = f'{first}\n\n…{entry["truth"]}' if ev_hit else entry["truth"]
-            else:
-                ROOM["press"][pk] = pressed + 1
-                outcome = "evasive"
-                line = ev[min(pressed, len(ev) - 1)] if isinstance(ev, (list, tuple)) else ev
-        elif selfmode:
-            outcome, line = "evasive", "\"…무슨 말씀이신지 모르겠습니다.\""
-        else:
-            intro = (getattr(SC, "INTERROGATE_PLAIN", {}) or {}).get(b.targetRoleId, "")
-            outcome, line = "plain", f'{intro} 「{card["title"]}」— {card["text"]}'.strip()
-
-        ROOM["interrogate"]["used"] += 1
-        if bool(getattr(SC, "INTERROGATE_ONCE", False)):
-            for cid in (b.cardId, evid_id):
-                if cid and cid not in ROOM["itgUsed"]:
-                    ROOM["itgUsed"].append(cid)
-
-        badge = {"truth": "실토", "evasive": "얼버무림", "plain": "답변", "unknown": "모른다"}[outcome]
-        if outcome == "evasive":
-            nxt = ROOM["press"].get(pk, 0)
-            if nxt >= INTERROGATE_PRESS_BREAK:
-                badge = "얼버무림 · 더는 못 버틴다"
-            elif nxt >= 2:
-                badge = "말이 흔들린다"
-        elif outcome == "truth" and pressed:
-            badge = "실토 — 끝내 무너졌다"
-        if selfmode:
-            header = f'{badge} — {asker.get("name","")} → {target.get("name","")} · 본인 추궁'
-        else:
-            # 증거가 답을 정했으면 머리글도 그 카드를 가리켜야 한다 — 아니면 엉뚱한 카드에
-            # 대해 실토한 것처럼 읽힌다.
-            shown = (SC.get_card(evid_id) if (ev_entry or stumped) else None) or card
-            where = f'{shown["locName"]} · {shown["spot"]}' if shown.get("spot") else shown["locName"]
-            header = f'{badge} — {asker.get("name","")} → {target.get("name","")} · [{where}] 「{shown["title"]}」'
-        # 대화창에서는 「추궁 결과」 상자가 아니라 그 사람이 대답하는 말로 선다 —
-        # 카드를 내려놓으며 말하는 그림이라야 추리가 대화로 읽힌다. roleId/speaker 는
-        # 답하는 쪽(추궁당한 사람)이고, 옆에 놓이는 카드는 방금 그 자리에서 오간 카드다.
-        talked = shown if not selfmode else None
-        ROOM["table"].append({"kind": "interrogate", "broadcast": True,
-                              "askerRoleId": b.askerRoleId, "targetRoleId": b.targetRoleId,
-                              "roleId": b.targetRoleId, "speaker": target.get("name", ""),
-                              "askerName": asker.get("name", ""), "badge": badge,
-                              "showCardId": (talked or {}).get("id", ""),
-                              "showCardTitle": (talked or {}).get("title", ""),
-                              "cardId": b.cardId, "outcome": outcome, "text": header, "line": line})
-        bump()
-        return {"ok": True, "outcome": outcome, "line": line,
-                "press": ROOM["press"].get(pk, 0), "budget": _interrogate_budget()}
-
-
 @app.get("/api/hand/{role_id}")
 def get_hand(role_id: str, clientId: str = ""):
     with LOCK:
@@ -3309,7 +2652,7 @@ def get_hand(role_id: str, clientId: str = ""):
                 "notes": _my_notes(role_id, mine)}
 
 
-# ── 에이전트(코드 세션) 원격 조종: GM 읽기 + AI 배역 대리 행동 ──
+# ── 에이전트(코드 세션) 원격 조종: 진행석 읽기·마킹 ──
 @app.get("/api/gm")
 def gm(key: str = ""):
     if not _agent_ok(key):
@@ -3322,22 +2665,8 @@ def gm(key: str = ""):
             "table": ROOM["table"],
             "revealed": [SC.public_card(c) for c in ROOM["revealed"]],
             "hands": {rid: [SC.public_card(c) for c in cs] for rid, cs in ROOM["hands"].items()},
-            "grades": ROOM["grades"],
             "finalAnswers": ROOM["finalAnswers"],
         }
-
-
-@app.post("/api/agent/say")
-def agent_say(b: AgentSay):
-    if not _agent_ok(b.key):
-        return JSONResponse({"error": "key"}, status_code=403)
-    with LOCK:
-        c = SC.get_character(b.roleId)
-        if not c:
-            return JSONResponse({"error": "없는 배역"}, status_code=404)
-        ROOM["table"].append({"kind": "ai", "roleId": b.roleId, "speaker": c["name"], "text": b.text.strip()})
-        bump()
-    return {"ok": True}
 
 
 @app.post("/api/agent/investigate")
@@ -3369,24 +2698,6 @@ def turn_next(b: TurnReq):
         return {"ok": True, "turn": ROOM.get("turn")}
 
 
-@app.post("/api/ai-investigate")
-def ai_investigate_auto(b: TurnReq):
-    """AI 배역 자동 조사(휴리스틱, 즉시). 대상 미지정 시 현재 차례 배역."""
-    with LOCK:
-        rid = b.roleId or ROOM.get("turn")
-        if not rid or rid not in ROOM["roles"]:
-            return JSONResponse({"error": "대상 배역 없음"}, status_code=400)
-        allowed = _agent_ok(b.key) or (ROOM.get("host") is None) or _is_host(b.clientId)
-        if not allowed:
-            return JSONResponse({"error": "권한 없음"}, status_code=403)
-        if _ap_for(ROOM["seq"]) <= 0:
-            return JSONResponse({"error": "조사 페이즈가 아닙니다"}, status_code=409)
-        picks = _ai_take_turn(rid)
-        cat = {c["id"]: c for c in SC.CARDS}
-    return {"ok": True, "roleId": rid,
-            "picked": [{"id": i, "title": cat[i]["title"], "loc": cat[i]["loc"], "locName": cat[i]["locName"]} for i in picks]}
-
-
 @app.get("/api/events")
 def events(key: str = "", since: int = 0, wait: int = 0):
     """진행 세션이 따라 읽는 사건 목록. since 이후 것만 준다.
@@ -3412,48 +2723,6 @@ def events(key: str = "", since: int = 0, wait: int = 0):
         time.sleep(0.6)
 
 
-@app.get("/api/relay-next")
-def relay_next(key: str = "", clientId: str = ""):
-    """지금 말할 차례인 AI 배역만 알려준다. 내용은 주지 않는다.
-
-    진행 세션은 이 이름 하나만 받아서 그 배역의 서브에이전트를 띄우면 된다.
-    카드도 대본도 진행 세션을 지나가지 않는다.
-    """
-    if not (_agent_ok(key) or _is_host(clientId)):
-        return JSONResponse({"error": "key"}, status_code=403)
-    rid = _pick_reactor()
-    if not rid:
-        return JSONResponse({"error": "AI 배역이 없습니다"}, status_code=409)
-    c = SC.get_character(rid) or {}
-    return {"roleId": rid, "name": c.get("name", rid)}
-
-
-@app.get("/api/relay/{role_id}", response_class=PlainTextResponse)
-def relay_prompt(role_id: str, key: str = "", clientId: str = ""):
-    """API 키가 없을 때 쓰는 통로 — 그 배역 하나짜리 지시문을 글로 내준다.
-
-    보통 채팅 세션에는 임의의 주소로 요청을 보낼 손이 없다. 그래서 서버가 대신
-    부를 수 없고, 사람이 이 글을 복사해 채팅에 넣고 돌아온 대사를 도로 붙여넣는다.
-    ANTHROPIC_API_KEY를 넣으면 서버가 직접 부르므로 이 통로는 필요 없어진다.
-
-    담기는 것은 공개 카드와 '그 배역 자신의 손패'뿐이다. 남의 손패는 들어가지 않는다.
-    """
-    if not (_agent_ok(key) or _is_host(clientId)):
-        return PlainTextResponse("key", status_code=403)
-    if not SC.get_character(role_id):
-        return PlainTextResponse("없는 배역", status_code=404)
-    with LOCK:
-        r = ROOM["roles"].get(role_id) or {}
-    if r.get("mode") != "ai":
-        return PlainTextResponse("사람이 맡은 배역입니다", status_code=409)
-    return _role_prompt(role_id, _pick_nudge(role_id))
-
-
-@app.get("/relay")
-def relay_page():
-    return FileResponse(_HERE / "relay.html")
-
-
 @app.get("/api/handoff", response_class=PlainTextResponse)
 def handoff_brief(key: str = "", base: str = ""):
     """진행 세션이 스스로 받아 가는 지침. 배포된 코드에서 만들어지므로 낡을 일이 없다.
@@ -3464,9 +2733,7 @@ def handoff_brief(key: str = "", base: str = ""):
     """
     if not _agent_ok(key):
         return PlainTextResponse("key", status_code=403)
-    # 배포에 LLM 키가 있느냐에 따라 지침이 갈린다 — 없는데 ai-react를 알려주면 502만 만난다
-    has_llm = bool(ANTHROPIC_API_KEY and anthropic) or BACKEND == "ollama"
-    return handoff.runner_brief(SC, base or "", key or "<AGENT_KEY>", has_llm=has_llm)
+    return handoff.runner_brief(SC, base or "", key or "<AGENT_KEY>")
 
 
 @app.get("/api/player-notice", response_class=PlainTextResponse)
@@ -3577,7 +2844,7 @@ def _seed_phase_lines(seq: int) -> None:
     solved = (ROOM.get("crisis") or {}).get("solved")
     for c in SC.CHARACTERS:
         rid = c["id"]
-        if (ROOM["roles"].get(rid) or {}).get("mode") not in ("human", "ai"):
+        if (ROOM["roles"].get(rid) or {}).get("mode") != "human":
             continue
         try:
             frags = SC.memory_up_to(rid, seq, solved) if solved is not None else SC.memory_up_to(rid, seq)
@@ -3733,452 +3000,21 @@ def human_say(b: HumanSay):
     return {"ok": True}
 
 
-class Busy(RuntimeError):
-    """다른 배역이 말하는 중."""
-
-
-def _role_prompt(role_id: str, nudge: str = "") -> str:
-    """그 배역 하나짜리 연기 지시문.
-
-    들어가는 것: 공개된 카드(모두가 아는 것) + **그 배역 자신의 손패**.
-    들어가지 않는 것: 남의 손패, 남의 비밀, 진상.
-    조사해놓고 자기가 뭘 찾았는지 모르면 그걸로 방어도 추궁도 못 한다.
-    """
-    with LOCK:
-        seq = ROOM["seq"]
-        revealed = list(ROOM["revealed"])
-        table = list(ROOM["table"])
-        hand = list(ROOM["hands"].get(role_id, []))   # 자기 것만. 남의 손패는 넘기지 않는다.
-        cs = (ROOM.get("crisis") or {}).get("solved")
-    c = SC.get_character(role_id)
-    for args in ((nudge, hand, cs), (nudge, hand), (nudge,), ()):   # 아직 이걸 안 받는 시나리오도 있다
-        try:
-            return SC.build_play_prompt(c, seq, revealed, table, *args)
-        except TypeError:
-            continue
-    return SC.build_play_prompt(c, seq, revealed, table)
-
-
-def _speak(role_id: str, nudge: str = "", fallback: str = "") -> dict:
-    """AI 배역 한 명에게 한마디 시킨다. 프롬프트는 그 배역 것만 들어간다.
-
-    fallback은 모델이 빈손으로 돌아왔을 때 대신 나가는 한 줄이다. 「…」만 남는 것보다
-    정해둔 문장이라도 나가는 편이 낫다 — 특히 카드를 방금 내려놓은 직후가 그렇다.
-    """
-    with LOCK:
-        r = ROOM["roles"].get(role_id)
-        if not r or r["mode"] != "ai":
-            raise ValueError("AI 배역이 아닙니다")
-        if ROOM["typing"]:
-            raise Busy("다른 배역이 말하는 중입니다")
-        ROOM["typing"] = role_id
-        bump()
-        seq = ROOM["seq"]
-        revealed = list(ROOM["revealed"])
-        table = list(ROOM["table"])
-    c = SC.get_character(role_id)
-    try:
-        system = _role_prompt(role_id, nudge)
-        reply = llm(system, f"이제 '{c['name']}'로서 다음 한마디를 하라 (1~3문장).", 400, fast=True)
-        reply = re.sub(rf"^{re.escape(c['name'])}\s*[:：]\s*", "", reply or "").strip()
-        if not reply:
-            reply = fallback
-    except Exception:
-        if fallback:                       # 모델 쪽이 통째로 막혀도 액션은 나가야 한다
-            with LOCK:
-                entry = {"kind": "ai", "roleId": role_id, "speaker": c["name"], "text": fallback}
-                ROOM["table"].append(entry)
-                _ev("say", who="ai", roleId=role_id, speaker=c["name"], text=fallback)
-                ROOM["typing"] = None
-                bump()
-            return entry
-        with LOCK:
-            ROOM["typing"] = None
-            bump()
-        raise
-    entry = {"kind": "ai", "roleId": role_id, "speaker": c["name"], "text": reply or "…"}
-    with LOCK:
-        ROOM["table"].append(entry)
-        _ev("say", who="ai", roleId=role_id, speaker=c["name"], text=entry["text"])
-        ROOM["typing"] = None
-        bump()
-    return entry
-
-
-@app.post("/api/ai-say")
-def ai_say(b: RoleOnly):
-    try:
-        _speak(b.roleId)
-    except Busy as e:
-        return JSONResponse({"error": str(e)}, status_code=429)
-    except ValueError as e:
-        return JSONResponse({"error": str(e)}, status_code=409)
-    except Exception as e:  # noqa: BLE001
-        return JSONResponse({"error": str(e)}, status_code=502)
-    return {"ok": True}
-
-
-def _addressed_in(text: str, exclude: str = "") -> list[str]:
-    """대사 안에서 이름이 불린 배역들. 이름을 부르면 그 사람이 대답한다 — 대화가 이어지는 핵심."""
-    out = []
-    for ch in SC.CHARACTERS:
-        if ch["id"] == exclude:
-            continue
-        if ch["name"] in text or ch["name"][1:] in text:   # '문재이' / '재이' 둘 다
-            out.append(ch["id"])
-    return out
-
-
-def _pick_reactor(exclude: list[str] | None = None) -> str | None:
-    """지금 한마디 하기에 가장 자연스러운 AI 배역을 고른다.
-
-    진행 세션이 매번 '누가 말할 차례냐'를 직접 판단하면 부담이 크고, 결국 한두 명만
-    계속 떠들게 된다. 그래서 서버가 고른다 — 최근에 말한 사람은 빼고, 방금 공개된
-    카드가 자기 구역·관심사인 배역에 가중치를 준다.
-    """
-    exclude = set(exclude or [])
-    with LOCK:
-        ais = [rid for rid, r in ROOM["roles"].items() if r["mode"] == "ai" and rid not in exclude]
-        if not ais:
-            return None
-        # 최근 발언자 2명은 연속 발언을 피한다(그래도 후보가 없으면 되살린다)
-        recent = [t.get("roleId") for t in ROOM["table"][-4:] if t.get("roleId")]
-        fresh = [rid for rid in ais if rid not in recent[-2:]] or ais
-        last_card = ROOM["revealed"][-1] if ROOM["revealed"] else None
-        seq = ROOM["seq"]
-        last = ROOM["table"][-1] if ROOM["table"] else {}
-        last_text = str(last.get("text") or "")
-        last_from = str(last.get("roleId") or "")
-        spoke_n = {rid: sum(1 for t in ROOM["table"] if t.get("roleId") == rid) for rid in ais}
-    card = SC.get_card(last_card) if last_card else None
-    ai_cfg = getattr(SC, "INVEST_AI", {})
-    chat_cfg = getattr(SC, "CHAT_AI", {})
-    called = set(_addressed_in(last_text, exclude=last_from))
-
-    def score(rid: str) -> tuple[float, int]:
-        s = 0.0
-        cfg = ai_cfg.get(rid) or {}
-        if rid in called:
-            s += 8.0                                       # 이름이 불렸으면 대답할 차례다
-        if card:
-            if card.get("loc") in (cfg.get("home") or []):
-                s += 3.0                                   # 방금 열린 곳이 자기 구역이면 할 말이 있다
-            s += float((cfg.get("interest") or {}).get(card["id"], 0) or 0)
-        s += 2.0 * float((chat_cfg.get(rid) or {}).get("talk", 1.0))   # 원래 말이 많은 사람
-        s -= spoke_n.get(rid, 0) * 0.8                     # 적게 말한 사람에게 자리를 준다
-        return (s, -zlib.crc32(f"{rid}:{seq}".encode()) % 997)   # 동점은 결정적으로 가른다
-
-    return max(fresh, key=score)
-
-
-def _pick_nudge(rid: str) -> str:
-    """이번 한마디의 결을 고른다. 매번 같은 결이면 금세 기계처럼 들린다."""
-    nudges = getattr(SC, "CHAT_NUDGES", {})
-    if not nudges:
-        return ""
-    with LOCK:
-        last = ROOM["table"][-1] if ROOM["table"] else {}
-        n_lines = len(ROOM["table"])
-    ask_w = float((getattr(SC, "CHAT_AI", {}).get(rid) or {}).get("ask", 1.0))
-    # 앞사람이 방금 말했으면 받아치는 쪽이 자연스럽고, 정적이 흘렀으면 새 화제를 꺼내야 한다.
-    weights = {
-        "react": 3.0 if last.get("text") else 0.5,
-        "ask":   2.2 * ask_w,
-        "press": 1.6 if last.get("kind") in ("ai", "human") else 0.3,
-        "raise": 1.4,
-        "mood":  0.7 if n_lines % 5 == 0 else 0.25,        # 가끔만. 자주 하면 겉돈다
-    }
-    keys = [k for k in weights if k in nudges]
-    tot = sum(weights[k] for k in keys) or 1.0
-    r = random.random() * tot
-    for k in keys:
-        r -= weights[k]
-        if r <= 0:
-            return nudges[k]
-    return nudges.get("react", "")
-
-
-# ── 자발 대화 ─────────────────────────────────────────────────────
-# AI 배역이 불릴 때만 말하면 자판기처럼 보인다. 조용한 시간이 일정 이상 흐르면
-# 서버가 스스로 한 명을 골라 말하게 한다. 사람이 말하면 물러나고, AI만 계속
-# 떠들면 간격을 벌려서 사람이 낄 자리를 만든다.
-CHAT = {
-    "on": os.getenv("AUTO_CHAT", "1") != "0",
-    "gap": float(os.getenv("AUTO_CHAT_GAP", "13")),   # 기본 침묵 허용치(초)
-    "seenLen": 0, "lastAt": 0.0, "streak": 0, "busy": False,
-}
-
-
-def _chat_gap_now(ph: dict) -> float:
-    """지금 얼마나 조용해야 AI가 입을 여는가."""
-    gap = CHAT["gap"]
-    if int(ph.get("ap", 0) or 0) > 0:
-        gap *= 2.6                       # 조사 페이즈 — 다들 카드 보는 중이라 조용해야 한다
-    gap *= 1.0 + CHAT["streak"] * 0.55   # AI만 연달아 떠들수록 물러난다
-    return gap
-
-
-def _chatter_tick():
-    if not CHAT["on"]:
-        return
-    now = time.monotonic()
-    with LOCK:
-        ph = SC.phase_by_seq(ROOM["seq"])
-        n = len(ROOM["table"])
-        typing = ROOM["typing"]
-        last = ROOM["table"][-1] if ROOM["table"] else {}
-        has_ai = any(r["mode"] == "ai" for r in ROOM["roles"].values())
-    if ph.get("key") == "reveal" or not has_ai:
-        return
-    if n != CHAT["seenLen"]:              # 방금 누가 말했다 — 시계를 다시 잡는다
-        CHAT["seenLen"] = n
-        CHAT["lastAt"] = now
-        CHAT["streak"] = CHAT["streak"] + 1 if last.get("kind") == "ai" else 0
-        return
-    if typing or CHAT["busy"]:
-        return
-    if now - CHAT["lastAt"] < _chat_gap_now(ph):
-        return
-    CHAT["busy"] = True
-    try:
-        _run_queued_act() or _run_free_talk()
-    except Exception:                    # 한 번 실패해도 루프는 계속 돈다
-        pass
-    finally:
-        CHAT["busy"] = False
-        CHAT["lastAt"] = time.monotonic()
-
-
-def _run_queued_act() -> bool:
-    """예약된 액션 하나를 내보낸다. 카드를 내려놓은 직후의 해석, 몰린 사람에 대한 추궁.
-
-    액션은 정적 대기(_chat_gap_now)를 건너뛴다 — 사건과 붙어 있어야 무슨 얘긴지 통한다.
-    """
-    with LOCK:
-        q = ROOM.get("aiActs") or []
-        act = None
-        while q:
-            a = q.pop(0)
-            r = ROOM["roles"].get(a["roleId"])
-            if r and r["mode"] == "ai":       # 그 사이 사람이 그 배역을 잡았으면 버린다
-                act = a
-                break
-        if not act:
-            return False
-        seed = f'{act["roleId"]}|{act["kind"]}|{len(ROOM["table"])}'
-    _speak(act["roleId"], _act_nudge(act["kind"], act["fmt"]),
-           _act_fallback(act["kind"], act["fmt"], seed, act["roleId"]))
-    return True
-
-
-def _run_free_talk() -> bool:
-    """정적이 흘렀을 때의 자발 발언. 공개된 것이 한 사람을 가리키면 추궁으로 바꾼다."""
-    rid = _pick_reactor()
-    if not rid:
-        return False
-    with LOCK:
-        target, why, why1 = _public_suspect(exclude=rid)
-        n = len(ROOM["table"])
-    # 근거가 쌓였을 때만, 그리고 매번은 아니게. 계속 몰아세우면 대화가 한 방향으로 굳는다.
-    if target and why and n % 3 == 0:
-        who = (SC.get_character(target) or {}).get("name", "")
-        if who:
-            fmt = {"who": who, "why": why, "why1": why1}
-            _speak(rid, _act_nudge("blame", fmt), _act_fallback("blame", fmt, f"{rid}|{n}", rid))
-            return True
-    _speak(rid, _pick_nudge(rid))
-    return True
-
-
-def _chatter_loop():
-    while True:
-        time.sleep(2.0)
-        try:
-            _chatter_tick()
-        except Exception:                # noqa: BLE001
-            pass
-
-
-# ── AI 배역 조사 차례 자동 진행 ────────────────────────────────────────────────
-# 사람이 없는 배역의 차례가 오면 아무도 카드를 뽑지 않아 순번이 그 자리에 선다.
-# 진행석에서 버튼을 눌러야 넘어가면 호스트가 화면을 닫는 순간 판이 멈추므로,
-# 서버가 스스로 처리한다. 다만 차례가 넘어오자마자 해치우면 사람들이 무슨 일이
-# 지나갔는지 못 읽는다 — 차례가 AI에게 온 뒤 잠깐 뜸을 들이고 나서 뽑는다.
-# 사람 차례는 절대 대신 넘기지 않는다. 서버는 그 자리에서 기다린다.
-AUTO_TURN = {
-    "on": os.getenv("AUTO_TURN", "1") != "0",
-    # AI 차례 하나에 10초를 쓰면 다섯이면 한 바퀴가 1분이다. 사람은 그동안 할 게 없다.
-    # 이 시간은 연출이 아니라 순수한 대기라서, 「방금 뭔가 일어났다」가 읽힐 만큼만 남긴다.
-    "delay": float(os.getenv("AUTO_TURN_DELAY", "2.5")),  # AI에게 차례가 온 뒤 기다리는 초
-    "key": None,        # 지금 재고 있는 차례 (seq, roleId)
-    "seq": None,        # idle 카운터를 리셋할 기준 페이즈
-    "since": 0.0,       # 그 차례가 시작된 시각(monotonic)
-    "idle": 0,          # 아무것도 못 뽑고 넘긴 횟수 — 한 바퀴 헛돌면 멈춘다
-}
-
-
-def _auto_turn_tick():
-    if not AUTO_TURN["on"]:
-        return
-    now = time.monotonic()
-    with LOCK:                       # 판단에 필요한 것만 짧게 읽고 바로 놓는다
-        seq = ROOM["seq"]
-        ph = SC.phase_by_seq(seq)
-        turn = ROOM.get("turn")
-        started = bool(ROOM.get("started"))
-        mode = (ROOM["roles"].get(turn) or {}).get("mode") if turn else None
-        remaining = (_ap_for(seq) - _round_checks(turn, current_round(seq))) if turn else 0
-        lap = len(_turn_order())
-        blocked = _crisis_blocking()   # 침수 대응 중에는 시계도 멈춘다
-    if AUTO_TURN["seq"] != seq:      # 페이즈가 바뀌면 헛돌기 카운터를 푼다
-        AUTO_TURN["seq"] = seq
-        AUTO_TURN["idle"] = 0
-    key = (seq, turn)
-    if key != AUTO_TURN["key"]:      # 차례가 막 바뀌었다 — 시계를 다시 잡고 이번엔 넘어간다
-        AUTO_TURN["key"] = key
-        AUTO_TURN["since"] = now
-        return
-    if not started or ph.get("key") != "invest" or not turn or blocked:
-        return
-    if mode != "ai":                 # 사람 차례 — 대신 넘기지 않는다
-        return
-    if remaining <= 0:               # 이번 라운드 몫을 이미 다 썼다(페이즈 진행은 호스트 몫)
-        return
-    if AUTO_TURN["idle"] > lap:      # 한 바퀴 돌도록 아무도 뽑을 게 없었다 — 그만 돌린다
-        return
-    if now - AUTO_TURN["since"] < AUTO_TURN["delay"]:
-        return
-    with LOCK:
-        # 기다리는 사이 판이 바뀌었을 수 있다 — 잡고 나서 한 번 더 확인한다
-        if (ROOM["seq"], ROOM.get("turn")) != key or not ROOM.get("started"):
-            return
-        if SC.phase_by_seq(ROOM["seq"]).get("key") != "invest":
-            return
-        if (ROOM["roles"].get(turn) or {}).get("mode") != "ai":
-            return
-        picks = _ai_take_turn(turn)
-    AUTO_TURN["idle"] = 0 if picks else AUTO_TURN["idle"] + 1
-    AUTO_TURN["since"] = time.monotonic()
-
-
-def _auto_turn_loop():
-    while True:
-        # 틱이 2초면 2.5초짜리 대기가 실제로는 4초가 된다. 다섯 명이면 그 차이가 10초다.
-        time.sleep(0.5)
-        try:
-            _auto_turn_tick()
-        except Exception:                # noqa: BLE001  한 번 실패해도 루프는 계속 돈다
-            pass
-
-
-@app.on_event("startup")
-def _start_loops():
-    threading.Thread(target=_chatter_loop, daemon=True).start()
-    threading.Thread(target=_auto_turn_loop, daemon=True).start()
-
-
-@app.post("/api/chat")
-def chat_ctl(b: ChatCtl):
-    """자발 대화 on/off와 속도. 토론이 뜨거우면 끄고, 식으면 켠다."""
-    if not (_agent_ok(b.key) or _is_host(b.clientId) or ROOM.get("host") is None):
-        return JSONResponse({"error": "권한 없음"}, status_code=403)
-    if b.on is not None:
-        CHAT["on"] = bool(b.on)
-        CHAT["lastAt"] = time.monotonic()
-    if b.gap is not None:
-        CHAT["gap"] = max(4.0, min(90.0, float(b.gap)))
-    with LOCK:
-        bump()
-    return {"ok": True, "on": CHAT["on"], "gap": CHAT["gap"]}
-
-
-@app.post("/api/ai-react")
-def ai_react(b: TurnReq):
-    """AI 배역 중 하나를 골라 한마디 시킨다 — 진행 세션의 '누구 시킬까' 부담을 덜어준다."""
-    rid = b.roleId or _pick_reactor()
-    if not rid:
-        return JSONResponse({"error": "AI 배역이 없습니다"}, status_code=409)
-    try:
-        entry = _speak(rid, _pick_nudge(rid))
-    except Busy as e:
-        return JSONResponse({"error": str(e)}, status_code=429)
-    except ValueError as e:
-        return JSONResponse({"error": str(e)}, status_code=409)
-    except Exception as e:  # noqa: BLE001
-        return JSONResponse({"error": str(e)}, status_code=502)
-    CHAT["lastAt"] = time.monotonic()          # 방금 말했으니 자발 발언 시계를 다시 잡는다
-    return {"ok": True, "roleId": rid, "speaker": entry["speaker"], "text": entry["text"]}
-
-
-def _grade(c: dict, answers: list[str]) -> dict:
-    raw = llm(SC.build_grade_prompt(c, answers), "채점 JSON만 출력하라.", 500)
-    o = _parse_json(raw)
-    ncount = len(c["sins"]) if c["sins"] else 0
-    g = {
-        "name": c["name"],
-        "selfAccused": bool(o.get("selfAccused", False)),
-        "sinsAcknowledged": max(0, min(ncount, int(o.get("sinsAcknowledged", 0) or 0))),
-        "osewonIdentified": bool(o.get("osewonIdentified", False)),
-        "score": max(0, min(40, int(o.get("score", 0) or 0))),
-        "verdict": str(o.get("verdict", "") or ""),
-    }
-    # 후더닛 시나리오(예: subway)용 추가 필드 — 있을 때만 보존(자기지목형 시나리오엔 영향 없음).
-    if "culpritGuess" in o:
-        g["culpritGuess"] = str(o.get("culpritGuess") or "unknown")
-    if "correct" in o:
-        g["correct"] = bool(o.get("correct", False))
-    if "cluesFound" in o:
-        g["cluesFound"] = max(0, int(o.get("cluesFound", 0) or 0))
-    if isinstance(o.get("tags"), list):
-        g["tags"] = o["tags"]
-    return g
-
-
+# ── 종막 — 서술 답변은 기록으로 남고, 엔딩은 지목표가 정한다 ──────
 @app.post("/api/final-answers")
 def final_answers(b: FinalAnswers):
+    """종막 질문지의 서술 답변. 채점하지 않는다 — 그대로 보관한다.
+
+    사람 셋이 하는 판이라 채점자가 없다. 서술은 진행석과 큰 화면에서 다 같이
+    읽는 기록이고, 엔딩을 가르는 것은 그 옆의 지목표다(SC.compute_ending).
+    """
     with LOCK:
         r = ROOM["roles"].get(b.roleId)
         if not r or r["clientId"] != b.clientId:
             return JSONResponse({"error": "그 배역의 답이 아닙니다"}, status_code=403)
-    # 백엔드(API 키)가 없으면 AI 채점 대신 답변을 보관 → 진행자(GM)가 채점/엔딩 내레이션
-    if not backend_ready()[0]:
-        with LOCK:
-            ROOM["finalAnswers"][b.roleId] = list(b.answers)
-            bump()
-        return {"pending": True, "answers": list(b.answers)}
-    c = SC.get_character(b.roleId)
-    try:
-        grade = _grade(c, b.answers)
-    except Exception as e:  # noqa: BLE001
-        return JSONResponse({"error": str(e)}, status_code=502)
-    with LOCK:
-        ROOM["grades"][b.roleId] = grade
         ROOM["finalAnswers"][b.roleId] = list(b.answers)
         bump()
-    return {"grade": grade}
-
-
-@app.post("/api/ai-final")
-def ai_final(b: RoleOnly):
-    with LOCK:
-        r = ROOM["roles"].get(b.roleId)
-        if not r or r["mode"] != "ai":
-            return JSONResponse({"error": "AI 배역이 아닙니다"}, status_code=409)
-        revealed = list(ROOM["revealed"])
-        table = list(ROOM["table"])
-    c = SC.get_character(b.roleId)
-    try:
-        raw = llm(SC.build_final_answer_prompt(c, revealed, table), "JSON만 출력하라.", 700)
-        answers = _parse_json(raw).get("answers", [])
-        if not isinstance(answers, list) or not answers:
-            answers = ["(답변 없음)"]
-        grade = _grade(c, [str(x) for x in answers])
-    except Exception as e:  # noqa: BLE001
-        return JSONResponse({"error": str(e)}, status_code=502)
-    with LOCK:
-        ROOM["grades"][b.roleId] = grade
-        bump()
-    return {"answers": answers, "grade": grade}
+    return {"ok": True, "answers": list(b.answers)}
 
 
 @app.post("/api/reset")
@@ -4224,11 +3060,9 @@ def lan_ip() -> str:
 
 if __name__ == "__main__":
     import uvicorn
-    ok, label = backend_ready()
     ip = lan_ip()
     print("=" * 56)
-    print("  PIMMmurderboard · 졸업사진(卒業寫眞)")
-    print(f"  AI 백엔드: {label}" + ("" if ok else "  ⚠ (미준비 — .env 확인)"))
+    print(f"  {SC.TITLE} — 사람 셋이서 하는 머더미스터리")
     print("  브라우저에서 열기:")
     print(f"    이 컴퓨터    →  http://127.0.0.1:{PORT}")
     print(f"    같은 와이파이 →  http://{ip}:{PORT}   (폰·다른 PC는 이 주소로)")

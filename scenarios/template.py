@@ -6,6 +6,9 @@
 돌아갑니다 — 배역을 고르고, 오프닝을 보고, 세 구역을 뒤지고, 토론하고,
 지목하고, 진상까지 갑니다. 다만 내용이 전부 자리표시자라 재미는 없습니다.
 
+**좌석은 전부 사람입니다.** AI 배역이 없으니 연기 지시도 채점 프롬프트도
+안 씁니다. 엔딩은 종막 지목표만으로 갈립니다 — 맨 아래 compute_ending 입니다.
+
 ## 쓰는 법
 
 1. 이 파일을 `scenarios/<내사건id>.py` 로 복사합니다.
@@ -32,10 +35,8 @@
 | `ZONE_LOCK` | 라운드별 구역 잠금 |
 | `PHASE_REVEAL` | 그 막이 열리면 저절로 테이블에 오르는 카드 |
 | `CARD_PAIRS` / 카드의 `combo` | 두 조각이 맞물리면 저절로 열리는 카드 |
-| `INTERROGATE` · `INTERROGATE_SELF` | 심층심문의 대사·판정표 |
 | `ROOMS` | 구역 배경 그림 (`assets/{ID}_room_{art}.webp`) |
 | `TURN_ORDER` | 조사 순번 고정 |
-| `INVEST_AI` | AI 배역이 무엇부터 뒤지는가 |
 
 전체 목록은 `docs/시나리오_인터페이스.md` 에 있습니다.
 """
@@ -134,7 +135,7 @@ TIMELINE = [
 TRUTH_FULL = (
     "여기에 사건의 진상을 통째로 적습니다.\n"
     "누가 왜 무엇을 했는지, 그리고 왜 다른 사람들이 그걸 못 봤는지까지.\n"
-    "이 글이 채점의 기준이 되므로 애매하게 적으면 채점도 애매해집니다."
+    "종막에서 이 글을 다 같이 읽고 판을 닫습니다."
 )
 
 # ── 막 ────────────────────────────────────────────────────────────
@@ -181,11 +182,10 @@ HIDDEN_ID = ""                       # 정체가 따로 있는 배역(있으면)
 #   storyToday 오늘 일어난 일 (긴 글 가능)
 #   past       [{"w": 시각, "t": 일어난 일}] — 「사건 당일, 나는」 타임라인
 #   hide       감출 것. ★ 가 많을수록 치명적이라는 뜻으로 씁니다
-#   goals      [{"t": 목표, "p": 점수}] — 종막 채점의 축
-#   sins       채점자가 「이 배역의 죄」로 읽는 목록
+#   goals      [{"t": 목표, "p": 점수}] — 이 배역이 오늘 노리는 것
+#   sins       이 배역의 죄. 진상 공개에서 읽어줄 몫
 #   tips       진행자 참고용. private_sheet 에서 내보낼지는 아래에서 정합니다
 #   knows      판 시작부터 아는 카드 id 목록
-#   ai_note    AI가 맡았을 때의 연기 지시. 무엇을 절대 말하면 안 되는지를 여기 적습니다
 CHARACTERS = [
     {
         "id": "alpha", "name": "배역 하나", "age": "40", "sex": "여",
@@ -200,11 +200,10 @@ CHARACTERS = [
         "storyPast": "지난 과거를 적습니다.",
         "storyToday": "오늘 일어난 일을 적습니다.",
         "hide": ["★ 이게 나오면 곤란한 것", "그냥 말하기 싫은 것"],
-        "sins": ["채점자가 죄로 읽을 것"],
+        "sins": ["진상 공개에서 읽어줄 죄"],
         "goals": [{"t": "★ 가장 큰 목표", "p": 6}, {"t": "두 번째 목표", "p": 3}],
         "tips": ["이 배역을 어떻게 굴리는가 — 처음 하는 사람이 제일 막막해하는 자리."],
         "knows": [],
-        "ai_note": "무고자다. ★ 감출 것은 어떤 압박에도 끝까지 말하지 마라.",
     },
     {
         "id": "beta", "name": "배역 둘", "age": "35", "sex": "남",
@@ -219,11 +218,10 @@ CHARACTERS = [
         "storyPast": "지난 과거를 적습니다.",
         "storyToday": "오늘 일어난 일을 적습니다.",
         "hide": ["★ 이게 나오면 곤란한 것"],
-        "sins": ["채점자가 죄로 읽을 것"],
+        "sins": ["진상 공개에서 읽어줄 죄"],
         "goals": [{"t": "★ 가장 큰 목표", "p": 6}, {"t": "두 번째 목표", "p": 3}],
         "tips": ["이 배역을 어떻게 굴리는가."],
         "knows": [],
-        "ai_note": "무고자다. 묻지 않은 것을 먼저 말하지 마라.",
     },
     {
         "id": "gamma", "name": "배역 셋", "age": "28", "sex": "남",
@@ -242,7 +240,6 @@ CHARACTERS = [
         "goals": [{"t": "★ 끝까지 안 걸린다", "p": 8}, {"t": "두 번째 목표", "p": 3}],
         "tips": ["몰릴 때 변명하지 말고 「지금은 말 안 한다」로 버티는 게 덜 몰린다."],
         "knows": [],
-        "ai_note": "★ 네가 범인이다. 절대 자백하지 마라. 최후의 선택 전에는 자기지목 금지.",
     },
 ]
 
@@ -272,7 +269,7 @@ NPC_LINES = {
 #   requires 먼저 밝혀져야 하는 카드 id
 #   combo    [id, id] 두 조각이 모이면 저절로 열립니다
 #   gone     이 라운드부터는 그 자리가 사라집니다
-#   bait     미끼 카드 표시 (채점·AI 가중치에 씁니다)
+#   bait     미끼 카드 표시
 #   hot      화면에서 붉게 표시됩니다
 CARDS = [
     {"id": "A1", "loc": "A", "locName": "발견된 자리", "round": 1,
@@ -344,13 +341,6 @@ OPENING_CUTS = [
      "lines": ["밖으로 나가는 길은 하나뿐이었다.", "그러니 이 안에 있는 사람 중 하나가 한 일이다."]},
 ]
 
-# AI 배역이 무엇부터 뒤지는가. home = 자연히 향하는 구역,
-# interest = 카드 가중치(음수면 피한다), role = normal / troll(진범은 자기 것을 감춘다)
-INVEST_AI = {
-    "alpha": {"home": ["B"], "interest": {"B1": 2.0, "A2": 1.5}, "role": "normal"},
-    "beta": {"home": ["C"], "interest": {"C1": 2.0, "B2": -3.0}, "role": "normal"},
-    "gamma": {"home": ["A"], "interest": {"A2": -3.0, "C2": 2.0}, "role": "troll"},
-}
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -459,123 +449,27 @@ def public_scenario() -> dict:
     }
 
 
-# ── AI 프롬프트 ───────────────────────────────────────────────────
-def _revealed_cards_text(ids: list) -> str:
-    ls = []
-    for cid in ids:
-        c = get_card(cid)
-        if c:
-            ls.append(f"- [{c['locName']}/{c.get('spot', '')}] {c['title']}: {c['text']}")
-    return "\n".join(ls) or "(아직 공개된 것이 없다)"
+# ── 엔딩 ─────────────────────────────────────────────────────────
+def compute_ending(votes: dict):
+    """종막 지목표로 엔딩을 고른다.
 
+    `votes` 는 `{지목한 배역id: 지목당한 배역id}` 다. 사람 셋이 하는 판이라
+    채점자가 없다 — 서술 답변은 다 같이 읽는 기록으로 남고, 갈리는 것은 이 표다.
 
-def _hand_cards_text(ids) -> str:
-    ls = []
-    for cid in (ids or []):
-        c = get_card(cid)
-        if c:
-            ls.append(f"- [{c['locName']}/{c.get('spot', '')}] {c['title']}: {c['text']}")
-    return "\n".join(ls) or "(손에 든 것이 없다)"
-
-
-def _table_text(table: list) -> str:
-    ls = []
-    for m in table[-40:]:
-        who = m.get("speaker") or m.get("roleId") or ""
-        txt = m.get("text", "")
-        if txt:
-            ls.append(f"{who}: {txt}")
-    return "\n".join(ls) or "(아직 아무 말도 오가지 않았다)"
-
-
-def _dossier_text(c: dict) -> str:
-    past = "\n".join(f"  {r['w']} — {r['t']}" for r in c.get("past", []))
-    hide = "\n".join(f"  · {x}" for x in c.get("hide", []))
-    goals = "\n".join(f"  · {g['t']} (+{g['p']})" for g in c.get("goals", []))
-    return (f"이름 {c['name']} ({c.get('age', '')}, {c['job']})\n"
-            f"말투: {c['persona']}\n\n"
-            f"[내력]\n{past}\n\n"
-            f"[오늘]\n{c.get('storyToday', '')}\n\n"
-            f"[감출 것]\n{hide}\n\n"
-            f"[목표]\n{goals}\n\n"
-            f"[연기 지시]\n{c.get('ai_note', '')}")
-
-
-def build_play_prompt(c, seq, revealed_ids, table, nudge="", hand_ids=None,
-                      crisis_solved=None) -> str:
-    ph = phase_by_seq(seq)
-    return f"""너는 《{TITLE}》의 '{c['name']}' 배역이다. 지금은 「{ph['name']}」이다.
-
-[너의 대본]
-{_dossier_text(c)}
-
-[네가 지금 손에 든 것 — 아직 아무도 모른다]
-{_hand_cards_text(hand_ids)}
-
-[공개된 것]
-{_revealed_cards_text(revealed_ids)}
-
-[대화]
-{_table_text(table)}
-
-{nudge}
-
-한국어로 한두 문장만 말하라. 배역의 말투를 지켜라.
-감출 것은 감춘 채로 말하되 거짓말을 새로 지어내지는 마라 — 말을 아끼는 쪽이 낫다.
-JSON만 출력하라: {{"say": "할 말"}}"""
-
-
-def build_final_answer_prompt(c, revealed_ids, table) -> str:
-    qs = "\n".join(f"{i + 1}. {q}" for i, q in enumerate(FINAL_QUESTIONS))
-    return f"""너는 《{TITLE}》의 '{c['name']}'다. 종막이다. 아래 질문에 배역으로서 답하라.
-
-[너의 대본]
-{_dossier_text(c)}
-
-[공개된 것]
-{_revealed_cards_text(revealed_ids)}
-
-[대화]
-{_table_text(table)}
-
-[질문]
-{qs}
-
-각 질문에 2~4문장씩, 아래 JSON으로만 답하라:
-{{"answers": [{", ".join('"' + str(i + 1) + '번 답"' for i in range(len(FINAL_QUESTIONS)))}]}}"""
-
-
-def build_grade_prompt(c, answers) -> str:
-    sins = "\n".join(f"- {s}" for s in c.get("sins", [])) or "- (해당 없음)"
-    a = "\n".join(f"Q{i + 1}. {q}\nA. {answers[i] if i < len(answers) else ''}"
-                  for i, q in enumerate(FINAL_QUESTIONS))
-    return f"""너는 《{TITLE}》의 채점자다.
-
-[사건의 진상(정답)]
-{TRUTH_FULL}
-
-[이 배역 '{c['name']}'의 죄]
-{sins}
-
-[종막 답변]
-{a}
-
-채점 기준:
-- culpritNamed: 1번 답에서 진범({get_character(CULPRIT_ID)['name'] if get_character(CULPRIT_ID) else '?'})을 맞혔으면 true
-- sinsAcknowledged: 위 죄 목록 중 스스로 인정한 개수
-- score: 0~40 정수 (스스로 인정한 것에 후하게, 남 탓에 박하게)
-- verdict: 이 배역의 종막을 1~2문장으로
-
-아래 JSON으로만 답하라:
-{{"culpritNamed": true, "sinsAcknowledged": 0, "score": 0, "verdict": "..."}}"""
-
-
-def compute_ending(grades: dict):
-    """채점 결과로 엔딩을 고릅니다. 아직 다 안 채점됐으면 None 을 돌려주세요."""
-    if not grades:
+    아직 다 안 적었으면 None 을 돌려주세요. 그러면 화면이 엔딩을 안 엽니다.
+    """
+    if len(votes) < len(CHARACTERS):
         return None
-    hit = [rid for rid, g in grades.items() if g.get("culpritNamed")]
-    key = "caught" if len(hit) * 2 >= len(grades) else "missed"
+    tally = {}
+    for t in votes.values():
+        tally[t] = tally.get(t, 0) + 1
+    top = max(tally.values())
+    lead = sorted(t for t, v in tally.items() if v == top)
+    # 표가 갈리면 아무도 안 잡힌 것으로 본다. 「제일 많이 불린 이름」이 하나여야 검거다.
+    caught = (len(lead) == 1 and lead[0] == CULPRIT_ID)
+    key = "caught" if caught else "missed"
     e = ENDINGS[key]
+    hit = sorted(rid for rid, t in votes.items() if t == CULPRIT_ID)
     return {"key": key, "name": e["name"], "tone": e["tone"], "desc": e["desc"],
+            "culprit": CULPRIT_ID, "tally": tally, "lead": lead,
             "accused": hit, "truth": TRUTH_FULL}

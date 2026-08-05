@@ -344,70 +344,6 @@
   /* 결말이 모두에게 얹어주는 몫 — 맞히고 틀린 것과는 다른 축이라 색을 가른다 */
   .pill.bonus{color:var(--gold-b);border-color:color-mix(in srgb,var(--gold) 55%,transparent);
     background:rgba(140,110,50,.16)}
-  /* 심층심문(취조) — 채팅 로그 안의 결과 카드 */
-  .itg-badge{margin-left:6px;font-size:10.5px;font-weight:800;letter-spacing:.04em;
-    border:1px solid var(--line);border-radius:20px;padding:1px 7px;color:var(--muted);vertical-align:1px}
-  .itg-msg.truth .itg-badge{color:#ff8a8a;border-color:#7a2c2c;background:rgba(122,44,44,.18)}
-  .itg-msg.evasive .itg-badge{color:var(--sub)}
-  .itg-msg.unknown .itg-badge{color:var(--sub)}
-  .itg-msg.plain .itg-badge{color:var(--cold);border-color:#2c465a;background:rgba(44,70,90,.18)}
-  .itg-msg .bub{white-space:pre-wrap}
-  .itg-msg.truth .bub{border-color:#7a2c2c;background:#2a1214}
-  .itg-msg.plain .bub{border-color:#2c465a;background:#0e1620}
-  .itg-by{margin-top:4px;font-size:10.5px;color:var(--muted)}
-  /* 심층심문 패널 — 토론 페이즈. 남은 횟수를 계기판처럼 크게 세운다. */
-  .ig-go{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;
-    padding:12px 14px;border:1px solid var(--ember);border-radius:13px;
-    background:linear-gradient(150deg,rgba(40,12,10,.9),rgba(20,18,17,.95))}
-  .ig-go .gauge{display:flex;flex-direction:column;line-height:1.15;min-width:64px}
-  .ig-go .gauge b{font-size:26px;color:var(--ember-b);font-variant-numeric:tabular-nums}
-  .ig-go .gauge span{font-size:10.5px;letter-spacing:.16em;color:var(--muted)}
-  .ig-go .gbtns{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
-  /* 심문 팝업 — 대상 → 무엇을 → 증거 → 확인, 한 창 안에서 한 걸음씩 */
-  .ig-step{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px;font-size:11px;letter-spacing:.06em}
-  .ig-step i{font-style:normal;color:var(--muted);padding:3px 9px;border-radius:12px;border:1px solid var(--line)}
-  .ig-step i.on{color:var(--ember-b);border-color:var(--ember)}
-  .ig-step i.done{color:var(--sub)}
-  .ig-step u{text-decoration:none;color:var(--muted)}
-  .ig-people{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,148px),1fr));gap:9px}
-  .ig-p{display:flex;align-items:center;gap:9px;text-align:left;padding:11px 12px;border-radius:12px;
-    border:1px solid var(--line);background:var(--panel2);color:inherit;font-family:inherit;cursor:pointer;transition:.15s}
-  .ig-p:hover:not(:disabled){border-color:var(--pc,var(--gold))}
-  .ig-p:disabled{opacity:.38;cursor:not-allowed}
-  .ig-p .av{font-size:22px;flex:0 0 auto}
-  .ig-p .nm{font-weight:700;font-size:13.5px;color:var(--pc,var(--ink));display:block}
-  .ig-p .sub{font-size:11.5px;color:var(--muted);display:block}
-  .ig-spots{display:flex;flex-direction:column;gap:7px}
-  .ig-spot{text-align:left;padding:11px 13px;border-radius:11px;border:1px solid var(--line);
-    background:var(--panel2);color:inherit;font-family:inherit;font-size:13.5px;cursor:pointer;transition:.15s}
-  .ig-spot:hover{border-color:var(--ember)}
-  .ig-spot .sw{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
-  .ig-evlist{display:flex;flex-direction:column;gap:7px}
-  .ig-ev{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:10px 13px;
-    font-size:13px;cursor:pointer;color:inherit;font-family:inherit;text-align:left;transition:.15s}
-  .ig-ev:hover{border-color:var(--gold)}
-  .ig-ev.on{border-color:var(--ember);color:var(--ember-b);box-shadow:0 0 0 1px var(--ember) inset}
-  .ig-ev.bare{border-style:dashed}
-  .ig-ev .ew{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
-  /* 확인 — 여기서 한 번 멈춘다. 두 번뿐인 기회가 헛손질 한 번에 날아가지 않게. */
-  /* 사람을 바로 붙잡는 길 — 카드 목록 위에 따로 세워 «다른 종류의 수»라는 게 보이게 한다. */
-  .ig-selfbtn{display:block;width:100%;text-align:left;font-family:inherit;cursor:pointer;
-    background:linear-gradient(160deg,rgba(160,40,30,.16),var(--panel2));border:1px solid var(--ember-b);
-    border-radius:12px;padding:13px 14px;color:var(--ink);font-size:14px;font-weight:700;transition:.15s}
-  .ig-selfbtn:hover{filter:brightness(1.1)}
-  .ig-selfbtn .sw{display:block;margin-top:5px;font-size:11.5px;font-weight:400;color:var(--sub);
-    line-height:1.6;word-break:keep-all}
-  .ig-or{margin:16px 0 8px;font-size:11.5px;letter-spacing:.08em;color:var(--muted);font-weight:700}
-  .ig-sum{display:flex;flex-direction:column;gap:9px}
-  .ig-sum .r{display:flex;gap:10px;align-items:baseline;padding:10px 13px;border-radius:11px;
-    background:var(--panel2);border:1px solid var(--line)}
-  .ig-sum .r .k{font-size:11px;letter-spacing:.14em;color:var(--muted);flex:0 0 62px}
-  .ig-sum .r .v{font-size:14px;font-weight:700;word-break:keep-all}
-  .ig-warn{margin-top:12px;font-size:12.5px;color:var(--warn);line-height:1.7;word-break:keep-all}
-  .ig-out{border:1px solid var(--line);border-radius:12px;padding:13px 15px;background:var(--panel2)}
-  .ig-out.truth{border-color:#7a2c2c;background:#2a1214}
-  .ig-out.plain{border-color:#2c465a;background:#0e1620}
-  .ig-out .ln{margin-top:9px;font-size:14px;line-height:1.8;white-space:pre-wrap;color:#e3e2e1}
   .composer{display:flex;gap:8px;padding:9px 12px;border-top:1px solid var(--line);background:var(--bg2);align-items:flex-end}
   /* 이름표를 따로 두지 않는다 — 「오세린이 되어 말하세요」가 그 자리를 대신하고,
      그만큼 입력칸이 길어진다. 좁은 폰에서 이름표가 88px을 먹고 있었다. */
@@ -416,7 +352,6 @@
      확대된 채로 돌아오지 않는다. 타이핑하는 모든 칸의 바닥을 16px로 잡는다. */
   @media (pointer:coarse){
     textarea,input[type="text"],input[type="password"],input[type="search"],input:not([type]),select{font-size:16px}
-    #gmAiRole{font-size:16px}   /* id 선택자라 위 규칙에 안 걸린다 */
   }
   .composer textarea:focus{outline:none;border-color:var(--gold)}.composer textarea:disabled{opacity:.5}
   .banner{position:fixed;left:50%;top:112px;transform:translate(-50%,-14px);z-index:80;
@@ -424,10 +359,6 @@
     padding:9px 15px;font-size:13px;line-height:1.5;text-align:center;border-radius:11px;
     box-shadow:0 12px 30px -10px #000;opacity:0;pointer-events:none;transition:opacity .22s,transform .22s}
   .banner.on{opacity:1;transform:translate(-50%,0)}
-  .aicall{display:flex;gap:6px;flex-wrap:wrap;padding:7px 12px;border-top:1px solid var(--line);background:var(--bg2);align-items:center}
-  .aicall .lb{font-size:11px;color:var(--muted)}
-  .aichip{display:inline-flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:4px 10px;cursor:pointer;font-size:12px}
-  .aichip:hover{border-color:var(--sc)}.aichip .d{width:8px;height:8px;border-radius:50%;background:var(--sc)}
 
   /* 오프닝/토론 패널 */
   .intro{white-space:pre-line;font-size:15px;line-height:1.95;color:#dddcdb;border-left:2px solid var(--ember);padding-left:14px}
@@ -1121,7 +1052,6 @@
   .gm-side-h{padding:10px 14px;font-weight:700;font-size:13px;color:var(--gold-b);border-bottom:1px solid var(--line);flex:0 0 auto}
   .gm-side #gmChat{flex:1 1 auto;overflow-y:auto;min-height:0}
   .gm-side .composer{flex:0 0 auto;border-top:1px solid var(--line)}
-  #gmAiRole{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:8px;font-size:12.5px;font-family:inherit;align-self:center;max-width:120px}
   @media(max-width:820px){ .gm-main{flex-direction:column;overflow-y:auto} .gm-matrix{flex:none;overflow:visible} .gm-side{flex:none;max-width:none;border-left:0;border-top:1px solid var(--line);height:60vh} }
   .gm-guide{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 15px;margin-bottom:14px}
   .gm-guide .g{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--gold-b);border:1px solid var(--gold);border-radius:6px;padding:1px 7px;margin-right:8px}
@@ -1825,7 +1755,7 @@
 
 <div id="s-lobby" class="screen on">
   <div class="wrap">
-    <div class="head"><span class="t serif">배역 선택</span><span class="pill" id="lobbyScen" style="cursor:pointer" title="사건 허브로 돌아가기" onclick="location.href='/'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.4h18M3 14.6h18M8 5v14M16 5v14"/></svg> <span id="lobbyScenName"></span> · 홈으로</span><span class="pill" id="beChip2"></span></div>
+    <div class="head"><span class="t serif">배역 선택</span><span class="pill" id="lobbyScen" style="cursor:pointer" title="사건 허브로 돌아가기" onclick="location.href='/'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.4h18M3 14.6h18M8 5v14M16 5v14"/></svg> <span id="lobbyScenName"></span> · 홈으로</span></div>
     <div class="lead">각자 자기 기기에서 배역을 고르세요. 내 비밀 정보는 이 기기에만 보입니다.</div>
     <div id="lobbyList"></div>
     <div class="setbar">
@@ -1853,7 +1783,6 @@
   </div>
   <div class="banner" id="banner"></div>
   <div class="ppanel" id="ppanel"></div>
-  <div class="aicall" id="aicall"></div>
   <nav class="dock" id="dock">
     <button class="dk here" onclick="dockHome()">
       <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6.4v13.2L9 17.2l6 2.4 6-2.4V4l-6 2.4L9 4Z"/><path d="M9 4v13.2M15 6.4v13.2"/></svg>
@@ -1891,11 +1820,7 @@
     <div class="gm-side">
       <div class="gm-side-h"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 12.4c0 3.7-3.6 6.7-8 6.7a9.6 9.6 0 0 1-2.6-.35L5 20.6l1.2-3.3A6.3 6.3 0 0 1 4.4 12.4c0-3.7 3.6-6.7 8-6.7s8 3 8 6.7Z"/></svg> 테이블 대화 <span style="font-weight:400;color:var(--muted);font-size:11px">플레이어 발언이 실시간으로 뜹니다</span></div>
       <div class="chat" id="gmChat"></div>
-      <div class="aicall" id="gmAiTrig" style="display:none"></div>
       <div class="composer">
-        <select id="gmAiRole" title="AI 배역 선택"></select>
-        <textarea id="gmAiInput" rows="1" placeholder="AI 배역 대사 전송…  (Enter)"></textarea>
-        <button class="btn gold" onclick="gmSay()">전송</button>
       </div>
     </div>
   </div>
@@ -1909,7 +1834,6 @@
 <div class="modal overdock" id="handModal"><div class="box" id="handBox"></div></div>
 <div class="modal" id="trimModal"><div class="box" id="trimBox"></div></div>
 <div class="modal" id="swapModal"><div class="box" id="swapBox"></div></div>
-<div class="modal" id="interrogModal"><div class="box" id="interrogBox"></div></div>
 <!-- 조사 화면 열람창. 구역 팝업(#mapModal)이 이 위로 떠야 하므로 반드시 그보다 앞에 둔다. -->
 <div class="modal overdock" id="lookModal"><div class="box" id="lookBox"></div></div>
 <div class="modal" id="mapModal"><div class="box" id="mapBox"></div></div>
@@ -2020,12 +1944,10 @@ function applyLanding(){
   // 로비 문안을 선택된 시나리오에서 채운다(시나리오 선택 자체는 허브 / 에서 한다)
   $("pTitle").textContent=SCEN.title; document.title=SCEN.title+" — PIMMmurderboard";
   $("lobbyScenName").textContent=SCEN.title;
-  const be=SCEN.backend||{ok:false,label:"?"};
-  $("beChip2").textContent=be.label; $("beChip2").className="pill"+(be.ok?"":" bad");
 }
 async function boot(){
   try{ await loadScenario(); }
-  catch(e){ $("beChip2").textContent="서버 연결 실패"; $("beChip2").className="pill bad"; return; }
+  catch(e){ banner("서버 연결 실패"); return; }
   await poll();
   setInterval(poll,1500);
   // 마지막 10초 동안에는 1.5초가 너무 길다 — 그때만 촘촘히 본다.
@@ -2158,7 +2080,7 @@ function applyState(){
     chatChime();
     // 다음 페이즈·조사 화면·진행석은 ☰ 서랍이 페이즈를 보고 스스로 넣고 뺀다.
     if(ph.key==="invest"&&$("lookModal").classList.contains("on")) closeLook();
-    renderAiCall();
+    
     maybePhaseFx(ph);
   }
 }
@@ -2254,28 +2176,6 @@ function playPhaseFx(ph){
 }
 
 /* AI 배역 진행 (서버 Claude API가 연기) — GM이 눌러 AI 턴 진행 */
-let aiBusy=false;
-/* 답안은 두 군데에 있다 — 이 기기가 낸 것(localStorage)과 방 전체가 낸 것(종막에만 서버가 내려준다).
-   폰이 여섯 대인 방에서는 뒤엣것이 없으면 아무도 전체 묶음을 만들 수 없다. */
-function serverAnswersOf(id){ const m=(STATE&&STATE.finalAnswers)||null; return (m&&m[id])||null; }
-function finalSubmitted(id){ return !!(id&&(localStorage.getItem("pmb.final."+id)!=null||serverAnswersOf(id))); }
-function finalAnswersOf(id){ const sv=serverAnswersOf(id); if(sv) return sv;
-  try{ return JSON.parse(localStorage.getItem("pmb.final."+id)||"null"); }catch(e){ return null; } }
-function backendOn(){ return !!(SCEN&&SCEN.backend&&SCEN.backend.ok); }
-function renderAiCall(){
-  const bar=$("aicall");
-  if(!backendOn()){ bar.style.display="none"; return; }  /* API 키가 있어야 자동 AI. 없으면 GM이 수동 릴레이 */
-  const ph=STATE.phase||{};
-  const ais=SCEN.characters.filter(c=>STATE.roles[c.id]&&STATE.roles[c.id].mode==="ai");
-  if(!ais.length){ bar.style.display="none"; return; }
-  bar.style.display="flex";
-  let h=`<span class="lb">AI 배역</span>`;
-  ais.forEach(c=>{ h+=`<span class="aichip" style="--sc:${c.color}" onclick="aiSay('${c.id}')"><span class="d"></span>${esc(c.name)} 발언</span>`; });
-  if(ais.length>1) h+=`<span class="aichip" style="--sc:var(--gold)" onclick="aiAll()"><span class="d" style="background:var(--gold)"></span>전원</span>`;
-  if(ph.key==="final") ais.forEach(c=>{ if(!(STATE.grades||{})[c.id]) h+=`<span class="aichip" style="--sc:${c.color}" onclick="aiFinal('${c.id}')"><span class="d"></span>${esc(c.name)} 최종답변</span>`; });
-  bar.innerHTML=h;
-}
-async function aiSay(id){ if(aiBusy)return; aiBusy=true; const r=await post("/api/ai-say",{roleId:id}); if(r&&r.error){ if(String(r.error).indexOf("말하는 중")<0) banner("AI 오류: "+r.error);} else banner(""); aiBusy=false; await poll(); }
 /* 오프닝은 읽고 나면 끝이다 — 그 자리에서 바로 다음 막으로 넘어갈 수 있게 한다.
    머리띠의 「다음 막」과 같은 단추이고, 같은 금색 그라데이션을 쓴다. */
 function nextPhaseBlock(){
@@ -2289,8 +2189,6 @@ function nextPhaseBlock(){
 }
 /* 대화는 제 탭이 있다 — 조사화면에 미리보기를 겹쳐 두지 않는다.
    대신 안 읽은 말이 몇 마디인지만 하단바에 얹는다. */
-/* 대화창을 안 보고 있는 동안 쌓인 말 — 하단바에 숫자로 얹는다.
-   대화창 탭이 열려 있거나, 접지 않은 대화 미리보기가 바닥에 붙어 있으면 읽은 것으로 본다. */
 let chatSeen=0;
 function chatLines(){ return (STATE&&STATE.table||[]).filter(m=>m.kind==="ai"||m.kind==="human"||m.kind==="gm").length; }
 function markChatSeen(){ chatSeen=chatLines(); paintChatBadge(); }
@@ -2313,20 +2211,6 @@ function chatChime(){
   chatHeard=n;
   if(fresh.some(m=>m.roleId!==myRoleId)) sfx("chat");
 }
-
-async function aiAll(){ const ais=SCEN.characters.filter(c=>STATE.roles[c.id].mode==="ai"); for(const c of ais){ await aiSay(c.id); } }
-/* 자율대화 — 켜두면 조용해질 때마다 서버가 알아서 한 명을 골라 말하게 한다 */
-async function toggleChat(){
-  const on=!((STATE.chat||{}).on!==false);
-  const r=await post("/api/chat",{on});
-  if(r&&r.error) banner("자율대화 전환 실패: "+r.error);
-  await poll();
-}
-async function aiReact(){
-  const r=await post("/api/ai-react",{});
-  if(r&&r.error) banner("발언 실패: "+r.error); else await poll();
-}
-async function aiFinal(id){ banner("AI 최종답변 채점 중…"); const r=await post("/api/ai-final",{roleId:id}); if(r&&r.error)banner("AI 채점 오류: "+r.error); else banner(""); await poll(); }
 
 /* 로비 — 2열 포스터 그리드. 카드 자체가 버튼이고, 부가 동작은 아래 액션바로 뺀다. */
 /* 에셋은 webp를 먼저, 없으면 png를 찾는다 — 어느 포맷으로 넣어도 동작하게. */
@@ -2983,11 +2867,9 @@ function roleCardState(c){
   let badge="", btn="";
   if(mine){ badge=`<span class="badge me">${ICO.dot} 나</span>`; btn=`<span class="rc-go done">${ICO.check} 선택함</span>`; }
   else if(otherHuman){ badge=`<span class="badge hu">사람</span>`; btn=`<span class="rc-go off">참여 중</span>`; }
-  else if(r.mode==="ai"){ badge=`<span class="badge ai">AI</span>`;
-    btn=locked?`<span class="rc-go off">AI</span>`:`<button class="rc-go" onclick="setAI('${c.id}')">AI 해제</button>`; }
   else { btn=locked?`<span class="rc-go off">-</span>`:`<span class="rc-go pick">선택</span>`; }
   // 카드 전체가 곧 단추다 — 작은 「선택」만 노리게 하면 폰에서 몇 번씩 빗나간다.
-  const tap=locked?"":(mine?"" : (r.mode==="ai"?`setAI('${c.id}')`:(otherHuman?"":`claim('${c.id}')`)));
+  const tap=(locked||mine||otherHuman)?"":`claim('${c.id}')`;
   return {cls:"rc"+(mine?" mine":"")+(otherHuman?" off":"")+(tap?" tap":""), badge, btn, tap};
 }
 
@@ -3057,25 +2939,14 @@ function roleBarHTML(){
          <span class="hint">게임이 시작됐습니다</span>`;
   }
   const opens=SCEN.characters.filter(c=>(STATE.roles[c.id]||{}).mode==="open");
-  const ais=SCEN.characters.filter(c=>(STATE.roles[c.id]||{}).mode==="ai");
-  // 빈자리 채우기/AI 해제는 내 배역 유무와 무관하게 필요하다 —
-  // 호스트는 보통 자기 배역을 맡은 다음 나머지를 AI로 채운다.
-  const bulk=`${opens.length?`<button class="btn" onclick="fillAI()">남은 ${opens.length}자리 AI로</button>`:""}
-    ${ais.length?`<button class="btn sm" onclick="clearAI()">AI ${ais.length}명 해제</button>`:""}`;
+  // 좌석은 셋 다 사람이 앉아야 시작한다 — 빈자리를 대신 채울 것이 없다.
+  const bulk="";
   // 내 정보는 오프닝이 끝난 뒤에 연다 — 아직 배역을 고르는 중인 사람이 있는데
   // 누군가 먼저 자기 비밀을 읽기 시작하면 시작선이 어긋난다.
   if(myRoleValid()) return `<span class="hint locked">${ICO.lock} 내 정보는 오프닝이 끝나면 열립니다</span>
     <button class="btn sm" onclick="releaseRole()">배역 해제</button>${bulk}`;
   return `<button class="btn gold" onclick="claimRandom()" ${opens.length?"":"disabled"}>${ICO.dice} 랜덤 배역 받기</button>
     ${bulk}<span class="hint">배역을 골라 선택하세요</span>`;
-}
-async function fillAI(){
-  for(const c of SCEN.characters.filter(x=>(STATE.roles[x.id]||{}).mode==="open")) await post("/api/setai",{roleId:c.id,clientId});
-  await poll();
-}
-async function clearAI(){
-  for(const c of SCEN.characters.filter(x=>(STATE.roles[x.id]||{}).mode==="ai")) await post("/api/setai",{roleId:c.id,clientId});
-  await poll();
 }
 /* ===== GM 마킹 보드 (페이즈 구동 · 시네마틱) ===== */
 let gmSig=null, gmSeenMarks=null;
@@ -3094,21 +2965,6 @@ function renderGM(_force){
   const sig=k+"|"+STATE.seq+"|"+cur+"|"+JSON.stringify(checked)+"|"+JSON.stringify(used);
   if(sig!==gmSig||fresh.size){ gmSig=sig; $("gmWrap").innerHTML=buildGMBody(ph,cur,ap,k,checked,used,fresh); }
   renderChat("gmChat");
-  updateAiSelect();
-  // API 백엔드가 켜져 있으면 AI 자동발언 버튼, 아니면 수동 릴레이(입력창)
-  const trig=$("gmAiTrig");
-  const ais=SCEN.characters.filter(c=>(STATE.roles[c.id]||{}).mode==="ai");
-  if(backendOn()&&ais.length){
-    trig.style.display="flex";
-    const chatOn=((STATE.chat||{}).on!==false);
-    trig.innerHTML=
-      `<span class="aichip" style="--sc:${chatOn?"var(--good)":"var(--muted)"}" onclick="toggleChat()" title="AI끼리 알아서 떠들게 둘지">`+
-        `<span class="d" style="background:${chatOn?"var(--good)":"var(--muted)"}"></span>${chatOn?"자율대화 켬":"자율대화 끔"}</span>`+
-      `<span class="aichip" style="--sc:var(--ember-b)" onclick="aiReact()"><span class="d" style="background:var(--ember-b)"></span>지금 한마디</span>`+
-      `<span class="lb">지목</span>`+
-      ais.map(c=>`<span class="aichip" style="--sc:${c.color}" onclick="aiSay('${c.id}')"><span class="d"></span>${esc(c.name)}</span>`).join("")+
-      ((STATE.phase||{}).key==="final"?ais.map(c=>!(STATE.grades||{})[c.id]?`<span class="aichip" style="--sc:${c.color}" onclick="aiFinal('${c.id}')"><span class="d"></span>${esc(c.name)} 답변</span>`:"").join(""):"");
-  } else trig.style.display="none";
 }
 function buildGMBody(ph,cur,ap,k,checked,used,fresh){
   const inter=(SCEN.interludes||{})[String(ph.seq)]||"";
@@ -3172,7 +3028,7 @@ function buildGMBody(ph,cur,ap,k,checked,used,fresh){
         ? `<b>완성됐습니다.</b> ${d.report.note}<div style="margin-top:8px">이 종이를 낭독한 뒤 <b>다음 페이즈 ›</b>로 진상을 여세요.</div>`
         : "각자 자기 칸에 서명합니다. 잃은 칸은 남은 사람들이 표로 채웁니다. 네 칸이 다 차야 종이가 완성됩니다.");
   }
-  if(k==="reveal") return gmCinematic("진상 공개", (STATE.ending?STATE.ending.desc:"채점이 끝나면 엔딩이 열립니다."), (STATE.ending?("— "+STATE.ending.name):""),
+  if(k==="reveal") return gmCinematic("진상 공개", (STATE.ending?STATE.ending.desc:"전원이 이름을 적으면 엔딩이 열립니다."), (STATE.ending?("— "+STATE.ending.name):""),
     "이 세션이 진상과 엔딩을 전해주면, 낭독으로 밤을 닫으세요.");
   // invest / talk → 공용 카드 한 벌. 같은 카드가 인물 수만큼 반복되던 매트릭스를 걷어냈다 —
   // 조사카드는 한 사람만 가져갈 수 있으니, 카드는 한 장씩만 있고 '누가 가져갔나'를 표시하면 된다.
@@ -3258,21 +3114,6 @@ function gmCinematic(kick, body, tail, note){
   if(note) h+=`<div class="go" style="animation-delay:${d.toFixed(2)}s">${note}</div>`;
   return h+`</div>`;
 }
-function updateAiSelect(){
-  const sel=$("gmAiRole"); const prev=sel.value;
-  const ais=SCEN.characters.filter(c=>(STATE.roles[c.id]||{}).mode==="ai");
-  const opts=ais.map(c=>`<option value="${c.id}">${c.avatar} ${esc(c.name)}</option>`).join("")||`<option value="">AI 배역 없음</option>`;
-  const sig=ais.map(c=>c.id).join(",");
-  if(sel.dataset.sig!==sig){ sel.innerHTML=opts; sel.dataset.sig=sig; if(prev&&ais.some(c=>c.id===prev))sel.value=prev; }
-}
-async function gmSay(){
-  const sel=$("gmAiRole"); const inp=$("gmAiInput"); const role=sel.value; const t=inp.value.trim();
-  if(!role){ gmBanner("AI 배역이 없습니다 (빈자리를 로비에서 ‘AI로’ 지정하세요)"); return; }
-  if(!t)return;
-  const r=await post("/api/agent/say",{roleId:role,text:t,key:gmKey});
-  if(r&&r.error){ gmBanner(r.error==="key"?"GM 키가 올바르지 않습니다 — AI 대사 전송에도 AGENT_KEY가 필요합니다.":("전송 오류: "+r.error)); return; }
-  inp.value=""; inp.style.height="auto"; gmBanner(""); await poll();
-}
 /* 마킹 대상 — 조사 페이즈면 차례인 사람이 기본. 토론 중엔 직접 고른다. */
 let gmTarget=null;
 function gmMarkTarget(){
@@ -3300,7 +3141,6 @@ async function claim(id){ const r=await post("/api/claim",{roleId:id,clientId});
 async function claimRandom(){ const r=await post("/api/claim-random",{clientId}); if(r&&r.error){banner(r.error);return;} if(r&&r.roleId){ await setMy(r.roleId); } }
 async function setMy(id){ myRoleId=id; localStorage.setItem("pmb.role",id); await poll(); }
 async function releaseRole(){ if(myRoleId){ await post("/api/release",{roleId:myRoleId,clientId}); myRoleId=null; localStorage.removeItem("pmb.role"); await poll(); } }
-async function setAI(id){ const r=await post("/api/setai",{roleId:id,clientId}); if(r&&r.error)banner(r.error); await poll(); }
 /* 이 기기에 남는 것 — 배역, 종막 답안, 어디까지 읽었나, 진행석 토글, 대화창 접힘.
    방을 새로 열어도 이게 남아 있으면 지난 판이 그대로 이어져 보인다. gmKey만 남긴다(다시 치기 번거로우니). */
 function wipeLocal(keepKey){
@@ -3363,7 +3203,7 @@ function renderPanel(ph){
   const p=$("ppanel"); const k=ph.key;
   // 매 폴링마다 통째로 다시 그리면 방 카드 애니메이션이 계속 재생돼 '깜빡임'이 생긴다.
   // 실제로 바뀐 게 있을 때만 다시 그린다.
-  const sig=JSON.stringify([k,STATE.seq,STATE.round,STATE.turn,ph.ap,myRoleId,myHand.map(c=>c.id),STATE.revealedIds,STATE.usedAP,STATE.grades,STATE.ending&&STATE.ending.name,STATE.interrogate,STATE.checked,STATE.crisis&&[STATE.crisis.open,STATE.crisis.solved,STATE.crisis.answered],crAns.join(""),STATE.flood,
+  const sig=JSON.stringify([k,STATE.seq,STATE.round,STATE.turn,ph.ap,myRoleId,myHand.map(c=>c.id),STATE.revealedIds,STATE.usedAP,STATE.ending&&STATE.ending.name,STATE.checked,STATE.crisis&&[STATE.crisis.open,STATE.crisis.solved,STATE.crisis.answered],crAns.join(""),STATE.flood,
     // 아침 이야기를 봤는지도 이 화면을 바꾼다 — 다 보고 나서야 밤의 결과가 열린다.
     STATE.night&&[STATE.night.open,STATE.night.done,STATE.night.mine,(STATE.night.picked||[]).join(""),cutWasSeen("night:done")],
     STATE.ask&&[STATE.ask.open,STATE.ask.turn,(STATE.ask.asked||[]).map(r=>r.by+r.q).join("")],askSel,
@@ -3406,7 +3246,7 @@ function renderPanel(ph){
         const rd=pairReady(k,c.id);
         return `<button class="pill pair${rd?" rdy":""}" title="${rd?"짝이 지금 나와 있습니다 — 눌러서 맞춰보세요":"같은 조각을 단 카드를 찾으세요"}" onclick="event.stopPropagation();showPairHint('${c.id}',${k.i})">${pairChip(k,c.id,rd)}${rd?"맞물림":"조각"}</button>`;
       }).join("")}<div class="lead clip1">${esc(oneLine(c.text))}</div></div>`).join("")||'<div class="panel-note">아직 조사한 단서가 없어요. (조사 페이즈에 카드를 여세요.)</div>'}</div>`
-    +interrogPanelHTML()+nextPhaseBlock(); }
+    +nextPhaseBlock(); }
   else if(k==="ask"){ renderAsk(p); }
   else if(k==="night"){ renderNight(p); }
   else if(k==="accuse"){ renderAccuse(p); }
@@ -3607,14 +3447,6 @@ function showTalkRule(){
   say({title:"토론하는 법", body:"아래 대화창에서 서로를 취조하세요.\n\n"
     +"내 손패는 알릴지 감출지 자유입니다. 전체공개 카드는 이미 모두가 보고 있어요.\n\n"
     +"카드를 누르면 내용이 열리고, 거기서 대화에 올릴 수 있습니다."});
-}
-function showInterrogRule(){
-  say({title:"심층심문", body:
-     "상대가 지금 손패로 쥔 카드를 지목해 답을 요구합니다. 카드 자체는 공개되지 않아요 — "
-    +"대답만 듣는 거고, 민감한 비밀이면 그 대답이 진짜라는 보장도 없습니다.\n\n"
-    +"맨손으로 물으면 한 번은 넘어갈 수 있어요. 다만 얼버무린 자리를 다시 찌르면 결국 붑니다.\n\n"
-    +"증거를 함께 들이밀면 그 자리에서 무너집니다 — 한 번 얼버무리고, 이내 실토해요. "
-    +"무엇을 들이밀지가 곧 추리입니다."});
 }
 function showInvestRule(){
   const ap=(STATE&&STATE.phase&&STATE.phase.ap)||0;
@@ -3847,133 +3679,7 @@ function dashHTML(){
         <span class="fi">${ICO.filter}</span><span class="fk">필터</span><span class="fv">${esc(f[1])}</span></button>
     </div>${blocks||`<div class="panel-note" style="margin-top:10px">${esc(f[3])}</div>`}`;
 }
-/* ── 심층심문 — 상대가 지금 손패로 쥔 카드를 지목해 답을 요구한다(예산 소모, 그 자리에서 공개) ── */
-function heldCardsOf(roleId){ return ((STATE.checked||{})[roleId]||[]).map(id=>cardCat(id)).filter(Boolean); }
-function interrogPanelHTML(){
-  if(!myRoleValid()) return `<div class="card" style="margin-top:14px"><h2>${ICO.torch} 심층심문</h2><div class="panel-note">배역을 맡아야 심문할 수 있어요.</div></div>`;
-  const ig=STATE.interrogate; if(!ig) return "";
-  // 사람이 맡은 배역은 대상이 아니다. 이 기능은 AI 배역에게서 대답을 끌어내는 장치고,
-  // 사람끼리는 대화창에서 직접 물으면 된다.
-  const targets=SCEN.characters
-    .filter(c=>c.id!==myRoleId && ((STATE.roles||{})[c.id]||{}).mode!=="human")
-    .map(c=>({c,cards:heldCardsOf(c.id)}));
-  const voteBtn=(!ig.bonusGranted&&ig.voteNeed>0)?`<button class="btn sm" onclick="interrogVote()">${ICO.vote} 추가 심문 신청 (${ig.voteHave}/${ig.voteNeed})</button>`:(ig.bonusGranted?`<span class="pill" style="color:var(--good)">추가 심문 승인됨</span>`:"");
-  let h=`<div class="card" style="margin-top:14px"><div class="clue-h"><h2 style="margin:0">${ICO.torch} 심층심문</h2>
-      <span class="mspace"></span><button class="mrule" onclick="showInterrogRule()" aria-label="심문 규칙">?</button></div>
-    <div class="ig-go">
-      <span class="gauge"><b>${ig.remaining}</b><span>남은 심문 / ${ig.total}</span></span>
-      <span class="gbtns">${voteBtn}
-        <button class="btn ember" ${(ig.remaining<=0||!targets.length)?"disabled":""} onclick="openInterrog()">${ICO.torch} 심문하기</button></span>
-    </div>`;
-  if(!targets.length) h+=`<div class="panel-note" style="margin-top:8px">지금은 심문할 대상이 없어요 — 사람이 맡은 배역은 심문할 수 없습니다. 직접 물어보세요.</div>`;
-  else if(ig.remaining<=0) h+=`<div class="panel-note" style="margin-top:8px">이번 토론에서 쓸 수 있는 심문을 다 썼어요. 다음 토론에 다시 채워집니다.</div>`;
-  return h+`</div>`;
-}
-async function interrogVote(){ const r=await post("/api/interrogate/vote",{roleId:myRoleId,clientId}); if(r&&r.error){banner(r.error);return;} banner(""); await poll(); }
-
-/* 심문 팝업 — 한 창 안에서 한 걸음씩. 대상 → 무엇을 캐물을지 → 들이밀 카드(맨손 가능) → 확인.
-   두 번째 걸음에 길이 둘이다: 그 사람이 쥔 카드를 캐묻거나, 사람을 바로 붙잡거나.
-   사람을 붙잡으면 나오는 건 한 겹뿐이다 — 핵심을 뚫는 건 여전히 카드 쪽 일이다.
-   쥔 카드가 하나뿐이어도 이 걸음을 건너뛰지 않는다. 본인 추궁을 고를 길이 막히기 때문이다. */
-let igW={step:"who",target:null,card:null,evidence:"",busy:false,result:null};
-function openInterrog(){
-  igW={step:"who",target:null,card:null,evidence:"",busy:false,result:null};
-  $("interrogBox").style.setProperty("--mt","var(--ember)");
-  igRender(); openModal("interrogModal");
-}
-function igPickWho(id){
-  const cards=heldCardsOf(id);
-  igW.target=id; igW.card=null;
-  // 쥔 게 한 장이면 고를 것이 없다 — 묻지 않고 바로 증거로 넘어간다
-  igW.step="what";   // 카드가 하나뿐이어도 «본인 추궁»을 고를 수 있어야 하니 이 단계를 건너뛰지 않는다
-  igRender();
-}
-function igPickWhat(id){ igW.card=id||null; igW.step="ev"; igRender(); }
-function igPickEv(id){ igW.evidence=id; igW.step="ok"; igRender(); }
-function igBack(){ igW.step=(igW.step==="ok")?"ev":(igW.step==="ev"?"what":"who"); igRender(); }
-function igRender(){
-  const ig=STATE.interrogate||{};
-  const tc=igW.target?(roleById(igW.target)||{}):null;
-  const cd=igW.card?(cardCat(igW.card)||{}):null;
-  const evCard=igW.evidence?[...myHand,...(STATE.revealed||[])].find(e=>e.id===igW.evidence):null;
-  const selfMode=!!igW.target&&!igW.card;
-  const steps=[["who","대상"],["what","무엇을"],["ev","증거"],["ok","확인"]];
-  const order=steps.map(s=>s[0]); const cur=order.indexOf(igW.step);
-  const bar=`<div class="ig-step">${steps.map(([k,l],i)=>
-    `${i?"<u>›</u>":""}<i class="${k===igW.step?"on":(i<cur?"done":"")}">${i+1} ${l}</i>`).join("")}</div>`;
-
-  let body,foot;
-  if(igW.result){
-    const r=igW.result;
-    const badge=r.outcome==="truth"?'<span class="pill" style="color:var(--ember-b)">'+ICO.speak+' 실토</span>'
-      :(r.outcome==="evasive"?'<span class="pill">'+ICO.swirl+' 얼버무림</span>':'<span class="pill" style="color:var(--cold)">'+ICO.chat+' 답변</span>');
-    body=`<div class="ig-out ${r.outcome||"plain"}">${badge}<div class="ln">${esc(r.line||"")}</div></div>
-      <div class="panel-note" style="margin-top:12px">같은 내용이 대화창에도 남았습니다 — 모두가 보고 있어요.</div>`;
-    // 결과가 온 뒤에는 이 창에 다시 보낼 길을 아예 두지 않는다 — 닫기뿐이다
-    foot=`<span class="mf-note">남은 심문 ${ig.remaining||0}회</span>
-      <button class="btn" onclick="closeModal('interrogModal')">닫기</button>`;
-  }
-  else if(igW.step==="who"){
-    const list=SCEN.characters.filter(c=>c.id!==myRoleId).map(c=>{ const n=heldCardsOf(c.id).length;
-      return `<button class="ig-p" style="--pc:${c.color}" onclick="igPickWho('${c.id}')">
-        <span class="av">${avaHTML(c,"sm")}</span><span><span class="nm">${esc(c.name)}</span>
-        <span class="sub">${n?`쥔 카드 ${n}장`:"쥔 카드 없음 — 본인만 추궁 가능"}</span></span></button>`; }).join("");
-    body=bar+`<div class="mlead">누구를 붙잡을지 고르세요.</div><div class="ig-people">${list}</div>`;
-    foot=`<button class="btn" onclick="closeModal('interrogModal')">취소</button>`;
-  }
-  else if(igW.step==="what"){
-    const held=heldCardsOf(igW.target);
-    const list=held.map(c=>`<button class="ig-spot" onclick="igPickWhat('${c.id}')">
-      ${esc(c.spot||c.locName)}<span class="sw">${esc(c.locName)} · R${c.round}</span></button>`).join("");
-    body=bar+`<div class="mlead">카드를 캐물을지, 사람을 바로 붙잡을지 고르세요.</div>
-      <button class="ig-selfbtn" onclick="igPickWhat('')">
-        <b style="color:${tc.color}">${esc(tc.name)}</b> 본인을 추궁하기
-        <span class="sw">쥔 카드가 아니라 그 사람에게 직접 묻습니다 — 나오는 건 한 겹뿐입니다</span></button>
-      ${held.length?`<div class="ig-or">또는, 쥔 카드를 캐묻기</div>
-      <div class="panel-note" style="margin-bottom:8px">제목은 아직 안 보입니다. 어디서 나온 것인지만 압니다.</div>
-      <div class="ig-spots">${list}</div>`:`<div class="panel-note" style="margin-top:12px">지금 이 사람이 쥔 카드는 없습니다.</div>`}`;
-    foot=`<button class="btn" onclick="igBack()">‹ 뒤로</button>`;
-  }
-  else if(igW.step==="ev"){
-    const evid=[...myHand,...(STATE.revealed||[])];
-    const mine=new Set(myHand.map(c=>c.id));
-    body=bar+`<div class="mlead">들이밀 카드를 고르세요. <b>안 골라도 됩니다</b> — 다만 무엇이든 들이밀면 그 자리에서 실토합니다. 맨손이면 한 번은 넘어갈 수 있어요.</div>
-      <div class="ig-evlist">
-        <button class="ig-ev bare ${igW.evidence===""?"on":""}" data-id="" onclick="igPickEv('')">카드 없이 추궁
-          <span class="ew">맨손으로 캐묻습니다</span></button>
-        ${evid.map(e=>`<button class="ig-ev ${igW.evidence===e.id?"on":""}" data-id="${e.id}" onclick="igPickEv('${e.id}')">${esc(e.title)}
-          <span class="ew">${esc(e.locName)}${e.spot?" · "+esc(e.spot):""} · ${mine.has(e.id)?"내 손패":"전체공개"}</span></button>`).join("")}
-      </div>`;
-    foot=`<button class="btn" onclick="igBack()">‹ 뒤로</button>`;
-  }
-  else {
-    body=bar+`<div class="ig-sum">
-      <div class="r"><span class="k">누구를</span><span class="v" style="color:${tc.color}">${avaHTML(tc,"xs")} ${esc(tc.name)}</span></div>
-      <div class="r"><span class="k">무엇을</span><span class="v">${selfMode?"본인을 직접":esc((cd&&(cd.spot||cd.locName))||"")}</span></div>
-      <div class="r"><span class="k">증거</span><span class="v">${evCard?esc(evCard.title):"카드 없이 맨손"}</span></div></div>
-      <div class="ig-warn">${ICO.warn} 보내면 심문 <b>1회</b>가 즉시 소모됩니다. 남은 횟수 ${ig.remaining||0}회 — 되돌릴 수 없어요.</div>`;
-    foot=`<button class="btn" ${igW.busy?"disabled":""} onclick="igBack()">‹ 뒤로</button>
-      <button class="btn ember" id="igGo" ${igW.busy?"disabled":""} onclick="submitInterrog()">${igW.busy?"보내는 중…":"추궁한다"}</button>`;
-  }
-  $("interrogBox").innerHTML=`<div class="mhead">
-      <div class="mh-t"><span class="mh-eb">심층심문 · 남은 ${ig.remaining||0}회</span>
-        <h2>${igW.result?"추궁 결과":(tc?`<span style="color:${tc.color}">${avaHTML(tc,"xs")} ${esc(tc.name)}</span> 추궁`:"누구를 추궁할까")}</h2>
-        ${cd?`<span class="mh-sub">${esc(cd.spot||cd.locName||"")}</span>`:""}</div>
-      <button class="mh-x" onclick="closeModal('interrogModal')" aria-label="닫기">${ICO.close}</button></div>
-    <div class="mbody">${body}</div><div class="mfoot">${foot}</div>`;
-}
-async function submitInterrog(){
-  // 잘못 눌러 연달아 나가면 두 번뿐인 기회가 한꺼번에 날아간다. 요청이 도는 동안 잠그고,
-  // 결과가 온 뒤에도 다시 못 누르게 화면 자체를 바꾼다.
-  if(igW.busy||igW.result) return;
-  igW.busy=true; igRender();
-  const r=await post("/api/interrogate",{askerRoleId:myRoleId,targetRoleId:igW.target,cardId:igW.card||"",evidenceCardId:igW.evidence,clientId});
-  igW.busy=false;
-  if(r&&r.error){ banner(r.error); igRender(); return; }
-  banner(""); igW.result=r; igRender();
-  await poll(); igRender();   // 폴이 끝나야 남은 횟수가 줄어든 값으로 바뀐다
-}
-/* ── 조사 턴 (하이브리드: 순번 강제 + 넘기기·AI 자동조사) ── */
+/* ── 조사 턴 (순번 강제 + 넘기기) ── */
 /* 이번 라운드에 아직 조사할 사람이 남았는가 · 손패가 넘치는 사람이 있는가.
    STATE.checked 는 배역별 현재 손패의 카드 id다(내용은 안 온다) — 남의 손패 장수는
    여기서만 알 수 있고, 한 명이라도 넘치면 그 카드는 아직 갈 곳이 안 정해진 것이다. */
@@ -4029,24 +3735,21 @@ function turnBar(){
     act=`<div class="tb-act"><button class="btn gold" onclick="turnNext()">${left>0?`조사 그만하고 다음 차례 (${left}장 남음)`:'다음 차례로 ›'}</button></div>`;
   } else {
     // 남의 차례에 화면이 멈춘 것처럼 보이면 게임이 끊긴 걸로 읽힌다. 뭔가 돌고 있다는 걸 보여준다.
-    const w=STATE.turnWait, isAI=(STATE.roles[turn]||{}).mode==="ai";
-    const tick=(isAI&&w!=null)?`<span class="tb-tick"><i></i>${w>0?`${w.toFixed(1)}초 뒤 조사`:"조사하는 중…"}</span>`:"";
     const skip=(STATE.isHost||gmOn)?`<button class="btn sm" onclick="turnNext()">건너뛰기 ›</button>`:"";
-    act=`<div class="tb-wait">지금은 <b style="color:${now.color}">${esc(now.name||'')}</b> 차례예요 — 대화로 조사를 이끌어 주세요.${tick}${skip}</div>`;
+    act=`<div class="tb-wait">지금은 <b style="color:${now.color}">${esc(now.name||'')}</b> 차례예요 — 대화로 조사를 이끌어 주세요.${skip}</div>`;
   }
   return `<div class="turnbar"><div class="tb-order"><div class="tb-rail">${chips}</div></div>${act}</div>`;
 }
 function gmTurnBar(){
   const turn=STATE.turn, order=STATE.turnOrder||[]; if(!turn||!order.length) return "";
-  const ap=(STATE.phase||{}).ap||0; const now=roleById(turn)||{}; const isAI=(STATE.roles[turn]||{}).mode==="ai";
+  const ap=(STATE.phase||{}).ap||0;
   const chip=(id,cp)=>{ const ch=roleById(id)||{}; const used=(STATE.usedAP||{})[id]||0; const done=ap>0&&used>=ap;
-    return `<span class="tb-chip ${id===turn?'on':''} ${done?'done':''}" data-c="${cp}" style="--tc:${ch.color||'#888'}"><span class="d"></span>${esc(ch.name||id)}${id===turn?`<span class="tg">${isAI?'AI':'사람'}</span>`:''}</span>`; };
+    return `<span class="tb-chip ${id===turn?'on':''} ${done?'done':''}" data-c="${cp}" style="--tc:${ch.color||'#888'}"><span class="d"></span>${esc(ch.name||id)}${id===turn?`<span class="tg">조사 중</span>`:''}</span>`; };
   const chips=[0,1,2].map(cp=>order.map(id=>chip(id,cp)).join("")).join("");
   return `<div class="turnbar"><div class="tb-order"><div class="tb-rail">${chips}</div></div>
-    <div class="tb-act">${isAI?`<button class="btn gold" onclick="aiInvestigateNow('${turn}')">${ICO.bot} ${esc(now.name)} 자동 조사</button>`:''}<button class="btn" onclick="turnNext()">다음 차례 ›</button></div></div>`;
+    <div class="tb-act"><button class="btn" onclick="turnNext()">다음 차례 ›</button></div></div>`;
 }
 async function turnNext(){ const bn=(scr==="gm")?gmBanner:banner; const r=await post("/api/turn/next",{clientId,roleId:myRoleId,key:gmKey}); if(r&&r.error)bn(r.error); await poll(); }
-async function aiInvestigateNow(rid){ const r=await post("/api/ai-investigate",{roleId:rid||"",clientId,key:gmKey}); if(r&&r.error){gmBanner(r.error);return;} if(r&&r.picked){ const c=roleById(rid)||{}; gmBanner(`${c.name||'AI'} 자동 조사 — ${r.picked.map(p=>p.title).join(", ")||'열 카드 없음'}`);} await poll(); }
 
 /* 이 카드가 짝을 이루는가. 어떤 카드와 짝인지는 절대 알려주지 않는다 —
    그걸 알려주면 추리가 아니라 심부름이 된다. 「혼자서는 반쪽」이라는 것까지만. */
@@ -4600,13 +4303,8 @@ async function swapConfirm(){
   closeModal("swapModal"); await poll(); banner("바꿨습니다.");
 }
 
-/* 종막 질문지 — 답안이 어디로 가는지가 세 갈래다.
-   ① AI 백엔드가 붙어 있으면 그 자리에서 채점된다.
-   ② 없어도 진행석이 있으면 거기로 모인다.
-   ③ 둘 다 없으면 낼 곳이 없다. 여태 그럴 때도 「제출완료」라고만 떠서, 아무도 받지
-      않은 답을 낸 것으로 보였다. 이제는 클로드에 그대로 붙여넣을 한 덩어리 글을 만들어
-      준다 — 그걸 들고 클로드 세션에 물어보면 그 자리가 진행석이 된다. */
-function finalRoute(){ return backendOn()?"ai":((gmOn||(STATE&&STATE.hasGM))?"gm":"claude"); }
+/* 종막 질문지 — 채점하지 않는다. 사람 셋이 하는 판이라 채점자가 없다.
+   서술은 다 같이 읽는 기록으로 남고, 엔딩을 가르는 것은 그 옆의 지목표다. */
 /* 「키어런가 물었다」가 안 되게. 받침이 있으면 이, 없으면 가. */
 function subjOf(nm){ if(!nm) return "가"; const c=nm.charCodeAt(nm.length-1)-0xAC00;
   return (c>=0&&c<11172&&c%28)?"이":"가"; }
@@ -4753,11 +4451,9 @@ async function acSend(){
   banner(""); acSel=""; await poll();
 }
 function renderFinal(p){
-  const g=myRoleId?STATE.grades[myRoleId]:null; const mine=myRoleValid();
-  const route=finalRoute();
-  const lead={ai:"배역으로서 서술로 답하면 진행자(AI)가 진상 기준으로 채점합니다.",
-               gm:"배역으로서 서술로 답하면 진행석(GM)이 모아 진상 기준으로 채점합니다.",
-               claude:"이 방에는 채점할 진행자가 없습니다. 답을 적으면 <b>클로드에 붙여넣을 한 덩어리 글</b>로 정리해 드려요."}[route];
+  const mine=myRoleValid();
+  const lead="배역으로서 서술로 답하고, 그 아래에 한 사람의 이름을 적습니다.<br>"
+    +"<b>엔딩을 가르는 것은 이름 쪽입니다</b> — 서술은 판이 끝난 뒤 다 같이 읽는 기록으로 남습니다.";
   let h="";
   // 1차에서 부른 이름은 지워지지 않는다 — 종막에도 그대로 걸려 있어야 그게 «따라온» 것이 된다.
   const a1=(STATE&&STATE.accuse1)||null;
@@ -4771,21 +4467,14 @@ function renderFinal(p){
         ${a1.tie?"표가 갈렸습니다 — 아직 한 사람으로 모이지 않았어요.":`지금까지 이 판의 이름은 <b>${esc(nameOf(a1.lead[0]))}</b>입니다.`}</div></div>`;
   }
   h+=`<div class="card"><h2>종막 · 질문지</h2><div class="mlead">${lead}</div>`;
-  if(mine&&!g&&finalSubmitted(myRoleId)){
+  if(mine&&finalSubmitted(myRoleId)){
     const a=finalAnswersOf(myRoleId)||[];
-    const note={ai:"제출 완료 — 채점 중입니다.",
-                gm:"제출 완료 — 진행석(GM)이 채점 후 엔딩을 진행합니다.",
-                claude:"답안을 적어뒀습니다. <b>다만 이 방에는 받을 진행자가 없어요</b> — 아래 글을 통째로 복사해 클로드에 물어보세요."}[route];
-    h+=`<div class="panel-note">${note}</div>`
+    h+=`<div class="panel-note">적었습니다. 판이 끝나면 다 같이 읽습니다.</div>`
       +SCEN.finalQuestions.map((q,i)=>`<div class="q-block"><div class="q">${i+1}. ${esc(q)}</div><div class="b" style="white-space:pre-wrap;opacity:.85">${esc(a[i]||"(무응답)")}</div></div>`).join("");
   }
-  else if(mine&&!g){ h+=SCEN.finalQuestions.map((q,i)=>`<div class="q-block"><div class="q">${i+1}. ${esc(q)}</div><textarea id="qa${i}"></textarea></div>`).join("")+`<div style="text-align:right"><button class="btn ember" onclick="submitFinal()">제출</button></div>`; }
-  else if(mine&&g){ h+=gradeRow(myRoleId,g); }
-  else h+=`<div class="panel-note">관전 중 — 사람 배역만 답합니다.</div>`;
+  else if(mine){ h+=SCEN.finalQuestions.map((q,i)=>`<div class="q-block"><div class="q">${i+1}. ${esc(q)}</div><textarea id="qa${i}"></textarea></div>`).join("")+`<div style="text-align:right"><button class="btn ember" onclick="submitFinal()">제출</button></div>`; }
+  else h+=`<div class="panel-note">관전 중 — 배역을 맡은 사람만 답합니다.</div>`;
   h+=`</div>`;
-  if(route==="claude"&&finalAnswerRoles().length) h+=claudeHandoffHTML();
-  const others=Object.keys(STATE.grades||{}).filter(id=>id!==myRoleId);
-  if(others.length){ h+=`<div class="card"><h2>다른 배역 채점</h2>${others.map(id=>gradeRow(id,STATE.grades[id])).join("")}</div>`; }
   p.innerHTML=accuseHTML()+destHTML()+h+readyHTML();
 }
 
@@ -4890,69 +4579,9 @@ function finalAnswerRoles(){
 }
 /* 클로드에 그대로 붙여넣는 한 덩어리. 앞머리에 무엇을 해달라는지부터 적는다 —
    붙여넣는 사람이 따로 설명을 보태지 않아도 되게. */
-function claudeHandoffText(){
-  const qs=SCEN.finalQuestions||[];
-  const L=[];
-  L.push("[채점 요청] 아래는 온라인 머더미스터리 종막 질문지의 답안입니다.");
-  L.push("당신이 진행자(GM)입니다. 사건의 진상에 비추어 인물마다 ① 짚어낸 것 ② 빗나간 것");
-  L.push("③ 점수 ④ 한 줄 평을 매기고, 마지막에 이 판의 엔딩을 한 문단으로 들려주세요.");
-  L.push("");
-  L.push("── 사건");
-  L.push(SCEN.title||"");
-  if(SCEN.subtitle) L.push(SCEN.subtitle);
-  if(vicText()) L.push("피해자 — "+vicText());
-  L.push("");
-  L.push("── 질문");
-  qs.forEach((q,i)=>L.push(`${i+1}. ${q}`));
-  L.push("");
-  L.push("── 답안");
-  finalAnswerRoles().forEach(c=>{
-    const a=finalAnswersOf(c.id)||[];
-    L.push("");
-    L.push(`[${c.name}${c.job?" · "+c.job:""}]`);
-    qs.forEach((q,i)=>{ L.push(`${i+1}. ${q}`); L.push(`   → ${(a[i]||"").trim()||"(무응답)"}`); });
-  });
-  return L.join("\n");
-}
-function claudeHandoffHTML(){
-  const who=finalAnswerRoles().map(c=>`<span class="pill" style="color:${c.color}">${avaHTML(c,"xs")} ${esc(c.name)}</span>`).join("");
-  return `<div class="card"><h2>${ICO.board} 클로드에 물어보기</h2>
-    <div class="mlead">진행석이 없으니 이 글을 통째로 복사해 클로드 세션에 붙여넣으세요. 거기가 진행석이 됩니다.</div>
-    <div class="panel-note" style="margin-bottom:9px">담긴 답안 ${who}</div>
-    <pre class="handoff" id="handoffText">${esc(claudeHandoffText())}</pre>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;align-items:center">
-      <span class="mf-note" id="handoffMsg" style="margin-right:auto;font-size:12px;color:var(--muted)"></span>
-      <button class="btn gold" onclick="copyHandoff()">복사하기</button></div></div>`;
-}
-async function copyHandoff(){
-  const t=claudeHandoffText(); let ok=false;
-  try{ await navigator.clipboard.writeText(t); ok=true; }
-  catch(e){
-    // 클립보드 권한이 없거나 https 가 아니면 위가 막힌다 — 글을 통째로 선택해 두고
-    // 직접 복사하게 넘긴다. 복사가 이 화면의 유일한 출구라 실패한 채로 두면 안 된다.
-    const el=$("handoffText");
-    if(el){ const r=document.createRange(); r.selectNodeContents(el);
-      const s=getSelection(); s.removeAllRanges(); s.addRange(r);
-      try{ ok=document.execCommand("copy"); }catch(e2){} }
-  }
-  const m=$("handoffMsg"); if(m) m.textContent=ok?"복사했습니다 — 클로드에 붙여넣으세요":"복사가 막혀 있어요. 글이 선택돼 있으니 직접 복사해 주세요.";
-}
-function gradeRow(id,g){ const c=roleById(id)||{color:"#999",avatar:"",name:id};
-  let pills;
-  if(Array.isArray(g.tags)){ // 시나리오가 표시 태그를 제공하면 그대로 렌더
-    pills=g.tags.map(t=>`<span class="pill ${t.ok?'':'bad'}">${esc(t.label)}</span>`).join("");
-  }else{ // 졸업사진 폴백
-    pills=`<span class="pill ${g.selfAccused?'':'bad'}">자기지목 ${g.selfAccused?ICO.check:ICO.cross}</span><span class="pill">죄 ${g.sinsAcknowledged}</span>${g.osewonIdentified?'<span class="pill">오세원 간파 '+ICO.check+'</span>':''}`;
-  }
-  // 결말이 모두에게 얹어주는 몫(히든 엔딩의 유산 같은 것). 점수와 따로 보여준다.
-  const e=(STATE&&STATE.ending)||{};
-  const bon=(e.bonus&&(!e.bonusWho||e.bonusWho.indexOf(id)>=0))
-    ? `<span class="pill bonus">${esc(e.bonusLabel||"덤")} +${e.bonus}</span>` : "";
-  const tot=e.bonus&&(!e.bonusWho||e.bonusWho.indexOf(id)>=0)?(Number(g.score)||0)+e.bonus:null;
-  return `<div class="grade"><span style="color:${c.color};font-weight:700">${avaHTML(c,"xs")} ${esc(c.name)}</span>${pills}${bon}<span class="pill">${tot==null?g.score:`${tot}점 (${g.score}+${e.bonus})`}${tot==null?"점":""}</span>${g.verdict?`<span class="v">“${esc(g.verdict)}”</span>`:''}</div>`; }
 async function submitFinal(){ if(gradeBusy)return; const answers=SCEN.finalQuestions.map((q,i)=>($("qa"+i)?$("qa"+i).value.trim():"")); if(answers.every(a=>!a)){ await say({title:"답이 비어 있습니다",body:"한 문항 이상 적어주세요.",ok:"알겠습니다"}); return; } gradeBusy=true; banner("제출 중…"); const r=await post("/api/final-answers",{roleId:myRoleId,clientId,answers}); gradeBusy=false; if(r&&r.error){banner("제출 오류: "+r.error); return;} localStorage.setItem("pmb.final."+myRoleId,JSON.stringify(answers));
   // 낼 곳이 없는데 '제출 완료'라고 하지 않는다 — 어디로 갔는지를 그대로 말한다
-  banner(!(r&&r.pending)?"":((gmOn||(STATE&&STATE.hasGM))?"제출 완료 — 진행석(GM)이 채점합니다":"답안을 적어뒀습니다 — 아래 글을 클로드에 붙여넣으세요"));
+  banner("적었습니다.");
   // 제출 여부는 로컬에만 남아 패널 서명에 안 잡힌다 — 손으로 한 번 무효화해야 화면이 바뀐다
   renderPanel._sig=null;
   await poll(); }
@@ -5141,14 +4770,24 @@ async function sendDecisionExtra(optId){
   if(r&&r.error) banner(r.error); else { banner(""); poll(); }
 }
 
+/* 표를 그대로 펴 보인다 — 누가 누구를 짚었는지가 이 판의 마지막 기록이다. */
+function endTallyHTML(e){
+  const t=e.tally||{}; const ks=Object.keys(t).sort((a,b)=>t[b]-t[a]);
+  if(!ks.length) return "";
+  const rows=ks.map(id=>{
+    const hit=(id===e.culprit);
+    return `<div class="ac-row${hit?" hit":""}"><span>${esc(nameOf(id))}${hit?" · 진범":""}</span><b>${t[id]}표</b></div>`;
+  }).join("");
+  return `<div class="ac-tally" style="margin-top:12px">${rows}</div>`;
+}
 function renderReveal(p){
   const e=STATE.ending;
-  // 채점이 붙지 않는 방이 대부분이다. 엔딩이 없다고 이 화면을 비워두면 밤이 그냥 끝나버린다.
+  // 전원이 이름을 적어야 엔딩이 열린다. 그 전에는 그날 밤에 무슨 일이 있었는지부터 본다.
   const head=e
     ? `<div class="verdict ${e.tone==="good"?"good":(e.tone==="warn"?"warn":"bad")}">${esc(e.name)}</div>`
-      +Object.keys(STATE.grades||{}).map(id=>gradeRow(id,STATE.grades[id])).join("")
+      +endTallyHTML(e)
       +`<div class="rev-sol" style="margin-top:12px">${esc(e.desc)}\n\n─ 진상 ─\n${esc(e.truth)}</div>`
-    : `<div class="panel-note">채점은 아직입니다. 먼저 그날 밤에 실제로 무슨 일이 있었는지부터 봅니다.</div>`;
+    : `<div class="panel-note">아직 이름을 다 안 적었습니다. 먼저 그날 밤에 실제로 무슨 일이 있었는지부터 봅니다.</div>`;
   const truth=(!e&&STATE.truthFull)?`<div class="card"><h2>진상</h2><div class="rev-sol">${esc(STATE.truthFull)}</div></div>`:"";
   p.innerHTML=`<div class="card"><h2>진상 공개</h2>${head}</div>`+crossHTML()+timelineHTML()+truth+keepGoalsHTML();
 }
@@ -5201,15 +4840,6 @@ function chatRow(m){
     d.innerHTML=`<div class="av">${avaHTML(c,"sm")}</div><div><div class="nm" style="color:${c.color||"#999"}">${esc(m.speaker)}`
       +`<span class="alb-j">${esc(c.job||"")}</span><span class="alb-t">${esc(m.at||"")}</span></div>`
       +`<div class="bub alb-bub">${esc(m.text)}</div></div>`;
-    return d; }
-  if(m.kind==="interrogate"){
-    const c=roleById(m.roleId||m.targetRoleId)||{};
-    const d=document.createElement("div"); d.className="msg itg-msg "+(m.outcome||"plain");
-    d.innerHTML=`<div class="av">${avaHTML(c,"sm")}</div><div>
-      <div class="nm" style="color:${c.color||"#999"}">${esc(m.speaker||c.name||"")}<span class="itg-badge">${esc(m.badge||"")}</span></div>
-      <div class="bub">${esc(m.line||m.text||"")}</div>
-      ${m.showCardId?`<div class="cchips">${chipFor(m.showCardId,m.showCardTitle||"")}</div>`:""}
-      <div class="itg-by">${esc(m.askerName||"")}의 추궁</div></div>`;
     return d; }
   const c=roleById(m.roleId);
   const row=document.createElement("div"); row.className="msg"+(m.roleId===myRoleId?" own":"");
@@ -6194,8 +5824,6 @@ function openModal(id){
   $(id).classList.add("on"); markDock(id,true);
 }
 function closeModal(id){ $(id).classList.remove("on"); markDock(id,false); }
-$("gmAiInput").addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); gmSay(); }});
-$("gmAiInput").addEventListener("input",e=>{ e.target.style.height="auto"; e.target.style.height=Math.min(96,e.target.scrollHeight)+"px"; });
 boot();
 </script>
 </body>
