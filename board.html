@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>졸업사진 卒業寫眞 — 게임보드 (서버 없음)</title>
+<style>
+  /* 한글 웹폰트 자체 호스팅 — 이름만 적어두면 보는 기기에 그 폰트가 있을 때만 먹는다.
+     KS X 1001 상용 2350자 서브셋. swap이라 폰트가 늦어도 글은 먼저 보인다. */
+  @font-face{font-family:"PIMM Myeongjo";src:url("/assets/fonts/NanumMyeongjo-400.woff2") format("woff2");
+    font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:"PIMM Sans";src:url("/assets/fonts/NotoSansKR-400.woff2") format("woff2");
+    font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:"PIMM Sans";src:url("/assets/fonts/NotoSansKR-700.woff2") format("woff2");
+    font-weight:700;font-style:normal;font-display:swap}
+
+  :root{
+    --bg:#0b0a0d;--bg2:#111015;--panel:#17151d;--panel2:#1f1c27;--line:#2f2a3a;
+    --ink:#ece7f0;--sub:#a49db8;--muted:#6f697f;
+    --ember:#c8442f;--ember-b:#e7654c;--gold:#c9a24a;--gold-b:#e0bd6a;--cold:#7fb4d6;
+    --good:#7ee0a8;--warn:#ffd479;--shadow:0 18px 50px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box}html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);line-height:1.62;-webkit-font-smoothing:antialiased;min-height:100vh;
+    font-family:"PIMM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo",sans-serif;
+    word-break:keep-all;overflow-wrap:break-word;text-wrap:pretty}
+  .serif{font-family:"PIMM Myeongjo","Nanum Myeongjo","AppleMyungjo",serif}
+  button{font-family:inherit;color:inherit}
+  .btn{background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:8px 14px;border-radius:10px;cursor:pointer;font-size:13.5px;transition:.15s}
+  .btn:hover{border-color:var(--gold);color:#fff}
+  .btn.gold{background:linear-gradient(90deg,#8a7038,var(--gold));border-color:var(--gold);color:#1a1509;font-weight:700}
+  .btn.ember{background:linear-gradient(90deg,#7a1410,var(--ember));border-color:var(--ember-b);color:#fff;font-weight:700}
+  .btn.sm{padding:5px 10px;font-size:12px;border-radius:8px}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:11px;background:var(--panel2);border:1px solid var(--line);color:var(--sub)}
+  header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(17,15,21,.97),rgba(17,15,21,.8));backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  header .b{font-weight:700;letter-spacing:.04em;display:flex;align-items:center;gap:8px}.header .b .mk,header .mk{color:var(--ember)}
+  header .ph{font-size:12.5px;color:var(--gold)}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px 0;max-width:900px;margin:0 auto}
+  .tab{background:var(--panel2);border:1px solid var(--line);color:var(--sub);padding:7px 14px;border-radius:20px;cursor:pointer;font-size:13px}
+  .tab.on{background:var(--ink);color:#0b0a0d;border-color:var(--ink);font-weight:700}
+  .wrap{max-width:900px;margin:0 auto;padding:14px 16px 60px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+  .card h2{margin:0 0 10px;font-size:15px;color:var(--gold-b)}
+  .lead{color:var(--sub);font-size:13px;line-height:1.75}
+
+  .stepper{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
+  .step{flex:1;min-width:66px;text-align:center;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:7px 4px;font-size:11px;color:var(--sub);cursor:pointer}
+  .step.on{background:var(--gold);color:#1a1509;border-color:var(--gold);font-weight:700}
+  .step.done{border-color:#5a4a2c}
+  .gm{background:#12161e;border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14.5px;line-height:1.75;white-space:pre-line}
+  .gm .lb{color:var(--gold);font-size:11px;letter-spacing:.1em;display:block;margin-bottom:6px}
+  .bc{background:#0e1620;border:1px solid #2c465a;color:var(--cold);border-radius:10px;padding:10px 14px;margin-top:10px;font-size:13.5px}
+
+  .role-card{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;position:relative;overflow:hidden}
+  .role-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--rc)}
+  .role-card:hover{border-color:var(--gold)}
+  .role-card .av{font-size:24px;width:42px;height:42px;display:grid;place-items:center;background:var(--bg);border-radius:10px;flex:0 0 42px}
+  .role-card .nm{font-weight:700}.role-card .jb{font-size:11.5px;color:var(--muted)}.role-card .tg{font-size:12px;color:#c3bcd2;margin-top:2px}
+
+  .loc-group{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+  .loc-group .lh{padding:9px 13px;background:var(--panel2);font-weight:700;font-size:13.5px}
+  .loc-group .lb{padding:8px 13px;display:flex;flex-direction:column;gap:7px}
+  .slot{border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13px}
+  .slot.locked{color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .slot.open{border-color:var(--cold);background:#0e1620}
+  .slot.open .ct{font-weight:700;color:#a9d3ea;margin-bottom:3px}
+  .slot.open.bait{border-color:#5a4a2c}
+  .slot .rr{font-size:11px;color:var(--muted)}
+  .cardmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+  .gcard{aspect-ratio:3/4;border:1px solid var(--line);border-radius:11px;padding:9px;display:flex;flex-direction:column;cursor:pointer;position:relative;overflow:hidden;background:linear-gradient(160deg,#1a1722,#141119);transition:.15s}
+  .gcard:hover{transform:translateY(-2px);border-color:var(--gold)}
+  .gcard .rb{font-size:10px;color:var(--muted)}
+  .gcard .t{font-size:12.5px;font-weight:700;margin-top:auto;line-height:1.35}
+  .gcard.face{align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,#181521,#181521 6px,#15121d 6px,#15121d 12px)}
+  .gcard.face .q{font-size:28px;font-family:"PIMM Myeongjo","Nanum Myeongjo",serif;color:#3c354c}
+  .gcard.face .rb{position:absolute;bottom:8px;left:0;right:0;text-align:center}
+  .gcard.face .tag{color:var(--gold-b)}
+  .gcard.locked{cursor:default;opacity:.55}
+  .gcard.hand{border-color:#5a4a2c;background:linear-gradient(160deg,#221c14,#171219)}
+  .gcard.hand .t{color:var(--gold-b)}
+  .gcard.pub{border-color:var(--cold);background:linear-gradient(160deg,#111a22,#0e1620)}
+  .gcard.pub.baitc{border-color:#5a4a2c}
+  .gcard .tag{position:absolute;top:7px;right:7px;font-size:9px;padding:1px 6px;border-radius:6px;background:rgba(0,0,0,.45)}
+  .gcard.hand .tag{color:var(--gold-b)}.gcard.pub .tag{color:var(--cold)}
+
+  textarea{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px;font-size:13.5px;font-family:inherit;line-height:1.6;resize:vertical}
+  textarea:focus,select:focus{outline:none;border-color:var(--gold)}
+  select{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+  .modal{position:fixed;inset:0;background:rgba(6,4,8,.82);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}.modal.on{display:flex}
+  .modal .box{background:var(--panel);border:1px solid var(--line);border-radius:18px;max-width:560px;width:100%;padding:22px;box-shadow:var(--shadow);max-height:92vh;overflow-y:auto}
+  .modal h2{margin:0 0 4px;font-size:20px}
+  .sec{border-top:1px dashed var(--line);padding-top:11px;margin-top:11px}.sec:first-of-type{border-top:0;margin-top:0;padding-top:0}
+  .sec .h{font-weight:700;color:var(--gold-b);font-size:13.5px;margin-bottom:4px}.sec .b{font-size:14px;color:#ded8ea;line-height:1.72}
+  .hb{background:#2a1214;border:1px solid #5a2c2c;color:#ffb9b9;border-radius:10px;padding:10px 13px;font-weight:700;text-align:center;margin-bottom:12px}
+  .frag{background:#0e1620;border:1px solid #2c465a;border-radius:10px;padding:9px 12px;margin:8px 0;color:#cfe0ee;font-size:13.5px}
+  .frag .w{font-size:11px;color:var(--cold);margin-bottom:3px}
+  .goal{display:flex;gap:8px;font-size:13px;padding:5px 0;border-bottom:1px solid var(--line)}.goal:last-child{border-bottom:0}.goal .pt{margin-left:auto;color:var(--good);font-weight:700;font-family:"PIMM Myeongjo","Nanum Myeongjo",serif}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--gold);color:#1a1509;padding:9px 18px;border-radius:20px;font-size:13px;font-weight:700;z-index:80;opacity:0;transition:.25s}
+  .toast.on{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <span class="b"><span class="mk">◈</span> 졸업사진 <span class="pill">게임보드</span></span>
+  <span class="ph" id="hPhase"></span>
+  <span style="margin-left:auto"><button class="btn sm" onclick="reset()">초기화</button></span>
+</header>
+<div class="tabs" id="tabs"></div>
+<div class="wrap" id="root"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ============ 시나리오 스냅샷 (scenario.py 기준 · 진상/채점은 에이전트가 보유) ============ */
+const D = {
+  title:"졸업사진", subtitle:"卒業寫眞 · 10년 만의 동창회",
+  intro:"우리는 모두 동창이다. 하지만 왜인지, 기억이 흐릿하다. 오래된 친구이지만 — 낯선 이들.\n어느 날, 의문의 쪽지가 도착했다. 「10년 만의 동창회. 졸업식 날 밤, 3학년 2반에서. — 동창회장」\n고등학생 때의 기억은 안개 같다. 떠올리려 하면, 손가락 사이로 빠져나간다.\n동창회 장소는 인적 드문 폐교. 우리가 졸업한 학교다. 복도의 공기는 10년 전 겨울에서 멈춘 채 차갑다.\n3학년 2반의 문을 연다. 달빛이 비추는 교실 한가운데 — 교복을 입은 누군가가 쓰러져 있다.\n처음 보는 시체. 그런데. 이 시체가, 내 동창이라고?",
+  phases:[
+    {seq:1,name:"오프닝",ap:0,gm:"공통지문을 낭독하고, 각자 배역으로 자기소개(공개 정보만)한다."},
+    {seq:2,name:"조사 R1",ap:3,gm:"먼저, 이 시체가 누구인지부터. (각자 3장 조사)"},
+    {seq:3,name:"토론 1",ap:0,gm:"물품 3점의 주인은 이 안에 있다. 오늘 밤 무슨 일이 있었나?"},
+    {seq:4,name:"조사 R2",ap:3,gm:"학교가 기억하는 것을 찾아라. (각자 3장 조사)"},
+    {seq:5,name:"토론 2",ap:0,gm:"오승택은 10년 전에 죽었다. 그렇다면 — 그 겨울, 당신들은 무엇을 했나?"},
+    {seq:6,name:"조사 R3",ap:2,gm:"마지막 문이 열렸다. (각자 2장 조사)"},
+    {seq:7,name:"최종 토론",ap:0,gm:"죽인 사람이 꼭 손을 쓴 사람인가?"},
+    {seq:8,name:"종막 · 질문지",ap:0,gm:"각자 마지막 질문에 답한다. 오승택을 죽인 것은 누구인가 — 당신은 누구를 지목하는가."},
+    {seq:9,name:"진상 공개",ap:0,gm:"에이전트가 진상을 밝히고 엔딩을 확인한다."},
+  ],
+  interludes:{4:"…재학생 여러분께 알립니다. 분실물은, 잃어버린 자리에 있습니다.",6:"…하교 시간이 지났습니다. 아직 교실에 남아 있는 학생은 — 자신이 왜 남아 있는지 생각해 보십시오.",7:"…졸업식을 시작하겠습니다. 호명된 학생은, 자기 이름에 대답하십시오.",8:"마지막 질문입니다. — 오승택을 죽인 사람은, 누구입니까."},
+  roles:[
+    {id:"sim",name:"심상윤",age:"32",job:"가게 운영(기억은 흐릿)",avatar:"🚬",color:"#e6a355",hidden:false,
+     tagline:"왕년의 분위기 메이커. 누구와도 금방 친해지는 호탕한 성격.",
+     sheet:[
+       {h:"자신에 대하여",b:"늘 사람이 따르는 쪽이었다. 시키지 않아도 다들 내 말대로 움직였고, 나는 그걸 우정이라 불렀다. 지금은 작은 가게를 한다고 말하지만, 가게의 간판 색이 기억나지 않는다."},
+       {h:"기억의 균열",b:"졸업식이 기억나지 않는다. 사진 한 장 없다. J와 어떻게 헤어졌는지도. 그 겨울 이후의 모든 것이 젖은 종이처럼 찢겨 있다."},
+       {h:"오승택과의 관계 (죄의 실체)",b:"승택이는 소꿉친구다. 매점 빵, 과제, 가방 — 걔가 '해주던' 거다. 나는 시킨 적 없다. …정말 없나? 걔가 싫다고 한 적이 없었을 뿐인 건 아닌가."},
+       {h:"그날의 진실",b:"그 겨울 밤, 승택의 문자에 J의 사진이 붙어 있었다. '시키는 대로 해.' 나는 옥상으로 올라갔고 — 거부한다는 선택지가 없다는 게 어떤 것인지, 난간 앞에서 처음 알았다. 그리고 나는 떨어졌다."},
+       {h:"당신의 심경",b:"두려운 건 라이터다. 기억이 없는 밤에 내가 뭘 했을까. 승택이 이야기가 나올 때마다 내가 나쁜 놈이었을지 모른다는 생각을, 나는 웃음으로 덮는다."},
+       {h:"자백의 순간(트리거)",b:"B4(심부름 쪽지 'SY')+C3(마지막 문자)가 공론화되고 '시키는 대로 한다는 게 어떤 기분인지 아느냐'는 질문을 받으면 무너진다. C4(추모석)까지 나오면 자기지목 확정."},
+     ],
+     goals:[{t:"라이터·주종관계 초반 은폐",p:0},{t:"죄의 조각이 드러나게",p:10},{t:"최종에 자기 자신 지목(자백)",p:15}]},
+    {id:"yu",name:"유지호",age:"32",job:"미대 출신(어렴풋)",avatar:"🏺",color:"#7fb4d6",hidden:false,
+     tagline:"조용한 완벽주의자. 관찰력이 좋고 말수가 적다.",
+     sheet:[
+       {h:"자신에 대하여",b:"손으로 만드는 것만이 나를 증명했다. 재능은 부족했고, 그래서 더 절박했다. 지금 무슨 일을 하는지 물으면 '작업을 한다'고 답하지만, 최근 작업이 하나도 떠오르지 않는다."},
+       {h:"기억의 균열",b:"대학에 갔던가? 합격 발표를 본 기억이… 봤다고 믿을 뿐, 장면이 없다. 그 겨울, 도자기를 감싸 안았던 감촉에서 기억이 끊긴다."},
+       {h:"오승택과의 관계 (죄의 실체)",b:"말 한번 섞은 적 없다. 저 재능이 내 유일한 자리를 가져간다 싶었다. 아무도 없는 미술실, 시너, 5분. 나는 그림을 지웠을 뿐이라 되뇌었다 — 그게 그의 유일한 동아줄인 걸 알면서."},
+       {h:"그날의 진실",b:"그 겨울, 승택이 내 첫 입상작을 들고 나타났다. '네가 내 전부를 부쉈으니까.' 도자기가 도로 위에서 부서졌고, 파편을 줍던 손등 위로 헤드라이트가 쏟아졌다."},
+       {h:"당신의 심경",b:"두려운 건 단추다. 미술실에 흘린 교표 단추가 나오면 끝이다. '그의 인생을 죽인 것'에 대해서라면… 그 문장은 생각하지 않기로 한다."},
+       {h:"자백의 순간(트리거)",b:"D2(단추)+D3(실격 공문)이 공론화되고 단추 주인을 물으면 부분 인정('그 날 미술실에 있었다'). D4(파편 상자)까지 나오면 전면 자백·자기지목."},
+     ],
+     goals:[{t:"조각칼·훼손 초반 은폐",p:0},{t:"죄의 조각이 드러나게",p:10},{t:"최종에 자기 자신 지목(자백)",p:15}]},
+    {id:"lee",name:"이정민",age:"32",job:"봉사활동 이야기를 먼저 꺼냄",avatar:"🕊️",color:"#8ec98a",hidden:false,
+     tagline:"반의 궂은일을 도맡던 '좋은 사람'. 다정하고 공감 능력이 좋아 보인다.",
+     sheet:[
+       {h:"자신에 대하여",b:"나는 좋은 사람이다. 그렇게 말해오면 정말 그렇게 되는 줄 알았다. 사람들이 고마워할 때의 그 표정을 나는 사랑했다 — 그 사람 자체보다도."},
+       {h:"기억의 균열",b:"졸업 후 누구와도 연락한 기억이 없다. '내 사람들'이 그렇게 많았는데 얼굴이 하나도 떠오르지 않는다. 그 겨울, 복도에 흩날리던 종이들에서 기억이 끊긴다."},
+       {h:"오승택과의 관계 (죄의 실체)",b:"승택의 유일한 친구는 나였다. 그런데 어느 날 걔가 물었다. '너 지금, 나 불쌍해서 좋지?' 그날 이후 걔를 피했고, 주변엔 '내가 걔한테 제일 잘해줬는데'라고, 뒤에서는 더한 말도 했다. 선의라는 이름의 가장 높은 자리에서, 나는 그를 내려다봤다."},
+       {h:"그날의 진실",b:"그 겨울, 내 목소리가 담긴 유인물이 전교에 뿌려졌다. 전부 사실이라 반박할 수 없었다. 승택이 10년간 견딘 눈빛 속에서, 나는 무너졌고 스스로를 끝냈다."},
+       {h:"당신의 심경",b:"두려운 건 녹취다. '좋은 사람'이 무너지는 것은 죽음보다 무섭다 — 실제로 그랬다. 그래서 이 밤에도 중재자 자리를 먼저 차지한다. 그동안은 아무도 나를 심문하지 않으니까."},
+       {h:"자백의 순간(트리거)",b:"E3(녹취 유인물)이 공론화되면 '짜깁기'로 1차 방어. B5(장례의 조사)가 공개되고 '조사를 읽으며 무슨 생각을 했느냐'는 질문을 받으면 무너진다."},
+     ],
+     goals:[{t:"뒷말·선인 프레임 초반 은폐",p:0},{t:"죄의 조각이 드러나게",p:10},{t:"최종에 자기 자신 지목(자백)",p:15}]},
+    {id:"ose",name:"오세원",age:"32",job:"조용해서 기억 안 날 수도 있는 동창",avatar:"📷",color:"#c8442f",hidden:true,
+     tagline:"담백하고 반 박자 느린 말투. 결코 단정하지 않고, 남이 스스로 말하게 만든다.",
+     sheet:[
+       {h:"당신의 정체 (최대 비밀)",b:"당신은 오세원이 아니다. 오승택 본인의 망령이며, 이 밤의 설계자다. 저 시체는 10년 전의 당신이다. 목적은 진혼 — 세 사람이 스스로 죄를 깨달아야 반복이 끝난다."},
+       {h:"정체 방어선",b:"명부에 '오세원'이 없다는 지적엔 '일찍 전학 가서 명단에 없다'. 시체와 닮았다는 지적엔 '오승택은 내 쌍둥이 형이다. 형의 일을 알고 싶어 왔다'(2차 방어선)."},
+       {h:"당신의 심경",b:"복수는 10년 전에 끝났다. 남은 건 지겨움과, 인정하기 싫은 외로움. 나는 그들이 미워서가 아니라 이 밤을 끝내고 싶어서 초대장을 쓴다. 그들이 스스로 말하는 순간에만 문이 열린다."},
+       {h:"당신의 목표",b:"세 사람의 죄가 타인에 의해 드러나도록 유도 / 정체 은닉 / 최종에 인간 전원이 자기 자신을 지목하게. 자백 트리거 없음(무너지지 않는다). 전원 자기지목 확정 직후에만 정체를 밝힐 수 있다."},
+     ],
+     goals:[{t:"세 사람의 죄가 드러나게 유도",p:0},{t:"정체 은닉",p:10},{t:"인간 전원 자기 자신 지목 유도",p:45}]},
+  ],
+  memory:{sim:{t1:"저 라이터… 내 거다. 왜 저기에?",t2:"그 겨울, 승택이 옥상으로 불렀다. J의 사진과 함께. 그 다음이 없다.",t3:"난간을 넘던 것은 — 나였다. 시키는 대로."},
+    yu:{t1:"저 조각칼… 내 거다. 잃어버린 줄 알았는데.",t2:"그 겨울, 승택이 내 도자기를 들고 찾아왔다. 그 다음이 없다.",t3:"도로 위 파편을 줍던 손 — 내 손이었다."},
+    lee:{t1:"저 손수건… 내 거다. 승택에게 줬던 건데.",t2:"그 겨울, 유인물이 뿌려졌다. 내 목소리였다. 그 다음이 없다.",t3:"무너진 건 승택이 아니라 나였다. 그의 장례에서 조사를 읽은 것도, 나였다."},
+    ose:{t1:"",t2:"",t3:"이제, 대답을 들을 시간."}},
+  cards:[
+    {id:"A1",loc:"A",ln:"시체(교실 중앙)",r:1,ob:false,bait:false,t:"쓰러진 남성",b:"교복 차림의 남성. 낯이 익다. 놀랍도록 생생해서, 방금 숨이 멎은 것 같다. 오른손에 무언가를 꽉 쥐고 있다."},
+    {id:"A2",loc:"A",ln:"시체(교실 중앙)",r:1,ob:true,bait:false,t:"명찰과 학생증",b:"명찰과 학생증 — 오승택. 우리 동창이다."},
+    {id:"A3",loc:"A",ln:"시체(교실 중앙)",r:1,ob:true,bait:true,t:"시체 주변 물품 3점",b:"오래된 지포 라이터, 목제 조각칼, 자수 손수건. (각자 자기 물건임을 알아본다.)"},
+    {id:"A4",loc:"A",ln:"시체(교실 중앙)",r:2,ob:false,bait:false,t:"쥔 손의 사진",b:"구겨진 졸업사진 — 5명 중 한 명의 얼굴만 가위로 오려져 있다. 뒷면: '너희에게, 마지막 선물'."},
+    {id:"A5",loc:"A",ln:"시체(교실 중앙)",r:3,ob:false,bait:false,t:"재관찰 — 먼지",b:"시체 아래만 10년 치 먼지가 없다. 이 시체는 오늘 죽은 게 아니다. 처음부터, 계속, 여기 있었다."},
+    {id:"A6",loc:"A",ln:"시체(교실 중앙)",r:2,ob:false,bait:false,req:"A3",t:"물품 재감정",b:"라이터 바닥 각인 'S.Y'. 조각칼 손잡이의 낙관 — 미술하는 사람의 버릇. 손수건 모서리 자수 'J.M'. (라이터→심상윤, 손수건→이정민, 조각칼→미술=유지호는 D1과 교차.)"},
+    {id:"B1",loc:"B",ln:"3학년 2반 교실",r:1,ob:false,bait:false,t:"멈춘 칠판",b:"칠판의 날짜가 10년 전 졸업식 그대로. 밑에 지워지다 만 글씨: '졸업 축하…'."},
+    {id:"B2",loc:"B",ln:"3학년 2반 교실",r:1,ob:false,bait:true,t:"오승택의 책상",b:"'심부름꾼', 지워진 욕설 낙서, 그리고 깊은 칼자국."},
+    {id:"B3",loc:"B",ln:"3학년 2반 교실",r:2,ob:false,bait:false,t:"학급일지",b:"'오승택 3일째 결석. 가정방문 요망.' 마지막 장이 찢겨 있다."},
+    {id:"B4",loc:"B",ln:"3학년 2반 교실",r:2,ob:false,bait:false,t:"오승택 사물함",b:"미대 입시 요강, 찢긴 데생 조각, 심부름 목록 쪽지 '매점: 빵2 커피1 — SY'."},
+    {id:"B5",loc:"B",ln:"3학년 2반 교실",r:3,ob:false,bait:false,t:"찢긴 일지 마지막 장",b:"'오승택의 장례에 반 아이들은 오지 않았다. 이정민만이 조사를 읽었다. 울고 있었지만, 어쩐지 자랑스러워 보였다.'"},
+    {id:"C1",loc:"C",ln:"옥상",r:1,ob:false,bait:false,t:"잠긴 옥상 문",b:"옥상 문이 잠겨 있다. 빛바랜 안내문: '학생 출입 금지 — 사고 이후'."},
+    {id:"C2",loc:"C",ln:"옥상",r:2,ob:false,bait:false,t:"시든 꽃다발",b:"문틈의 시든 꽃다발. 리본: '상윤아, 미안해. — J'."},
+    {id:"C3",loc:"C",ln:"옥상",r:3,ob:false,bait:false,req:"F5",t:"난간과 휴대폰",b:"난간의 삭은 금줄. 낡은 휴대폰 마지막 문자: '네가 안 하면 J가 다쳐. 네가 나한테 그랬던 것처럼 — 시키는 대로 해.'"},
+    {id:"C4",loc:"C",ln:"옥상",r:3,ob:false,bait:false,req:"F5",t:"화단의 추모석",b:"난간 아래 화단의 작은 추모석. 이름이 마모됐다 — '沈○尹'."},
+    {id:"D1",loc:"D",ln:"미술실",r:1,ob:false,bait:false,t:"미술대전 포스터",b:"전국 학생 미술대전 포스터. 출품 명단: 오승택, 유지호."},
+    {id:"D5",loc:"D",ln:"미술실",r:1,ob:false,bait:false,t:"시너 냄새",b:"10년 폐교인데 시너 냄새가 아직 코를 찌른다. 이곳만 시간이 고여 있는 것 같다."},
+    {id:"D2",loc:"D",ln:"미술실",r:2,ob:false,bait:false,t:"부서진 캔버스",b:"오승택의 출품작. 시너로 훼손됐다. 구석에 교표 단추 하나."},
+    {id:"D3",loc:"D",ln:"미술실",r:2,ob:false,bait:false,t:"심사 공문",b:"'출품작 훼손으로 인한 실격: 오승택'. 합격자 명단의 한 이름에 동그라미: 유지호."},
+    {id:"D4",loc:"D",ln:"미술실",r:3,ob:false,bait:false,t:"유지호의 로커",b:"산산조각 난 도자기 파편이 소중히 담긴 상자. 사고 기사: '천변 도로에서 학생 1명 사고사 — 흩어진 무언가를 주우려 도로로 뛰어들어…'."},
+    {id:"E1",loc:"E",ln:"방송실",r:1,ob:false,bait:true,t:"켜진 장비",b:"폐교인데 장비에 전원이 들어온다. 재생 버튼에만 먼지가 없다 — 오늘 밤 누군가 이 방을 썼다. 라벨: '종업식'."},
+    {id:"E2",loc:"E",ln:"방송실",r:2,ob:true,bait:false,t:"테이프 재생",b:"잡음 너머 소년의 목소리: '나는 너희가 한 일을 전부 알고 있어. 전부, 그대로, 돌려줄 거야.' 녹음일: 10년 전 종업식."},
+    {id:"E3",loc:"E",ln:"방송실",r:2,ob:false,bait:false,t:"뿌려졌던 유인물",b:"이정민의 육성 녹취록 사본. '걔는 내가 없으면 아무것도 못 해. 불쌍하니까 놀아주는 거지.' 평판은 하룻밤에 무너졌다."},
+    {id:"E4",loc:"E",ln:"방송실",r:3,ob:false,bait:false,t:"오늘 밤의 흔적",b:"오늘 밤의 사용 흔적과 메모 한 장. 필체가 우리가 받은 초대장과 같다."},
+    {id:"F1",loc:"F",ln:"교무실",r:1,ob:false,bait:false,t:"멈춘 달력",b:"달력이 10년 전 2월에 멈춰 있다. 폐교 공고문."},
+    {id:"F2",loc:"F",ln:"교무실",r:2,ob:true,bait:true,t:"신문 스크랩 ①",b:"'졸업식 당일 오모 군 사망. 자살로 보이나 유서가 없고, 사망 추정 시각과 목격 증언이 어긋나며, 현장에서 제3자의 물품 3점이 발견되어 경찰은 사인을 단정하지 못했다.'"},
+    {id:"F3",loc:"F",ln:"교무실",r:2,ob:true,bait:false,t:"신문 스크랩 ②",b:"'같은 겨울, 같은 학교 3학년 3명 잇달아 사망 — 추락, 교통사고, 그리고…'. 이름은 잉크가 번져 읽을 수 없다."},
+    {id:"F5",loc:"F",ln:"교무실",r:2,ob:false,bait:false,t:"키박스",b:"'옥상' 열쇠만 최근에 만진 흔적. (획득하면 옥상 C3·C4 조사 가능.)"},
+    {id:"F6",loc:"F",ln:"교무실",r:2,ob:false,bait:false,t:"학생 명부",b:"오승택의 이름은 있다. 그러나 '오세원'이라는 이름은 어디에도 없다."},
+    {id:"F4",loc:"F",ln:"교무실",r:3,ob:true,bait:false,t:"졸업대장",b:"세 이름 위에 붉은 줄. 심상윤·유지호·이정민, '졸업 전 사망'."},
+  ],
+  finalQuestions:[
+    "그 겨울, 당신에게 무슨 일이 있었습니까? 당신이 기억해낸 것을 이야기해 주세요.",
+    "오승택의 죽음에, 당신은 어떤 책임이 있습니까?",
+    "오승택을 죽인 것은 누구입니까? 당신은 누구를 지목하겠습니까? (자기 자신도 지목 가능)",
+    "'오세원'은 누구라고 생각합니까?",
+  ],
+};
+
+/* ============ 상태 (로컬 · 새로고침 유지) ============ */
+const LS="board.gp.v1";
+let S = load();
+function load(){ const def={seq:1,revealed:[],hand:[],log:"",tab:"cast",assign:{sim:"ai",yu:"ai",lee:"ai",ose:"ai"}}; try{const s=Object.assign(def,JSON.parse(localStorage.getItem(LS)||"{}")); if(!s.assign)s.assign={sim:"ai",yu:"ai",lee:"ai",ose:"ai"}; if(!s.hand)s.hand=[]; return s;}catch(e){return def;} }
+function save(){ try{localStorage.setItem(LS,JSON.stringify(S));}catch(e){} }
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const card=id=>D.cards.find(c=>c.id===id);
+const roundOf=seq=> seq>=6?3:seq>=4?2:seq>=2?1:0;
+
+function autoReveal(){ const cr=roundOf(S.seq); let go=true; while(go){ go=false; D.cards.forEach(c=>{ if(c.ob&&c.r<=cr&&!S.revealed.includes(c.id)&&(!c.req||S.revealed.includes(c.req))){ S.revealed.push(c.id); go=true; } }); } }
+
+/* ============ 렌더 ============ */
+const TABS=[["run","진행 · 조사"],["cast","배역"],["log","진행 로그"],["final","종막"]];
+function render(){
+  autoReveal();
+  $("hPhase").textContent="· "+D.phases[S.seq-1].name+" (조사 R"+roundOf(S.seq)+")";
+  const tb=$("tabs"); tb.innerHTML="";
+  TABS.forEach(([k,l])=>{ const t=document.createElement("div"); t.className="tab"+(S.tab===k?" on":""); t.textContent=l; t.onclick=()=>{S.tab=k;save();render();}; tb.appendChild(t); });
+  const r=$("root"); r.innerHTML="";
+  ({run:renderRun,cast:renderCast,log:renderLog,final:renderFinal}[S.tab]||renderRun)(r);
+  save();
+}
+function renderRun(r){
+  let step=`<div class="stepper">`+D.phases.map(p=>`<div class="step${p.seq===S.seq?' on':''}${p.seq<S.seq?' done':''}" onclick="setSeq(${p.seq})">${p.seq}. ${esc(p.name)}</div>`).join("")+`</div>`;
+  const ph=D.phases[S.seq-1]; const il=D.interludes[S.seq];
+  r.innerHTML=`<div class="card">${step}
+    <div class="gm"><span class="lb">GM 지문 · ${esc(ph.name)}${ph.ap?` · 조사 ${ph.ap}AP`:""}</span>${esc(ph.gm)}</div>
+    ${il?`<div class="bc">📻 교내방송 — ${esc(il)}</div>`:""}
+    <div class="row" style="margin-top:14px"><button class="btn sm" ${S.seq<=1?"disabled":""} onclick="setSeq(${S.seq-1})">‹ 이전</button>
+      <button class="btn gold sm" ${S.seq>=9?"disabled":""} onclick="setSeq(${S.seq+1})">다음 단계 ›</button>
+      <span style="margin-left:auto"><button class="btn sm" onclick="pushState()">📋 상태 복사(수동)</button></span></div></div>
+  ${boardMarkup()}`;
+}
+function renderCast(r){
+  r.innerHTML=`<div class="card"><h2>🎲 랜덤 배역 배정</h2><div class="lead" style="margin-bottom:10px">사람 수를 정하고 <b>랜덤 배정</b>을 누르면 배역이 무작위로 정해집니다. 각 사람은 아래 <b>개인 링크</b>를 <b>자기 기기</b>에서 열어 <b>자기 배역만</b> 확인하세요(AI 배역은 이 세션이 연기).</div>
+      <div class="row"><span style="font-size:13px;color:var(--sub)">사람 수</span><select id="nHuman"><option>1</option><option selected>2</option><option>3</option><option>4</option></select><button class="btn gold sm" onclick="randomAssign()">🎲 랜덤 배정</button></div>
+      <div class="lead" style="margin-top:9px">※ 개인 링크를 <b>다른 기기</b>에서 열려면 이 보드가 접속 가능한 주소여야 합니다 — 같은 와이파이면 이 폴더에서 <code>python3 -m http.server</code> 후 <code>http://(내IP):8000/board.html</code>. 파일을 바로 연 경우 개인 링크는 같은 기기에서만 열립니다.</div></div>
+    <div class="card"><h2>배역 배정 & 시트</h2><div class="lead" style="margin-bottom:10px">'사람' 배역만 시트를 열 수 있습니다. 셀렉트로 직접 바꿔도 됩니다.</div><div id="rl"></div></div>`;
+  const rl=r.querySelector("#rl");
+  D.roles.forEach(c=>{ const mode=S.assign[c.id]||"ai"; const d=document.createElement("div"); d.className="role-card"; d.style.setProperty("--rc",c.color);
+    d.innerHTML=`<div class="av">${c.avatar}</div>
+      <div style="flex:1;min-width:0"><div class="nm" style="color:${c.color}">${esc(c.name)}${c.hidden?' <span class="pill">스포일러</span>':''}</div><div class="jb">${esc(c.age)} · ${esc(c.job)}</div>
+        ${mode==="human"?`<div class="tg" style="color:var(--gold-b);word-break:break-all;font-size:11px">🔗 ${esc(privLink(c.id))}</div>`:`<div class="tg">${esc(c.tagline)}</div>`}</div>
+      <div class="row" style="flex:0 0 auto;gap:6px">
+        <select onchange="setAssign('${c.id}',this.value)"><option value="ai"${mode==="ai"?" selected":""}>AI가 연기</option><option value="human"${mode==="human"?" selected":""}>사람이 플레이</option></select>
+        ${mode==="human"?`<button class="btn sm" onclick="copyLink('${c.id}')">링크</button>`:""}
+        <button class="btn sm ${mode==="human"?"gold":""}" ${mode==="human"?"":"disabled"} onclick="openSheet('${c.id}')">시트</button>
+      </div>`;
+    rl.appendChild(d); });
+}
+function boardMarkup(){
+  const cr=roundOf(S.seq); const apMax={1:3,2:3,3:2}[cr]||0;
+  const apUsed=[...S.revealed,...S.hand].filter(id=>{const c=card(id);return c&&c.r===cr&&!c.ob;}).length;
+  const locs=[["A","시체(교실 중앙)"],["B","3학년 2반 교실"],["C","옥상"],["D","미술실"],["E","방송실"],["F","교무실"]];
+  const locIcon={A:"🏫 시체 (교실 중앙)",B:"📋 3학년 2반 교실",C:"🌫️ 옥상",D:"🎨 미술실",E:"📻 방송실",F:"🗄️ 교무실"};
+  let h=`<div class="card"><h2>조사 맵 · 공개 ${S.revealed.length} · 손패 ${S.hand.length}${cr?` · R${cr} ${apUsed}/${apMax}`:""}</h2><div class="lead" style="margin-bottom:12px">카드를 눌러 <b>조사(손패)</b> → 열어보고 <b>전체공개</b>. 불리한 카드는 손패에 감출 수 있어요. 공개의무 카드는 라운드 진입 시 자동 공개.</div>`;
+  locs.forEach(([lc,ln])=>{ const cs=D.cards.filter(c=>c.loc===lc); if(!cs.length)return;
+    h+=`<div class="loc-group"><div class="lh">${esc(locIcon[lc]||ln)}</div><div class="lb" style="display:block"><div class="cardmap">`;
+    cs.forEach(c=>{
+      if(S.revealed.includes(c.id)) h+=`<div class="gcard pub${c.bait?' baitc':''}" onclick="openCard('${c.id}')"><span class="tag">공개</span><div class="rb">R${c.r}${c.bait?' · ※':''}</div><div class="t">${esc(c.t)}</div></div>`;
+      else if(S.hand.includes(c.id)) h+=`<div class="gcard hand" onclick="openCard('${c.id}')"><span class="tag">손패</span><div class="rb">R${c.r} · 비공개</div><div class="t">${esc(c.t)}</div></div>`;
+      else{ const reqOk=!c.req||has(c.req); const roundOk=c.r<=cr;
+        if(roundOk&&reqOk) h+=`<div class="gcard face" onclick="investigate('${c.id}')"><span class="tag">${c.ob?'공개의무':'조사'}</span><div class="q">?</div><div class="rb">R${c.r}</div></div>`;
+        else h+=`<div class="gcard face locked"><div class="q">🔒</div><div class="rb">${roundOk?"선행 필요":"R"+c.r}</div></div>`; }
+    });
+    h+=`</div></div></div>`; });
+  h+=`</div>`; return h;
+}
+function renderLog(r){
+  r.innerHTML=`<div class="card"><h2>진행 로그</h2><div class="lead" style="margin-bottom:8px">오간 대사·판단을 적어두세요. '🔗 에이전트에게 상태 복사'가 최근 로그를 함께 담아줍니다.</div>
+    <textarea id="logta" rows="16" placeholder="예)\n[GM] (공통지문 낭독)\n심상윤(나): 다들 오랜만이네. 근데 저 시체는 대체…\n이정민(AI): 우선 진정하자. 우리끼리 싸울 일은 아니잖아?">${esc(S.log)}</textarea>
+    <div class="row" style="margin-top:10px"><button class="btn sm" onclick="pushState()">📋 상태 복사(수동)</button><button class="btn sm" onclick="saveLog()">저장</button></div></div>`;
+  $("logta").addEventListener("input",e=>{S.log=e.target.value;save();});
+}
+function renderFinal(r){
+  r.innerHTML=`<div class="card"><h2>종막 · 질문지</h2><div class="lead" style="margin-bottom:10px">각자 아래 4문항에 서술로 답합니다. <b>채점·엔딩은 Claude 세션(에이전트)</b>이 진상 기준으로 처리합니다. '🔗 상태 복사'로 답변을 세션에 넘기세요.</div>
+    ${D.finalQuestions.map((q,i)=>`<div class="sec"><div class="h">${i+1}. ${esc(q)}</div></div>`).join("")}
+    <div class="lead" style="margin-top:12px">판정 규칙: 가해자 3인이 모두 '자기 자신'을 (죄 2개 이상 근거와 함께) 지목 → <b>진혼</b>, 일부 → 반쪽 진혼, 아무도 못 하면 → 오인·루프.</div></div>`;
+}
+
+function openSheet(id){
+  const c=D.roles.find(x=>x.id===id); const cr=roundOf(S.seq);
+  const frags=Object.entries(D.memory[id]||{}).filter(([k,v])=>v&&((k==="t1"&&S.seq>=3)||(k==="t2"&&S.seq>=5)||(k==="t3"&&S.seq>=7)))
+    .map(([k,v])=>`<div class="frag"><div class="w">기억의 파편 · ${k==="t1"?"토론1":k==="t2"?"토론2":"최종토론"}</div>${esc(v)}</div>`).join("");
+  $("mbox").innerHTML=`<h2 style="color:${c.color}">${c.avatar} ${esc(c.name)} <span style="font-size:13px;color:var(--muted)">· ${esc(c.job)}</span></h2>
+    <div class="lead" style="margin-bottom:8px">${esc(c.tagline)}</div>
+    ${c.hidden?`<div class="hb">⚑ 스포일러 배역 — 정체를 숨기세요</div>`:""}
+    ${c.sheet.map(x=>`<div class="sec"><div class="h">${esc(x.h)}</div><div class="b">${esc(x.b)}</div></div>`).join("")}
+    ${frags?`<div class="sec"><div class="h">떠오른 기억</div>${frags}</div>`:""}
+    <div class="sec"><div class="h">나의 목표</div>${c.goals.map(g=>`<div class="goal"><span>${esc(g.t)}</span><span class="pt">+${g.p}</span></div>`).join("")}</div>
+    <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" onclick="closeM()">확인</button></div>`;
+  $("modal").classList.add("on");
+}
+function closeM(){ $("modal").classList.remove("on"); }
+
+function setSeq(n){ n=Math.max(1,Math.min(9,n)); const changed=n!==S.seq; S.seq=n; autoReveal(); save(); render(); if(changed) pushState(true); }
+function setAssign(id,v){ S.assign[id]=v; save(); render(); }
+function privLink(id){ return location.origin+location.pathname+"?sheet="+id; }
+function copyLink(id){ copy(privLink(id)); toast("개인 링크 복사됨 — 그 사람 기기에서 여세요"); }
+function randomAssign(){ const el=document.getElementById("nHuman"); const n=el?+el.value:2;
+  const ids=D.roles.map(r=>r.id); for(let i=ids.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); const t=ids[i];ids[i]=ids[j];ids[j]=t;}
+  const a={}; ids.forEach((id,i)=>a[id]=i<n?"human":"ai"); S.assign=a; save(); render(); toast("🎲 랜덤 배정 완료 — 각 개인 링크를 해당 기기에서 여세요"); }
+function renderSolo(id){
+  const c=D.roles.find(x=>x.id===id);
+  const tabsEl=document.getElementById("tabs"); if(tabsEl)tabsEl.style.display="none";
+  const brand=document.querySelector("header .b"); if(brand)brand.innerHTML='<span class="mk">◈</span> 내 배역 카드';
+  const hp=document.getElementById("hPhase"); if(hp)hp.textContent="";
+  const rb=document.querySelector('header span[style]'); if(rb)rb.style.display="none";
+  function draw(){
+    const sseq=+(localStorage.getItem("solo.seq."+id)||1);
+    const frags=Object.entries(D.memory[id]||{}).filter(([k,v])=>v&&((k==="t1"&&sseq>=3)||(k==="t2"&&sseq>=5)||(k==="t3"&&sseq>=7)))
+      .map(([k,v])=>`<div class="frag"><div class="w">기억의 파편 · ${k==="t1"?"토론1":k==="t2"?"토론2":"최종토론"}</div>${esc(v)}</div>`).join("");
+    const steps=D.phases.map(p=>`<div class="step${p.seq===sseq?' on':''}${p.seq<sseq?' done':''}" onclick="soloSeq('${id}',${p.seq})">${p.seq}</div>`).join("");
+    document.getElementById("root").innerHTML=`<div class="card">
+      <div style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:8px">이 화면은 <b style="color:var(--gold)">당신만</b> 보세요 🙈</div>
+      <h2 style="color:${c.color};font-size:19px">${c.avatar} ${esc(c.name)} <span style="font-size:13px;color:var(--muted)">· ${esc(c.job)}</span></h2>
+      <div class="lead" style="margin-bottom:8px">${esc(c.tagline)}</div>
+      ${c.hidden?'<div class="hb">⚑ 스포일러 배역 — 정체를 숨기세요</div>':""}
+      ${c.sheet.map(x=>`<div class="sec"><div class="h">${esc(x.h)}</div><div class="b">${esc(x.b)}</div></div>`).join("")}
+      ${frags?`<div class="sec"><div class="h">떠오른 기억</div>${frags}</div>`:""}
+      <div class="sec"><div class="h">나의 목표</div>${c.goals.map(g=>`<div class="goal"><span>${esc(g.t)}</span><span class="pt">+${g.p}</span></div>`).join("")}</div>
+      <div class="sec"><div class="h">현재 단계 <span style="color:var(--muted);font-weight:400;font-size:12px">— GM 안내에 맞춰 넘기면 기억이 떠오릅니다</span></div><div class="stepper" style="margin-top:6px">${steps}</div></div>
+    </div>`;
+  }
+  window.soloSeq=function(rid,n){ localStorage.setItem("solo.seq."+rid,n); draw(); };
+  draw();
+}
+function has(id){ return S.revealed.includes(id)||S.hand.includes(id); }
+function investigate(id){ const c=card(id); const cr=roundOf(S.seq);
+  if(c.r>cr){toast("아직 조사할 수 없습니다");return;} if(c.req&&!has(c.req)){toast("선행 단서(예: 열쇠)가 필요합니다");return;}
+  if(!has(id)){ S.hand.push(id); save(); render(); toast("손패에 넣었어요 — 공개는 당신 선택"); } }
+function publish(id){ S.hand=S.hand.filter(x=>x!==id); if(!S.revealed.includes(id))S.revealed.push(id); save(); render(); pushState(true); }
+function openCard(id){ const c=card(id); const inHand=S.hand.includes(id); const isPub=S.revealed.includes(id);
+  document.getElementById("mbox").innerHTML=`<div style="color:var(--muted);font-size:12px;text-align:center;margin-bottom:8px">${esc(c.ln)} · R${c.r}${isPub?' · 전체공개':inHand?' · 손패(비공개)':''}</div>
+    <h2 style="font-size:18px">${esc(c.t)}${c.bait?' <span class="pill">※미끼?</span>':''}</h2>
+    <div class="sec"><div class="b" style="font-size:15px">${esc(c.b)}</div></div>
+    <div class="row" style="margin-top:16px;justify-content:flex-end;gap:8px">${inHand?`<button class="btn gold" onclick="publish('${id}');closeM()">전체공개</button>`:""}<button class="btn" onclick="closeM()">닫기</button></div>`;
+  document.getElementById("modal").classList.add("on"); }
+function saveLog(){ toast("저장됨"); }
+/* 조사카드 전체공개 / 페이즈 진행 시 자동 호출 — 공개된 것만 클립보드로 밀어준다(손패 제외) */
+function pushState(auto){
+  const ph=D.phases[S.seq-1];
+  const rev=S.revealed.map(id=>{const c=card(id);return `- [${c.ln}] ${c.t}: ${c.b}`;}).join("\n");
+  const log=(S.log||"").slice(-1400);
+  const il=D.interludes[S.seq];
+  const asg=D.roles.map(x=>`${x.name}=${(S.assign[x.id]==='human')?'사람':'AI(세션)'}`).join(", ");
+  const block=`[졸업사진 · 게임보드 상태 업데이트]
+단계: ${ph.name} (조사 R${roundOf(S.seq)})
+배역 배정: ${asg}
+GM 지문: ${ph.gm}${il?`\n망령 인터루드(교내방송): ${il}`:""}
+
+■ 전체공개된 조사카드 (손패/비공개 제외):
+${rev||"(아직 없음)"}
+
+■ 최근 진행 로그:
+${log||"(없음)"}
+
+※ 위 공개 카드·단계·배정을 인지하고 이후 GM·배역 진행에 반영해줘. 사람이 맡지 않은 배역(AI)과 GM은 네가 진행한다.`;
+  copy(block); toast(auto?"📋 상태 자동 복사됨 — 세션에 붙여넣기":"📋 복사됨 — 세션에 붙여넣기");
+}
+function copy(t){ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).catch(()=>fallbackCopy(t));}else fallbackCopy(t); }
+function fallbackCopy(t){ const ta=document.createElement("textarea"); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy");}catch(e){} ta.remove(); }
+let tt; function toast(m){ const el=$("toast"); el.textContent=m; el.classList.add("on"); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove("on"),1800); }
+function reset(){ if(confirm("보드를 초기화할까요? (단계·조사·손패·로그·배정이 지워집니다)")){ S={seq:1,revealed:[],hand:[],log:"",tab:"cast",assign:{sim:"ai",yu:"ai",lee:"ai",ose:"ai"}}; save(); render(); } }
+
+const SOLO=new URLSearchParams(location.search).get("sheet");
+if(SOLO && D.roles.find(r=>r.id===SOLO)) renderSolo(SOLO); else render();
+</script>
+<div class="modal" id="modal"><div class="box" id="mbox"></div></div>
+</body>
+</html>

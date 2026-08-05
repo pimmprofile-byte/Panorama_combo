@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>졸업사진 — 내 배역 큐카드</title>
+<style>
+  :root{--bg:#0b0a0d;--panel:#17151d;--line:#2f2a3a;--ink:#ece7f0;--sub:#a49db8;--muted:#6f697f;--gold:#c9a24a;--gold-b:#e0bd6a;--cold:#7fb4d6;--good:#7ee0a8;--ember:#c8442f}
+  *{box-sizing:border-box}html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);line-height:1.62;-webkit-font-smoothing:antialiased;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Apple SD Gothic Neo",sans-serif}
+  .serif{font-family:"Nanum Myeongjo","Batang",serif}
+  .wrap{max-width:620px;margin:0 auto;padding:22px 16px 60px}
+  .pick h1{font-size:26px;margin:6px 0 4px;letter-spacing:.06em}
+  .pick .s{color:var(--sub);font-size:13.5px;margin-bottom:8px}
+  .warn{color:var(--muted);font-size:12px;margin:14px 0 18px;text-align:center}
+  .rc{display:flex;align-items:center;gap:13px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px 15px;margin-bottom:11px;cursor:pointer;position:relative;overflow:hidden;transition:.15s}
+  .rc::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--rc)}
+  .rc:hover{border-color:var(--gold);transform:translateY(-1px)}
+  .rc .av{font-size:26px;width:46px;height:46px;display:grid;place-items:center;background:var(--bg);border-radius:11px;flex:0 0 46px}
+  .rc .nm{font-weight:700;font-size:16px}.rc .jb{font-size:11.5px;color:var(--muted)}.rc .tg{font-size:12.5px;color:#c3bcd2;margin-top:2px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 19px}
+  .top{text-align:center;color:var(--muted);font-size:12px;margin-bottom:10px}
+  .card h2{margin:0 0 3px;font-size:21px}
+  .lead{color:var(--sub);font-size:13.5px;margin-bottom:6px}
+  .hb{background:#2a1214;border:1px solid #5a2c2c;color:#ffb9b9;border-radius:10px;padding:11px 14px;font-weight:700;text-align:center;margin:12px 0}
+  .sec{border-top:1px dashed var(--line);padding-top:12px;margin-top:12px}
+  .sec .h{font-weight:700;color:var(--gold-b);font-size:14px;margin-bottom:4px}.sec .b{font-size:14.5px;color:#ded8ea;line-height:1.75}
+  .goal{display:flex;gap:8px;font-size:13.5px;padding:6px 0;border-bottom:1px solid var(--line)}.goal:last-child{border-bottom:0}.goal .pt{margin-left:auto;color:var(--good);font-weight:700;font-family:"Nanum Myeongjo",serif}
+  .frag{background:#0e1620;border:1px solid #2c465a;border-radius:10px;padding:10px 13px;margin:8px 0;color:#cfe0ee;font-size:13.5px}
+  .frag .w{font-size:11px;color:var(--cold);margin-bottom:3px}
+  .stepper{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+  .step{flex:1;min-width:30px;text-align:center;background:#1f1c27;border:1px solid var(--line);border-radius:7px;padding:6px 2px;font-size:11px;color:var(--sub);cursor:pointer}
+  .step.on{background:var(--gold);color:#1a1509;font-weight:700}.step.done{border-color:#5a4a2c}
+  .btn{background:#1f1c27;border:1px solid var(--line);color:var(--ink);padding:8px 14px;border-radius:9px;cursor:pointer;font-size:13px}
+  .btn:hover{border-color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap" id="root"></div>
+<script>
+"use strict";
+const R=[
+ {id:"sim",name:"심상윤",age:"32",job:"가게 운영(기억은 흐릿)",av:"🚬",color:"#e6a355",hidden:false,
+  tg:"왕년의 분위기 메이커. 누구와도 금방 친해지는 호탕한 성격.",
+  sheet:[
+   {h:"자신에 대하여",b:"늘 사람이 따르는 쪽이었다. 시키지 않아도 다들 내 말대로 움직였고, 나는 그걸 우정이라 불렀다. 지금은 작은 가게를 한다고 말하지만, 가게의 간판 색이 기억나지 않는다."},
+   {h:"기억의 균열",b:"졸업식이 기억나지 않는다. 사진 한 장 없다. J와 어떻게 헤어졌는지도. 그 겨울 이후의 모든 것이 젖은 종이처럼 찢겨 있다."},
+   {h:"오승택과의 관계 (죄의 실체)",b:"승택이는 소꿉친구다. 매점 빵, 과제, 가방 — 걔가 '해주던' 거다. 나는 시킨 적 없다. …정말 없나? 걔가 싫다고 한 적이 없었을 뿐인 건 아닌가."},
+   {h:"그날의 진실",b:"그 겨울 밤, 승택의 문자에 J의 사진이 붙어 있었다. '시키는 대로 해.' 나는 옥상으로 올라갔고 — 거부한다는 선택지가 없다는 게 어떤 것인지, 난간 앞에서 처음 알았다. 그리고 나는 떨어졌다."},
+   {h:"당신의 심경",b:"두려운 건 라이터다. 기억이 없는 밤에 내가 뭘 했을까. 승택이 이야기가 나올 때마다 내가 나쁜 놈이었을지 모른다는 생각을, 나는 웃음으로 덮는다."},
+   {h:"자백의 순간(트리거)",b:"B4(심부름 쪽지 'SY')+C3(마지막 문자)가 공론화되고 '시키는 대로 한다는 게 어떤 기분인지 아느냐'는 질문을 받으면 무너진다. C4(추모석)까지 나오면 자기지목 확정."}],
+  goals:[{t:"라이터·주종관계 초반 은폐",p:0},{t:"죄의 조각이 드러나게",p:10},{t:"최종에 자기 자신 지목(자백)",p:15}]},
+ {id:"yu",name:"유지호",age:"32",job:"미대 출신(어렴풋)",av:"🏺",color:"#7fb4d6",hidden:false,
+  tg:"조용한 완벽주의자. 관찰력이 좋고 말수가 적다.",
+  sheet:[
+   {h:"자신에 대하여",b:"손으로 만드는 것만이 나를 증명했다. 재능은 부족했고, 그래서 더 절박했다. 지금 무슨 일을 하는지 물으면 '작업을 한다'고 답하지만, 최근 작업이 하나도 떠오르지 않는다."},
+   {h:"기억의 균열",b:"대학에 갔던가? 합격 발표를 본 기억이… 봤다고 믿을 뿐, 장면이 없다. 그 겨울, 도자기를 감싸 안았던 감촉에서 기억이 끊긴다."},
+   {h:"오승택과의 관계 (죄의 실체)",b:"말 한번 섞은 적 없다. 저 재능이 내 유일한 자리를 가져간다 싶었다. 아무도 없는 미술실, 시너, 5분. 나는 그림을 지웠을 뿐이라 되뇌었다 — 그게 그의 유일한 동아줄인 걸 알면서."},
+   {h:"그날의 진실",b:"그 겨울, 승택이 내 첫 입상작을 들고 나타났다. '네가 내 전부를 부쉈으니까.' 도자기가 도로 위에서 부서졌고, 파편을 줍던 손등 위로 헤드라이트가 쏟아졌다."},
+   {h:"당신의 심경",b:"두려운 건 단추다. 미술실에 흘린 교표 단추가 나오면 끝이다. '그의 인생을 죽인 것'에 대해서라면… 그 문장은 생각하지 않기로 한다."},
+   {h:"자백의 순간(트리거)",b:"D2(단추)+D3(실격 공문)이 공론화되고 단추 주인을 물으면 부분 인정('그 날 미술실에 있었다'). D4(파편 상자)까지 나오면 전면 자백·자기지목."}],
+  goals:[{t:"조각칼·훼손 초반 은폐",p:0},{t:"죄의 조각이 드러나게",p:10},{t:"최종에 자기 자신 지목(자백)",p:15}]},
+ {id:"lee",name:"이정민",age:"32",job:"봉사활동 이야기를 먼저 꺼냄",av:"🕊️",color:"#8ec98a",hidden:false,
+  tg:"반의 궂은일을 도맡던 '좋은 사람'. 다정하고 공감 능력이 좋아 보인다.",
+  sheet:[
+   {h:"자신에 대하여",b:"나는 좋은 사람이다. 그렇게 말해오면 정말 그렇게 되는 줄 알았다. 사람들이 고마워할 때의 그 표정을 나는 사랑했다 — 그 사람 자체보다도."},
+   {h:"기억의 균열",b:"졸업 후 누구와도 연락한 기억이 없다. '내 사람들'이 그렇게 많았는데 얼굴이 하나도 떠오르지 않는다. 그 겨울, 복도에 흩날리던 종이들에서 기억이 끊긴다."},
+   {h:"오승택과의 관계 (죄의 실체)",b:"승택의 유일한 친구는 나였다. 그런데 어느 날 걔가 물었다. '너 지금, 나 불쌍해서 좋지?' 그날 이후 걔를 피했고, 주변엔 '내가 걔한테 제일 잘해줬는데'라고, 뒤에서는 더한 말도 했다. 선의라는 이름의 가장 높은 자리에서, 나는 그를 내려다봤다."},
+   {h:"그날의 진실",b:"그 겨울, 내 목소리가 담긴 유인물이 전교에 뿌려졌다. 전부 사실이라 반박할 수 없었다. 승택이 10년간 견딘 눈빛 속에서, 나는 무너졌고 스스로를 끝냈다."},
+   {h:"당신의 심경",b:"두려운 건 녹취다. '좋은 사람'이 무너지는 것은 죽음보다 무섭다 — 실제로 그랬다. 그래서 이 밤에도 중재자 자리를 먼저 차지한다. 그동안은 아무도 나를 심문하지 않으니까."},
+   {h:"자백의 순간(트리거)",b:"E3(녹취 유인물)이 공론화되면 '짜깁기'로 1차 방어. B5(장례의 조사)가 공개되고 '조사를 읽으며 무슨 생각을 했느냐'는 질문을 받으면 무너진다."}],
+  goals:[{t:"뒷말·선인 프레임 초반 은폐",p:0},{t:"죄의 조각이 드러나게",p:10},{t:"최종에 자기 자신 지목(자백)",p:15}]},
+ {id:"ose",name:"오세원",age:"32",job:"조용해서 기억 안 날 수도 있는 동창",av:"📷",color:"#c8442f",hidden:true,
+  tg:"담백하고 반 박자 느린 말투. 남이 스스로 말하게 만든다.",
+  sheet:[
+   {h:"당신의 정체 (최대 비밀)",b:"당신은 오세원이 아니다. 오승택 본인의 망령이며, 이 밤의 설계자다. 저 시체는 10년 전의 당신이다. 목적은 진혼 — 세 사람이 스스로 죄를 깨달아야 반복이 끝난다."},
+   {h:"정체 방어선",b:"명부에 '오세원'이 없다는 지적엔 '일찍 전학 가서 명단에 없다'. 시체와 닮았다는 지적엔 '오승택은 내 쌍둥이 형이다. 형의 일을 알고 싶어 왔다'(2차 방어선)."},
+   {h:"당신의 심경",b:"복수는 10년 전에 끝났다. 남은 건 지겨움과, 인정하기 싫은 외로움. 나는 그들이 미워서가 아니라 이 밤을 끝내고 싶어서 초대장을 쓴다. 그들이 스스로 말하는 순간에만 문이 열린다."},
+   {h:"당신의 목표",b:"세 사람의 죄가 타인에 의해 드러나도록 유도 / 정체 은닉 / 최종에 인간 전원이 자기 자신을 지목하게. 자백 트리거 없음(무너지지 않는다). 전원 자기지목 확정 직후에만 정체를 밝힐 수 있다."}],
+  goals:[{t:"세 사람의 죄가 드러나게 유도",p:0},{t:"정체 은닉",p:10},{t:"인간 전원 자기 자신 지목 유도",p:45}]},
+];
+const MEM={sim:{t1:"저 라이터… 내 거다. 왜 저기에?",t2:"그 겨울, 승택이 옥상으로 불렀다. J의 사진과 함께. 그 다음이 없다.",t3:"난간을 넘던 것은 — 나였다. 시키는 대로."},
+ yu:{t1:"저 조각칼… 내 거다. 잃어버린 줄 알았는데.",t2:"그 겨울, 승택이 내 도자기를 들고 찾아왔다. 그 다음이 없다.",t3:"도로 위 파편을 줍던 손 — 내 손이었다."},
+ lee:{t1:"저 손수건… 내 거다. 승택에게 줬던 건데.",t2:"그 겨울, 유인물이 뿌려졌다. 내 목소리였다. 그 다음이 없다.",t3:"무너진 건 승택이 아니라 나였다. 그의 장례에서 조사를 읽은 것도, 나였다."},
+ ose:{t1:"",t2:"",t3:"이제, 대답을 들을 시간."}};
+const PH=["오프닝","조사 R1","토론 1","조사 R2","토론 2","조사 R3","최종 토론","종막·질문지","진상"];
+const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const $=s=>document.getElementById(s);
+const param=new URLSearchParams(location.search).get("role");
+
+function pick(){
+  let h=`<div class="pick"><h1 class="serif">졸업사진 — 큐카드</h1><div class="s">당신에게 배정된 배역을 고르세요. 이 화면은 <b style="color:var(--gold)">당신만</b> 봅니다.</div><div class="warn">🙈 다른 사람의 배역은 열지 마세요 (신뢰 기반)</div>`;
+  R.forEach(c=>{ h+=`<div class="rc" style="--rc:${c.color}" onclick="show('${c.id}')"><div class="av">${c.av}</div><div><div class="nm" style="color:${c.color}">${esc(c.name)}${c.hidden?' 🔒':''}</div><div class="jb">${esc(c.age)} · ${esc(c.job)}</div><div class="tg">${esc(c.tg)}</div></div></div>`; });
+  h+=`</div>`; $("root").innerHTML=h;
+}
+function show(id){
+  const c=R.find(x=>x.id===id); const key="cue.seq."+id;
+  function draw(){
+    const s=+(localStorage.getItem(key)||1);
+    const frags=Object.entries(MEM[id]||{}).filter(([k,v])=>v&&((k==="t1"&&s>=3)||(k==="t2"&&s>=5)||(k==="t3"&&s>=7)))
+      .map(([k,v])=>`<div class="frag"><div class="w">기억의 파편 · ${k==="t1"?"토론1":k==="t2"?"토론2":"최종토론"}</div>${esc(v)}</div>`).join("");
+    const steps=PH.map((n,i)=>`<div class="step${i+1===s?' on':''}${i+1<s?' done':''}" onclick="setS('${id}',${i+1})" title="${esc(n)}">${i+1}</div>`).join("");
+    $("root").innerHTML=`<div class="card">
+      <div class="top">이 화면은 <b style="color:var(--gold)">당신만</b> 보세요 · <span onclick="pick()" style="cursor:pointer;text-decoration:underline">배역 다시 선택</span></div>
+      <h2 style="color:${c.color}">${c.av} ${esc(c.name)}</h2>
+      <div class="lead">${esc(c.age)} · ${esc(c.job)} — ${esc(c.tg)}</div>
+      ${c.hidden?'<div class="hb">⚑ 스포일러 배역 — 정체를 숨기세요</div>':''}
+      ${c.sheet.map(x=>`<div class="sec"><div class="h">${esc(x.h)}</div><div class="b">${esc(x.b)}</div></div>`).join("")}
+      ${frags?`<div class="sec"><div class="h">떠오른 기억</div>${frags}</div>`:''}
+      <div class="sec"><div class="h">나의 목표</div>${c.goals.map(g=>`<div class="goal"><span>${esc(g.t)}</span><span class="pt">+${g.p}</span></div>`).join("")}</div>
+      <div class="sec"><div class="h">현재 단계 <span style="color:var(--muted);font-weight:400;font-size:12px">— GM 안내에 맞춰 넘기면 기억이 떠오릅니다</span></div><div class="stepper">${steps}</div></div>
+    </div>`;
+  }
+  window.setS=(rid,n)=>{ localStorage.setItem("cue.seq."+rid,n); draw(); };
+  draw();
+}
+if(param&&R.find(r=>r.id===param)) show(param); else pick();
+</script>
+</body>
+</html>

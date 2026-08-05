@@ -1,0 +1,50 @@
+# Render 배포를 GitHub 쪽에서 직접 찌른다.
+#
+# Render의 Auto-Deploy는 GitHub 웹훅에 기대는데, 저장소 이름이
+# pimmmurderboard → PIMMmurderboard 로 바뀌면서 그 훅이 옛 이름에 걸린 채로
+# 남았다. git push 는 리다이렉트를 타지만 웹훅은 안 탄다 — 그래서 커밋은 올라가는데
+# 배포가 안 돈다. 이 워크플로는 그 훅을 건너뛰고 Render 배포 훅을 직접 호출한다.
+#
+# 준비 (한 번만):
+#   1. Render → 서비스 → Settings → Deploy Hook 의 URL 을 복사
+#   2. GitHub → 이 저장소 → Settings → Secrets and variables → Actions
+#      → New repository secret → 이름 RENDER_DEPLOY_HOOK, 값은 그 URL
+#   그러면 이후 main 에 올릴 때마다 저절로 배포된다.
+name: Deploy to Render
+
+on:
+  push:
+    branches: [main]
+    # 글만 고친 커밋으로 무료 플랜 빌드 시간을 태우지 않는다.
+    # 그래도 지금 당장 올리고 싶으면 Actions 탭에서 손으로 돌리면 된다.
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+  workflow_dispatch:        # Actions 탭에서 손으로도 돌릴 수 있게
+
+# 연달아 밀어 넣으면 앞의 배포는 취소하고 마지막 것만 올린다.
+concurrency:
+  group: render-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Render 배포 훅 호출
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::error::RENDER_DEPLOY_HOOK 시크릿이 없습니다."
+            echo "Render → Settings → Deploy Hook 의 URL 을 저장소 시크릿으로 넣어주세요."
+            exit 1
+          fi
+          # 훅 URL 자체가 비밀이라 응답만 찍는다. 실패하면 그 자리에서 죽는다.
+          code=$(curl -sS -o /tmp/out.txt -w '%{http_code}' --max-time 30 -X POST "$HOOK")
+          echo "Render 응답: $code"
+          cat /tmp/out.txt
+          case "$code" in
+            2*) echo "배포를 걸었습니다 — Render 대시보드 Events 에서 진행 상황을 봅니다." ;;
+            *)  echo "::error::Render 가 $code 로 답했습니다. 훅 URL 이 만료됐는지 확인하세요."; exit 1 ;;
+          esac

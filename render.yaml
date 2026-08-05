@@ -1,0 +1,20 @@
+# Render 블루프린트 — "Deploy to Render" 버튼이 이 파일을 읽어 자동 배포한다.
+# 배포 후 대시보드에서 ANTHROPIC_API_KEY 값만 넣으면 끝. (Render가 PORT를 주입한다)
+services:
+  - type: web
+    name: panorama-combo
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    envVars:
+      - key: ANTHROPIC_API_KEY   # 배포 시 본인 키 입력 (비공개). 에이전트가 GM 조종하면 없어도 됨
+        sync: false
+      - key: AGENT_KEY           # 코드 세션(GM)이 원격 조종할 때 쓰는 비밀 키(임의 문자열). 나에게만 공유
+        sync: false
+      - key: REUNION_MODEL       # 종막 채점·AI 답안용(판당 몇 번). 아끼려면 claude-sonnet-5
+        value: claude-opus-4-8
+      - key: PIMM_MODEL_FAST     # 배역 대사용(판당 60~100번). 비용과 체감속도는 여기서 갈린다
+        value: claude-haiku-4-5-20251001
+      - key: PYTHON_VERSION
+        value: "3.11.9"

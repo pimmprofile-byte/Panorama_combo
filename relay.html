@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>대사 릴레이 — PIMMmurderboard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%94%81%3C/text%3E%3C/svg%3E">
+<style>
+  @font-face{font-family:"PIMM Sans";src:url("/assets/fonts/NotoSansKR-400.woff2") format("woff2");
+    font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:"PIMM Sans";src:url("/assets/fonts/NotoSansKR-700.woff2") format("woff2");
+    font-weight:700;font-style:normal;font-display:swap}
+  :root{--bg:#0b0a0d;--panel:#17151d;--panel2:#1f1c27;--line:#2f2a3a;
+    --ink:#ece7f0;--sub:#a49db8;--muted:#6f697f;--ember:#c8442f;--ember-b:#e7654c;
+    --gold:#c9a24a;--good:#7ee0a8;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.6;
+    font-family:"PIMM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    word-break:keep-all;overflow-wrap:break-word;text-wrap:pretty;
+    padding:24px 18px calc(44px + env(safe-area-inset-bottom))}
+  .wrap{max-width:820px;margin:0 auto}
+  h1{font-size:21px;margin:0 0 5px}
+  .lede{color:var(--sub);font-size:13.5px;margin:0 0 20px}
+  .warn{background:rgba(200,68,47,.1);border:1px solid rgba(200,68,47,.4);border-radius:11px;
+    padding:12px 15px;font-size:13px;margin:0 0 20px;color:#f2d7d1}
+  .warn b{color:var(--ember-b)}
+  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 18px}
+  .bar input{flex:1;min-width:190px;background:var(--panel);border:1px solid var(--line);
+    color:var(--ink);border-radius:9px;padding:8px 11px;font-family:var(--mono);font-size:12.5px}
+  .bar input:focus{outline:none;border-color:var(--gold)}
+  .who{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 18px}
+  .who button{border:1px solid var(--line);background:var(--panel);border-radius:999px;
+    padding:7px 14px;font-size:13px;display:flex;align-items:center;gap:7px}
+  .who button.on{border-color:var(--sc);background:color-mix(in srgb,var(--sc) 17%,var(--panel))}
+  .who .d{width:8px;height:8px;border-radius:50%;background:var(--sc)}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:13px;
+    padding:15px 16px;margin:0 0 15px}
+  .sh{font-size:14.5px;font-weight:700;margin:0 0 3px}
+  .sd{color:var(--sub);font-size:12.5px;margin:0 0 11px}
+  pre,textarea{background:#0e0d12;border:1px solid var(--line);border-radius:9px;padding:12px;
+    font-family:var(--mono);font-size:11.5px;line-height:1.6;color:#d8d2e2;width:100%;margin:0}
+  pre{max-height:280px;overflow:auto;white-space:pre-wrap}
+  textarea{min-height:82px;resize:vertical;font-size:13px;font-family:inherit;line-height:1.55}
+  textarea:focus{outline:none;border-color:var(--gold)}
+  .row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  button{font-family:inherit;color:inherit;cursor:pointer;font-size:13px;background:var(--panel2);
+    border:1px solid var(--line);border-radius:9px;padding:8px 14px;transition:.15s}
+  button:hover{border-color:var(--gold);color:#fff}
+  button.go{background:linear-gradient(90deg,#8a3a2b,var(--ember));border-color:var(--ember-b);
+    color:#fff;font-weight:700}
+  button:disabled{opacity:.45;cursor:default}
+  .ok{color:var(--good)}
+  .cau{color:var(--gold)}
+  .msg{font-size:12.5px;color:var(--sub);margin-top:9px;min-height:1.3em}
+  .feed{font-size:13px;color:var(--sub);max-height:190px;overflow:auto}
+  .feed div{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+  .feed b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>대사 릴레이</h1>
+  <p class="lede">서버에 LLM 키가 없을 때, 인물 대사를 손으로 건네는 통로입니다.</p>
+
+  <div class="warn">
+    <b>이 화면을 보는 사람은 플레이어가 아니어야 합니다.</b>
+    인물의 대본이 그대로 보입니다. 진행만 맡은 사람이 여세요.
+    <br>중계는 <b>사람이 직접</b> 합니다 — 진행 세션은 이 내용을 보지 않습니다.
+    <br>렌더에 <b>ANTHROPIC_API_KEY</b>를 넣으면 서버가 알아서 처리하므로 이 화면은 쓸 일이 없습니다.
+  </div>
+
+  <div class="bar">
+    <input id="key" placeholder="AGENT_KEY" autocomplete="off" spellcheck="false">
+    <button onclick="boot()">연결</button>
+    <span class="msg" id="conn" style="margin:0"></span>
+  </div>
+
+  <div class="who" id="who"></div>
+
+  <section>
+    <div class="sh">1 · 이 글을 <span id="whoName">그 인물</span> 전용 대화창에 붙여넣기</div>
+    <p class="sd">공개된 카드와 <b>그 인물이 직접 조사한 것</b>만 들어 있습니다.
+      <b class="cau">인물마다 대화창을 따로 쓰세요.</b> 두 사람 지시문을 같은 창에 넣으면
+      그 창이 양쪽 손패를 다 알게 되고, 인물이 알 리 없는 것을 아는 것처럼 말하게 됩니다.</p>
+    <pre id="prompt">위에서 인물을 고르세요.</pre>
+    <div class="row">
+      <button class="go" onclick="copyPrompt(this)" id="cp" disabled>프롬프트 복사</button>
+      <button onclick="load()" id="rf" disabled>새로 받기</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="sh">2 · 돌아온 대사를 여기에</div>
+    <p class="sd">채팅이 답한 한두 문장을 그대로 붙여넣고 보내면 모두의 화면에 뜹니다.</p>
+    <textarea id="line" placeholder="예: 그건 제가 대답할 문제가 아닌 것 같은데요."></textarea>
+    <div class="row"><button class="go" onclick="send()" id="sd" disabled>이 대사로 말하기</button></div>
+    <div class="msg" id="msg"></div>
+  </section>
+
+  <section>
+    <div class="sh">지금 테이블</div>
+    <p class="sd">손으로 나를 때 쓰는 대화록입니다.
+      진행 세션이 이 서버를 부를 수 있으면 복사할 필요가 없습니다 — 알아서 읽어 갑니다.</p>
+    <div class="feed" id="feed">…</div>
+    <div class="row"><button onclick="copyFeed(this)">대화록 복사</button></div>
+  </section>
+</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+let SCEN=null, STATE=null, cur=null;
+const key=()=>$("key").value.trim();
+
+async function boot(){
+  try{
+    SCEN=await (await fetch("/api/scenario")).json();
+    await poll();
+    $("conn").textContent="연결됨";
+    $("conn").className="msg ok";
+  }catch(e){ $("conn").textContent="연결 실패: "+e; $("conn").className="msg"; }
+}
+async function poll(){
+  STATE=await (await fetch("/api/state")).json();
+  renderWho(); renderFeed();
+}
+function renderWho(){
+  if(!SCEN||!STATE) return;
+  const ais=SCEN.characters.filter(c=>(STATE.roles[c.id]||{}).mode==="ai");
+  $("who").innerHTML = ais.length
+    ? ais.map(c=>`<button class="${c.id===cur?"on":""}" style="--sc:${c.color}"
+        onclick="pick('${c.id}')"><span class="d"></span>${c.name}</button>`).join("")
+    : `<span class="sd">AI가 맡은 배역이 없습니다. 플레이 화면에서 빈 자리를 AI로 돌리세요.</span>`;
+}
+function renderFeed(){
+  const t=(STATE.table||[]).filter(m=>m.kind==="ai"||m.kind==="human").slice(-12);
+  $("feed").innerHTML = t.length
+    ? t.map(m=>`<div><b>${esc(m.speaker||"")}</b> ${esc(m.text||"")}</div>`).reverse().join("")
+    : `<div class="sd">아직 대화가 없습니다.</div>`;
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+async function pick(id){
+  cur=id; renderWho();
+  const c=(SCEN.characters||[]).find(x=>x.id===id);
+  $("whoName").textContent = c ? c.name : "그 인물";
+  await load();
+}
+async function load(){
+  if(!cur) return;
+  $("prompt").textContent="받는 중…";
+  const r=await fetch(`/api/relay/${cur}?key=${encodeURIComponent(key())}`);
+  const t=await r.text();
+  $("prompt").textContent = r.ok ? t
+    : (r.status===403 ? "AGENT_KEY가 맞지 않습니다." : t);
+  const on=r.ok;
+  $("cp").disabled=!on; $("rf").disabled=!cur; $("sd").disabled=!on;
+}
+async function copyPrompt(btn){
+  await nav($("prompt").textContent, btn, "프롬프트 복사");
+}
+/* 시간 순서대로, 붙여넣기 좋은 평문으로 */
+async function copyFeed(btn){
+  const t=(STATE&&STATE.table||[]).filter(m=>m.kind==="ai"||m.kind==="human").slice(-20);
+  await nav(t.map(m=>`${m.speaker}: ${m.text}`).join("\n") || "(대화 없음)", btn, "대화록 복사");
+}
+async function nav(text,btn,label){
+  try{ await navigator.clipboard.writeText(text); }
+  catch(e){ const ta=document.createElement("textarea"); ta.value=text;
+    document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
+  btn.textContent="복사됨 ✓"; btn.classList.add("ok");
+  setTimeout(()=>{ btn.textContent=label; btn.classList.remove("ok"); },1400);
+}
+async function send(){
+  const text=$("line").value.trim();
+  if(!cur||!text) return;
+  $("sd").disabled=true;
+  const r=await fetch("/api/agent/say",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({key:key(),roleId:cur,text})});
+  const o=await r.json().catch(()=>({}));
+  if(o.ok){ $("line").value=""; $("msg").textContent="보냈습니다."; $("msg").className="msg ok";
+    await poll(); await load(); }
+  else { $("msg").textContent="실패: "+(o.error||r.status); $("msg").className="msg"; }
+  $("sd").disabled=false;
+}
+setInterval(()=>{ if(STATE) poll().catch(()=>{}); }, 4000);
+$("key").addEventListener("keydown",e=>{ if(e.key==="Enter") boot(); });
+</script>
+</body>
+</html>

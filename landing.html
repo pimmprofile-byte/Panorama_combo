@@ -1,0 +1,1093 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>PIMM MURDERMYSTERY BOARD</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%230b0a0d' stroke='%23c9a24a' stroke-width='2'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='Georgia,serif' font-size='17' font-weight='700' fill='%23c9a24a'%3EP%3C/text%3E%3C/svg%3E">
+<style>
+  /* 한글 웹폰트 자체 호스팅 — 이름만 적어두면 보는 기기에 그 폰트가 있을 때만 먹는다.
+     KS X 1001 상용 2350자 서브셋. swap이라 폰트가 늦어도 글은 먼저 보인다. */
+  @font-face{font-family:"PIMM Myeongjo";src:url("/assets/fonts/NanumMyeongjo-400.woff2") format("woff2");
+    font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:"PIMM Sans";src:url("/assets/fonts/NotoSansKR-400.woff2") format("woff2");
+    font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:"PIMM Sans";src:url("/assets/fonts/NotoSansKR-700.woff2") format("woff2");
+    font-weight:700;font-style:normal;font-display:swap}
+
+  :root{
+    --bg:#0d0b0e; --bg2:#141016; --panel:#1a151c; --panel2:#221b25;
+    --bone:#ece4d3; --bone-dim:#b7ad9a; --faint:#6d6560;
+    --line:#2c2530; --line2:#3a3140;
+    --blood:#c8392b; --blood-bri:#e0503f; --brass:#c99a4e; --signal:#00ff99;
+    --blood-bg:rgba(200,57,43,.14); --brass-bg:rgba(201,154,78,.12);
+    --serif:"Playfair Display","PIMM Myeongjo","Nanum Myeongjo",Georgia,serif;
+    --sans:"PIMM Sans","Pretendard","Apple SD Gothic Neo",system-ui,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--bg);color:var(--bone);font-family:var(--sans);word-break:keep-all;overflow-wrap:break-word;text-wrap:pretty;-webkit-font-smoothing:antialiased;min-height:100vh}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  button{font-family:inherit;cursor:pointer;color:inherit}
+  ::-webkit-scrollbar{height:10px;width:10px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:10px}::-webkit-scrollbar-track{background:transparent}
+
+  /* shared noir stage — 전 화면 동일 무드 */
+  .stage{position:relative;min-height:100vh;overflow:hidden}
+  .bg{position:fixed;inset:-3%;z-index:0;
+    background:
+      linear-gradient(180deg, rgba(10,8,11,.72), rgba(9,7,10,.82) 55%, rgba(7,5,8,.95)),
+      radial-gradient(900px 480px at 50% -8%, rgba(200,57,43,.12), transparent 60%),
+      url("/assets/lobby_bg.jpg") center 32%/cover no-repeat;}
+  .bg::after{content:"";position:absolute;inset:0;opacity:.05;mix-blend-mode:overlay;
+    background-image:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px);pointer-events:none}
+  .vig{position:fixed;inset:0;z-index:1;pointer-events:none;box-shadow:inset 0 0 240px 40px rgba(0,0,0,.82)}
+  /* VHS / 노이즈 — 엔트리 전용(#scr-entry 안에 있어 사건선택 화면엔 안 뜸) */
+  .vhs{position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+  .vhs .scan{position:absolute;inset:0;opacity:.5;background:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px)}
+  .vhs .noise{position:absolute;inset:-60%;opacity:.10;mix-blend-mode:screen;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation:grain .5s steps(3) infinite}
+  .vhs .rollbar{position:absolute;left:0;right:0;height:120px;opacity:.55;
+    background:linear-gradient(180deg,transparent,rgba(255,255,255,.05) 45%,rgba(0,255,153,.03) 50%,transparent);animation:roll 8s linear infinite}
+  @keyframes grain{0%{transform:translate(0,0)}33%{transform:translate(-6%,4%)}66%{transform:translate(4%,-5%)}100%{transform:translate(0,0)}}
+  @keyframes roll{0%{top:-14%}100%{top:114%}}
+  .wrap{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:clamp(16px,4vw,40px) clamp(14px,4vw,40px) 70px;min-height:100vh}
+
+  .screen{display:none;animation:fade .5s ease}
+  .screen.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* top rail */
+  .toprail{display:flex;align-items:center;gap:12px;padding:6px 2px 0;min-height:40px}
+  .toprail .mini{display:flex;align-items:center;gap:9px;font-family:var(--serif);font-weight:800;letter-spacing:.02em}
+  .toprail .mini .dot{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--brass);display:grid;place-items:center;font-size:.8rem}
+  .toprail .sp{flex:1}
+  .back{background:none;border:1px solid var(--line2);color:var(--bone-dim);border-radius:9px;padding:7px 13px;font-size:.82rem;font-weight:600}
+  .back:hover{border-color:var(--brass);color:var(--bone)}
+  .hostpill{display:inline-flex;align-items:center;gap:6px;font-family:var(--serif);font-weight:800;font-size:.74rem;letter-spacing:.03em;
+    color:var(--signal);border:1px solid color-mix(in srgb,var(--signal) 34%,var(--line2));border-radius:999px;padding:4px 12px 4px 9px;
+    background:color-mix(in srgb,var(--signal) 8%,transparent)}
+  .hostpill svg{width:15px;height:15px;flex:0 0 auto}
+  .hostpill.part{color:var(--bone-dim);border-color:var(--line2);background:rgba(255,255,255,.02)}
+
+  /* ENTRY */
+  .mast{text-align:center;padding:clamp(30px,10vw,90px) 0 clamp(20px,4vw,36px)}
+  .emblem{width:88px;height:88px;margin:0 auto 22px;position:relative;display:grid;place-items:center;
+    border:2px solid var(--blood);border-radius:50%;
+    box-shadow:0 0 0 4px rgba(200,57,43,.14), 0 0 36px rgba(200,57,43,.30), 0 10px 34px rgba(0,0,0,.6);
+    background:radial-gradient(circle at 40% 35%, #2a1113, #12080a);animation:emberpulse 4.5s ease-in-out infinite}
+  .emblem span{font-family:var(--serif);font-weight:800;font-size:2.1rem;color:var(--bone);
+    text-shadow:0 0 16px rgba(224,80,63,.65), 0 1px 0 #000}
+  @keyframes emberpulse{0%,100%{box-shadow:0 0 0 4px rgba(200,57,43,.14), 0 0 26px rgba(200,57,43,.22), 0 10px 34px rgba(0,0,0,.6)}50%{box-shadow:0 0 0 4px rgba(200,57,43,.2), 0 0 44px rgba(200,57,43,.42), 0 10px 34px rgba(0,0,0,.6)}}
+  .emblem img{width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 3px 8px rgba(0,0,0,.55))}
+  .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.42em;color:var(--blood-bri);text-transform:uppercase;margin-bottom:14px}
+  h1.title{font-family:var(--serif);font-weight:800;line-height:.94;margin:0;letter-spacing:.01em;
+    /* 390px(아이폰13)에서 2.3rem 하한이 걸려 "MURDERMYSTERY"가 본문 폭을 꽉 채웠다(354/359px).
+       하한만 낮춰 8.5vw가 먹게 하면 390에서 33px로 떨어져 좌우 여백이 생긴다. 430·1280은 그대로. */
+    font-size:clamp(1.85rem,8.5vw,4.6rem);text-wrap:balance;color:var(--bone);
+    text-shadow:.6px 0 rgba(224,80,63,.6), -.6px 0 rgba(0,255,153,.22), 0 2px 20px rgba(0,0,0,.75);
+    animation:vflick 6s steps(1) infinite}
+  h1.title .amp{color:var(--blood);font-style:italic}
+  @keyframes vflick{0%,96%,100%{opacity:1}97%{opacity:.72}98%{opacity:1}98.6%{opacity:.85}}
+  .tageline{color:var(--bone-dim);font-size:clamp(.9rem,2.2vw,1.05rem);margin-top:18px;letter-spacing:.02em;
+    /* ch는 숫자 0 기준이라 한글 폭(1em)보다 한참 좁다. 24ch로는 <br>로 나눈 두 문장이
+       각각 또 접혀 4줄이 됐다. 글자를 줄이는 대신 줄 폭을 문장 길이에 맞춰 넓힌다. */
+    line-height:1.6;word-break:keep-all;text-wrap:balance;max-width:27ch;margin-left:auto;margin-right:auto}
+
+  .entrybox{max-width:460px;margin:0 auto}
+  .cta-host{width:100%;position:relative;overflow:hidden;text-align:left;border-radius:15px;padding:17px 18px;
+    display:flex;align-items:center;gap:15px;
+    border:1px solid color-mix(in srgb,var(--blood) 55%,var(--line2));
+    background:linear-gradient(180deg,var(--blood-bg),var(--panel));box-shadow:0 16px 44px rgba(0,0,0,.5)}
+  .cta-host+.cta-host{margin-top:13px}
+  .cta-host:hover{transform:translateY(-2px);border-color:var(--blood);box-shadow:0 22px 54px rgba(200,57,43,.18)}
+  .cta-host.alt{border-color:var(--line2);background:linear-gradient(180deg,rgba(32,27,36,.7),var(--panel))}
+  .cta-host.alt:hover{border-color:var(--brass);box-shadow:0 22px 54px rgba(0,0,0,.5)}
+  .cta-host .eic{flex:0 0 auto;width:46px;height:46px;display:grid;place-items:center;border-radius:12px;color:var(--blood-bri);
+    border:1px solid color-mix(in srgb,var(--blood) 40%,var(--line2));background:rgba(200,57,43,.08)}
+  .cta-host.alt .eic{color:var(--bone);border-color:var(--line2);background:rgba(255,255,255,.03)}
+  .cta-host .eic .ic{width:24px;height:24px}
+  .cta-host .txt{flex:1;min-width:0}
+  .cta-host .k{font-family:var(--mono);font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--blood-bri)}
+  .cta-host.alt .k{color:var(--brass)}
+  .cta-host .nm{font-weight:800;font-size:1.26rem;margin:3px 0 4px;color:var(--bone)}
+  /* balance로 두 줄 길이를 맞춰, "…진행 / 시 꼭 필요한" 처럼 한 글자만 넘어가는 걸 막는다 */
+  .cta-host .ds{font-size:.79rem;color:var(--bone-dim);line-height:1.45;word-break:keep-all;text-wrap:balance}
+  .cta-host .arrow{flex:0 0 auto;font-size:1.4rem;color:var(--blood-bri);opacity:.65}
+  .cta-host.alt .arrow{color:var(--bone-dim)}
+
+  /* SCENARIOS */
+  .scr-head{text-align:center;padding:clamp(14px,4vw,34px) 0 6px}
+  .scr-head .eyebrow{margin-bottom:10px}
+  .scr-head h2{font-family:var(--serif);font-weight:800;font-size:clamp(1.7rem,5.5vw,2.8rem);margin:0;letter-spacing:.01em}
+  .scr-head p{color:var(--faint);font-size:clamp(.68rem,2.3vw,.76rem);letter-spacing:.06em;margin:11px auto 0;max-width:26ch;line-height:1.5;word-break:keep-all}
+  /* 포스터 줄은 끝이 없다 — 같은 벌을 여러 번 이어 붙이고 가운데 벌을 벗어나면
+     한 벌 폭만큼 조용히 되돌린다. 그래서 좌우 어느 쪽으로 밀어도 계속 이어진다.
+     끝이 없으니 양옆을 벌려두던 여백(::before/::after)도 필요 없다 — 늘 가운데다.
+     scroll-snap 은 proximity 다. mandatory 로 두면 한 벌씩 되돌릴 때 브라우저가
+     스냅 목표를 다시 잡느라 손가락이 튕겨나간다. */
+  .rail{display:flex;gap:clamp(14px,3vw,22px);overflow-x:auto;padding:26px 2px 30px;
+    scroll-snap-type:x proximity;scrollbar-width:none;overscroll-behavior-x:contain}
+  .rail::-webkit-scrollbar{display:none}
+  .poster{scroll-snap-align:center;flex:0 0 auto;width:clamp(242px,75vw,290px);text-align:left;background:none;border:none;padding:0;transition:.2s;color:inherit}
+  .poster:hover{transform:translateY(-7px)}
+  .frame{position:relative;border-radius:9px;padding:12px;
+    background:linear-gradient(145deg,#3a2f22,#1c1610 40%,#2a2118);
+    box-shadow:0 20px 48px rgba(0,0,0,.62), inset 0 0 0 1px rgba(201,154,78,.35), inset 0 0 22px rgba(0,0,0,.7)}
+  .frame::before{content:"";position:absolute;inset:6px;border:1px solid rgba(201,154,78,.28);border-radius:5px;pointer-events:none;z-index:3}
+  .art{position:relative;aspect-ratio:3/4.2;border-radius:4px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;
+    box-shadow:inset 0 0 60px rgba(0,0,0,.78)}
+  .art .ph-ic{position:absolute;inset:0;display:grid;place-items:center;font-size:3.6rem;opacity:.4}
+  .art .gloss{position:absolute;inset:0;background:linear-gradient(150deg,rgba(255,255,255,.10),transparent 42%);z-index:2;pointer-events:none}
+  .hc{position:absolute;top:10px;right:10px;z-index:4;display:flex;align-items:center;gap:6px;
+    background:rgba(6,4,7,.72);border:1px solid var(--line2);border-radius:999px;padding:3px 9px 3px 8px;backdrop-filter:blur(4px)}
+  .hc .pips{display:inline-flex;gap:2px;align-items:center}
+  .hc .pip{display:inline-flex;color:var(--faint);opacity:.45;transition:.2s}
+  .hc .pip svg{width:12px;height:12px;display:block}
+  .hc .pip.host{color:var(--signal);opacity:1}                 /* 호스트 = 초록 */
+  .hc .pip.part{color:#E5A02C;opacity:1}                        /* 참가자 = 노랑(호박) */
+  .hc b{font-family:var(--mono);font-size:.66rem;color:var(--bone-dim);font-weight:700;letter-spacing:.02em}
+  .hc.live{border-color:var(--line2)}
+  .art .grain{position:absolute;inset:0;opacity:.06;background-image:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
+  .art .cap{position:relative;padding:26px 16px 18px;z-index:2}
+  /* 포그: 블러+어둠을 마스크로 위로 서서히 사라지게 → 경계선 없는 자연 그라데이션 */
+  .art .cap::before{content:"";position:absolute;left:0;right:0;bottom:0;top:-56px;z-index:-1;pointer-events:none;
+    background:linear-gradient(0deg, rgba(3,2,4,.97) 0%, rgba(3,2,4,.74) 42%, rgba(3,2,4,.34) 72%, transparent 100%);
+    backdrop-filter:blur(7px) saturate(.85);-webkit-backdrop-filter:blur(7px) saturate(.85);
+    -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 46%,rgba(0,0,0,.6) 72%,transparent 100%);
+    mask-image:linear-gradient(0deg,#000 0%,#000 46%,rgba(0,0,0,.6) 72%,transparent 100%)}
+  .art .cap .tone{font-family:var(--mono);font-size:.55rem;letter-spacing:.22em;text-transform:uppercase;color:var(--brass);margin-bottom:9px;display:inline-block;padding-bottom:6px;border-bottom:1px solid color-mix(in srgb,var(--brass) 32%,transparent)}
+  .art .cap .pt{font-family:var(--serif);font-weight:800;font-size:clamp(1.9rem,7.6vw,2.25rem);line-height:1.0;letter-spacing:.01em;margin:2px 0 7px;color:#efe4d1;
+    /* 양각(엠보) 릴리프 — 위 하이라이트 + 아래 그림자로 어둠에서 도드라지게 */
+    text-shadow:0 -1px 0 rgba(245,236,220,.16), 0 1px 0 rgba(0,0,0,.92), 0 2px 3px rgba(0,0,0,.8), 0 3px 14px rgba(0,0,0,.7), .5px 0 rgba(226,86,69,.28)}
+  .art .cap .psub{font-size:.82rem;color:var(--bone-dim);letter-spacing:.02em;line-height:1.45}
+  .meta{display:flex;align-items:center;gap:8px;margin-top:12px;padding:0 3px}
+  .chip{font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;color:var(--bone-dim);border:1px solid var(--line2);border-radius:999px;padding:2px 8px}
+  /* 분량은 난이도(추리의 어려움)와 다른 축이다 — 결을 갈라 한눈에 구분되게 한다 */
+  .chip.tx{border-color:rgba(120,170,200,.34);color:rgba(178,210,228,.9);letter-spacing:.02em}
+  .meta .sel{margin-left:auto;font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;color:var(--faint)}
+  .poster.on .frame{box-shadow:0 24px 54px rgba(0,0,0,.72), inset 0 0 0 2px var(--blood), inset 0 0 26px rgba(0,0,0,.7)}
+  .poster.on .meta .sel{color:var(--blood-bri)}
+  .poster.locked{opacity:.72;cursor:not-allowed}
+  .poster.locked .frame{filter:grayscale(.55)}
+  /* 지금 판이 돌고 있는 사건. 다른 걸 고르면 그 판을 닫아야 한다는 걸 미리 알려준다. */
+  .livetag{position:absolute;top:9px;right:9px;z-index:5;font-family:var(--mono);font-size:.56rem;
+    letter-spacing:.18em;color:#0d0b0c;background:var(--brass);border-radius:20px;padding:3px 9px;font-weight:700}
+  .lockband{position:absolute;top:46%;left:-9px;right:-9px;transform:translateY(-50%) rotate(-7deg);z-index:4;
+    background:repeating-linear-gradient(45deg,#141013 0 14px,#c8392b 14px 28px);border-top:1px solid #000;border-bottom:1px solid #000;box-shadow:0 4px 14px rgba(0,0,0,.6)}
+  .lockband span{display:block;text-align:center;font-family:var(--mono);font-weight:700;font-size:.7rem;letter-spacing:.3em;color:#fff;padding:6px 0;text-shadow:0 1px 2px #000;background:rgba(20,16,19,.35)}
+
+  .confirm{display:flex;justify-content:center;margin:14px 0 2px;min-height:52px;align-items:center}
+  .pickhint{margin:0;font-size:.82rem;color:var(--bone-dim)}
+  .confirm .in{display:flex;align-items:center;gap:14px;background:rgba(20,16,22,.94);backdrop-filter:blur(10px);
+    border:1px solid var(--line2);border-radius:14px;padding:10px 12px 10px 18px;box-shadow:0 12px 34px rgba(0,0,0,.55);max-width:calc(100% - 20px)}
+  .confirm .lbl{font-size:.85rem;color:var(--bone-dim)}.confirm .lbl b{color:var(--bone);font-family:var(--serif)}
+  .confirm .lbl.warn{color:var(--blood-bri)}
+  .confirm .go{background:var(--blood);color:#fff;border:none;border-radius:10px;padding:11px 20px;font-weight:800;font-size:.92rem;white-space:nowrap}
+  .confirm .go.alt{background:transparent;border:1px solid var(--blood);color:var(--blood-bri)}
+  .confirm .go:disabled{opacity:.4;cursor:not-allowed}
+
+  /* toast */
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(12px);z-index:70;
+    background:rgba(20,16,22,.96);border:1px solid var(--line2);border-radius:11px;padding:11px 18px;
+    font-size:.85rem;color:var(--bone);box-shadow:0 14px 40px rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:.28s;max-width:88vw;text-align:center;word-break:keep-all}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* 관리자 / 열람(테스트) 모드 */
+  .adminbtn{position:fixed;top:12px;right:12px;z-index:55;font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;
+    background:rgba(20,16,22,.8);border:1px solid var(--line2);color:var(--faint);border-radius:999px;padding:6px 12px;backdrop-filter:blur(6px)}
+  .adminbtn:hover{color:var(--bone);border-color:var(--brass)}
+  .adminbtn.on{color:var(--signal);border-color:color-mix(in srgb,var(--signal) 45%,var(--line2))}
+  .admask{position:fixed;inset:0;z-index:80;background:rgba(4,3,5,.82);backdrop-filter:blur(6px);display:none;place-items:center;padding:20px}
+  .admask.on{display:grid}
+  .adcard{width:min(580px,95vw);max-height:86vh;overflow:auto;background:linear-gradient(180deg,var(--panel),#100c12);
+    border:1px solid var(--line2);border-radius:16px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+  .adcard h3{font-family:var(--serif);font-weight:800;font-size:1.4rem;margin:0 0 4px}
+  .adcard .adsub{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;color:var(--faint);margin-bottom:18px}
+  .adform{display:flex;gap:9px;margin-top:6px}
+  .adform input{flex:1;min-width:0;background:#0c0910;border:1px solid var(--line2);color:var(--bone);border-radius:9px;padding:11px 13px;font-size:.95rem;letter-spacing:.2em}
+  .adform input:focus{outline:none;border-color:var(--brass)}
+  .adform button{background:var(--blood);color:#fff;border:none;border-radius:9px;padding:0 18px;font-weight:800}
+  .aderr{color:var(--blood-bri);font-size:.78rem;margin-top:10px;min-height:1.1em}
+  .adclose{margin-top:18px;width:100%;background:none;border:1px solid var(--line2);color:var(--bone-dim);border-radius:9px;padding:11px;font-size:.85rem}
+  .adclose:hover{color:var(--bone);border-color:var(--brass)}
+  /* 카드 훑어보기 — 검수용. 한 화면에 다 늘어놓고 눈으로 훑는 게 목적이라 넓게 쓴다. */
+  .adcard.wide{width:min(1080px,96vw)}
+  .adtabs{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 16px}
+  .adtab{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;background:#0c0910;
+    border:1px solid var(--line2);color:var(--bone-dim);border-radius:999px;padding:7px 13px}
+  .adtab.on{color:#120d08;background:var(--brass);border-color:var(--brass);font-weight:800}
+  .adzone{margin-top:20px}
+  .adzone > h4{font-family:var(--serif);font-size:1.05rem;margin:0 0 9px;color:var(--bone);
+    border-bottom:1px solid var(--line2);padding-bottom:7px}
+  .adzone > h4 .n{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;color:var(--faint);margin-left:8px}
+  .adcards{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr))}
+  .adc{background:#0c0910;border:1px solid var(--line2);border-radius:11px;padding:13px 14px}
+  .adc.bait{border-color:color-mix(in srgb,var(--blood) 45%,var(--line2))}
+  /* 이튿날 새로 나오는 카드 — 몇 장인지 세는 자리라 눈으로 갈라져야 한다 */
+  .adc.fresh{background:linear-gradient(180deg,rgba(96,150,190,.12),#0c0910 70%);
+    border-color:color-mix(in srgb,#6096be 42%,var(--line2))}
+  /* 카드 갈래 딱지 — 관리자 열람에서 이걸로 분류한다 */
+  .adc .cfr{font-family:var(--mono);font-size:.55rem;letter-spacing:.08em;font-weight:700;
+    border-radius:20px;padding:1px 6px;white-space:nowrap;
+    color:var(--faint);border:1px solid var(--line2);background:rgba(255,255,255,.03)}
+  .adc .cfr.k1{color:#d9c9a4;border-color:rgba(201,154,78,.42);background:rgba(201,154,78,.13)}
+  .adc .cfr.k2{color:#9cc6e0;border-color:rgba(156,198,224,.45);background:rgba(96,150,190,.16)}
+  .adc .cfr.k4{color:#e8b45c;border-color:rgba(232,180,92,.5);background:rgba(232,180,92,.14)}
+  .adc .cfr.k9{color:#8e8798;border-color:rgba(142,135,152,.4);background:rgba(142,135,152,.10);
+    border-style:dashed}
+  .adc .cfr.ka{color:#e8b45c;border-color:rgba(232,180,92,.5);background:rgba(232,180,92,.14)}
+  .adc .cks{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+  .adc.sleep{opacity:.82}
+  /* 그 아침에 벌어진 일 자체를 적은 카드 — 판을 뒤집는 자리라 붉게 세운다 */
+  .adc.hot{border-color:color-mix(in srgb,var(--blood) 60%,var(--line2));
+    background:linear-gradient(180deg,rgba(170,50,40,.16),#0c0910 72%)}
+  .adc.rulecard{border-color:var(--brass)}
+  .adc .ch{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin-bottom:3px}
+  .adc .cid{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;color:var(--faint)}
+  .adc .cti{font-family:var(--serif);font-weight:800;font-size:1rem;color:var(--bone)}
+  .adc .cwhere{font-size:.72rem;color:var(--brass);margin-bottom:7px}
+  .adc .ctx{font-size:.83rem;line-height:1.75;color:var(--bone-dim);word-break:keep-all}
+  .adc .chint{font-size:.75rem;line-height:1.6;color:var(--faint);margin-top:8px;
+    border-left:2px solid var(--line2);padding-left:9px;word-break:keep-all}
+  /* 하루가 지나면 접히는 카드 — 어제 판본 아래에 오늘 판본을 붙여 같이 검수한다 */
+  .adc .cday2{margin-top:11px;padding:10px 12px;border-radius:9px;
+    border:1px dashed color-mix(in srgb,#6096be 45%,var(--line2));background:rgba(96,150,190,.07)}
+  .adc .cday2>b{display:block;font-family:var(--mono);font-size:.55rem;letter-spacing:.1em;
+    color:#9cc6e0;margin-bottom:6px}
+  .adc .cday2 .ctx{font-size:.8rem}
+  .adc .cgone{margin-top:9px;font-family:var(--mono);font-size:.58rem;letter-spacing:.06em;
+    color:#8e8798;border-left:2px solid rgba(142,135,152,.5);padding-left:8px}
+  .adc .ctags{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+  .adc .ctags i{font-style:normal;font-family:var(--mono);font-size:.55rem;letter-spacing:.08em;
+    border:1px solid var(--line2);color:var(--faint);border-radius:5px;padding:2px 6px}
+  .adc .ctags i.r{color:var(--brass);border-color:color-mix(in srgb,var(--brass) 40%,var(--line2))}
+  .adc .ctags i.b{color:var(--blood-bri);border-color:color-mix(in srgb,var(--blood) 45%,var(--line2))}
+  .adpair{font-size:.8rem;line-height:1.7;color:var(--bone-dim);padding:8px 0;border-top:1px solid var(--line2)}
+  .adpair b{color:var(--brass)}
+
+  /* 에셋 프롬프트 훑어보기 — 읽는 화면이 아니라 «복사하는» 화면이다.
+     프롬프트 하나는 앞머리 + 톤 + 본문 세 조각을 이어 붙여야 완성되므로,
+     그 셋을 한 번에 붙여주는 버튼을 항목마다 세워 둔다. */
+  .adp{background:#0c0910;border:1px solid var(--line2);border-radius:11px;padding:13px 14px;margin-bottom:10px}
+  .adp .ph{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:2px}
+  .adp .pti{font-family:var(--serif);font-weight:800;font-size:1rem;color:var(--bone)}
+  .adp .pfile{font-family:var(--mono);font-size:.6rem;letter-spacing:.03em;color:var(--brass);word-break:break-all}
+  .adp .pmeta{font-size:.72rem;color:var(--faint);margin-bottom:7px;word-break:keep-all}
+  .adp .pbody{font-family:var(--mono);font-size:.72rem;line-height:1.8;color:var(--bone-dim);
+    background:#080610;border:1px solid var(--line2);border-radius:8px;padding:11px 12px;
+    white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto}
+  .adp .pbody b{color:var(--brass);font-weight:700}
+  .adp .pacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;align-items:center}
+  .adp .pnote{font-size:.74rem;line-height:1.6;margin-top:8px;display:flex;gap:7px;word-break:keep-all}
+  .adp .pnote .w{font-family:var(--mono);font-size:.55rem;letter-spacing:.08em;border:1px solid currentColor;
+    border-radius:5px;padding:1px 6px;flex:0 0 auto;align-self:flex-start}
+  .adp .pnote.m{color:#8fb37f}
+  .adp .pnote.r{color:var(--blood-bri)}
+  .adp .pnote span.t{color:var(--bone-dim)}
+  .adp .phave{font-family:var(--mono);font-size:.55rem;letter-spacing:.08em;margin-left:auto;
+    border:1px solid rgba(143,179,127,.5);color:#8fb37f;border-radius:20px;padding:1px 7px;white-space:nowrap}
+  .adcp{font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;background:#0c0910;
+    border:1px solid var(--line2);color:var(--bone-dim);border-radius:7px;padding:6px 11px}
+  .adcp:hover{color:var(--bone);border-color:var(--brass)}
+  .adcp.k{background:var(--brass);border-color:var(--brass);color:#120d08;font-weight:800}
+  .adcp.done{background:#3f6b3a!important;border-color:#3f6b3a!important;color:#fff!important}
+  .adphint{font-size:.74rem;line-height:1.7;color:var(--faint);margin:0 0 14px;word-break:keep-all}
+  .adphint b{color:var(--brass)}
+
+  /* 배역 훑어보기 — 한 사람이 한 칸. 카드 훑어보기와 달리 세로로 길어서
+     한 줄에 하나(넓은 화면은 둘)만 놓고, 안에서 소제목으로 갈라 읽는다. */
+  .adroles{display:grid;gap:14px;grid-template-columns:1fr}
+  @media (min-width:900px){ .adroles{grid-template-columns:1fr 1fr} }
+  .adr{background:#0c0910;border:1px solid var(--line2);border-left:3px solid var(--rk,var(--line2));
+    border-radius:11px;padding:14px 15px}
+  .adr .rh{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .adr .rav{flex:0 0 34px;height:34px;border-radius:50%;border:1px solid var(--line2);
+    display:grid;place-items:center;font-size:1.05rem;background:#0a0710}
+  .adr .rnm{font-family:var(--serif);font-weight:800;font-size:1.1rem;color:var(--rk,var(--bone))}
+  .adr .rjb{font-size:.72rem;color:var(--faint)}
+  .adr .rflag{font-family:var(--mono);font-size:.55rem;letter-spacing:.1em;margin-left:auto;
+    border:1px solid color-mix(in srgb,var(--blood) 50%,var(--line2));color:var(--blood-bri);
+    border-radius:5px;padding:2px 7px;white-space:nowrap}
+  .adr .rflag.q{color:var(--brass);border-color:color-mix(in srgb,var(--brass) 40%,var(--line2))}
+  .adr .rtag{font-size:.78rem;line-height:1.65;color:var(--bone-dim);word-break:keep-all;margin-bottom:4px}
+  .adr h5{font-family:var(--mono);font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--faint);margin:14px 0 6px;padding-top:10px;border-top:1px solid var(--line2)}
+  .adr h5:first-of-type{border-top:none;padding-top:0}
+  .adr p{font-size:.8rem;line-height:1.75;color:var(--bone-dim);margin:0 0 6px;word-break:keep-all}
+  .adr .rli{font-size:.8rem;line-height:1.7;color:var(--bone-dim);padding:5px 0;
+    border-top:1px dotted var(--line2);word-break:keep-all;display:flex;gap:9px}
+  .adr .rli:first-of-type{border-top:none}
+  .adr .rli .w{flex:0 0 auto;font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;
+    color:var(--brass);padding-top:3px;min-width:52px}
+  .adr .rli .p{margin-left:auto;font-family:var(--mono);font-size:.6rem;color:var(--brass);
+    padding-top:3px;white-space:nowrap}
+  .adr .rq{font-size:.78rem;line-height:1.7;color:var(--bone-dim);word-break:keep-all}
+  .adr .rq .t{color:var(--bone)}
+  .adr .rq .e{color:var(--faint)}
+  .adr .rnote{font-size:.76rem;line-height:1.7;color:var(--faint);word-break:keep-all;
+    border-left:2px solid var(--line2);padding-left:10px}
+
+  .adrow{border-top:1px solid var(--line2);padding:15px 0}
+  .adrow:first-of-type{border-top:none;padding-top:4px}
+  .adrow .rt{font-family:var(--serif);font-weight:800;font-size:1.08rem}
+  .adrow .rt .tg{font-family:var(--mono);font-size:.56rem;letter-spacing:.12em;color:var(--brass);margin-left:8px;text-transform:uppercase}
+  .adrow .rt .tg.locked{color:var(--faint)}
+  .adrow .rk{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;color:var(--blood-bri);margin:8px 0 3px;text-transform:uppercase}
+  .adrow .rd{font-size:.83rem;color:var(--bone-dim);line-height:1.55;word-break:keep-all}
+  .adrow .rd b{color:var(--bone)}
+  .waiting{text-align:center;color:var(--bone-dim);font-size:.9rem;margin-top:20px}
+  .waiting .mono{color:var(--faint);font-size:.66rem;letter-spacing:.16em;display:block;margin-top:8px}
+
+  /* 클릭/프레스 피드백 */
+  .cta-host,.ebtn,.join button,.roombtn,.back,.poster,.confirm .go{transition:transform .13s cubic-bezier(.2,.8,.2,1),box-shadow .18s,border-color .18s,filter .13s}
+  .cta-host:active,.roombtn:active,.back:active,.join button:active{transform:scale(.955)!important;filter:brightness(1.12)}
+  .confirm .go:active{transform:scale(.93)!important;filter:brightness(1.14)}
+  .poster:active{transform:translateY(-4px) scale(.965)!important}
+  .cta-host:active{box-shadow:0 6px 20px rgba(200,57,43,.28)!important}
+  @keyframes pop{0%{transform:translateY(-6px) scale(.98)}45%{transform:translateY(-8px) scale(1.035)}100%{transform:translateY(-6px) scale(1)}}
+  .poster.on{animation:pop .3s cubic-bezier(.2,.9,.25,1)}
+  /* 탭 하이라이트 제거 + 클릭 물결(엔트리 host) */
+  button{-webkit-tap-highlight-color:transparent}
+  .cta-host::after{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at var(--rx,50%) var(--ry,50%),rgba(255,255,255,.16),transparent 45%);opacity:0;transition:opacity .5s}
+  .cta-host:active::after{opacity:1;transition:opacity 0s}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  @media(max-width:560px){ .toprail .mini span.full{display:none} .cta-host .arrow{display:none} }
+</style></head><body>
+
+<div class="stage">
+  <div class="bg" id="bg"></div><div class="vig"></div>
+  <div class="wrap">
+
+    <!-- ═══ 1) ENTRY ═══ -->
+    <section class="screen on" id="scr-entry">
+      <div class="vhs" aria-hidden="true"><div class="scan"></div><div class="noise"></div><div class="rollbar"></div></div>
+      <header class="mast">
+        <div class="emblem"><img src="data:image/png;base64,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" alt="PIMM"></div>
+        <div class="eyebrow">PIMM Artworks · Presents</div>
+        <h1 class="title">MURDERMYSTERY <span class="amp">BOARD</span></h1>
+        <div class="tageline">각자의 이유로 한 사건에 갇힌다.<br>진실을 찾을 것인가, 감출 것인가.</div>
+      </header>
+      <div class="entrybox">
+        <button class="cta-host" onclick="enterHost()">
+          <div class="eic"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 17.2 5.1 8.5l3.7 3.4L12 6.2l3.2 5.7 3.7-3.4 1.5 8.7H3.6z"/><rect x="4.1" y="18.4" width="15.8" height="2.1" rx="1"/></svg></div>
+          <div class="txt">
+            <div class="k">Room Authority · 호스트</div>
+            <div class="nm">호스트로 시작</div>
+            <div class="ds">사건을 고르고 진행을 통제합니다. 시나리오 진행 시 꼭 필요한 자리예요.</div>
+          </div>
+          <div class="arrow">→</div>
+        </button>
+        <button class="cta-host alt" onclick="enterParticipant()">
+          <div class="eic"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 19.5c0-3.4 2.9-5.8 6.5-5.8s6.5 2.4 6.5 5.8"/></svg></div>
+          <div class="txt">
+            <div class="k">Player · 참가자</div>
+            <div class="nm">참가자로 입장</div>
+            <div class="ds">사건 포스터를 골라 참가하고, 호스트가 열면 함께 시작해요.</div>
+          </div>
+          <div class="arrow">→</div>
+        </button>
+      </div>
+    </section>
+
+    <!-- ═══ 2) SCENARIOS ═══ -->
+    <section class="screen" id="scr-scenarios">
+      <div class="toprail">
+        <div class="mini"><span class="dot">P</span><span class="full">MURDERMYSTERY BOARD</span></div>
+        <span class="sp"></span>
+        <span class="hostpill" id="rolepill"></span>
+        <button class="back" onclick="go('entry')">← 나가기</button>
+      </div>
+      <div class="scr-head">
+        <div class="eyebrow">Select a Case File</div>
+        <h2>어떤 사건을 여시겠습니까</h2>
+        <div class="confirm" id="confbar"></div>
+      </div>
+      <div class="rail" id="rail"></div>
+    </section>
+
+  </div>
+</div>
+
+<button class="adminbtn" id="adminbtn" onclick="toggleAdmin()">관리자</button>
+<div class="toast" id="toast"></div>
+<div class="admask" id="admask" onclick="if(event.target===this)closeAdmin()"><div class="adcard" id="adcard"></div></div>
+
+<script>
+// 사건 목록은 서버가 채운다 — refreshSeats() 가 /api/scenarios 를 읽어
+// 여기 없는 id 는 SCEN·ORDER 에 저절로 밀어 넣는다. 손으로 적는 자리가 아니다.
+// (포스터는 /assets/poster_{id}.jpg 를 찾고, 없으면 글자 카드로 뜬다.)
+const SCEN=[];
+const $=id=>document.getElementById(id);
+const ORDER=[];                       // 표시 순서. 서버가 준 순서대로 채워진다
+// 각 사건의 캐릭터 정원(배역 수) — 정원만큼 사람표시가 뜨고 선택하면 하나씩 차오름
+const CAP={};                         // {사건id: 배역 수}. 없으면 4로 본다
+// 실제 서버에서 읽어 온 접속 인원. 예전엔 여기에 데모용 숫자가 박혀 있어서
+// 아무도 없는 방인데 잠수정에 2명, 막차에 1명이 들어와 있는 것처럼 보였다.
+// 방은 한 번에 하나뿐이라, 지금 열려 있는 시나리오만 실제 인원이 찬다.
+let liveSeats={};
+// 지금 실제로 판이 돌고 있는 사건. 이게 보이지 않으면 «왜 다른 게 뜨지»가 된다.
+let liveId="";
+async function refreshSeats(){
+  try{
+    const st=await (await fetch("/api/state")).json();
+    const n=Object.values(st.roles||{}).filter(r=>r.claimed).length;
+    liveSeats = st.scenarioId ? {[st.scenarioId]:n} : {};
+    liveId = st.started ? (st.scenarioId||"") : "";
+  }catch(e){ liveSeats={}; liveId=""; }
+  render();
+}
+let me={mode:null, pick:null};   // mode: 'host' | 'participant'
+let hostPresent=false;
+let admin=false;
+
+/* 실서버 연동 — 이 파일을 서버가 / 로 서빙하면 게임(/play)으로 이어진다 */
+const clientId=(()=>{ let c=localStorage.getItem("pmb.cid"); if(!c){ c="c"+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4); localStorage.setItem("pmb.cid",c);} return c; })();
+/* 사건 목록의 「분량」은 서버가 원고를 세어 내려준다. 로컬 배열에 적어두면
+   원고를 고칠 때마다 손으로 맞춰야 하고, 결국 안 맞게 된다. */
+async function loadTextLoads(){
+  try{
+    const j=await (await fetch("/api/scenarios")).json();
+    (j.scenarios||[]).forEach(m=>{
+      let s=SCEN.find(x=>x.id===m.id);
+      // 서버에만 있는 새 사건은 여기서 만들어 붙인다. 예전엔 이 배열에 손으로 적어야
+      // 목록에 떴고, 안 적으면 시나리오를 등록해놓고도 아무도 못 골랐다.
+      if(!s){ s={id:m.id, img:`/assets/poster_${m.id}.jpg`, glow:"rgba(120,150,170,.30)"}; SCEN.push(s); }
+      // 표시 순서도 ORDER가 정한다 — 여기 없으면 render가 걸러버려서 등록해도 안 보였다.
+      if(ORDER.indexOf(m.id)<0) ORDER.push(m.id);
+      s.title=m.title||s.title||m.id;
+      s.sub=m.subtitle||s.sub||"";
+      s.tone=m.tone||s.tone||"";
+      s.diff=m.difficulty||s.diff||"";
+      s.players=m.players||s.players||"";
+      s.tagline=m.tagline||s.tagline||"";
+      s.locked=!!m.locked;
+      if(m.text) s.text=m.text;
+    });
+    // 이 파일에는 scr 변수가 없다. 화면이 켜져 있는지는 DOM으로 본다(파일 내 다른 곳과 같은 방식).
+    if($("scr-scenarios").classList.contains("on")) render();
+  }catch(e){}
+}
+async function apiSelect(id,force){
+  try{
+    const r=await fetch("/api/select",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({scenarioId:id,clientId,key:"",force:!!force})});
+    const j=await r.json().catch(()=>({}));
+    return j&&j.error?{ok:false,status:r.status,error:j.error,activeTitle:j.activeTitle||""}:{ok:true};
+  }catch(e){ return {ok:false,status:0,error:"network"}; }
+}
+async function apiResetRoom(){
+  try{ await fetch("/api/reset",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({clientId,key:localStorage.getItem("pmb.gmkey")||""})}); }catch(e){}
+}
+/* 고른 사건으로 실제로 들어가기까지. 여기서 조용히 포기하면 «뭘 눌러도 저번 사건이 뜨는»
+   증상이 된다 — 앞 세션이 남긴 방이 그대로 살아 있기 때문이다. 그래서 실패는 반드시 말한다. */
+async function openScenario(id){
+  let r=await apiSelect(id);
+  if(r.ok) return true;
+  if(r.status===409){
+    const keep=confirm(`${r.error}.\n\n확인 = 그 판을 닫고 《${(SCEN.find(x=>x.id===id)||{}).title}》을 새로 엽니다.\n취소 = 진행 중인 판에 그대로 들어갑니다.`);
+    if(!keep) return true;                 // 이어서 들어가기
+    await apiResetRoom();
+    await claimHost();
+    r=await apiSelect(id,true);
+    if(r.ok) return true;
+  }
+  note(r.error==="host" ? "다른 기기가 호스트예요 — 그 기기에서 사건을 고르세요."
+                        : ("사건을 여는 데 실패했어요: "+r.error));
+  return false;
+}
+// 아무도 호스트를 맡고 있지 않으면 내가 맡는다(안전: 이미 다른 사람이 있으면 그대로 둔다)
+async function claimHost(){
+  try{
+    const r=await fetch("/api/host/claim",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({clientId})});
+    return await r.json().catch(()=>({isHost:false}));
+  }catch(e){ return {isHost:false}; }
+}
+async function joinGame(){
+  // 참가자는 남의 판에 끼어드는 쪽이다. 이미 판이 돌고 있으면 사건을 건드리지 않는다 —
+  // 호스트 본인이 뒤로 가기로 여기 들렀다 돌아오는 경우가 흔한데(특히 모바일), 예전엔
+  // 그때마다 apiSelect가 방을 초기화해서 배역·손패·공개카드가 전부 사라졌다.
+  let running=false;
+  try{
+    const st=await (await fetch("/api/state?clientId="+encodeURIComponent(clientId))).json();
+    running=!!(st&&st.started);
+  }catch(e){}
+  if(me.pick && !running){
+    await claimHost();
+    if(!await openScenario(me.pick)) return;
+  }
+  location.href="/play";
+}
+
+/* ── 사운드: 클릭·전환음만 (Web Audio 합성, 파일 0개) · 음악은 최종 빌드에서 ── */
+let _ac=null;
+function ac(){ if(!_ac){ try{ _ac=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ _ac=false; } } if(_ac&&_ac.state==="suspended") _ac.resume(); return _ac; }
+function blip(freq,dur,type,gain,slideTo){
+  const c=ac(); if(!c) return;
+  const o=c.createOscillator(), g=c.createGain(), t=c.currentTime;
+  o.type=type||"sine"; o.frequency.setValueAtTime(freq,t);
+  if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo,t+dur);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(gain||0.08,t+0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(c.destination); o.start(t); o.stop(t+dur+0.02);
+}
+function sfxClick(){ blip(430,0.05,"triangle",0.06); }                 // 짧고 마른 탭
+function sfxPick(){ blip(300,0.09,"triangle",0.07,560); }             // 포스터 선택: 상승
+function sfxTransit(){ blip(180,0.28,"sine",0.06,90); setTimeout(()=>blip(520,0.16,"sine",0.045,760),60); } // 화면 전환: 낮은 스윕+반짝
+document.addEventListener("pointerdown",e=>{ if(e.target.closest("button")) sfxClick(); },true);
+
+loadTextLoads();          // 첫 화면에서 관리자를 열어도 목록이 비지 않게, 뜨자마자 한 번 읽는다
+function go(name){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
+  $("scr-"+name).classList.add("on");
+  if(name==="scenarios"){ refreshSeats(); loadTextLoads(); }   // 들어올 때마다 인원과 분량을 다시 읽는다
+  const ab=$("adminbtn"); if(ab) ab.style.display=(name==="entry"?"":"none");  // 관리자 버튼은 메인에만
+  sfxTransit();
+  window.scrollTo(0,0);
+}
+function enterHost(){ me.mode="host"; hostPresent=true; go("scenarios"); render(); }
+function enterParticipant(){ me.mode="participant"; go("scenarios"); render(); }
+function becomeHostNow(){ me.mode="host"; hostPresent=true; note("이제 당신이 호스트예요. 사건을 열 수 있어요."); render(); }
+function headcount(id){ return (liveSeats[id]||0) + (me.pick===id?1:0); }
+// 정원 가이드 사람표시: 호스트=초록, 참가자=노랑, 빈자리=회색
+function pips(id){
+  const cap=CAP[id]||4;
+  const hostOn=(me.mode==="host" && me.pick===id)?1:0;
+  const part=Math.min((liveSeats[id]||0)+((me.mode==="participant"&&me.pick===id)?1:0), cap-hostOn);
+  let out="";
+  for(let i=0;i<cap;i++){
+    const cls = i<hostOn ? "pip host" : (i<hostOn+part ? "pip part" : "pip");
+    out+=`<span class="${cls}">${svgUserSm}</span>`;
+  }
+  const filled=hostOn+part;
+  return `<div class="hc ${filled>0?"live":""}"><span class="pips">${out}</span><b>${filled}/${cap}</b></div>`;
+}
+function pickScenario(id){
+  const s=SCEN.find(x=>x.id===id);
+  // 준비 중인 사건 — 한 번은 여느 때처럼 막고, 곧바로 한 번 더 누르면 관리자 문을 연다.
+  // 만드는 사람이 자기 판을 열어보려고 매번 메인으로 돌아가지 않게.
+  if(s.locked && !admin){
+    const t=Date.now();
+    if(lockTap.id===id && t-lockTap.at<2600){ lockTap={id:"",at:0}; admAfter=id; openPw(); return; }
+    lockTap={id, at:t};
+    note(`《${s.title}》은 아직 준비 중이에요. 한 번 더 누르면 관리자로 열어봅니다.`);
+    return;
+  }
+  // 고른 포스터는 가운데로 온다. 다시 그리는 쪽이 보던 자리를 되돌린 «뒤에» 밀어야
+  // 하므로 뜻만 남겨두고, 다시 안 그렸으면 여기서 바로 민다.
+  me.pick=id; sfxPick(); railWant=id; render();
+  if(!railRedrew){ railWant=null; railCenter(id,true); }
+}
+async function launch(){
+  const s=SCEN.find(x=>x.id===me.pick); if(!s) return;
+  note(`《${s.title}》 여는 중…`);
+  await claimHost();               // 비어 있으면 잡는다. 이미 남이 쥐고 있으면 그대로 둔다
+  if(!await openScenario(me.pick)) return;
+  location.href="/play";
+}
+function note(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("on"); clearTimeout(note._t); note._t=setTimeout(()=>t.classList.remove("on"),2600); }
+
+const svgUser='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 19.5c0-3.4 2.9-5.8 6.5-5.8s6.5 2.4 6.5 5.8"/></svg>';
+const svgUserSm='<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="3.7"/><path d="M4.5 20.5c0-4 3.4-6.6 7.5-6.6s7.5 2.6 7.5 6.6z"/></svg>';
+const svgCrown='<svg class="pmk" viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 17.2 5.1 8.5l3.7 3.4L12 6.2l3.2 5.7 3.7-3.4 1.5 8.7H3.6z"/><rect x="4.1" y="18.4" width="15.8" height="2.1" rx="1"/></svg>';
+
+function render(){
+  const rp=$("rolepill");
+  rp.innerHTML=(me.mode==="host"?svgCrown+"<span>호스트</span>":svgUser+"<span>참가자</span>");
+  rp.className="hostpill"+(me.mode==="host"?"":" part");
+  renderRail();
+  renderBar();
+}
+
+/* ── 끝 없는 포스터 줄 ────────────────────────────────────────────
+   같은 벌을 여러 번 이어 붙이고, 가운데 벌을 벗어나면 한 벌 폭만큼 조용히 되돌린다.
+   되돌린 자리에 같은 그림이 같은 간격으로 서 있어서 눈에는 안 띈다 — 그래서 좌우
+   어느 쪽으로 계속 밀어도 끝이 안 나온다.
+   벌 수는 화면에 맞춰 정한다. 한 벌이 화면보다 좁으면(큰 모니터) 세 벌로는
+   가운데 벌 안에 머물 수가 없어서 빈자리가 드러난다. */
+function railList(){ return ORDER.map(id=>SCEN.find(s=>s.id===id)).filter(Boolean); }
+function posterHTML(s,c){
+  return `
+    <button class="poster ${s.locked&&!admin?"locked":""} ${me.pick===s.id?"on":""}"
+       data-c="${c}" data-id="${s.id}" onclick="pickScenario('${s.id}')">
+      <div class="frame">
+        <div class="art" style="background-image:url('${s.img}');background-size:cover;background-position:center 56%">
+          <div style="position:absolute;inset:0;background:radial-gradient(130% 72% at 50% 130%, ${s.glow}, transparent 66%)"></div>
+          <div class="grain"></div><div class="gloss"></div>
+          ${s.locked?`<div class="lockband"><span>COMING SOON</span></div>`:""}
+          ${liveId===s.id?`<div class="livetag">진행 중</div>`:""}
+          ${pips(s.id)}
+          <div class="cap"><div class="tone">${s.tone}</div><div class="pt">${s.title}</div><div class="psub">${s.sub}</div></div>
+        </div>
+      </div>
+      <div class="meta"><span class="chip">${s.diff}</span><span class="chip">${s.players}</span>
+        ${s.text?`<span class="chip tx" title="내가 읽게 되는 분량 ${s.text.chars.toLocaleString()}자">${s.text.bar} ${s.text.label} · 읽기 ${s.text.minutes}분</span>`:""}
+        <span class="sel">${s.locked?"준비중":(me.pick===s.id?"● 내가 고름":"고르기")}</span></div>
+    </button>`;
+}
+let railCopies=5, railJump=false, railSig="", railWant=null, railRedrew=false, railIdle=0;
+/* 한 벌의 폭 — 다음 벌 첫 장까지의 거리다(사이 간격까지 들어간다) */
+function railPeriod(){
+  const rail=$("rail"), n=railList().length;
+  if(!rail||!n||rail.children.length<n*2) return 0;
+  return rail.children[n].offsetLeft - rail.children[0].offsetLeft;
+}
+function renderRail(){
+  const rail=$("rail"); if(!rail) return;
+  const list=railList(); if(!list.length){ rail.innerHTML=""; railSig=""; return; }
+  const html=[];
+  for(let c=0;c<railCopies;c++) for(const s of list) html.push(posterHTML(s,c));
+  const sig=html.join("");
+  railRedrew=false;
+  if(sig===railSig) return;              // 바뀐 게 없으면 손대지 않는다 — 보던 자리가 안 흔들리게
+  railRedrew=true;
+  const first=!railSig, keep=rail.scrollLeft;
+  railSig=sig; rail.innerHTML=sig;
+  if(!rail.dataset.wired){ rail.dataset.wired="1";
+    // 손가락이 «멈춘 뒤에» 되돌린다. 미는 도중에 scrollLeft 를 건드리면 그 자리에서
+    // 관성이 죽어버려서 「막혔다」로 읽힌다. 벌을 넉넉히 깔아 그동안 끝이 안 나오게 한다.
+    rail.addEventListener("scroll",()=>{ if(railJump) return;
+      clearTimeout(railIdle); railIdle=setTimeout(railWrap,140);
+      railGuard();                       // 진짜 끝이 코앞이면 그때는 도중에라도 되돌린다
+    },{passive:true}); }
+  requestAnimationFrame(()=>{
+    const one=railPeriod(); if(!one) return;
+    // 한 벌이 화면보다 좁으면 벌을 더 깐다. 가운데 벌에 머물러도 바깥이 안 비게.
+    const need=Math.max(5, Math.ceil(rail.clientWidth/one)+4);
+    if(need!==railCopies){ railCopies=need; railSig=""; renderRail(); return; }
+    if(first){
+      // 처음에는 가운데 벌에 세운다. 0 에 두면 왼쪽으로 밀 자리가 없어서
+      // 되돌릴 기회조차 안 생기고 그대로 왼쪽 끝에 갇힌다.
+      railJump=true; rail.scrollLeft=railHome(); railJump=false;
+      railCenter(me.pick||list[0].id,false);
+      return;
+    }
+    // 다시 그리면 scrollLeft 가 0 으로 떨어진다 — 보던 자리부터 되돌려놓고 시작한다.
+    railJump=true; rail.scrollLeft=keep; railJump=false;
+    railWrap();
+    if(railWant){ const w=railWant; railWant=null; railCenter(w,true); }
+  });
+}
+/* 그 사건을 화면 한가운데로. 여러 벌 중 «지금 자리에서 제일 가까운» 벌을 고른다 —
+   늘 가운데 벌로 보내면 방금 누른 포스터가 화면 밖으로 날아간다. */
+function railCenter(id, smooth){
+  const rail=$("rail"); if(!rail) return;
+  const els=[...rail.querySelectorAll(`.poster[data-id="${id}"]`)];
+  if(!els.length) return;
+  const mid=rail.scrollLeft + rail.clientWidth/2;
+  let best=els[0], bd=Infinity;
+  for(const el of els){ const d=Math.abs(el.offsetLeft+el.offsetWidth/2-mid); if(d<bd){ bd=d; best=el; } }
+  const to=best.offsetLeft-(rail.clientWidth-best.offsetWidth)/2;
+  // 미는 동안에는 되돌리지 않는다. 부드럽게 미는 중에 scrollLeft 를 건드리면
+  // 브라우저가 그 자리에서 미는 걸 멈춰버려서, 엉뚱한 포스터 앞에 선다.
+  railJump=true;
+  rail.scrollTo({left:to, behavior: smooth?"smooth":"auto"});
+  clearTimeout(railCenter._t);
+  if(smooth) railCenter._t=setTimeout(()=>{ railJump=false; railWrap(); }, 620);
+  else railJump=false;
+}
+/* 제자리 — 가운데 벌의 머리 */
+function railHome(){ return Math.floor(railCopies/2)*railPeriod(); }
+/* 제자리에서 «네 벌의 삼》 넘게 멀어지면 한 벌씩 당겨 제자리 쪽으로 돌려놓는다.
+   한 벌 단위라 그림은 똑같은 자리에 서고, 되돌린 뒤에도 제자리에서 4분의 1 벌 안이라
+   스냅이 반 장쯤 밀어도 다시 문턱에 안 닿는다.
+   문턱을 반 벌로 잡았을 때는 되돌린 자리를 스냅이 밖으로 밀어내고, 그걸 또 되돌리고 —
+   그렇게 왼쪽에서 핑퐁이 나서 한 발짝도 못 갔다. */
+function railWrap(){
+  const rail=$("rail"), one=railPeriod(); if(!one) return;
+  const home=railHome(), lim=one*0.75, x=rail.scrollLeft;
+  let nx=x;
+  while(nx < home-lim) nx+=one;
+  while(nx > home+lim) nx-=one;
+  if(Math.abs(nx-x)>=1){ railJump=true; rail.scrollLeft=nx; railJump=false; }
+}
+/* 진짜 끝이 코앞이면 손이 아직 안 멈췄어도 되돌린다 — 막다른 벽보다는 한 번 덜컹이는 게 낫다 */
+function railGuard(){
+  const rail=$("rail"), one=railPeriod(); if(!one) return;
+  const x=rail.scrollLeft, max=rail.scrollWidth-rail.clientWidth;
+  if(x<one*0.5 || x>max-one*0.5) railWrap();
+}
+addEventListener("resize",()=>{ if($("rail")&&$("rail").children.length){ railSig=""; renderRail(); } });
+function renderBar(){
+  const s=me.pick?SCEN.find(x=>x.id===me.pick):null;
+  let h;
+  if(me.mode==="host"){
+    if(!s) h=`<div class="lbl">열고 싶은 사건의 포스터를 누르세요.</div>`;
+    else h=`<div class="lbl">선택 <b>《${s.title}》</b></div><button class="go" onclick="launch()">이 사건 열기</button>`;
+  } else {
+    h=`<div class="lbl">호스트가 고른 사건으로 함께 시작해요</div><button class="go" onclick="joinGame()">입장하기</button>`;
+  }
+  $("confbar").innerHTML=h?`<div class="in">${h}</div>`
+    :`<p class="pickhint">← 옆으로 넘겨 고르세요 · 호스트가 열면 전원 함께 입장 →</p>`;
+}
+
+/* ── 관리자 / 열람(테스트) 모드 ── 비밀번호로 진입, 모든 사건 내용을 읽어보는 모드 ── */
+const ADMINDOC={
+  // 사건 하나당 한 칸. 여기 없는 사건은 관리자 화면에서 「설명 없음」으로 뜬다.
+  template:{stage:"이 자리에 무대를 적습니다", theme:'"이 판이 묻는 것"',
+    spoiler:"여기에 진상을 적습니다 — 관리자 화면에서만 보입니다.",
+    rule:"8페이즈 · 정본: scenarios/template.py"},
+};
+
+/* 준비 중인 포스터를 두 번 눌러 들어온 경우, 비밀번호가 풀리면 그 사건을 바로 고른다 */
+let lockTap={id:"",at:0}, admAfter="";
+function toggleAdmin(){ admAfter=""; if(admin){ showAdminPanel(); } else { openPw(); } }
+function openPw(){
+  $("adcard").className="adcard";
+  $("adcard").innerHTML=`<h3>관리자 · 열람 모드</h3><div class="adsub">TEST / ADMIN ACCESS</div>
+    <div class="adform"><input id="adpw" type="password" placeholder="비밀번호" autocomplete="off" inputmode="text"><button onclick="submitAdmin()">입장</button></div>
+    <div class="aderr" id="aderr"></div>
+    <button class="adclose" onclick="closeAdmin()">닫기</button>`;
+  $("admask").classList.add("on");
+  setTimeout(()=>{ const e=$("adpw"); if(e){ e.focus(); e.onkeydown=ev=>{ if(ev.key==="Enter") submitAdmin(); }; } },60);
+}
+function submitAdmin(){
+  const v=($("adpw")?$("adpw").value:"").trim();
+  if(v==="pimm5265"){
+    admin=true;
+    // 서버가 아는 사건을 먼저 당겨온다. 늦게 와도 목록을 다시 그린다.
+    loadTextLoads().then(()=>{ if($("admask").classList.contains("on")) showAdminPanel(); });
+    const b=$("adminbtn"); b.classList.add("on"); b.textContent="● 관리자 ON";
+    if($("scr-scenarios").classList.contains("on")) render();
+    if(admAfter){
+      // 포스터에서 들어온 길이다 — 열람 패널 대신 그 사건을 고른 채로 돌려보낸다.
+      const id=admAfter; admAfter="";
+      closeAdmin(); pickScenario(id);
+      note("관리자 모드 ON — 준비 중인 사건도 열어볼 수 있어요.");
+      return;
+    }
+    showAdminPanel();
+    note("관리자 모드 ON — 잠긴 사건도 열어서 내용을 확인할 수 있어요.");
+  } else {
+    const e=$("aderr"); if(e) e.textContent="비밀번호가 맞지 않아요.";
+    const i=$("adpw"); if(i){ i.value=""; i.focus(); }
+  }
+}
+/* ── 조사카드 훑어보기 ─────────────────────────────────────────────
+   본문까지 통째로 보는 창구라 서버가 AGENT_KEY로 잠가 뒀다. 관리자 비밀번호는
+   이 파일 안에 그대로 적혀 있어서 잠금이 되지 않기 때문이다.
+   AGENT_KEY를 안 걸어둔 로컬 판에서는 빈 값으로 그냥 열린다. */
+let admScen="template", admKey=localStorage.getItem("pmb.gmkey")||"";
+const ADM_ESC=t=>String(t==null?"":t).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+async function admLoad(sid){
+  if(sid) admScen=sid;
+  const box=$("admcards"); if(box) box.innerHTML='<div class="adsub">불러오는 중…</div>';
+  let d;
+  try{ d=await (await fetch(`/api/admin/cards?scenarioId=${encodeURIComponent(admScen)}&key=${encodeURIComponent(admKey)}`)).json(); }
+  catch(e){ d={error:"network"}; }
+  const b=$("admcards"); if(!b) return;
+  if(d.error){
+    b.innerHTML=`<div class="aderr">카드를 열 수 없습니다 (${ADM_ESC(d.error)}).</div>
+      <div class="adform"><input id="admk" type="password" placeholder="GM 키 (AGENT_KEY)" autocomplete="off">
+      <button onclick="admSetKey()">확인</button></div>
+      <div class="adsub" style="margin-top:10px">배포본은 서버에 넣어둔 AGENT_KEY가 필요합니다. 로컬은 빈 값으로 열립니다.</div>`;
+    const i=$("admk"); if(i){ i.value=admKey; i.onkeydown=ev=>{ if(ev.key==="Enter") admSetKey(); }; i.focus(); }
+    return;
+  }
+  const byLoc={}; (d.cards||[]).forEach(c=>{ (byLoc[c.loc]=byLoc[c.loc]||[]).push(c); });
+  const zones=(d.map||[]).map(z=>{
+    const cs=(byLoc[z.loc]||[]).slice().sort((x,y)=>(x.round-y.round)||x.id.localeCompare(y.id));
+    if(!cs.length) return "";
+    return `<div class="adzone"><h4>${ADM_ESC(z.name||z.loc)}<span class="n">${admBreak(cs)}</span></h4>
+      <div class="adcards">${cs.map(admCard).join("")}</div></div>`;
+  }).join("");
+  const loose=(d.cards||[]).filter(c=>!(d.map||[]).some(z=>z.loc===c.loc));
+  const pairs=(d.pairs||[]).map(p=>`<div class="adpair"><b>${ADM_ESC(p.key)}</b> — ${(p.cards||[]).join(" + ")} → ${ADM_ESC(p.conclusion||"")}</div>`).join("");
+  b.innerHTML=`<div class="adsub">${ADM_ESC(d.title)} · ${admBreak(d.cards||[])}</div>
+    ${zones}${loose.length?`<div class="adzone"><h4>구역 밖<span class="n">${admBreak(loose)}</span></h4><div class="adcards">${loose.map(admCard).join("")}</div></div>`:""}
+    ${pairs?`<div class="adzone"><h4>두 장이 만나야 나는 결론<span class="n">${(d.pairs||[]).length}쌍</span></h4>${pairs}</div>`:""}`;
+}
+/* 카드가 판에 «언제 나오는가» — 라운드 숫자 대신 이 이름으로 부른다.
+   관리자 열람은 이걸로 분류하는 자리라, 카드마다 하나씩 붙는다. */
+const CARD_KIND={1:["오늘","k1"],3:["이튿날","k2"],9:["잠든 카드","k9"]};
+function admKind(r){ return CARD_KIND[r]||[`R${r}`,"k0"]; }
+/* 「7장 · 오늘 3 · 이튿날 4 · 자동공개 2」 — 세는 게 이 화면의 일이다.
+   자동공개는 뒤져서 여는 카드가 아니라, 조사턴을 맞출 때 빼고 세야 한다.
+   그래서 갈래 수에서도 빼고 따로 적는다. */
+function admBreak(cs){
+  const inv=cs.filter(c=>!c.auto), au=cs.filter(c=>c.auto).length;
+  const br=[1,3,9].map(r=>{ const n=inv.filter(x=>x.round===r).length;
+    return n?`${admKind(r)[0]} ${n}`:""; }).filter(Boolean);
+  if(au) br.push(`자동공개 ${au}`);
+  return `${cs.length}장${br.length?` · ${br.join(" · ")}`:""}`;
+}
+function admCard(c){
+  const [kn,kc]=admKind(c.round);
+  const tags=[
+    c.round?`<i>R${c.round}</i>`:"",
+    c.reveal==="obligatory"?`<i>공개의무</i>`:"",
+    c.bait?`<i class="b">미끼</i>`:"",
+    c.requires?`<i class="r">선행 ${ADM_ESC(c.requires)}</i>`:"",
+    c.unlocks?`<i class="r">해금 ${ADM_ESC(c.unlocks)}</i>`:"",
+    (c.knownBy||[]).length?`<i>미리 앎 ${c.knownBy.map(ADM_ESC).join("·")}</i>`:"",
+  ].filter(Boolean).join("");
+  // 이튿날(마지막 조사)에 새로 생기는 자리는 갈라 보인다 — 첫날 덱과 섞이면 세기가 어렵다.
+  const fresh=(c.round===3&&!c.auto);
+  return `<div class="adc ${fresh?"fresh":""} ${c.hot?"hot":""} ${c.round===9?"sleep":""} ${c.bait?"bait":""} ${c.unlocks?"rulecard":""}">
+    <div class="ch"><span class="cid">${ADM_ESC(c.id)}</span><span class="cti">${ADM_ESC(c.title)}</span>
+      <span class="cks"><span class="cfr ${kc}">${kn}</span>${c.auto?'<span class="cfr ka">자동공개</span>':""}</span></div>
+    <div class="cwhere">${ADM_ESC(c.locName||"")}${c.spot?" · "+ADM_ESC(c.spot):""}</div>
+    <div class="ctx">${ADM_ESC(c.text)}</div>
+    ${c.hint?`<div class="chint">${ADM_ESC(c.hint)}</div>`:""}
+    ${c.day2?`<div class="cday2"><b>이튿날 판본</b>
+      <div class="ctx">${ADM_ESC(c.day2.text||c.text)}</div>
+      ${c.day2.hint?`<div class="chint">${ADM_ESC(c.day2.hint)}</div>`:""}</div>`:""}
+    ${c.gone?`<div class="cgone">이튿날에는 이 자리가 없다</div>`:""}
+    ${tags?`<div class="ctags">${tags}</div>`:""}</div>`;
+}
+function admSetKey(to){
+  const i=$("admk"); if(!i) return;
+  admKey=i.value.trim(); try{ localStorage.setItem("pmb.gmkey",admKey); }catch(e){}
+  if(to==="assets"){ ASSETS=null; admAssetsLoad(); }
+  else if(to) admRolesLoad(); else admLoad();
+}
+function showCardBrowser(){
+  const tabs=admOrder().map(id=>{ const sc=SCEN.find(s=>s.id===id); if(!sc) return "";
+    return `<button class="adtab${id===admScen?" on":""}" onclick="admScen='${id}';showCardBrowser()">${ADM_ESC(sc.title)}</button>`; }).join("");
+  $("adcard").className="adcard wide";
+  $("adcard").innerHTML=`<h3>조사카드 훑어보기</h3><div class="adsub">QA READOUT · 본문·힌트까지 전부</div>
+    <div class="adtabs">${tabs}<button class="adtab" onclick="showRoleBrowser()">배역</button><button class="adtab" onclick="showAssetBrowser()">에셋 프롬프트</button><button class="adtab" onclick="showAdminPanel()">← 사건 정본</button></div>
+    <div id="admcards"></div>
+    <button class="adclose" onclick="closeAdmin()">닫기</button>`;
+  $("admask").classList.add("on");
+  admLoad();
+}
+
+/* ── 배역 훑어보기 ─────────────────────────────────────────────
+   카드만 봐서는 그 카드가 누구의 무기이고 누구의 약점인지가 안 보인다.
+   목표·비밀·심문 대사까지 같이 펼쳐야 배분이 맞는지 판단이 선다.
+   범인이 그대로 나오므로 카드 쪽과 같은 AGENT_KEY로 잠겨 있다. */
+async function admRolesLoad(sid){
+  if(sid) admScen=sid;
+  const box=$("admroles"); if(box) box.innerHTML='<div class="adsub">불러오는 중…</div>';
+  let d;
+  try{ d=await (await fetch(`/api/admin/roles?scenarioId=${encodeURIComponent(admScen)}&key=${encodeURIComponent(admKey)}`)).json(); }
+  catch(e){ d={error:"network"}; }
+  const b=$("admroles"); if(!b) return;
+  if(d.error){
+    b.innerHTML=`<div class="aderr">배역을 열 수 없습니다 (${ADM_ESC(d.error)}).</div>
+      <div class="adform"><input id="admk" type="password" placeholder="GM 키 (AGENT_KEY)" autocomplete="off">
+      <button onclick="admSetKey(1)">확인</button></div>
+      <div class="adsub" style="margin-top:10px">배포본은 서버에 넣어둔 AGENT_KEY가 필요합니다. 로컬은 빈 값으로 열립니다.</div>`;
+    const i=$("admk"); if(i){ i.value=admKey; i.onkeydown=ev=>{ if(ev.key==="Enter") admSetKey(1); }; i.focus(); }
+    return;
+  }
+  const rs=(d.roles||[]);
+  b.innerHTML=`<div class="adsub">${ADM_ESC(d.title)} · 배역 ${rs.length}명</div>
+    <div class="adroles">${rs.map(r=>admRole(r,d)).join("")}</div>`;
+}
+function admRole(r,d){
+  const cardRef=c=>`${ADM_ESC(c.id)}${c.title?" 「"+ADM_ESC(c.title)+"」":""}`;
+  const sec=(h,body)=>body?`<h5>${h}</h5>${body}`:"";
+  const past=(r.past||[]).map(x=>`<div class="rli"><span class="w">${ADM_ESC(x.w||"")}</span><span>${ADM_ESC(x.t||"")}</span></div>`).join("");
+  const P=t=>(t||"").split("\n\n").map(x=>x.trim()).filter(Boolean).map(x=>`<p>${ADM_ESC(x)}</p>`).join("");
+  const hook=r.hook?`<p style="color:var(--bone);font-weight:700;white-space:pre-line">${ADM_ESC(r.hook)}</p>`:"";
+  const story=hook+P(r.storyPast)+P(r.storyToday);
+  const hide=(r.hide||[]).map(x=>`<div class="rli"><span>· ${ADM_ESC(x)}</span></div>`).join("");
+  const sins=(r.sins||[]).map(x=>`<div class="rli"><span>· ${ADM_ESC(x)}</span></div>`).join("");
+  // 점수 총합을 같이 보여준다 — 목표가 몇 점짜리로 흩어져 있는지가 검수의 핵심이라서.
+  const gp=(r.goals||[]).reduce((a,g)=>a+(g.p||0),0)+((r.keepGoal&&r.keepGoal.points)||0);
+  const goals=(r.goals||[]).map(g=>`<div class="rli"><span>${ADM_ESC(g.t||"")}</span><span class="p">${g.p||0}점</span></div>`).join("");
+  const keep=r.keepGoal?`<div class="rli"><span>${ADM_ESC(r.keepGoal.label||"")} <span class="e">— ${(r.keepGoal.cards||[]).map(cardRef).join(", ")}</span></span><span class="p">${r.keepGoal.points||0}점</span></div>
+    ${r.keepGoal.fail?`<div class="rnote" style="margin-top:6px">실패하면 — ${ADM_ESC(r.keepGoal.fail)}</div>`:""}`:"";
+  const cards=(r.knows||[]).map(c=>`<div class="rli"><span>${cardRef(c)}${c.where?` <span class="e">· ${ADM_ESC(c.where)}</span>`:""}</span></div>`).join("");
+  const frags=(r.fragments||[]).map(f=>`<div class="rli"><span class="w">${ADM_ESC(f.phase||("P"+f.seq))}</span><span>${ADM_ESC(f.text)}</span></div>`).join("");
+  const ig=(r.interrogate||[]).map(x=>`<div class="rli"><span class="w">${ADM_ESC(x.card.id)}</span><span class="rq">
+      <span class="t">실토 — ${ADM_ESC(x.truth)}</span><br><span class="e">넘긴다 — ${ADM_ESC(x.evasive)}</span>
+      ${x.rebuttal?`<br><span class="e">반박카드 ${cardRef(x.rebuttal)} 가 나오면 넘길 수 없다</span>`:""}
+    </span></div>`).join("");
+  const flag=r.isCulprit?`<span class="rflag">진범</span>`:(r.isHidden?`<span class="rflag q">스포일러 배역</span>`:"");
+  return `<div class="adr" style="--rk:${ADM_ESC(r.color||"")}">
+    <div class="rh"><div class="rav">${ADM_ESC(r.avatar||"")}</div>
+      <div><div class="rnm">${ADM_ESC(r.name||"")}</div>
+        <div class="rjb">${ADM_ESC(r.age?r.age+" · ":"")}${ADM_ESC(r.job||"")}</div></div>${flag}</div>
+    ${r.tagline?`<div class="rtag">${ADM_ESC(r.tagline)}</div>`:""}
+    ${sec("겉모습", r.look?`<p>${ADM_ESC(r.look)}</p>`:"")}
+    ${sec("말투·성격", r.persona?`<p>${ADM_ESC(r.persona)}</p>`:"")}
+    ${sec("내가 아는 옛일", past)}
+    ${sec("나의 이야기", story)}
+    ${sec("들키면 위험한 사실", hide)}
+    ${sec("죄목", sins)}
+    ${sec(`목표 · 합계 ${gp}점`, goals+keep)}
+    ${sec("알고 있는 조사카드", cards)}
+    ${sec(ADM_ESC((d&&d.fragLabel)||"지금 할 말"), frags)}
+    ${sec("AI 연기지침", r.aiNote?`<div class="rnote">${ADM_ESC(r.aiNote)}</div>`:"")}
+    ${sec("심층심문 응답", ig)}
+    ${sec("그 밖의 카드를 들이밀면", r.interrogatePlain?`<div class="rq"><span class="t">${ADM_ESC(r.interrogatePlain)}</span></div>`:"")}
+  </div>`;
+}
+function showRoleBrowser(){
+  const tabs=admOrder().map(id=>{ const sc=SCEN.find(s=>s.id===id); if(!sc) return "";
+    return `<button class="adtab${id===admScen?" on":""}" onclick="admScen='${id}';showRoleBrowser()">${ADM_ESC(sc.title)}</button>`; }).join("");
+  $("adcard").className="adcard wide";
+  $("adcard").innerHTML=`<h3>배역 훑어보기</h3><div class="adsub">QA READOUT · 목표·비밀·심문 대사까지 전부</div>
+    <div class="adtabs">${tabs}<button class="adtab" onclick="showCardBrowser()">조사카드</button><button class="adtab" onclick="showAssetBrowser()">에셋 프롬프트</button><button class="adtab" onclick="showAdminPanel()">← 사건 정본</button></div>
+    <div id="admroles"></div>
+    <button class="adclose" onclick="closeAdmin()">닫기</button>`;
+  $("admask").classList.add("on");
+  admRolesLoad();
+}
+
+/* ── 에셋 프롬프트 훑어보기 ─────────────────────────────────────
+   그림을 뽑을 때 쓰는 창구다. 읽으라고 만든 화면이 아니라 «복사하라고» 만든 화면이다.
+   프롬프트 한 덩어리는 앞머리 + 톤 블록 + 본문, 세 조각을 이어 붙여야 완성된다.
+   그 조립을 사람이 매번 하면 언젠가 한 조각을 빠뜨린다 — 그래서 버튼이 붙여준다.
+   본문에 그대로 단서가 적혀 있어서 카드·배역 쪽과 같은 AGENT_KEY로 잠겨 있다. */
+let admAsset="template", ASSETS=null;
+const ADM_BARE=t=>String(t==null?"":t).replace(/\*\*/g,"").replace(/[«»]/g,'"');
+const ADM_MARK=t=>ADM_ESC(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");
+
+function admCopy(text,btn){
+  const done=()=>{ if(!btn) return; const o=btn.textContent;
+    btn.textContent="복사됨"; btn.classList.add("done");
+    setTimeout(()=>{ btn.textContent=o; btn.classList.remove("done"); },1200); };
+  // 사내망에서 http로 여는 경우가 많다 — 그때는 clipboard API가 없다.
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(done,()=>admCopyFallback(text,done));
+  } else admCopyFallback(text,done);
+}
+function admCopyFallback(text,done){
+  const ta=document.createElement("textarea");
+  ta.value=text; ta.style.position="fixed"; ta.style.top="-2000px"; ta.setAttribute("readonly","");
+  document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0,ta.value.length);
+  try{ document.execCommand("copy"); done(); }
+  catch(e){ note("복사가 막혔습니다 — 본문을 길게 눌러 직접 복사해 주세요."); }
+  ta.remove();
+}
+/* 앞머리 + 톤 + 본문. 이 순서가 규약이다. */
+function admAssetFull(sc,it,kind){
+  const head=(kind==="zone"?ASSETS.common.zone:ASSETS.common.card)||"";
+  return [head, sc&&sc.tone, ADM_BARE(it.body)].filter(Boolean).join("\n\n");
+}
+function admAssetItem(sc,it,kind){
+  const notes=[
+    it.must?`<div class="pnote m"><span class="w">꼭</span><span class="t">${ADM_MARK(it.must)}</span></div>`:"",
+    it.reject?`<div class="pnote r"><span class="w">리젝</span><span class="t">${ADM_MARK(it.reject)}</span></div>`:"",
+  ].join("");
+  return `<div class="adp">
+    <div class="ph"><span class="pti">${ADM_ESC(it.title)}</span>
+      <span class="pfile">${ADM_ESC(it.file)}</span>
+      ${it.have?'<span class="phave">설치됨</span>':""}</div>
+    ${it.meta?`<div class="pmeta">${ADM_MARK(it.meta)}</div>`:""}
+    <div class="pbody">${ADM_MARK(it.body)}</div>
+    <div class="pacts">
+      <button class="adcp k" onclick="admAssetCopy(this,'${sc.id}','${kind}','${ADM_ESC(it.file)}','full')">합쳐서 복사</button>
+      <button class="adcp" onclick="admAssetCopy(this,'${sc.id}','${kind}','${ADM_ESC(it.file)}','body')">본문만</button>
+      <button class="adcp" onclick="admAssetCopy(this,'${sc.id}','${kind}','${ADM_ESC(it.file)}','file')">파일명</button>
+    </div>${notes}</div>`;
+}
+function admAssetCopy(btn,sid,kind,file,what){
+  const sc=(ASSETS&&ASSETS.scen||[]).find(x=>x.id===sid); if(!sc) return;
+  const it=(kind==="zone"?sc.zones:sc.cards).find(x=>x.file===file); if(!it) return;
+  if(what==="full") admCopy(admAssetFull(sc,it,kind),btn);
+  else if(what==="body") admCopy(ADM_BARE(it.body),btn);
+  else admCopy(it.file,btn);
+}
+function admAssetBlock(title,sub,text,tag){
+  return `<div class="adp">
+    <div class="ph"><span class="pti">${ADM_ESC(title)}</span></div>
+    ${sub?`<div class="pmeta">${ADM_ESC(sub)}</div>`:""}
+    <div class="pbody">${ADM_ESC(text)}</div>
+    <div class="pacts"><button class="adcp" onclick="admCopy(admAssetRaw('${tag}'),this)">복사</button></div>
+  </div>`;
+}
+function admAssetRaw(tag){
+  if(!ASSETS) return "";
+  if(tag==="zone"||tag==="card"||tag==="ref") return ASSETS.common[tag]||"";
+  const sc=(ASSETS.scen||[]).find(x=>x.id===tag);
+  return sc?sc.tone:"";
+}
+async function admAssetsLoad(which){
+  if(which) admAsset=which;
+  const box=$("admassets"); if(box) box.innerHTML='<div class="adsub">불러오는 중…</div>';
+  if(!ASSETS){
+    let d;
+    try{ d=await (await fetch(`/api/admin/assets?key=${encodeURIComponent(admKey)}`)).json(); }
+    catch(e){ d={error:"network"}; }
+    if(d.error){
+      const b=$("admassets"); if(!b) return;
+      b.innerHTML=`<div class="aderr">프롬프트를 열 수 없습니다 (${ADM_ESC(d.error)}).</div>
+        <div class="adform"><input id="admk" type="password" placeholder="GM 키 (AGENT_KEY)" autocomplete="off">
+        <button onclick="admSetKey('assets')">확인</button></div>
+        <div class="adsub" style="margin-top:10px">배포본은 서버에 넣어둔 AGENT_KEY가 필요합니다. 로컬은 빈 값으로 열립니다.</div>`;
+      const i=$("admk"); if(i){ i.value=admKey; i.onkeydown=ev=>{ if(ev.key==="Enter") admSetKey("assets"); }; i.focus(); }
+      return;
+    }
+    ASSETS=d;
+  }
+  const b=$("admassets"); if(!b) return;
+
+  if(admAsset==="common"){
+    b.innerHTML=`<div class="adphint">여기 있는 블록은 <b>모든 프롬프트 맨 앞에</b> 붙습니다.
+        각 항목의 「합쳐서 복사」를 쓰면 이미 붙어서 나오니, 이 화면은 따로 손볼 때만 쓰세요.</div>
+      ${admAssetBlock("앞머리 · 구역 배경용","사람 없음 · 가운데 비움 · 글자 없음",ASSETS.common.zone,"zone")}
+      ${admAssetBlock("앞머리 · 카드 그림용","물건 하나를 크게 · 세로 40% 지점 · 글자 없음",ASSETS.common.card,"card")}
+      ${admAssetBlock("레퍼런스를 올릴 때","「화풍만 가져와라」 — 안 붙이면 다른 판 배경이 따라 들어옵니다",ASSETS.common.ref,"ref")}`;
+    return;
+  }
+  const sc=(ASSETS.scen||[]).find(x=>x.id===admAsset);
+  if(!sc){ b.innerHTML='<div class="adsub">이 사건에는 아직 프롬프트가 없습니다.</div>'; return; }
+
+  const group=(list,kind)=>{
+    let g=null, out=[];
+    list.forEach(it=>{
+      if(it.group&&it.group!==g){ g=it.group;
+        out.push(`<h4 style="font-family:var(--serif);font-size:.95rem;color:var(--faint);margin:16px 0 8px">${ADM_ESC(g)}</h4>`); }
+      out.push(admAssetItem(sc,it,kind));
+    });
+    return out.join("");
+  };
+  const done=[...sc.zones,...sc.cards].filter(x=>x.have).length;
+  b.innerHTML=`<div class="adsub">${ADM_ESC(sc.title||sc.name)} · 구역 ${sc.zones.length} · 카드 ${sc.cards.length}${done?` · 설치됨 ${done}`:""} · 시드 ${sc.seed}</div>
+    ${sc.tone?admAssetBlock(sc.name+" 톤 블록","앞머리 다음, 본문 앞에 붙습니다",sc.tone,sc.id):""}
+    ${sc.zones.length?`<div class="adzone"><h4>구역 배경<span class="n">${sc.zones.length}장</span></h4>${group(sc.zones,"zone")}</div>`:""}
+    ${sc.cards.length?`<div class="adzone"><h4>조사카드<span class="n">${sc.cards.length}장</span></h4>${group(sc.cards,"card")}</div>`:""}`;
+}
+function showAssetBrowser(){
+  const ids=["common","template"];
+  const nm={common:"공통 사양",template:"빈 판"};
+  const tabs=ids.map(id=>`<button class="adtab${id===admAsset?" on":""}" onclick="admAssetsLoad('${id}');showAssetTabs()">${nm[id]}</button>`).join("");
+  $("adcard").className="adcard wide";
+  $("adcard").innerHTML=`<h3>에셋 프롬프트</h3><div class="adsub">GRAPHIC-NOVEL · 앞머리 + 톤 + 본문</div>
+    <div class="adphint">그림은 <b>실사가 아니라 잉크 그래픽노블</b>입니다. 프롬프트 하나는
+      <b>앞머리 + 톤 블록 + 본문</b> 세 조각이라, <b>합쳐서 복사</b>가 그 셋을 이어 붙여 줍니다.
+      「본문만」은 이미 앞머리를 걸어둔 창에 이어 붙일 때 쓰세요.</div>
+    <div class="adtabs" id="admassettabs">${tabs}</div>
+    <div class="adtabs"><button class="adtab" onclick="showCardBrowser()">조사카드</button><button class="adtab" onclick="showRoleBrowser()">배역</button><button class="adtab" onclick="showAdminPanel()">← 사건 정본</button></div>
+    <div id="admassets"></div>
+    <button class="adclose" onclick="closeAdmin()">닫기</button>`;
+  $("admask").classList.add("on");
+  admAssetsLoad();
+}
+/* 탭만 다시 칠한다 — 목록을 통째로 다시 그리면 스크롤이 위로 튄다. */
+function showAssetTabs(){
+  const ids=["common","template"];
+  const t=$("admassettabs"); if(!t) return;
+  [...t.children].forEach((b,i)=>b.classList.toggle("on",ids[i]===admAsset));
+}
+
+/* 열람 순서 — ORDER 를 먼저 쓰되, 아직 안 채워졌으면 SCEN 에 있는 것도 붙인다.
+   목록이 화면을 어디 거쳐 왔는지에 따라 달라지면 그건 목록이 아니다. */
+function admOrder(){
+  const out=ORDER.slice();
+  SCEN.forEach(s=>{ if(out.indexOf(s.id)<0) out.push(s.id); });
+  return out;
+}
+function showAdminPanel(){
+  const rows=admOrder().map(id=>SCEN.find(s=>s.id===id)).filter(Boolean).map(s=>{
+    const d=ADMINDOC[s.id]||{};
+    return `<div class="adrow">
+      <div class="rt">《${s.title}》 <span class="tg ${s.locked?"locked":""}">${s.locked?"준비중 · 열람가능":"운영중"}</span></div>
+      <div class="rk">무대 / 부제</div><div class="rd">${d.stage||s.tagline||""} — <b>${s.tagline||""}</b></div>
+      <div class="rk">테마</div><div class="rd">${d.theme||"—"}</div>
+      <div class="rk">핵심(스포일러)</div><div class="rd">${d.spoiler||"—"}</div>
+      <div class="rk">진행 규칙</div><div class="rd">${d.rule||"—"}</div>
+    </div>`;
+  }).join("");
+  $("adcard").className="adcard";
+  $("adcard").innerHTML=`<h3>열람 모드 · 사건 정본</h3><div class="adsub">QA READOUT · 모든 내용 열람</div>
+    ${rows}
+    <button class="adtab" style="margin-top:16px;width:100%;padding:11px" onclick="showCardBrowser()">조사카드 전부 훑어보기 →</button>
+    <button class="adtab" style="margin-top:7px;width:100%;padding:11px" onclick="showRoleBrowser()">배역 전부 훑어보기 →</button>
+    <button class="adtab" style="margin-top:7px;width:100%;padding:11px" onclick="showAssetBrowser()">에셋 프롬프트 훑어보기 →</button>
+    <button class="adclose" onclick="closeAdmin()">닫기</button>`;
+  $("admask").classList.add("on");
+}
+function closeAdmin(){ $("admask").classList.remove("on"); }
+</script>
+</body></html>

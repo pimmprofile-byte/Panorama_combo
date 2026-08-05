@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>세션 준비 — PIMMmurderboard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%93%8B%3C/text%3E%3C/svg%3E">
+<style>
+  @font-face{font-family:"PIMM Sans";src:url("/assets/fonts/NotoSansKR-400.woff2") format("woff2");
+    font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:"PIMM Sans";src:url("/assets/fonts/NotoSansKR-700.woff2") format("woff2");
+    font-weight:700;font-style:normal;font-display:swap}
+  :root{--bg:#0b0a0d;--panel:#17151d;--panel2:#1f1c27;--line:#2f2a3a;
+    --ink:#ece7f0;--sub:#a49db8;--muted:#6f697f;--ember:#c8442f;--ember-b:#e7654c;
+    --gold:#c9a24a;--good:#7ee0a8;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.65;
+    font-family:"PIMM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    word-break:keep-all;overflow-wrap:break-word;text-wrap:pretty;
+    padding:28px 20px calc(48px + env(safe-area-inset-bottom))}
+  .wrap{max-width:860px;margin:0 auto}
+  h1{font-size:23px;margin:0 0 6px;letter-spacing:-.01em}
+  .lede{color:var(--sub);font-size:14px;margin:0 0 26px}
+  .warn{background:rgba(200,68,47,.1);border:1px solid rgba(200,68,47,.42);
+    border-radius:11px;padding:13px 16px;font-size:13.5px;margin:0 0 26px;color:#f2d7d1}
+  .warn b{color:var(--ember-b)}
+  .field{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:0 0 26px}
+  .field label{font-size:12.5px;color:var(--sub);letter-spacing:.04em}
+  .field input{flex:1;min-width:220px;background:var(--panel);border:1px solid var(--line);
+    color:var(--ink);border-radius:9px;padding:9px 12px;font-family:var(--mono);font-size:13px}
+  .field input:focus{outline:none;border-color:var(--gold)}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:17px 18px;margin:0 0 18px}
+  .sh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 4px}
+  .sh h2{font-size:15.5px;margin:0}
+  .sh .n{font-family:var(--mono);font-size:11.5px;color:var(--gold);letter-spacing:.1em}
+  .sd{color:var(--sub);font-size:13px;margin:0 0 13px}
+  pre{background:#0e0d12;border:1px solid var(--line);border-radius:10px;
+    padding:14px;margin:0;overflow-x:auto;max-height:340px;overflow-y:auto;
+    font-family:var(--mono);font-size:12px;line-height:1.6;color:#d8d2e2;white-space:pre-wrap}
+  .row{display:flex;gap:9px;margin-top:11px;flex-wrap:wrap}
+  button{font-family:inherit;color:inherit;cursor:pointer;font-size:13px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+    padding:8px 15px;transition:.15s}
+  button:hover{border-color:var(--gold);color:#fff}
+  button.go{background:linear-gradient(90deg,#8a3a2b,var(--ember));border-color:var(--ember-b);
+    color:#fff;font-weight:700}
+  ul{margin:0;padding-left:19px;font-size:13.5px;color:var(--sub)}
+  ul li{margin:5px 0}
+  ul b{color:var(--ink)}
+  .ok{color:var(--good)}
+  .warn.good{background:rgba(126,224,168,.09);border-color:rgba(126,224,168,.4);color:#cdebda}
+  .warn.good b{color:var(--good)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>세션 준비</h1>
+  <p class="lede">진행 세션과 플레이어에게 넘길 것. 아래 키를 넣으면 그대로 채워진다.</p>
+
+  <div class="warn">
+    <b>깃 저장소는 진행 세션에 주지 마세요.</b> 시나리오 파일에 진상이 들어 있습니다.
+    아래 세 덩어리만 넘기면 됩니다.
+  </div>
+
+  <div id="keystat" class="warn" style="display:none"></div>
+
+  <div class="field">
+    <label>AGENT_KEY</label>
+    <input id="key" placeholder="렌더 환경변수에 넣어둔 값" autocomplete="off" spellcheck="false">
+    <button onclick="load()">불러오기</button>
+  </div>
+
+  <section>
+    <div class="sh"><span class="n">01</span><h2>진행 세션에 붙여넣기</h2></div>
+    <p class="sd">새 대화를 Haiku로 열고 통째로 붙여넣으세요. 짧은 쪽을 권합니다 —
+      지침을 세션이 직접 받아가므로 고쳐도 항상 최신입니다.</p>
+    <pre id="short">키를 넣고 불러오기를 누르세요.</pre>
+    <div class="row">
+      <button class="go" onclick="copy('short',this)">짧은 버전 복사</button>
+      <button onclick="toggleFull()" id="fullBtn">전문 보기</button>
+    </div>
+    <pre id="full" style="display:none;margin-top:11px"></pre>
+    <div class="row" id="fullRow" style="display:none">
+      <button onclick="copy('full',this)">전문 복사</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="sh"><span class="n">02</span><h2>플레이어 단톡방에 보내기</h2></div>
+    <p class="sd">접속 주소와 지켜야 할 것들.</p>
+    <pre id="notice">…</pre>
+    <div class="row"><button class="go" onclick="copy('notice',this)">복사</button></div>
+  </section>
+
+  <section>
+    <div class="sh"><span class="n">03</span><h2>시작 전 확인</h2></div>
+    <ul>
+      <li>렌더에서 <b>Manual Deploy</b> 눌렀나</li>
+      <li>렌더 Environment에 <b>AGENT_KEY</b>가 들어가 있나 (다른 비밀번호와 다른 값으로)</li>
+      <li>큰 화면(TV·노트북) 준비했나 — <b>오프닝이 16:9</b>다</li>
+      <li><b>소리 켰나</b> — 오프닝에 효과음이 들어간다</li>
+      <li>호스트로 들어가서 <b>시나리오 포스터</b> 골랐나</li>
+      <li>전원 배역 고르면 호스트 화면에 "이대로 진행하시겠습니까?" → 누르면 오프닝</li>
+    </ul>
+    <p class="sd" style="margin:13px 0 0">진행 중 사람이 챙길 건 셋뿐이다 —
+      <b>시간 끊기</b>, <b>두 라운드째 말 없는 사람 이름 불러주기</b>, <b>조명 낮추기</b>.</p>
+  </section>
+</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const BASE=location.origin;
+function shortBrief(k){
+  const u=`${BASE}/api/handoff?key=${k}&base=${encodeURIComponent(BASE)}`;
+  return `머더미스터리 세션 진행을 맡아줘.\n\n`+
+  `먼저 연결부터 확인해줘. 터미널에서:\n`+
+  `  curl -s -o /dev/null -w "%{http_code}\\n" "${BASE}/api/state"\n`+
+  `200이 아니면 거기서 멈추고 알려줘.\n\n`+
+  `200이면 아래로 진행 지침 전문을 받아서 그대로 따라줘.\n`+
+  `  curl -s "${u}"\n\n`+
+  `이 서버는 브라우저가 아니라 curl로만 다룬다. GET·POST 전부 Bash로 해줘.\n`+
+  `키는 ${k} 다. API 호출에만 쓰고 채팅에 다시 출력하지 마라.\n\n`+
+  `지침을 읽고 나면, 무엇을 하는 역할인지 세 줄로 요약해서 알려주고 대기해줘.\n`+
+  `내가 "시작하자"라고 하면 그때 진행을 시작하면 된다.`;
+}
+async function load(){
+  const k=$("key").value.trim();
+  if(!k){ $("short").textContent="AGENT_KEY를 먼저 넣으세요."; return; }
+  $("short").textContent=shortBrief(k);
+  try{
+    const r=await fetch(`/api/handoff?key=${encodeURIComponent(k)}&base=${encodeURIComponent(BASE)}`);
+    $("full").textContent = r.ok ? await r.text()
+      : "키가 맞지 않습니다. 렌더 환경변수의 AGENT_KEY와 같은 값인지 확인하세요.";
+  }catch(e){ $("full").textContent="불러오지 못했습니다: "+e; }
+}
+function toggleFull(){
+  const on=$("full").style.display==="none";
+  $("full").style.display=on?"block":"none";
+  $("fullRow").style.display=on?"flex":"none";
+  $("fullBtn").textContent=on?"전문 접기":"전문 보기";
+}
+async function copy(id,btn){
+  try{ await navigator.clipboard.writeText($(id).textContent); }
+  catch(e){ const r=document.createRange(); r.selectNode($(id));
+    getSelection().removeAllRanges(); getSelection().addRange(r); document.execCommand("copy"); }
+  const t=btn.textContent; btn.textContent="복사됨 ✓"; btn.classList.add("ok");
+  setTimeout(()=>{ btn.textContent=t; btn.classList.remove("ok"); },1400);
+}
+/* 키가 실제로 걸려 있는지 스스로 확인해 알려준다.
+   키 없이 /api/handoff를 불러보면 된다 — 403이면 걸린 것, 200이면 무방비다. */
+fetch("/api/handoff").then(r=>{
+  const el=$("keystat"); el.style.display="block";
+  if(r.status===403){
+    el.className="warn good";
+    el.innerHTML="<b>AGENT_KEY가 걸려 있습니다.</b> 값은 렌더 → 서비스 → Settings의 "+
+      "Environment Variables에서 확인하거나, 기억이 안 나면 새 값으로 덮어쓰고 저장하세요.";
+  } else if(r.status===404){
+    el.className="warn";
+    el.innerHTML="<b>이 서버에 아직 오늘 코드가 없습니다.</b> 렌더에서 Manual Deploy를 눌러주세요.";
+  } else {
+    el.className="warn";
+    el.innerHTML="<b>AGENT_KEY가 설정돼 있지 않습니다.</b> 지금은 주소만 알면 누구나 "+
+      "페이즈를 넘기고 인물 대본까지 읽을 수 있습니다. 플레이 전에 렌더 환경변수에 "+
+      "AGENT_KEY를 넣고 재배포하세요.";
+  }
+}).catch(()=>{});
+
+fetch("/api/player-notice?base="+encodeURIComponent(BASE))
+  .then(r=>r.text()).then(t=>$("notice").textContent=t)
+  .catch(()=>$("notice").textContent="…");
+$("key").addEventListener("keydown",e=>{ if(e.key==="Enter") load(); });
+</script>
+</body>
+</html>
