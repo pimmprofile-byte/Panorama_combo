@@ -1055,6 +1055,17 @@ def start_game(b: HostReq):
             if _ph0.get("gm"):
                 ROOM["table"].append({"kind": "gm", "broadcast": True, "text": _ph0["gm"]})
             _seed_alibi()
+        # 처음부터 손에 쥐고 시작하는 물건(START_ITEMS). 데이지의 확성기처럼 «조사해서
+        # 얻는 것이 아니라 원래 갖고 있던» 물건이다. 여태 시나리오가 적어만 놓고
+        # 나눠주는 자리가 없어서 아무도 못 들고 시작했다.
+        for rid, cids in (getattr(SC, "START_ITEMS", {}) or {}).items():
+            if rid not in ROOM["roles"]:
+                continue
+            h = ROOM["hands"].setdefault(rid, [])
+            for cid in cids:
+                if cid not in h:
+                    h.append(cid)
+                    ROOM["checkedRound"].setdefault(rid, {})[cid] = 0
         _reveal_autos()          # 오프닝(0라운드)에서 스스로 열리는 자리
         bump()
     return {"ok": True, "started": True}
@@ -1895,7 +1906,9 @@ def puzzle_list(role_id: str, clientId: str = ""):
             continue
         n = int(tries.get(c["id"], 0))
         row = {"id": c["id"], "spot": c.get("spot", ""), "locName": c.get("locName", ""),
-               "prompt": p.get("prompt", ""), "tries": n}
+               "prompt": p.get("prompt", ""), "tries": n,
+               # 무엇이 나오는지는 미리 안 말한다 — 「도구가 나온다」까지만.
+               "gives": bool(c.get("item") or (SC.get_card(p.get("grants") or "") or {}).get("item"))}
         if n >= PUZZLE_HINT_AFTER:
             row["hint"] = SC.puzzle_hint(c["id"]) if hasattr(SC, "puzzle_hint") else p.get("hint", "")
         out.append(row)
@@ -1938,19 +1951,40 @@ def puzzle_answer(b: PuzzleTry):
             bump()
             return out
 
-        err = _try_investigate(b.roleId, b.cardId, enforce_ap=False, _puzzle_bypass=True)
+        # 푼 값이 «그 카드 자체» 가 아닐 수 있다. A9(메모리칩)는 풀면 A10(그 날 밤의 녹취)이
+        # 나오고, 그건 손패가 아니라 테이블에 펴진다 — 원고가 그렇게 적혀 있다.
+        pz = c.get("puzzle") or {}
+        give = pz.get("grants") or b.cardId
+        if pz.get("publish"):
+            # 테이블 전체공개. 푼 사람만 아는 것이 아니라 다 같이 보는 것이 된다.
+            _publish(give, by=b.roleId)
+            err = _try_investigate(b.roleId, b.cardId, enforce_ap=False, _puzzle_bypass=True) \
+                if give != b.cardId else None
+        else:
+            err = _try_investigate(b.roleId, give, enforce_ap=False, _puzzle_bypass=True)
         if err:
             return JSONResponse({"error": err}, status_code=409)
         # 조사턴을 안 쓴다. _try_investigate 는 열어준 카드에 «이번 라운드» 도장을 찍는데,
         # 남은 조사 수는 그 도장을 세어 구한다 — 그대로 두면 수수께끼가 조사턴을 먹는다.
         # 묶음 형제들과 같은 방식으로 0라운드로 눕힌다.
-        ROOM["checkedRound"].setdefault(b.roleId, {})[b.cardId] = 0
+        for _x in {b.cardId, give}:
+            ROOM["checkedRound"].setdefault(b.roleId, {})[_x] = 0
         # 「누가 무엇을 풀었는가」는 공개 정보다 — 도구를 몇 개 모았는지가 곧 판의 시계다.
         # 다만 «무엇이 나왔는지» 는 푼 사람만 안다. 여기서는 물건 이름을 안 적는다.
         who = (SC.get_character(b.roleId) or {}).get("name", b.roleId)
+        gc = SC.get_card(give) or {}
+        # 도구는 이름을 부른다 — 누가 무엇을 몇 개 모았는지가 이 판의 시계다.
+        # 도구가 아닌 것(녹취처럼 테이블에 펴지는 카드)은 이름을 안 부른다.
+        got = gc.get("itemName") or ("무언가" if not pz.get("publish") else "")
         with _drip():
-            ROOM["table"].append({"kind": "system",
-                "text": f"{who}{_subj(who)} {c.get('locName','')}의 수수께끼를 풀고 무언가를 손에 넣었다."})
+            if pz.get("publish"):
+                ROOM["table"].append({"kind": "system", "broadcast": True,
+                    "text": f"{who}{_subj(who)} {c.get('locName','')}의 수수께끼를 풀었다 — "
+                            f"「{gc.get('title','')}」{_subj(gc.get('title',''))} 테이블에 펼쳐졌다."})
+            else:
+                ROOM["table"].append({"kind": "system",
+                    "text": f"{who}{_subj(who)} {c.get('locName','')}의 수수께끼를 풀고 "
+                            f"«{got}»{_obj(got)} 손에 넣었다."})
         bump()
     return {"ok": True, "card": SC.public_card(b.cardId)}
 
