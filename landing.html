@@ -71,18 +71,23 @@
 
   /* ── 무대 ─────────────────────────────────────────────────────
      바탕 사진(회로기판 위의 브라운관)은 그대로 두되 밝기를 눌러 «뒤에 있는 기계» 로
-     물러나게 한다. 우리가 띄우는 창이 그 앞에서 켜져 있는 화면이 된다. */
+     물러나게 한다. 우리가 띄우는 창이 그 앞에서 켜져 있는 화면이 된다.
+
+     사진을 덮는 층은 셋이다 — ① .bg 의 brightness, ② .vig 의 어두운 세로 그라디언트,
+     ③ .vig 의 안쪽 비네트 그림자. 셋 다 «한 단계만» 걷어 사진이 조금 더 드러나게 했다
+     (brightness .62→.70 / 그라디언트 .34·.46·.66→.28·.40·.60 / 비네트 .72→.66).
+     창은 통째로 불투명하니 창 안 글자의 대비는 이 값들과 무관하다 — 재서 확인했다. */
   .stage{position:relative;min-height:100vh;overflow:hidden}
   .bg{position:fixed;inset:0;z-index:0;
     background:url("/assets/rule_the_day_lobby.webp") center 26%/cover no-repeat;
-    filter:saturate(.85) brightness(.62) contrast(1.02)}
+    filter:saturate(.85) brightness(.70) contrast(1.02)}
   /* 격자와 비네트. 사진 위에 인광 눈금을 한 겹 더 얹어 «전원이 들어와 있다» 를 만든다. */
   .vig{position:fixed;inset:0;z-index:1;pointer-events:none;image-rendering:pixelated;
-    box-shadow:inset 0 0 220px 40px rgba(0,0,0,.72);
+    box-shadow:inset 0 0 220px 40px rgba(0,0,0,.66);
     background:
       repeating-linear-gradient(0deg,rgba(124,240,176,.05) 0 1px,transparent 1px 16px),
       repeating-linear-gradient(90deg,rgba(124,240,176,.05) 0 1px,transparent 1px 16px),
-      linear-gradient(180deg,rgba(4,9,7,.34),rgba(3,7,5,.46) 60%,rgba(2,5,4,.66))}
+      linear-gradient(180deg,rgba(4,9,7,.28),rgba(3,7,5,.40) 60%,rgba(2,5,4,.60))}
   /* VHS — 엔트리 창 안에서만 돈다 */
   .vhs{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:hidden}
   .vhs .scan{position:absolute;inset:0;opacity:.5;background:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px)}
@@ -203,9 +208,9 @@
 
   /* 사건 카드 — 90년대 소프트웨어 상자다. 베이지 라벨 위에 그림 창이 한 칸 파여 있다.
      둘뿐인 목록에 무한 캐러셀을 돌리면 같은 그림이 계속 되돌아와 어지럽다. 나란히 편다. */
-  .rail{display:grid;gap:clamp(9px,2.2vw,18px);padding:18px 0 20px;
+  .rail{display:grid;gap:clamp(9px,2.2vw,18px);padding:18px 0 20px;align-items:stretch;
     grid-template-columns:repeat(auto-fit,minmax(min(46%,230px),1fr))}
-  .poster{scroll-snap-align:none;width:100%;text-align:left;padding:0;color:inherit;
+  .poster{scroll-snap-align:none;width:100%;height:100%;text-align:left;padding:0;color:inherit;
     display:flex;flex-direction:column;
     background:var(--case);border:1px solid var(--ink);
     box-shadow:inset 1px 1px 0 var(--case-hi),inset -1px -1px 0 var(--case-lo),3px 3px 0 var(--ink)}
@@ -224,28 +229,39 @@
     background:linear-gradient(158deg,rgba(255,255,255,.09),transparent 40%)}
   .art .grain{position:absolute;inset:0;z-index:3;opacity:.22;pointer-events:none;
     background-image:repeating-linear-gradient(0deg,rgba(0,0,0,.6) 0 1px,transparent 1px 3px)}
-  /* 인쇄 라벨 — 상자 아래에 붙은 종이 한 칸. 제목은 여기서만 말한다. */
-  .plabel{padding:7px 2px 6px}
-  .plabel .tone{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--case-sh);margin-bottom:3px}
-  .plabel .pt{font-size:clamp(13px,3.2vw,16px);line-height:1.25;color:var(--ink)}
-  .plabel .psub{font-size:11px;color:var(--ink2);line-height:1.4;margin-top:2px}
+  /* 인쇄 라벨 — 상자 아래에 붙은 종이 한 칸. 제목은 여기서만 말한다.
+     세 줄(분류·제목·부제)은 저마다 최소 한 줄 칸을 물고 있다. 그래야 옆 카드에
+     없는 줄이 있어도 남은 줄들이 같은 높이에 선다. */
+  .plabel{display:flex;flex-direction:column;padding:7px 2px 6px}
+  .plabel .tone{font-size:10px;letter-spacing:.16em;line-height:1.3;min-height:1.3em;
+    text-transform:uppercase;color:var(--case-sh);margin-bottom:3px}
+  .plabel .pt{font-size:clamp(13px,3.2vw,16px);line-height:1.25;min-height:1.25em;color:var(--ink)}
+  .plabel .psub{font-size:11px;color:var(--ink2);line-height:1.4;min-height:1.4em;margin-top:2px}
   .poster.on .plabel .tone{color:var(--phos-dim)}
   .poster.on .plabel .pt{color:var(--bone)}
   .poster.on .plabel .psub{color:var(--bone-dim)}
-  /* 폰에서는 라벨이 두 줄로 접히며 카드 높이가 서로 어긋난다 — 곁가지부터 접는다 */
-  @media(max-width:520px){ .chip.tx{display:none} .plabel .psub{display:none} }
-  /* 라벨 띠 — 상자 아래 붙은 인쇄 라벨. 고르면 통째로 반전된다(1비트의 «선택»). */
-  .meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:auto;padding:8px 9px 9px;
-    border-top:1px dotted var(--case-sh)}
-  .chip{font-size:11px;letter-spacing:.02em;color:var(--ink2);border:1px solid var(--case-sh);padding:1px 6px}
-  .chip.tx{border-style:dashed}
-  .meta .sel{margin-left:auto;font-size:12px;color:var(--ink)}
+  /* 부제는 이제 제목의 한 짝이다(《RULE THE DAY》—《데이의 규칙》). 폰에서 지우면
+     제목이 반쪽만 남는다. 대신 폭이 좁을 때는 곁가지인 분량칩만 접는다 —
+     한 줄 안에 온전히 못 들어갈 폭(660px 아래)에서는 잘려 보이느니 아예 접는다. */
+  @media(max-width:660px){ .chip.tx{display:none} }
+  /* 라벨 띠 — 상자 아래 붙은 인쇄 라벨. 고르면 통째로 반전된다(1비트의 «선택»).
+     한 줄로 고정한다. 예전엔 분량칩을 가진 카드만 두 줄로 접혀서, 옆 카드와
+     점선 테두리 높이가 어긋났다. 자리가 모자라면 칩이 줄어들지 줄을 늘리지 않는다. */
+  .meta{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow:hidden;
+    margin-top:auto;padding:8px 9px 9px;border-top:1px dotted var(--case-sh)}
+  .chip{flex:0 0 auto;font-size:11px;letter-spacing:.02em;color:var(--ink2);
+    border:1px solid var(--case-sh);padding:1px 6px;white-space:nowrap}
+  .chip.tx{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;border-style:dashed}
+  .meta .sel{flex:0 1 auto;min-width:0;margin-left:auto;padding-left:4px;font-size:12px;color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .poster.on{background:var(--ink);box-shadow:inset 0 0 0 1px var(--phos),3px 3px 0 var(--ink)}
   .poster.on .meta{border-top-color:var(--phos-deep)}
   .poster.on .chip{color:var(--phos-dim);border-color:var(--phos-deep)}
   .poster.on .meta .sel{color:var(--signal)}
   .poster.locked{opacity:.9;cursor:not-allowed}
-  .poster.locked .art{filter:grayscale(.7) brightness(.72)}
+  /* 잠긴 판은 그림만 바랜다. 예전엔 .art 통째로 물을 뺐더니 그 위에 놓인 경고띠까지
+     같이 회색이 돼서, 「준비 중」이라고 외치는 자리가 제일 안 보였다. */
+  .poster.locked .art .artimg{filter:grayscale(.7) brightness(.72)}
   .livetag{position:absolute;top:8px;right:8px;z-index:6;font-size:11px;letter-spacing:.14em;
     color:var(--screen);background:var(--signal);border:1px solid var(--ink);padding:2px 7px}
   .hc{position:absolute;bottom:8px;left:8px;z-index:6;display:flex;align-items:center;gap:5px;
@@ -256,11 +272,18 @@
   .hc .pip.host{color:var(--signal);opacity:1}
   .hc .pip.part{color:#e8c46a;opacity:1}
   .hc b{font-size:11px;color:var(--bone-dim);font-weight:400}
-  .lockband{position:absolute;top:46%;left:-8px;right:-8px;transform:translateY(-50%) rotate(-6deg);z-index:5;
-    background:repeating-linear-gradient(45deg,var(--ink) 0 10px,var(--alert) 10px 20px);
-    border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);box-shadow:2px 2px 0 rgba(0,0,0,.6)}
-  .lockband span{display:block;text-align:center;font-size:12px;letter-spacing:.24em;color:#fff;
-    padding:5px 0;background:rgba(18,19,15,.42)}
+  /* 준비중 띠 — 그림 창을 가로로 가로지르는 경고 테이프.
+     예전엔 -6도로 기울여 카드 밖(left/right:-8px)까지 뽑아놨는데, .art 가 overflow:hidden
+     이라 띠 끝이 잘리고 기운 글자는 계단이 져서 도트 화면에서 깨져 보였다.
+     기울임을 걷어내 가로 띠로 눕히고, 글자는 잉크판 위에 얹어 줄무늬와 겹치지 않게 한다. */
+  .lockband{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:5;
+    padding:4px 0;                       /* 위아래로 줄무늬가 4px 씩 드러나는 만큼만 */
+    background:repeating-linear-gradient(45deg,var(--ink) 0 8px,var(--alert) 8px 16px);
+    border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);
+    box-shadow:0 2px 0 rgba(0,0,0,.55)}
+  .lockband span{display:block;text-align:center;font-size:11px;letter-spacing:.18em;line-height:1.5;
+    color:var(--bone);background:var(--ink);padding:3px 6px;
+    white-space:nowrap;overflow:hidden;text-overflow:clip}
 
   /* 확인 줄 — 창 안의 «대화상자» 한 줄. 늘 같은 자리에 서 있어야 눈이 안 헤맨다. */
   .confirm{display:flex;justify-content:center;margin:4px 0 0;min-height:48px;align-items:center}
@@ -439,6 +462,57 @@
   @keyframes pick{0%{transform:translate(1px,1px)}100%{transform:none}}
   .poster.on{animation:pick .16s steps(2)}
 
+  /* ── 고른 순간의 지직 ──────────────────────────────────────────
+     포스터를 고르면 그 카드가 0.5초 동안 «한 번» 튄다. 신호가 바뀔 때 화면이
+     못 따라오는 그 순간이다. steps(1,end) 로 중간값 없이 프레임을 갈아치워
+     보간이 없는 8비트 화면처럼 끊어 친다. 무한 반복은 하지 않는다 — 골라둔 카드가
+     계속 떨면 제목도 칩도 못 읽는다. */
+  @keyframes glJolt{
+    0%,100%{transform:translate(0,0)}
+    9%{transform:translate(-3px,1px)}
+    21%{transform:translate(2px,-2px)}
+    36%{transform:translate(-2px,0)}
+    52%{transform:translate(3px,1px)}
+    68%{transform:translate(-1px,-1px)}
+    84%{transform:translate(1px,0)}
+  }
+  /* 주사선 튐 — 잉크판 조각을 difference 로 얹어 그 줄만 순간 반전시킨다.
+     조각은 clip-path 로 자른다. 그림 자체를 자르면 아래 깔린 «NO IMAGE» 자리표시자가
+     비쳐 보이므로, 덧대는 판만 자른다. */
+  @keyframes glTear{
+    0%{opacity:0}
+    8%{opacity:1;clip-path:inset(13% 0 76% 0);transform:translateX(-6px)}
+    16%{opacity:0}
+    27%{opacity:1;clip-path:inset(51% 0 35% 0);transform:translateX(5px)}
+    35%{opacity:0}
+    47%{opacity:1;clip-path:inset(70% 0 21% 0);transform:translateX(-4px)}
+    55%{opacity:0}
+    64%{opacity:1;clip-path:inset(0 0 0 0);transform:translateX(0)}   /* 한 프레임 통째로 반전 */
+    70%{opacity:0}
+    82%{opacity:1;clip-path:inset(33% 0 58% 0);transform:translateX(3px)}
+    90%{opacity:0}
+    100%{opacity:0}
+  }
+  /* RGB 어긋남 — 그림자 두 짝을 좌우로 벌려 색이 어긋난 것처럼 보이게 한다 */
+  @keyframes glRGB{
+    0%,100%{text-shadow:none;transform:translateX(0)}
+    9%{text-shadow:-2px 0 var(--alert),2px 0 var(--phos);transform:translateX(1px)}
+    21%{text-shadow:2px 0 var(--alert),-2px 0 var(--phos);transform:translateX(-2px)}
+    36%{text-shadow:none;transform:translateX(0)}
+    52%{text-shadow:-3px 0 var(--alert),3px 0 var(--phos);transform:translateX(2px)}
+    68%{text-shadow:1px 0 var(--phos),-1px 0 var(--alert);transform:translateX(-1px)}
+    84%{text-shadow:none;transform:translateX(0)}
+  }
+  @keyframes glBlink{ 0%,100%{opacity:1} 9%{opacity:0} 21%{opacity:1} 47%{opacity:0} 60%{opacity:1} 82%{opacity:0} 90%{opacity:1} }
+  /* 덧대는 판은 늘 깔려 있고 평소엔 안 보인다 — 지직할 때만 켜진다 */
+  .art::before{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
+    opacity:0;background:var(--bone);mix-blend-mode:difference}
+  .poster.glitch{animation:glJolt .5s steps(1,end) 1}
+  .poster.glitch .art::before{animation:glTear .5s steps(1,end) 1}
+  .poster.glitch .plabel .pt,
+  .poster.glitch .plabel .tone{animation:glRGB .5s steps(1,end) 1}
+  .poster.glitch .meta .sel{animation:glBlink .5s steps(1,end) 1}
+
   /* 눈썹라벨 앞의 픽셀 한 칸 — 색 없이 「여기서 한 덩이가 시작된다」를 말한다 */
   .scr-head .eyebrow::before,.cta-host .k::before{
     content:"";display:inline-block;width:6px;height:6px;margin-right:7px;vertical-align:1px;
@@ -471,6 +545,71 @@
   .adrow .rd{color:var(--ink2)}
   .adrow .rd b{color:var(--ink)}
   .adpair{color:var(--ink2);border-top-color:var(--case-sh)}
+
+  /* ── CRT 플리커선 ─────────────────────────────────────────────
+     오래된 브라운관은 수직동기가 어긋나면 굵은 밝은 띠 하나가 화면을 아래에서
+     위로 천천히 훑고 지나간다. 얇은 주사선을 촘촘히 까는 것(.winbody::after)과는
+     다른 현상이다 — 굵고, 하나고, 가끔이다.
+
+     쓰는 법: 떠오르는 창에 class="crt-flick" 한 줄. 이 덩어리(.crt-flick 두 규칙 +
+     @keyframes crtFlick + reduce 블록)만 그대로 옮기면 다른 파일에서도 그대로 돈다.
+     붙일 자리는 «가리개» 가 아니라 그 안에 든 «창» 이다. 두 가지만 조심한다 —
+       ① .crt-flick 이 position:relative 를 건다. 제가 position:fixed 로 자리를
+          잡고 있는 판(가리개·토스트)에 붙이면 그 자리를 잃는다. 안쪽 창에 붙여라.
+       ② 창이 제 안에서 구르면(overflow:auto) 띠도 내용과 같이 굴러 내려간다.
+          띠 판의 기준칸이 스크롤 칸이라 그렇다. 굴린 만큼 어긋날 뿐 보이기는
+          보이므로 그대로 뒀다.
+
+     띠는 ::after 한 장이다. 그 판은 창 전체를 덮고, 띠 모양은 판 «맨 아래» 64px 에만
+     마스크로 뚫어 둔다(mask-position 0 100%). 그래서 판을 위로 밀면 띠가 창을
+     아래에서 위로 지나간다. translateY 로만 움직인다 — top 을 건드리면 매 프레임
+     배치를 다시 잡는다. 시작(+띠 높이)과 끝(-100%)은 둘 다 창 밖이라 쉬는 동안
+     아무것도 안 보인다.
+
+     밝히는 방식은 흰색을 덧칠하는 게 아니라 backdrop-filter:brightness 다.
+     덧칠은 «더하기»라 어두운 판 위 인광 글자의 대비를 깎아먹는다. brightness 는
+     «곱하기»라 글자와 바탕이 같은 비율로 밝아져 대비가 그대로 남는다 — 실제로
+     빔 세기가 흔들리는 브라운관이 하는 일도 이쪽이다. 어두운 화면 칸은 곱해도
+     거의 안 밝아지므로, 거기만 아주 옅은 흰색(.05)을 한 겹 같이 얹는다.
+     contrast(1.04) 는 그 흰색이 깎아먹은 만큼을 도로 세워 주는 몫이다.
+     (재 본 값 — 띠가 통째로 덮은 순간의 최저 대비: 「입장」 단추 5.15→4.72,
+      나머지는 전부 올라간다. 4.5 아래로 내려가는 자리는 없다.) */
+  .crt-flick{position:relative;overflow:hidden;--crt-band:64px}
+  .crt-flick::after{
+    content:"";position:absolute;inset:0;z-index:9;pointer-events:none;
+    background:rgba(255,255,255,.05);
+    backdrop-filter:brightness(1.18) contrast(1.04);
+    -webkit-backdrop-filter:brightness(1.18) contrast(1.04);
+    /* 계단진 띠. 가운데 한 칸은 딱 끊고 위아래 가장자리만 두 계단으로 풀어 준다 —
+       전부 딱 끊으면 CRT 가 아니라 그냥 흰 사각형이 된다. */
+    --crt-mask:linear-gradient(180deg,
+      rgba(0,0,0,0)     0%,
+      rgba(0,0,0,.26)   9%, rgba(0,0,0,.26) 17%,
+      rgba(0,0,0,.60)  17%, rgba(0,0,0,.60) 28%,
+      rgba(0,0,0,1)    28%, rgba(0,0,0,1)   72%,
+      rgba(0,0,0,.60)  72%, rgba(0,0,0,.60) 83%,
+      rgba(0,0,0,.26)  83%, rgba(0,0,0,.26) 91%,
+      rgba(0,0,0,0)   100%);
+    -webkit-mask-image:var(--crt-mask);mask-image:var(--crt-mask);
+    -webkit-mask-size:100% var(--crt-band);mask-size:100% var(--crt-band);
+    -webkit-mask-position:0 100%;mask-position:0 100%;
+    -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+    transform:translateY(var(--crt-band));
+    will-change:transform;
+    animation:crtFlick 9s linear infinite}
+  /* 9초에 한 번, 1.17초 동안 창을 아래에서 위로 가로지르고 나머지 7.8초는 창 위쪽
+     밖에 서서 쉰다. 계속 돌면 눈이 아프고 글을 못 읽는다 — 「이따금」이 이 연출의
+     전부다. 긴 주기 하나에 쉬는 구간을 물려 두는 게 제일 싸다. 타이머도 JS 도 없다. */
+  @keyframes crtFlick{
+    0%{transform:translateY(var(--crt-band))}
+    13%{transform:translateY(-100%)}
+    100%{transform:translateY(-100%)}
+  }
+  @media(prefers-reduced-motion:reduce){ .crt-flick::after{display:none} }
+
+  /* 관리자 카드는 내용이 길면 제 안에서 굴러야 한다. .crt-flick 의 overflow:hidden
+     이 그걸 막으므로 여기서만 되돌린다 — overflow:auto 도 띠를 카드 밖으로 안 내보낸다. */
+  .adcard.crt-flick{overflow:auto}
 
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
   @media(max-width:560px){ .toprail .mini span.full{display:none} .cta-host .arrow{display:none} }
@@ -571,7 +710,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="admask" id="admask" onclick="if(event.target===this)closeAdmin()"><div class="adcard" id="adcard"></div></div>
+<div class="admask" id="admask" onclick="if(event.target===this)closeAdmin()"><div class="adcard crt-flick" id="adcard"></div></div>
 
 <script>
 // 사건 목록은 서버가 채운다 — refreshSeats() 가 /api/scenarios 를 읽어
@@ -749,6 +888,23 @@ function pickScenario(id){
   // 하므로 뜻만 남겨두고, 다시 안 그렸으면 여기서 바로 민다.
   me.pick=id; sfxPick(); railWant=id; render();
   if(!railRedrew){ railWant=null; railCenter(id,true); }
+  glitchPoster(id);   // 다시 그린 «뒤에» 붙인다 — render() 가 줄을 통째로 갈아끼우면 클래스가 날아간다
+}
+/* 고른 포스터가 한 번 지직하고 만다. 애니메이션이 끝나면 클래스를 도로 뗀다 —
+   남겨두면 같은 포스터를 다시 눌러도 브라우저가 「이미 그 상태」로 보고 다시 안 친다. */
+function glitchPoster(id){
+  // 애니메이션을 줄여 달라고 한 기기에서는 지직 없이 선택 상태만 바로 보인다
+  if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  document.querySelectorAll(`#rail .poster[data-id="${id}"]`).forEach(el=>{
+    el.classList.remove("glitch");
+    void el.offsetWidth;                 // 한 번 끊어줘야 같은 클래스를 다시 붙일 때 처음부터 다시 친다
+    el.classList.add("glitch");
+    el.addEventListener("animationend",function off(ev){
+      if(ev.animationName!=="glJolt") return;   // 라벨·주사선 쪽 애니메이션이 먼저 올라온다
+      el.classList.remove("glitch");
+      el.removeEventListener("animationend",off);
+    });
+  });
 }
 async function launch(){
   const s=SCEN.find(x=>x.id===me.pick); if(!s) return;
@@ -886,7 +1042,7 @@ function renderBar(){
   const s=me.pick?SCEN.find(x=>x.id===me.pick):null;
   let h;
   if(me.mode==="host"){
-    if(!s) h=`<div class="lbl">열고 싶은 사건의 포스터를 누르세요.</div>`;
+    if(!s) h=`<div class="lbl">진행할 시나리오를 선택해주세요.</div>`;
     else h=`<div class="lbl">선택 <b>《${s.title}》</b></div><button class="go" onclick="launch()">이 사건 열기</button>`;
   } else {
     h=`<div class="lbl">호스트가 고른 사건으로 함께 시작해요</div><button class="go" onclick="joinGame()">입장하기</button>`;
@@ -907,7 +1063,7 @@ const ADMINDOC={
 let lockTap={id:"",at:0}, admAfter="";
 function toggleAdmin(){ admAfter=""; if(admin){ showAdminPanel(); } else { openPw(); } }
 function openPw(){
-  $("adcard").className="adcard";
+  $("adcard").className="adcard crt-flick";
   $("adcard").innerHTML=`<h3>관리자 · 열람 모드</h3><div class="adsub">TEST / ADMIN ACCESS</div>
     <div class="adform"><input id="adpw" type="password" placeholder="비밀번호" autocomplete="off" inputmode="text"><button onclick="submitAdmin()">입장</button></div>
     <div class="aderr" id="aderr"></div>
@@ -1018,7 +1174,7 @@ function admSetKey(to){
 function showCardBrowser(){
   const tabs=admOrder().map(id=>{ const sc=SCEN.find(s=>s.id===id); if(!sc) return "";
     return `<button class="adtab${id===admScen?" on":""}" onclick="admScen='${id}';showCardBrowser()">${ADM_ESC(sc.title)}</button>`; }).join("");
-  $("adcard").className="adcard wide";
+  $("adcard").className="adcard wide crt-flick";
   $("adcard").innerHTML=`<h3>조사카드 훑어보기</h3><div class="adsub">QA READOUT · 본문·힌트까지 전부</div>
     <div class="adtabs">${tabs}<button class="adtab" onclick="showRoleBrowser()">배역</button><button class="adtab" onclick="showAssetBrowser()">에셋 프롬프트</button><button class="adtab" onclick="showAdminPanel()">← 사건 정본</button></div>
     <div id="admcards"></div>
@@ -1093,7 +1249,7 @@ function admRole(r,d){
 function showRoleBrowser(){
   const tabs=admOrder().map(id=>{ const sc=SCEN.find(s=>s.id===id); if(!sc) return "";
     return `<button class="adtab${id===admScen?" on":""}" onclick="admScen='${id}';showRoleBrowser()">${ADM_ESC(sc.title)}</button>`; }).join("");
-  $("adcard").className="adcard wide";
+  $("adcard").className="adcard wide crt-flick";
   $("adcard").innerHTML=`<h3>배역 훑어보기</h3><div class="adsub">QA READOUT · 목표·비밀·심문 대사까지 전부</div>
     <div class="adtabs">${tabs}<button class="adtab" onclick="showCardBrowser()">조사카드</button><button class="adtab" onclick="showAssetBrowser()">에셋 프롬프트</button><button class="adtab" onclick="showAdminPanel()">← 사건 정본</button></div>
     <div id="admroles"></div>
@@ -1221,7 +1377,7 @@ function showAssetBrowser(){
   const ids=["common","template"];
   const nm={common:"공통 사양",template:"빈 판"};
   const tabs=ids.map(id=>`<button class="adtab${id===admAsset?" on":""}" onclick="admAssetsLoad('${id}');showAssetTabs()">${nm[id]}</button>`).join("");
-  $("adcard").className="adcard wide";
+  $("adcard").className="adcard wide crt-flick";
   $("adcard").innerHTML=`<h3>에셋 프롬프트</h3><div class="adsub">GRAPHIC-NOVEL · 앞머리 + 톤 + 본문</div>
     <div class="adphint">그림은 <b>실사가 아니라 잉크 그래픽노블</b>입니다. 프롬프트 하나는
       <b>앞머리 + 톤 블록 + 본문</b> 세 조각이라, <b>합쳐서 복사</b>가 그 셋을 이어 붙여 줍니다.
@@ -1258,7 +1414,7 @@ function showAdminPanel(){
       <div class="rk">진행 규칙</div><div class="rd">${d.rule||"—"}</div>
     </div>`;
   }).join("");
-  $("adcard").className="adcard";
+  $("adcard").className="adcard crt-flick";
   $("adcard").innerHTML=`<h3>열람 모드 · 사건 정본</h3><div class="adsub">QA READOUT · 모든 내용 열람</div>
     ${rows}
     <button class="adtab" style="margin-top:16px;width:100%;padding:11px" onclick="showCardBrowser()">조사카드 전부 훑어보기 →</button>
