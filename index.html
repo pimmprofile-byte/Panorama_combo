@@ -4943,12 +4943,16 @@ function allSeated(){
   if(!STATE||!SCEN||!SCEN.characters||!SCEN.characters.length) return false;
   return !SCEN.characters.some(c=>((STATE.roles||{})[c.id]||{}).mode==="open");
 }
-/* ── 다 차면 배역 칸을 접는다 ────────────────────────────────────────
-   고르는 중에는 초상이 커야 한다 — 여섯 명을 가르는 건 이름표가 아니라 얼굴이다.
-   그런데 다 고르고 나면 그 큰 칸이 「이대로 진행하기」를 화면 밖으로 밀어내서,
-   다 골라놓고 «다음이 없다»고 여기는 자리가 생겼다. 그래서 다 차는 순간 초상을
-   40px 로 줄이고 한 줄짜리 목록으로 접는다 — 누가 무엇을 맡았는지는 그대로 읽힌다.
-   다시 그리지 않고 클래스만 토글하므로 폴링(1.5초)마다 깜빡이지 않는다. */
+/* ── 배역 칸은 이제 안 접는다 ────────────────────────────────────────
+   한동안 자리가 다 차는 순간 초상을 40px 로 줄이고 한 줄짜리 목록으로 접었다.
+   그럴 이유가 있었다 — 큰 칸 셋이 「이대로 진행하기」를 화면 밖으로 밀어내서,
+   다 골라놓고 «다음이 없다»고 여기는 자리가 생겼기 때문이다.
+
+   그 이유가 없어졌다. 단추는 머리줄 오른쪽으로 올라가 늘 보인다(startNowHTML).
+   그런데 접는 규칙만 남아서, 특히 QA 검수처럼 세 자리가 «시작하자마자» 차는
+   판에서는 배역 카드를 한 번도 못 본 채 가로 막대 셋만 뜨고 있었다.
+   고르는 중이든 다 골랐든 사람은 얼굴로 읽는다. 접지 않는다.
+   .slim 규칙(CSS)은 남겨 둔다 — 좁은 화면에서 다시 쓸 일이 생기면 그때 건다. */
 /* 머리줄 오른쪽의 시작 단추. 배역 목록을 다시 그리든 안 그리든 늘 같이 손본다 —
    이 자리는 #lobbyList 밖(머리줄)이라 목록의 갱신 경로에 얹혀 가지 않는다. */
 function paintStartNow(){
@@ -4957,7 +4961,7 @@ function paintStartNow(){
 }
 function paintLobbyFold(host){
   const sw=host.querySelector(".role-swipe"); if(!sw) return;
-  sw.classList.toggle("slim", allSeated());
+  sw.classList.remove("slim");
 }
 function renderLobby(force){
   const shape=((STATE&&STATE.scenarioId)||"")+"|"+SCEN.characters.map(c=>c.id).join(",");
