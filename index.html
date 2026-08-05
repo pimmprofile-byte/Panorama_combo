@@ -386,7 +386,11 @@
     #s-lobby .role-grid{padding-top:0;padding-bottom:4px}
     #s-lobby .role-nav{margin-top:6px}
     #s-lobby .hint{font-size:11px}
-    #s-lobby .rc .por{max-height:calc(100dvh - 392px)}
+    /* ★ max-height 만 걸면 «폭» 이 줄어든다. aspect-ratio 가 비율을 지키려고
+       높이에 맞춰 너비를 깎기 때문이다 — 사진 칸만 좁아져 카드 왼쪽에 붙어 보였다.
+       폭을 100% 로 못박아 두면 비율이 깨지는 쪽으로 풀리고, 그때 object-fit:cover 가
+       위아래를 잘라낸다. 그게 우리가 바라는 것이다(잘려도 좋으니 칸을 꽉 채운다). */
+    #s-lobby .rc .por{width:100%;max-height:calc(100dvh - 392px)}
   }
   @media(min-width:620px){
     .role-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
