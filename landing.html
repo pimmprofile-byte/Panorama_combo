@@ -1501,16 +1501,53 @@ function showAdminPanel(){
     </div>`;
   }).join("");
   $("adcard").className="adcard crt-flick";
+  /* ★ QA 로 «들어가는 문» 을 맨 위에 둔다. 여기 온 사람이 하려는 일이 그것이고,
+       읽을거리(사건 정본)는 참고다. 열쇠 칸도 그 문 옆에 붙는다 — 예전에는 이 칸이
+       「조사카드 훑어보기」 안에만 있어서, 관리자 비밀번호만 넣고 곧장 QA 로 들어간
+       사람은 열쇠를 한 번도 안 넣은 채 넘어갔다. 그러면 AGENT_KEY 를 건 배포본에서
+       좌석을 못 쥐고, 게임 화면에 가서야 「열쇠가 안 통한다」를 만난다 —
+       「관리자모드로 들어가도 QA가 안 된다」가 나던 자리다. */
   $("adcard").innerHTML=`<h3>열람 모드 · 사건 정본</h3><div class="adsub">QA READOUT · 모든 내용 열람</div>
+    <div class="adsub" style="margin-top:14px">GM 키 (AGENT_KEY) — 배포본에서 QA 모드를 열려면 필요합니다. 로컬은 빈 값으로 열립니다.</div>
+    <div class="adform"><input id="admk" type="password" placeholder="GM 키 (AGENT_KEY)" autocomplete="off">
+      <button onclick="admCheckKey()">확인</button></div>
+    <div class="adsub" id="admkst" style="margin-top:6px"></div>
+    <div class="adtabs" style="margin-top:12px">${qaTabs()}</div>
+    <div class="adsub" style="margin-top:8px">QA 모드 — 한 기기가 세 좌석을 다 쥐고, 배역을 갈아끼우며 판을 처음부터 끝까지 돌려봅니다.
+      「내 정보」·「내 단서」까지 그 배역 것으로 갈립니다.</div>
+    <div style="margin-top:18px;border-top:1px solid var(--ink);padding-top:14px"></div>
     ${rows}
     <button class="adtab" style="margin-top:16px;width:100%;padding:11px" onclick="showCardBrowser()">조사카드 전부 훑어보기 →</button>
     <button class="adtab" style="margin-top:7px;width:100%;padding:11px" onclick="showRoleBrowser()">배역 전부 훑어보기 →</button>
     <button class="adtab" style="margin-top:7px;width:100%;padding:11px" onclick="showAssetBrowser()">에셋 프롬프트 훑어보기 →</button>
-    <div class="adtabs" style="margin-top:16px">${qaTabs()}</div>
-    <div class="adsub" style="margin-top:8px">QA 모드 — 한 기기가 세 좌석을 다 쥐고, 배역을 갈아끼우며 판을 처음부터 끝까지 돌려봅니다.
-      「내 정보」·「내 단서」까지 그 배역 것으로 갈립니다. 서버에 AGENT_KEY를 걸어뒀다면 위의 GM 키가 맞아야 열립니다.</div>
     <button class="adclose" onclick="closeAdmin()">닫기</button>`;
   $("admask").classList.add("on");
+  const i=$("admk");
+  if(i){ i.value=admKey; i.onkeydown=ev=>{ if(ev.key==="Enter") admCheckKey(); }; }
+  admKeyStatus();
+}
+/* 이 서버에서 지금 이 열쇠가 통하는가. /api/gm 은 AGENT_KEY 를 «안 건» 서버에서는
+   빈 값에도 200 을 준다 — 로컬 검수판에서 없는 열쇠를 찾게 만들지 않으려는 값이다.
+   true 통함 · false 안 통함 · null 서버에 못 닿음. */
+async function admKeyOk(k){
+  try{ return (await fetch("/api/gm?key="+encodeURIComponent(k||""))).status!==403; }
+  catch(e){ return null; }
+}
+async function admKeyStatus(){
+  const s=$("admkst"); if(!s) return null;
+  s.textContent="열쇠를 확인하는 중…"; s.style.color="";
+  const ok=await admKeyOk(admKey);
+  const t=$("admkst"); if(!t) return ok;              // 그 사이에 다른 화면으로 갔다
+  if(ok===null){ t.textContent="서버에 못 닿았습니다."; t.style.color="#a3372a"; }
+  /* 베이지 판 위라 화면용 인광 초록(--phos)은 안 읽힌다 — 짙은 초록으로 적는다 */
+  else if(ok){ t.textContent="이 서버에서 통합니다 — QA 모드로 들어갈 수 있습니다."; t.style.color="#1a6b47"; }
+  else { t.textContent="이 서버에서는 안 통합니다. 배포본의 AGENT_KEY 를 넣어주세요."; t.style.color="#a3372a"; }
+  return ok;
+}
+function admCheckKey(){
+  const i=$("admk"); if(!i) return;
+  admKey=i.value.trim(); try{ localStorage.setItem("pmb.gmkey",admKey); }catch(e){}
+  admKeyStatus();
 }
 /* QA 모드 입장 단추 — 사건 하나에 하나씩. 고른 사건으로 방을 열고 /play?qa=1 로 넘긴다. */
 function qaTabs(){
@@ -1519,6 +1556,16 @@ function qaTabs(){
   }).join("");
 }
 async function qaEnter(id){
+  /* ★ 열쇠를 «여기서» 확인하고 넘어간다. 예전에는 그냥 넘어가서, 열쇠가 안 통하면
+     게임 화면이 배역 선택에 선 채로 좌석을 못 쥐었다 — 사람 눈에는 그냥
+     「관리자모드인데 QA가 안 켜진다」였다. 못 들어갈 판이면 여기서 멈춘다. */
+  const ok=await admKeyOk(admKey);
+  if(ok===false){
+    note("GM 키가 이 서버에서 안 통합니다 — 위 칸에 AGENT_KEY 를 넣고 다시 눌러주세요.");
+    admKeyStatus();
+    const i=$("admk"); if(i) i.focus();
+    return;
+  }
   note("QA 모드로 판을 여는 중…");
   // 게임 화면이 쓸 열쇠는 이 값 하나다 — 관리자 화면과 같은 자리(pmb.gmkey)에 둔다.
   // 빈 값으로 덮어쓰지 않는다. 카드 훑어보기를 안 거치고 바로 들어오면 admKey가 비어 있는데,
