@@ -1904,6 +1904,10 @@ def puzzle_list(role_id: str, clientId: str = ""):
             continue
         if _zone_lock(c.get("loc", ""), cur):
             continue
+        # 선행이 아직 안 밝혀진 자리는 목록에 안 올린다 — 물음만 보이고 답은 안 받는
+        # 자리가 되면, 못 푸는 것을 계속 붙들고 있게 된다.
+        if [r for r in _card_needs(c) if r not in held]:
+            continue
         n = int(tries.get(c["id"], 0))
         row = {"id": c["id"], "spot": c.get("spot", ""), "locName": c.get("locName", ""),
                "prompt": p.get("prompt", ""), "tries": n,
