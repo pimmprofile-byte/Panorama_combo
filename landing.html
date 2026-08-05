@@ -231,6 +231,15 @@
   .scr-head{text-align:center;padding:0 0 4px}
   .scr-head h2{font-size:clamp(20px,5vw,28px);margin:0;color:var(--bone);font-weight:400;letter-spacing:.02em}
   .scr-head p{color:var(--faint);font-size:12px;letter-spacing:.06em;margin:9px auto 0;max-width:30ch}
+  /* 낮은 화면(노트북 가로)에서는 머리말이 포스터 자리를 먹는다. 눈썹라벨을 접고
+     제목을 한 치수 내려서 상자 그림을 위로 끌어올린다 — 여기서 주인공은 포스터다.
+     창 안쪽 여백도 같이 줄인다. */
+  @media (max-height:900px){
+    #scr-scenarios .scr-head .eyebrow{display:none}
+    #scr-scenarios .scr-head h2{font-size:clamp(18px,3.4vw,23px)}
+    #scr-scenarios .winpad,.winpad:has(#scr-scenarios.on){padding-top:16px;padding-bottom:16px}
+    #scr-scenarios .toprail{margin-bottom:6px}
+  }
 
   /* 사건 카드 — 90년대 소프트웨어 상자다. 베이지 라벨 위에 그림 창이 한 칸 파여 있다.
      둘뿐인 목록에 무한 캐러셀을 돌리면 같은 그림이 계속 되돌아와 어지럽다. 나란히 편다. */
@@ -244,17 +253,14 @@
      그림칸이 2:3 이라 높이는 폭의 1.5 배쯤이고, 라벨·메타·여백이 그 아래 240px 을
      더 먹는다. 그래서 「쓸 수 있는 높이에서 240 을 빼고 1.5 로 나눈 폭」이 상한이다.
      좁은 화면에서는 이 값이 커서 안 걸리고, 낮고 넓은 화면에서만 걸린다. */
-  .rail{display:grid;gap:var(--gap);padding:18px 0 20px;align-items:stretch;
-    justify-content:center;
+  /* 두 장이 레일을 «가득» 채운다. 폭을 묶어두면 창은 952 인데 카드 둘이 738 만 쓰고
+     140 을 비워서, 창이 헐렁해 보이고 포스터도 작아 보인다. 상자 그림이 이 화면의
+     주인공이니 자리를 다 준다 — 세로로 길어지는 것은 스크롤로 받는다.
+     폰(한 줄에 한 장)에서만 최소폭 300 이 걸려서 두 줄로 안 쪼개진다. */
+  .rail{display:grid;gap:var(--gap);padding:14px 0 18px;align-items:stretch;
     --gap:clamp(9px,2.2vw,18px);
-    --pw:min(360px, max(240px, (100dvh - 240px) / 1.5));
-    /* 칸을 포스터 폭에 딱 맞춰 묶고 레일을 가운데 세운다. 안 그러면 칸이 남은
-       폭을 다 먹고 포스터만 그 안에서 가운데로 서서, «두 장 사이»가 바깥 여백보다
-       넓어진다 — 카드가 서로 떨어져 있는 것처럼 보이고 오른쪽이 비어 보인다. */
-    max-width:calc(var(--pw) * 2 + var(--gap));margin-inline:auto;
     grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
   .poster{scroll-snap-align:none;width:100%;height:100%;text-align:left;padding:0;color:inherit;
-    max-width:var(--pw);justify-self:center;
     display:flex;flex-direction:column;
     background:var(--case);border:1px solid var(--ink);
     box-shadow:inset 1px 1px 0 var(--case-hi),inset -1px -1px 0 var(--case-lo),3px 3px 0 var(--ink)}
