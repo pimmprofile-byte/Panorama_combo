@@ -962,6 +962,22 @@
   .sw-dot.on{background:var(--case-ink);box-shadow:1px 1px 0 rgba(0,0,0,.6)}
   /* 큰 카드(롤/손패) */
   .bigcard{border-radius:2px;padding:18px 18px 20px;background:linear-gradient(165deg,#1d1c1b,#141312);border:1px solid var(--line);min-height:220px}
+  /* ★ 강조 — 롤카드에서 「이건 특히 중요하다」를 뜻하고, ★ 수가 곧 세기다.
+     색은 그 배역의 키컬러(--rc)다. 롤카드는 그 사람의 물건이라 강조도 그 사람 색이어야
+     「내 것」으로 먼저 읽힌다. 세기는 색을 더 진하게 하는 게 아니라 판을 한 단계씩 세운다:
+       ★   글자만        ★★  옅은 판       ★★★ 통째로 반전
+     1비트 GUI 에서 최고 강조는 «반전» 이다 — 더 밝은 색이 아니라 흑백이 뒤집히는 것.
+     ★ 글리프는 Neo둥근모에 없어서 다른 글꼴로 떨어져 나왔다. 픽셀 네모로 직접 그린다. */
+  .sx{--k:var(--rc,var(--me,var(--gold-b)))}
+  .sx .sxm{display:inline-flex;gap:2px;align-items:center;vertical-align:1px;margin-right:7px}
+  .sx .sxp{width:6px;height:6px;background:var(--k);display:block}
+  .sx.s1{color:var(--k)}
+  .sx.s2{color:var(--k);background:color-mix(in srgb,var(--k) 15%,transparent);
+    box-shadow:0 0 0 3px color-mix(in srgb,var(--k) 15%,transparent)}
+  .sx.s3{background:var(--k);color:#0b0b09;box-shadow:0 0 0 3px var(--k);font-weight:700}
+  .sx.s3 .sxp{background:#0b0b09}
+  @media(forced-colors:active){ .sx.s3{background:Highlight;color:HighlightText} }
+
   .bigcard.role{border-color:color-mix(in srgb,var(--rc,#2f6b57) 45%,var(--line));background:linear-gradient(165deg,#201f1e,#151413)}
   .bigcard.role::before{content:"";display:block;height:3px;width:46px;border-radius:0;background:var(--rc,var(--cold));margin-bottom:14px}
   .bigcard.clue{border-color:var(--case-line);background:linear-gradient(165deg,#232019,#151413)}
@@ -2233,6 +2249,19 @@ const ICO={
 };
 
 const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+/* 롤카드의 ★ 줄 — 원고가 「★」 「★★」 「★★★」 로 세기를 적어 둔다.
+   그 자리를 그 배역의 키컬러로 세운다. ★ 자체는 픽셀 네모로 다시 그린다:
+   Neo둥근모에 ★ 글리프가 없어서 그대로 두면 그 글자만 다른 글꼴로 튀어나온다.
+   ★가 없는 줄은 예전과 똑같이 그냥 esc() 로 나간다 — 안 건드린다. */
+function starTx(t){
+  const raw=String(t==null?"":t);
+  const m=/^\s*(★+)\s*/.exec(raw);
+  if(!m) return esc(raw);
+  const n=Math.min(3,m[1].length);
+  const pips=Array.from({length:n},()=>'<i class="sxp"></i>').join("");
+  return `<span class="sx s${n}"><span class="sxm" aria-label="중요도 ${n}단계">${pips}</span>`
+       + esc(raw.slice(m[0].length)) + `</span>`;
+}
 // 배역이 아닌 사람도 대화창에 앉는다 — 마부도 왕진의도 말은 한다.
 const roleById=id=>(SCEN.characters||[]).find(c=>c.id===id)
                  ||(SCEN.npcs||[]).find(c=>c.id===id)
@@ -5928,7 +5957,7 @@ async function showMySheet(){
   if((s.hide||[]).length){
     slides.push({tab:"main", html:`<div class="bigcard role k-hide" style="--rc:${s.color}">
       <div class="bc-eyebrow">${esc(SL.when||"오늘 밤")}</div><div class="bc-title" style="font-size:18px">들키면 위험한 사실</div>
-      <div class="hidelist">${s.hide.map(t=>`<div class="hideitem">${esc(t)}</div>`).join("")}</div></div>`});
+      <div class="hidelist">${s.hide.map(t=>`<div class="hideitem">${starTx(t)}</div>`).join("")}</div></div>`});
   }
   // 4) 떠오른 기억
   const frags=(s.fragments||[]);
@@ -6037,7 +6066,7 @@ async function showMySheet(){
   });
   // 7) 나의 목표
   slides.push({tab:"main", html:`<div class="bigcard role" style="--rc:${s.color}"><div class="bc-eyebrow">나의 목표</div><div class="bc-title" style="font-size:18px">${esc(SL.goals||"이번 밤, 내가 노리는 것")}</div>
-    <div style="margin-top:12px">${(s.goals||[]).map(g=>`<div class="bc-goal"><span>${esc(g.t)}</span><span class="pt">+${g.p}</span></div>`).join("")}
+    <div style="margin-top:12px">${(s.goals||[]).map(g=>`<div class="bc-goal"><span>${starTx(g.t)}</span><span class="pt">+${g.p}</span></div>`).join("")}
     ${s.keepGoal?`<div class="bc-goal keep"><span>${esc(s.keepGoal.label)}</span><span class="pt">+${s.keepGoal.points}</span></div>
       <div class="keepnote">어느 카드인지는 <b>찾아내야 한다</b>. 조사해서 열어보면 그 자리에서 나에게만 표시된다.
         끝까지 <b>내 손패에 있어야</b> 점수가 인정되고, 전체공개되거나 남이 눈치채면 무효다.</div>`:""}</div></div>`});
@@ -6056,7 +6085,7 @@ async function showMySheet(){
   // 2-c) 내가 아는 옛일 — 연표
   if((s.past||[]).length){
     const rows=s.past.map((r,i,a)=>`<div class="tl-r${i===a.length-1?" last":""}">
-      <div class="tl-w">${esc(r.w)}</div><div class="tl-t">${esc(r.t)}</div></div>`).join("");
+      <div class="tl-w">${esc(r.w)}</div><div class="tl-t">${starTx(r.t)}</div></div>`).join("");
     slides.push({tab:"sum", html:`<div class="bigcard role" style="--rc:${s.color}">
       <div class="bc-eyebrow">한눈에</div>
       <div class="bc-title" style="font-size:18px">${esc(SL.pastTl||"여기까지의 나")}</div>
@@ -6066,7 +6095,7 @@ async function showMySheet(){
   if((s.tips||[]).length){
     slides.push({tab:"sum", html:`<div class="bigcard role k-tips" style="--rc:${s.color}">
       <div class="bc-eyebrow">한눈에</div><div class="bc-title" style="font-size:18px">이 배역, 이렇게 굴린다</div>
-      <div class="tiplist">${s.tips.map(t=>`<div class="tipitem">${esc(t)}</div>`).join("")}</div></div>`});
+      <div class="tiplist">${s.tips.map(t=>`<div class="tipitem">${starTx(t)}</div>`).join("")}</div></div>`});
   }
   // 4-d) 금고에서 나온 서류. 조사로 여는 카드가 아니라 «다 함께 읽는» 종이다.
   //       한 장에 둘을 밀어넣으면 글이 뭉개져서, 서류마다 한 장씩 세운다.
