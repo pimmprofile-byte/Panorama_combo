@@ -420,8 +420,11 @@
   .role-swipe.slim .role-nav{display:none}
 
   /* 카드는 컨테이너, 실제 동작은 카드 안 '선택' 버튼이 맡는다 */
+  /* 테는 평소에 «안 보인다». 자리는 잡아둬야 고를 때 칸이 안 튀므로 투명으로 둔다.
+     색이 켜지는 건 내가 고른 카드 하나뿐이고, 그때 그 사람 색이 켜진다 —
+     이 화면에서 색이 하는 말은 「이게 내 배역이다」 하나여야 한다. */
   .rc{position:relative;display:block;padding:0 0 10px;overflow:hidden;text-align:left;
-    background:var(--panel);border:1px solid var(--line);border-radius:2px;transition:border-color .16s,box-shadow .16s}
+    background:var(--panel);border:1px solid transparent;border-radius:2px;transition:border-color .16s,box-shadow .16s}
   .rc.off{opacity:.55}
   /* 카드 «전체» 가 단추다. 눌리는 느낌은 8비트식으로 — 한 칸 밀린 그림자가 사라지면서
      판이 실제로 내려앉는다(로비의 .poster:active 와 같은 방식). scale 로 살짝 줄이던
@@ -3248,6 +3251,7 @@ async function qaKeyOk(){
   catch(e){ return null; }
 }
 async function boot(){
+  loadAssetV();          // 그림 주소에 붙일 판 표시. 늦게 와도 다음 다시 그리기에 붙는다
   try{ await loadScenario(); }
   catch(e){ banner("서버 연결 실패"); return; }
   await qaVerify();
@@ -3586,7 +3590,10 @@ function applyState(){
   // 예전엔 플레이 화면의 오프닝 패널이 그릴 때만 열렸는데, 거기로 넘어가는 조건에
   // myRoleValid()가 붙어 있어서 '배역 없는 GM'은 로비에 남고 영영 못 봤다 —
   // 정작 이 연출을 틀어야 할 사람이 GM인데.
-  if(STATE.started&&(STATE.phase||{}).key==="open"&&isBoard()) openVN(false);
+  // ★ isBoard() 도 뗐다. 그건 「공용 화면 하나에 틀어준다」는 전제였는데, 이 판은
+  //   각자 자기 폰으로 들어오는 3인 온라인이다. 호스트만 오프닝을 보고 나머지 둘은
+  //   사건의 발단을 못 본 채 조사에 들어가고 있었다 — 출발선이 어긋난다.
+  if(STATE.started&&(STATE.phase||{}).key==="open") openVN(false);
   maybePlayCut();
   extraWatch();
   // 확정되면 각자 제 자리로 — 배역이 있으면 플레이 화면, 배역 없이 진행석만 켠 기기는 진행석으로.
@@ -4545,6 +4552,16 @@ function cropVars(c){
 }
 /* 초상을 얼굴 쪽으로 잘라 동그랗게 쓴다.
    사진을 못 찾으면 .noimg가 붙고 data-emo(이름 첫 글자)가 CSS로 드러난다. 규약은 portraitHTML과 같다. */
+/* ── 에셋 판 표시 ────────────────────────────────────────────────
+   그림을 갈아 끼워도 파일 이름이 같으면 브라우저는 옛것을 계속 보여준다.
+   데이지 초상을 새로 넣고도 폰에서는 옛 그림이 그대로 뜨던 자리다.
+   배포마다 바뀌는 값(빌드 sha)을 뒤에 달아 그때만 새로 받게 한다 —
+   값이 안 바뀌면 캐시는 그대로 산다. */
+let ASSET_V="";
+async function loadAssetV(){
+  try{ const b=await (await fetch("/api/build")).json(); ASSET_V=(b&&b.sha)||""; }catch(e){}
+}
+const assetURL=u=>ASSET_V?`${u}?v=${encodeURIComponent(ASSET_V)}`:u;
 function avaHTML(c,cls){
   if(!c) return `<span class="ava noimg ${cls||""}" data-emo="?"></span>`;
   const sid=(STATE&&STATE.scenarioId)||"";
@@ -4552,16 +4569,16 @@ function avaHTML(c,cls){
   if(!sid) return `<span class="ava noimg ${cls||""}" data-emo="${emo}">${emo}</span>`;
   const flip=(FLIP_PORTRAIT[sid]||[]).includes(c.id)?" flip":"";
   return `<span class="ava ${cls||""}" data-emo="${emo}" style="--ac:${c.color||"var(--line)"};${cropVars(c)}">`
-    +`<img class="pt${flip}" src="/assets/${sid}_portrait_${c.id}.webp" alt="" decoding="async"`
+    +`<img class="pt${flip}" src="${assetURL(`/assets/${sid}_portrait_${c.id}.webp`)}" alt="" decoding="async"`
     +` onerror="if(this.dataset.f){this.closest('.ava').classList.add('noimg');this.remove()}`
-    +`else{this.dataset.f=1;this.src='/assets/${sid}_portrait_${c.id}.png'}"></span>`;
+    +`else{this.dataset.f=1;this.src='${assetURL(`/assets/${sid}_portrait_${c.id}.png`)}'}"></span>`;
 }
 function portraitHTML(c){
   // 규약: /assets/{시나리오}_portrait_{배역}.{webp|png}
   // webp가 없으면 png로, 그것도 없으면 스스로 지워져 이모지가 드러난다.
   const sid=(STATE&&STATE.scenarioId)||"";
-  const src=sid?`/assets/${sid}_portrait_${c.id}.webp`:"";
-  const png=sid?`/assets/${sid}_portrait_${c.id}.png`:"";
+  const src=sid?assetURL(`/assets/${sid}_portrait_${c.id}.webp`):"";
+  const png=sid?assetURL(`/assets/${sid}_portrait_${c.id}.png`):"";
   // 대체 글자를 뒤에 깔지 않는다 — 다시 그릴 때마다 사진이 로드되는 사이에 비쳐서 깜빡여 보였다.
   // 사진을 끝내 못 찾은 경우에만 .por의 data-emo가 CSS로 드러난다.
   if(!src) return "";
@@ -6372,9 +6389,9 @@ function victimCardHTML(){
   if(!v) return `<div class="panel-note">${esc(vicText())}</div>`;
   const sid=(STATE&&STATE.scenarioId)||"";
   const meta=[v.age&&v.age+"세",v.job].filter(Boolean).join(" · ");
-  const img=sid?`<img class="pt" src="/assets/${sid}_portrait_victim.webp" alt="" decoding="async"`
+  const img=sid?`<img class="pt" src="${assetURL(`/assets/${sid}_portrait_victim.webp`)}" alt="" decoding="async"`
     +` onerror="if(this.dataset.f){this.closest('.por').classList.add('noimg');this.remove()}`
-    +`else{this.dataset.f=1;this.src='/assets/${sid}_portrait_victim.png'}">`:"";
+    +`else{this.dataset.f=1;this.src='${assetURL(`/assets/${sid}_portrait_victim.png`)}'}">`:"";
   return `<div class="viccard">
     <div class="rc vic-rc" style="--rc:${v.color||"var(--ember-b)"};${cropVars({id:"victim"})}">
       <div class="por" data-emo="${esc((v.name||"?").slice(0,1))}">${img}
