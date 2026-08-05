@@ -371,6 +371,23 @@
   .rn-d.on{background:var(--rd,var(--case-b));border-color:var(--rd,var(--case-b));
     box-shadow:0 0 0 2px rgba(0,0,0,.45)}
   .rn-d.held{border-color:var(--rd,var(--case-line))}
+  /* 낮은 화면 — 위쪽을 줄여 배역 카드를 통째로 끌어올린다.
+     아이폰 15 사파리는 실사용 세로가 660 남짓이라, 예전 여백으로는 점 표시와
+     상태줄이 접힌 아래로 내려가 «살짝 내려야» 보였다. 고르는 화면에서 그건
+     불편이 아니라 실수를 부른다 — 안 보이는 자리는 없는 자리로 읽힌다.
+     사진 칸은 남은 높이에 맞춰 줄인다(원본은 이미 확대·크롭이라 더 잘려도
+     인물이 살고, 생성기 워터마크는 여전히 밖에 있다). */
+  @media(max-height:800px) and (max-width:619px){
+    #s-lobby .wrap{padding:10px 12px 12px}
+    #s-lobby .winpad{padding:12px}
+    #s-lobby .head{margin-bottom:2px;gap:8px}
+    #s-lobby .head .t{font-size:18px}
+    #s-lobby .lead{font-size:12px;line-height:1.55;margin:0 0 9px}
+    #s-lobby .role-grid{padding-top:0;padding-bottom:4px}
+    #s-lobby .role-nav{margin-top:6px}
+    #s-lobby .hint{font-size:11px}
+    #s-lobby .rc .por{max-height:calc(100dvh - 392px)}
+  }
   @media(min-width:620px){
     .role-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
       overflow:visible;scroll-snap-type:none;padding:0}
