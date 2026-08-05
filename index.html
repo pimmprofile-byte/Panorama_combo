@@ -87,6 +87,22 @@
          글자를 얹을 때는 이 둘 중 하나만 쓴다. 화면용 밝은 글자(--ink/--sub/--muted)를
          베이지에 얹으면 그 자리가 통째로 안 읽힌다 — 이 개편에서 제일 흔한 사고다. */
     --case-lo:#a89e86;--case-fg2:#4b4a3c;
+    /* ── 화면 안쪽의 «짙은 차콜» ────────────────────────────────────
+       케이스는 베이지고 화면은 어둡다 — 여기까지는 그대로다. 그런데 그 «어둡다» 를
+       --bg(#0a0a09, 거의 검정)로 잡아 두었더니, 베이지 창틀 옆에서 화면만 구멍처럼
+       뚫려 보였다. 창틀과 화면의 명도차가 너무 벌어지면 둘이 한 물건으로 안 읽힌다.
+       그래서 탭 안쪽은 한 단 올린 «짙은 차콜» 로 간다. 베이지와 같은 온도(R>G>B)라
+       나란히 놓아도 색이 안 튄다.
+         --scr    탭 바탕. 여기가 기본 판이다
+         --scr2   그 위에 한 단 뜬 판(카드·칩·머리띠)
+         --scr3   손이 닿은 판 · 눌린 판
+         --scr-d  말풍선. 바탕보다 «더 짙다» — 말이 판에 파여 들어간 것처럼 보인다
+         --scr-line  차콜 위의 테. --line 은 거의 검정 위에서 잡은 값이라 여기선 묻는다
+       ★ 대비 — --ink 13.1:1, --sub 6.5:1, --muted 4.6:1 (모두 --scr 위). 그대로 쓴다. */
+    --scr:#24231f;--scr2:#2d2b26;--scr3:#39362f;--scr-d:#171613;--scr-line:#413d36;
+    /* 화면 안에 까는 옅은 모눈. 바탕색이 밝아진 만큼 눈금도 같이 올린다 —
+       .028 은 거의 검정 위에서 잡은 값이라 차콜 위에서는 안 보인다. */
+    --scr-grid:repeating-linear-gradient(0deg,rgba(240,236,226,.045) 0 1px,transparent 1px 8px);
     /* 8비트에 부드러운 blur 그림자는 없다. 한 칸 밀린 «오프셋 그림자» 가 그 자리를 맡는다. */
     --shadow:4px 4px 0 rgba(0,0,0,.55);
     --shadow-sm:2px 2px 0 rgba(0,0,0,.5);
@@ -337,6 +353,14 @@
   .wrap{max-width:760px;margin:0 auto;padding:24px 18px 44px}
   .head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
   .head .t{font-size:22px;font-weight:700;letter-spacing:.04em}
+  /* 「이대로 진행하기」는 머리줄 오른쪽 끝이다.
+     ★ 빈 칸(.sp)으로 밀지 않는다 — 머리줄이 접히는 폭에서는 그 빈 칸이 먼저 줄바꿈돼
+       단추가 다음 줄 «왼쪽» 으로 떨어졌다. margin-left:auto 는 접힌 줄에서도
+       그 줄의 오른쪽 끝을 잡는다. */
+  .head .sp{display:none}
+  .head .startnowslot{margin-left:auto;flex:0 0 auto}
+  .head .startnowslot:empty{display:none}
+  .head .btn.startnow{flex:0 0 auto;font-size:13px;padding:7px 13px}
   .lead{color:var(--sub);font-size:13.5px;line-height:1.8;margin:2px 0 18px;word-break:keep-all}
   /* ── 배역 선택: 폰은 좌우 스와이프, 넓은 화면은 3열 ──────────────
      세로 목록은 여럿을 한눈에 못 비교하고 아바타도 작다. 카드를 포스터로 세워
@@ -2995,6 +3019,155 @@
   .fq-foot .ff-n,
   .filt{font-family:var(--ui)}
 
+  /* ══════════════════════════════════════════════════════════════
+     §10 — 화면 안쪽을 «짙은 차콜» 로 · 탭도 창으로 (2026-08-05)
+     ══════════════════════════════════════════════════════════════
+     §9 에서 바깥을 베이지 케이스로 세우고 안쪽은 그대로 두었다. 그랬더니
+     케이스는 매킨토시인데 그 안이 «검정 바탕의 다른 앱» 처럼 읽혔다 —
+     하단바에서 여는 탭 다섯(내 정보·내 단서·대화·인물정보·조사 화면)이 특히 그랬다.
+     탭에는 창틀도 제목줄도 없었으니 케이스와 이어질 고리가 아예 없었던 것이다.
+
+     이 덩이가 하는 일은 셋이다.
+       ① 어두운 판의 «값을 갈아끼운다». 규칙을 하나하나 다시 쓰지 않고,
+          화면 안쪽(.winbody · .modal .box)에서 --bg/--panel/--line 을 차콜로
+          재정의한다. 커스텀 속성은 그 아래로 상속되므로 이 네 줄이 수백 개
+          규칙을 한 번에 끌고 내려온다. 하드코딩된 색만 아래에서 따로 짚는다.
+       ② 탭에 창틀과 제목줄을 씌운다. 이제 탭도 창이다 — 제목줄의 닫기 상자는
+          조사화면으로 돌아가는 그 길이고, 새 길이 아니다.
+       ③ 진행바·탭꼭지·말풍선을 시스템7 결로 맞춘다. 도스창이 아니다 —
+          네모난 잉크 테와 한 칸 오프셋, 눌리면 파이는 베벨. 그게 이 판의 문법이다.
+
+     ★ 되돌리려면 --scr* 다섯 값과 이 덩이만 지우면 된다. 다른 자리는 안 건드렸다. */
+
+  /* ── ① 화면 안쪽의 판 갈이 ────────────────────────────────────
+     :root 의 어두운 이름들을 «화면 안쪽에서만» 차콜로 다시 정의한다.
+     body 바탕(케이스 바깥, 책상)은 그대로 검정이다 — 케이스가 그 위에 놓인 물건으로
+     읽히려면 뒤가 더 어두워야 한다. */
+  .winbody,.modal .box,.hmenu .sheet{
+    --bg:var(--scr);--bg2:var(--scr2);--panel:var(--scr2);--panel2:var(--scr3);
+    --line:var(--scr-line);
+    background-color:var(--scr);
+    /* 옅은 모눈. 판이 밝아진 만큼 눈금도 같이 올렸다(§10 토큰 참고). */
+    background-image:var(--scr-grid)}
+  /* 판이 밝아지면 «파인 자리» 는 더 파여야 갈린다 */
+  .winbody{box-shadow:inset 2px 2px 0 rgba(0,0,0,.42)}
+
+  /* ── ② 탭도 창이다 ───────────────────────────────────────────
+     예전에는 여기서 창틀을 «벗겼다». 세로 24px 을 아끼려는 거래였는데,
+     그 대가로 탭이 케이스 밖의 다른 앱처럼 보였다. 값이 안 맞는 거래였다. */
+  .modal.overdock{background:var(--case-b)}
+  .modal.overdock .win{max-width:none;width:100%;height:100%;max-height:none;
+    display:flex;flex-direction:column;min-height:0;
+    background:var(--case-b);border:0;border-radius:0;box-shadow:none;
+    /* 안전영역은 창이 문다 — 예전에는 머리띠가 물었는데 이제 그 위에 제목줄이 있다 */
+    padding-top:env(safe-area-inset-top)}
+  .modal.overdock .titlebar{display:flex}
+  .modal.overdock .box{max-width:none;width:100%;height:auto;max-height:none;
+    flex:1 1 auto;min-height:0;margin:5px;border:1px solid var(--case-e);border-radius:0;
+    background-color:var(--scr);background-image:var(--scr-grid);
+    box-shadow:inset 2px 2px 0 rgba(0,0,0,.42);animation:none}
+  /* 제목줄이 「무슨 창인가」를 말하므로 탭에서도 눈썹라벨은 감춘다 — 모달과 같은 규칙 */
+  .modal.overdock .mhead{padding-top:12px}
+  .modal.overdock .mhead .mh-eb{display:none}
+  /* 떠오르는 창은 탭 «위» 다. 둘 다 z-index 60 이면 문서에서 뒤에 선 탭이 이겨서,
+     탭에서 연 카드창이 탭 뒤로 숨는 길이 열린다. 층을 한 칸 갈라 둔다. */
+  .modal:not(.overdock){z-index:70}
+  /* 창 머리띠 — 차콜 위라 예전의 «패널 그라데이션» 이 안 보인다. 한 단 뜬 판으로 세우되,
+     그 창의 성격(--mt)은 옅게 남긴다. 위 2px 띠(.mhead::before)가 지던 몫을 나눠 진다. */
+  .mhead{background:linear-gradient(180deg,color-mix(in srgb,var(--mt,var(--cold)) 10%,var(--scr3)),var(--scr2));
+    border-bottom:1px solid var(--case-e)}
+
+  /* ── ③ 대화창 ────────────────────────────────────────────────
+     바탕은 짙은 차콜, 말풍선은 «더 짙은» 차콜이다. 말이 판 위에 얹힌 게 아니라
+     판에 파여 들어간 것으로 읽힌다 — 오래된 단말기의 로그창이 그랬다.
+     누가 말했는지는 테두리가 진다(--tc, chatRow 가 걸어 준다). */
+  .chat{background-color:var(--scr);background-image:var(--scr-grid);
+    border-top:1px solid var(--case-e)}
+  .msg .bub{background:var(--scr-d);border:1px solid var(--scr-line);
+    box-shadow:inset 1px 1px 0 rgba(0,0,0,.5)}
+  .msg .bub{border-left:2px solid var(--tc,var(--scr-line))}
+  .msg.own .bub{background:var(--scr-d);color:var(--ink);
+    border:1px solid var(--scr-line);border-right:2px solid var(--tc,var(--case-line));
+    box-shadow:inset 1px 1px 0 rgba(0,0,0,.5)}
+  .msg .av{background:var(--scr2);border:1px solid var(--case-e);
+    box-shadow:1px 1px 0 rgba(0,0,0,.45)}
+  .msg.typing .bub.tybub{background:var(--scr-d);border-color:var(--tc,var(--scr-line))}
+  .sys{border-color:var(--scr-line);background:rgba(0,0,0,.22)}
+  .sys.bc{background:var(--scr-d);border-color:var(--case-line)}
+  .composer{background:var(--scr2);border-top:1px solid var(--case-e)}
+
+  /* ── ④ 진행바 · 차례 칩 ──────────────────────────────────────
+     여기가 제일 «웹» 처럼 남아 있던 자리다. 둥근 테와 옅은 선 대신,
+     잉크 테 + 파인 베벨로 판에 박아 넣는다. */
+  .turnbar,.advbar,.rdybar{border:1px solid var(--case-e);border-radius:0;
+    background:linear-gradient(180deg,var(--scr2),var(--scr));
+    box-shadow:inset 1px 1px 0 rgba(255,255,255,.045),2px 2px 0 rgba(0,0,0,.45)}
+  .turnbar.done{border-color:var(--case-e);box-shadow:inset 1px 1px 0 rgba(63,223,196,.18),2px 2px 0 rgba(0,0,0,.45)}
+  .tb-chip{border:1px solid var(--case-e);border-radius:0;background:var(--scr2);
+    box-shadow:inset 1px 1px 0 rgba(255,255,255,.05),1px 1px 0 rgba(0,0,0,.45)}
+  .tb-chip.on{background:linear-gradient(180deg,rgba(0,230,147,.16),var(--scr2));
+    border-color:var(--gold);box-shadow:inset 1px 1px 0 rgba(255,255,255,.08),1px 1px 0 rgba(0,0,0,.5)}
+  .tb-chip.next{border-color:var(--case-line)}
+  /* 사람 표시 — 8비트 계기등이다. 안 켜진 칸은 파여 있고, 켜지면 판이 «올라온다». */
+  .ap-p{width:12px;height:12px;border:1px solid var(--case-e);background:var(--scr-d);
+    box-shadow:inset 1px 1px 0 rgba(0,0,0,.6)}
+  .ap-p.on{background:var(--rc);border-color:var(--case-e);
+    box-shadow:inset 1px 1px 0 rgba(255,255,255,.42),inset -1px -1px 0 rgba(0,0,0,.35)}
+
+  /* 판 위의 카드들 — 차콜 바닥에서 «올라온 종이» 로 세운다. 부드러운 그림자는 안 쓴다.
+     ★ border-color 는 안 건드린다. .dc 는 왼쪽 3px 을 상태 색(--wc)으로 쓰고 있어서
+       shorthand 로 덮으면 여섯 상태가 통째로 같은 색이 된다. */
+  .dc,.zcard,.bigcard,.card{box-shadow:inset 1px 1px 0 rgba(255,255,255,.045),2px 2px 0 rgba(0,0,0,.4)}
+  .pill{border-radius:0;border-color:var(--case-e);background:var(--scr-d);
+    box-shadow:inset 1px 1px 0 rgba(255,255,255,.04)}
+
+  /* ── ⑤ 탭꼭지 ────────────────────────────────────────────────
+     지금 보고 있는 꼭지는 «앞으로 나온 종이» 다 — 베이지로 갈리고 나머지는 뒤에 남는다.
+     그 사람의 색은 꼭지 아래 2px 띠가 진다(베이지 위에 키컬러 글자를 얹으면 안 읽힌다). */
+  .htabs,.shtabs{gap:0}
+  .htab,.shtab{border:1px solid var(--case-e);border-radius:0;background:var(--scr2);
+    color:var(--sub);margin-right:-1px;position:relative;
+    box-shadow:inset 1px 1px 0 rgba(255,255,255,.045),inset -1px -1px 0 rgba(0,0,0,.4)}
+  .htab:hover,.shtab:hover{background:var(--scr3);color:var(--ink)}
+  .htab.on,.shtab.on{z-index:1;background:var(--case-b);color:var(--case-fg);
+    border-color:var(--case-e);text-shadow:none;
+    box-shadow:inset 1px 1px 0 var(--case-h),inset -1px -1px 0 var(--case-lo)}
+  .htab.on b,.shtab.on .n{color:var(--case-fg2);opacity:1}
+  /* ★ ::before 를 쓴다. ::after 는 «아직 안 열어 본» 점(.shtab.unseen::after)이 이미
+     쓰고 있고, 그 점은 .shtab.on.unseen::after 로 꺼지게 돼 있어서 여기 띠까지
+     같이 꺼진다. 층을 갈라 두면 둘이 안 싸운다. */
+  .htab.on::before,.shtab.on::before{content:"";position:absolute;left:-1px;right:-1px;bottom:-1px;
+    height:2px;background:var(--me,var(--gold))}
+  /* 아직 안 열어 본 꼭지의 점 — 베이지 꼭지 위에서도 보이게 잉크 테를 두른다 */
+  .shtab.unseen::after{border:1px solid var(--case-e)}
+
+  /* ── ⑥ 도구 격자 (장비창) ────────────────────────────────────
+     마인크래프트의 그 칸이다 — 파인 칸을 격자로 깔고 물건을 하나씩 앉힌다.
+     칸 자체는 «파여» 있고(왼위 그늘·오른아래 빛), 물건이 든 칸만 손이 닿는다.
+     고른 칸은 그 사람 키컬러 테로 두른다 — 채우지 않는다, 물건 그림이 먼저다. */
+  /* 칸은 다섯 줄이다. 칸이 크면 격자가 아니라 그냥 큰 단추 셋이 된다 —
+     인벤토리는 «작은 칸이 여럿» 이어야 한눈에 「몇 칸 중 몇 칸」이 읽힌다.
+     넓은 화면에서 칸만 커지지 않게 격자 폭에 상한을 두고 가운데 세운다. */
+  .invgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;
+    width:100%;max-width:400px;margin:0 auto 14px;padding:5px;
+    background:var(--scr-d);border:1px solid var(--case-e);
+    box-shadow:inset 2px 2px 0 rgba(0,0,0,.55)}
+  .islot{position:relative;display:grid;place-items:center;align-content:center;gap:3px;
+    aspect-ratio:1;padding:5px 3px 4px;border:0;border-radius:0;background:var(--scr2);
+    font-family:inherit;color:var(--sub);cursor:default;-webkit-appearance:none;appearance:none;
+    box-shadow:inset 2px 2px 0 rgba(0,0,0,.5),inset -2px -2px 0 rgba(255,255,255,.07)}
+  .islot.has{cursor:pointer}
+  .islot.has:hover{background:var(--scr3);color:var(--ink)}
+  .islot.has:active{box-shadow:inset 2px 2px 0 rgba(0,0,0,.62)}
+  .islot.sel{box-shadow:inset 2px 2px 0 rgba(0,0,0,.5),inset -2px -2px 0 rgba(255,255,255,.07),
+    0 0 0 2px var(--me,var(--gold))}
+  .islot:focus-visible{outline:2px solid var(--me,var(--gold));outline-offset:-2px}
+  .islot .ii{display:flex}
+  .islot .ii .ic{width:22px;height:22px;stroke:var(--me,var(--gold-b))}
+  .islot .il{font-family:var(--ui);font-size:9.5px;line-height:1.2;text-align:center;
+    word-break:keep-all;max-width:100%;overflow:hidden;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+
   /* ── 입력칸의 바닥은 16px ──────────────────────────────────────
      손가락으로 쓰는 기기에서 입력칸 글자가 16px 아래면 사파리가 화면을 확대하고,
      손을 떼도 되돌리지 않는다. user-scalable=no 는 iOS 10 부터 무시되므로
@@ -3017,7 +3190,7 @@
    <!-- 로비도 창 한 겹을 쓴다 — 베이지 케이스 안에 어두운 화면이 들어앉는다.
         제목줄은 안 단다(모달에만 단다). -->
    <div class="win"><div class="winbody"><div class="winpad">
-    <div class="head"><span class="t serif">배역 선택</span><span class="pill" id="lobbyScen" style="cursor:pointer" title="사건 허브로 돌아가기" onclick="location.href='/'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.4h18M3 14.6h18M8 5v14M16 5v14"/></svg> <span id="lobbyScenName"></span> · 홈으로</span></div>
+    <div class="head"><span class="t serif">배역 선택</span><span class="pill" id="lobbyScen" style="cursor:pointer" title="사건 허브로 돌아가기" onclick="location.href='/'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.4h18M3 14.6h18M8 5v14M16 5v14"/></svg> <span id="lobbyScenName"></span> · 홈으로</span><span class="sp"></span><span class="startnowslot" id="lobbyStartNow"></span></div>
     <!-- 두 문장이라 두 줄로 끊는다. 폭에 맡기면 「내 비밀 정보는 이 / 기기에만」처럼
          한 덩이 한가운데가 갈라진다 — 읽는 눈이 거기서 한 번 걸린다. -->
     <div class="lead">각자 자기 기기에서 배역을 고르세요.<br>내 비밀 정보는 이 기기에만 보입니다.</div>
@@ -3075,8 +3248,11 @@
       <span class="t">인물정보</span></button>
   </nav>
 </div>
-<div class="modal full overdock" id="chatModal"><div class="win"><div class="box" id="chatFullBox"></div></div></div>
-<div class="modal overdock" id="whoModal"><div class="win"><div class="box" id="whoBox"></div></div></div>
+<!-- 하단바에서 여는 탭도 «창» 이다. 예전에는 제목줄도 창틀도 안 달았는데(세로 24px 을
+     아끼려고), 그러다 보니 케이스 안에 든 게임뷰와 탭이 서로 다른 물건처럼 보였다.
+     제목줄의 닫기 상자는 새 길을 내지 않는다 — 조사화면으로 돌아가는 그 길이다. -->
+<div class="modal full overdock" id="chatModal"><div class="win"><div class="titlebar"><button class="tbox" aria-label="조사화면으로" onclick="dockHome()"></button><span class="wt" data-def="대화">대화</span><span class="tbox zoom" aria-hidden="true"></span></div><div class="box" id="chatFullBox"></div></div></div>
+<div class="modal overdock" id="whoModal"><div class="win"><div class="titlebar"><button class="tbox" aria-label="조사화면으로" onclick="dockHome()"></button><span class="wt" data-def="인물정보">인물정보</span><span class="tbox zoom" aria-hidden="true"></span></div><div class="box" id="whoBox"></div></div></div>
 
 <div id="s-gm" class="screen win">
   <div class="chead">
@@ -3104,13 +3280,13 @@
 <div class="hmenu" id="hmenu" onclick="if(event.target===this)closeHMenu()">
   <div class="sheet" id="hmenuBox"></div>
 </div>
-<div class="modal overdock" id="sheetModal"><div class="win"><div class="box" id="sheetBox"></div></div></div>
+<div class="modal overdock" id="sheetModal"><div class="win"><div class="titlebar"><button class="tbox" aria-label="조사화면으로" onclick="dockHome()"></button><span class="wt" data-def="내 정보">내 정보</span><span class="tbox zoom" aria-hidden="true"></span></div><div class="box" id="sheetBox"></div></div></div>
 <div class="modal " id="cardModal"><div class="win"><div class="titlebar"><button class="tbox" aria-label="닫기" onclick="closeModal('cardModal')"></button><span class="wt" data-def="단서">단서</span><span class="tbox zoom" aria-hidden="true"></span></div><div class="box" id="cardBox"></div></div></div>
-<div class="modal overdock" id="handModal"><div class="win"><div class="box" id="handBox"></div></div></div>
+<div class="modal overdock" id="handModal"><div class="win"><div class="titlebar"><button class="tbox" aria-label="조사화면으로" onclick="dockHome()"></button><span class="wt" data-def="내 단서">내 단서</span><span class="tbox zoom" aria-hidden="true"></span></div><div class="box" id="handBox"></div></div></div>
 <div class="modal " id="trimModal"><div class="win"><div class="titlebar"><button class="tbox" aria-label="닫기" onclick="closeModal('trimModal')"></button><span class="wt" data-def="손패 정리">손패 정리</span><span class="tbox zoom" aria-hidden="true"></span></div><div class="box" id="trimBox"></div></div></div>
 <div class="modal " id="swapModal"><div class="win"><div class="titlebar"><button class="tbox" aria-label="닫기" onclick="closeModal('swapModal')"></button><span class="wt" data-def="바꾸기">바꾸기</span><span class="tbox zoom" aria-hidden="true"></span></div><div class="box" id="swapBox"></div></div></div>
 <!-- 조사 화면 열람창. 구역 팝업(#mapModal)이 이 위로 떠야 하므로 반드시 그보다 앞에 둔다. -->
-<div class="modal overdock" id="lookModal"><div class="win"><div class="box" id="lookBox"></div></div></div>
+<div class="modal overdock" id="lookModal"><div class="win"><div class="titlebar"><button class="tbox" aria-label="조사화면으로" onclick="closeLook()"></button><span class="wt" data-def="조사 화면">조사 화면</span><span class="tbox zoom" aria-hidden="true"></span></div><div class="box" id="lookBox"></div></div></div>
 <div class="modal " id="mapModal"><div class="win"><div class="titlebar"><button class="tbox" aria-label="닫기" onclick="closeModal('mapModal')"></button><span class="wt" data-def="구역">구역</span><span class="tbox zoom" aria-hidden="true"></span></div><div class="box" id="mapBox"></div></div></div>
 <div id="vn" onclick="vnAdvance()">
   <div class="vn-stage" id="vnStage">
@@ -3316,6 +3492,12 @@ function checkRoomSwitch(){
   try{ localStorage.setItem("pmb.room",rid); }catch(e){}   // wipeLocal이 지운 것을 되돌린다
   banner("새 방이 열렸습니다 — 지난 판 기록을 지우고 배역 선택으로 돌아갑니다.");
   go("lobby");
+  /* ★ QA 검수는 «혼자 세 자리를 쥐고» 도는 모드다. 방이 갈리면 그 세 자리가 통째로
+     풀리는데, 자리를 다시 쥐는 길은 부팅 때 한 번뿐이었다(boot). 그래서 판을 새로
+     열거나 서버가 다시 뜬 뒤에는 QA 로 들어가 있어도 배역 선택에서 안 넘어갔다 —
+     자리가 비어 있으니 「이대로 진행하기」가 설 수 없었던 것이다. 여기서 다시 쥔다.
+     폴링 한가운데라 곧바로 부르지 않는다(qaClaimAll 이 다시 poll 을 부른다). */
+  if(qaOn) setTimeout(()=>{ if(qaOn&&!(STATE&&STATE.started)) qaClaimAll(); },0);
   return true;
 }
 
@@ -4714,6 +4896,12 @@ function allSeated(){
    다 골라놓고 «다음이 없다»고 여기는 자리가 생겼다. 그래서 다 차는 순간 초상을
    40px 로 줄이고 한 줄짜리 목록으로 접는다 — 누가 무엇을 맡았는지는 그대로 읽힌다.
    다시 그리지 않고 클래스만 토글하므로 폴링(1.5초)마다 깜빡이지 않는다. */
+/* 머리줄 오른쪽의 시작 단추. 배역 목록을 다시 그리든 안 그리든 늘 같이 손본다 —
+   이 자리는 #lobbyList 밖(머리줄)이라 목록의 갱신 경로에 얹혀 가지 않는다. */
+function paintStartNow(){
+  const s=$("lobbyStartNow"); if(!s) return;
+  const h=startNowHTML(); if(s.innerHTML!==h) s.innerHTML=h;
+}
 function paintLobbyFold(host){
   const sw=host.querySelector(".role-swipe"); if(!sw) return;
   sw.classList.toggle("slim", allSeated());
@@ -4736,6 +4924,7 @@ function renderLobby(force){
       <div class="qaslot">${qaLobbyHTML()}</div>`;
     wireRoleSwipe();
     paintLobbyFold(host);
+    paintStartNow();
     return;
   }
   // 이미 있는 카드에 상태만 덧입힌다 — 사진은 손대지 않는다
@@ -4749,6 +4938,7 @@ function renderLobby(force){
     const bs=el.querySelector(".badgeslot"); if(bs&&bs.innerHTML!==st.badge) bs.innerHTML=st.badge;
     const bt=el.querySelector(".btnslot");   if(bt&&bt.innerHTML!==st.btn)   bt.innerHTML=st.btn;
   });
+  paintStartNow();
   const sb=host.querySelector(".startslot"), nb=startBoxHTML();
   if(sb&&sb.innerHTML!==nb) sb.innerHTML=nb;
   const rb=host.querySelector(".rolebar"), nr=roleBarHTML();
@@ -4837,17 +5027,31 @@ function wireRoleSwipe(){
   roleSeat(roleAt);
   paintRoleNav();
 }
-/* 모두 정해지면 호스트에게 확정을 묻는다 — 확정 순간부터 배역은 고정된다 */
+/* 시작할 수 있는 판인가 — 자리가 다 찼고, 이 기기가 그 단추를 누를 수 있는가 */
+function canStartNow(){
+  if(!STATE||STATE.started||!SCEN||!SCEN.characters) return false;
+  return !SCEN.characters.some(c=>((STATE.roles||{})[c.id]||{}).mode==="open");
+}
+/* 누를 권한 — 진행석을 켠 기기이거나 호스트면 된다.
+   QA 검수 모드는 혼자 도는 판이라 「누가 호스트인가」를 기다릴 사람이 없다. */
+function mayStart(){ return !!(STATE&&(STATE.isHost||gmOn||qaOn)); }
+/* ── 「이대로 진행하기」는 머리줄 오른쪽에 산다 ──────────────────────
+   예전에는 배역 칸 «아래» 에 있었다. 그 자리는 화면 밖으로 밀려나기 쉬워서 —
+   낮은 창, 접히기 전의 큰 카드 셋, QA 안내판이 겹치면 — 자리를 다 쥐고도
+   「배역 선택에서 안 넘어간다」가 됐다. 머리줄은 늘 맨 위라 밀려날 데가 없다. */
+function startNowHTML(){
+  if(!canStartNow()) return "";
+  if(!mayStart()) return `<span class="pill">호스트가 시작하기를 기다리는 중…</span>`;
+  return `<button class="btn ember sm startnow" onclick="startGame()">이대로 진행하기 ›</button>`;
+}
+/* 모두 정해지면 확정을 묻는다 — 확정 순간부터 배역은 고정된다.
+   단추는 머리줄이 지고, 여기는 «무슨 일이 일어나는가» 만 적는다(단추가 둘이면 안 된다). */
 function startBoxHTML(){
-  if(!STATE||STATE.started) return "";
-  const opens=SCEN.characters.filter(c=>(STATE.roles[c.id]||{}).mode==="open");
-  if(opens.length) return "";
-  // 시작 버튼은 하나다 — 진행석을 켠 기기이거나 호스트면 누를 수 있다.
-  // QA 검수 모드는 혼자 도는 판이라 「누가 호스트인가」를 기다릴 사람이 없다.
-  if(!(STATE.isHost||gmOn||qaOn)) return `<div class="startbox wait">모든 배역이 정해졌습니다. 호스트가 시작하기를 기다리는 중…</div>`;
+  if(!canStartNow()) return "";
+  if(!mayStart()) return `<div class="startbox wait">모든 배역이 정해졌습니다. 호스트가 시작하기를 기다리는 중…</div>`;
   return `<div class="startbox"><div class="sb-t">모든 배역이 정해졌습니다</div>
-    <div class="sb-d">시작하면 배역을 더는 바꿀 수 없습니다.${gmOn?" 시작과 함께 진행석이 열립니다.":""}</div>
-    <button class="btn ember" onclick="startGame()">이대로 진행하기 ›</button></div>`;
+    <div class="sb-d">오른쪽 위 <b>「이대로 진행하기」</b>를 누르면 오프닝이 시작됩니다.
+      시작하면 배역을 더는 바꿀 수 없습니다.${gmOn?" 시작과 함께 진행석이 열립니다.":""}</div></div>`;
 }
 async function startGame(){
   if(startBusy) return; startBusy=true;
@@ -7359,12 +7563,16 @@ function chatRow(m){
   if(m.kind==="alibi"){
     const c=roleById(m.roleId)||{};
     const d=document.createElement("div"); d.className="msg alb-msg"+(m.roleId===myRoleId?" own":"");
+    d.style.setProperty("--tc", c.color||"var(--muted)");
     d.innerHTML=`<div class="av">${avaHTML(c,"sm")}</div><div><div class="nm" style="color:${c.color||"#999"}">${esc(m.speaker)}`
       +`<span class="alb-j">${esc(c.job||"")}</span><span class="alb-t">${esc(m.at||"")}</span></div>`
       +`<div class="bub alb-bub">${esc(m.text)}</div></div>`;
     return d; }
   const c=roleById(m.roleId);
   const row=document.createElement("div"); row.className="msg"+(m.roleId===myRoleId?" own":"");
+  /* 말풍선 테두리가 말한 사람 색을 쓴다 — 차콜 위에서 말풍선이 이어 붙으면
+     정렬(왼/오른쪽)만으로는 누가 말했는지가 한눈에 안 갈린다. */
+  row.style.setProperty("--tc", (c&&c.color)||"var(--muted)");
   row.innerHTML=`<div class="av">${avaHTML(c,"sm")}</div><div><div class="nm" style="color:${c?c.color:"#999"}">${esc(m.speaker)}${m.kind==="human"?'<span class="tag-me">사람</span>':''}</div><div class="bub">${esc(m.text)}</div>${cardChips(m.text)}</div>`;
   return row;
 }
@@ -8235,6 +8443,35 @@ function clueCards(){ return (myHand||[]).filter(c=>!isBelong(c)&&!isTool(c)); }
 function clueCount(){ const o=overLimit(); return o>0?handLimit()+o:Math.min(clueCards().length,handLimit()); }
 
 let handTab="clue";
+/* 지금 격자에서 골라 둔 도구. 빈 문자열이면 첫 칸을 본다. */
+let toolSel="";
+/* ── 도구 격자 ────────────────────────────────────────────────────
+   도구는 «장비창» 이다. 카드처럼 넘겨 보는 것이 아니라 격자에 놓인 물건이라,
+   RPG 인벤토리 그대로 정사각 칸을 깔고 그 안에 하나씩 앉힌다.
+   ★ 빈 칸을 «그린다». 물건 수만큼만 그리면 격자가 아니라 그냥 목록이 된다 —
+     빈 칸이 보여야 아직 채울 자리가 있다는 것이 눈에 남고, 물건이 하나 늘 때
+     어디가 찼는지도 보인다. 최소 아홉 칸(3×3), 넘치면 세 칸 단위로 늘린다.
+   ★ 칸을 눌러도 창이 새로 뜨지 않는다. 아래 붙는 큰 카드가 갈릴 뿐이다 —
+     탭 위에 창을 겹치면 어느 것을 닫는 중인지 아무도 모른다. */
+/* 칸 안의 그림. 물건 그림이 따로 없으니 이름에서 결을 짚어 아이콘을 고른다 —
+   못 짚으면 「물건」 하나로 떨어진다. 시나리오가 늘어도 여기만 손보면 된다. */
+const ITEM_ICO=[[/확성기|스피커|나팔/,"sound"],[/열쇠|키\b/,"unlock"],[/지도|배치도/,"map"],
+  [/수첩|기록|일지|장부/,"doc"],[/사진|필름/,"film"],[/자|눈금|계기/,"goal"]];
+function itemIco(t){ const k=(ITEM_ICO.find(([re])=>re.test(t||""))||[])[1]; return ICO[k]||ICO.torch; }
+function invGrid(cards){
+  const n=Math.max(10, Math.ceil(cards.length/5)*5);   // 다섯 줄 격자의 두 줄이 바닥이다
+  const sel=(cards.find(c=>c.id===toolSel)||cards[0]||{}).id;
+  let s=`<div class="invgrid">`;
+  for(let i=0;i<n;i++){
+    const c=cards[i];
+    if(!c){ s+=`<span class="islot" aria-hidden="true"></span>`; continue; }
+    s+=`<button type="button" class="islot has${c.id===sel?" sel":""}" onclick="toolPick('${c.id}')"`
+      +` title="${esc(c.title)}"><span class="ii">${itemIco(c.title)}</span>`
+      +`<span class="il">${esc(c.title)}</span></button>`;
+  }
+  return s+`</div>`;
+}
+function toolPick(id){ toolSel=id; showMyHand("tool"); }
 /* 내 단서는 두 칸이다 — «카드»와 «도구».
    카드는 손패 상한이 있고(넘치면 내려놓아야 한다), 도구는 상한 밖이라 몇 개든 든다.
    그래서 한 목록에 섞어 두면 「몇 장까지」가 어느 쪽 이야기인지 알 수 없다.
@@ -8271,13 +8508,7 @@ function showMyHand(tab){
   }
   h+=`<div class="mbody">`;
   if(tool) h+=`<div class="toolnote">도구는 손패 상한과 상관없습니다 — 몇 개든 판이 끝날 때까지 들고 있습니다.</div>`;
-  if(!cards.length){
-    h+=`<div class="panel-note">${bel
-      ?`아직 열린 ${esc(label)}이 없어요. 조사 페이즈에 ${esc(label)}을 열면 여기 모입니다.`
-      :(tool?"아직 얻은 도구가 없어요. 수수께끼를 풀면 여기에 모입니다."
-            :"아직 조사한 단서가 없어요. 조사 페이즈에 카드를 열면 여기에 계속 쌓입니다.")}</div>`;
-  }
-  else{ const slides=cards.map(c=>{
+  const slideOf=c=>{
       const isPub=bel&&!(myHand||[]).some(x=>x.id===c.id);
       return `<div class="bigcard clue">
       <div class="bc-eyebrow">${isPub?"전체공개":"손패 · 비공개"}</div>
@@ -8285,8 +8516,22 @@ function showMyHand(tab){
       <div class="bc-tags"><span class="pill">${esc(c.locName)}</span>${c.spot?`<span class="pill">${esc(c.spot)}</span>`:''}<span class="pill">R${c.round}</span>${keyTagFor(c.id,true)}${comboBadge(c.id)}${pairsOf(c.id).map(k=>{const rd=pairReady(k,c.id);
         return `<button class="pill pair${rd?" rdy":""}" title="${rd?"짝이 지금 나와 있습니다":"같은 조각을 단 카드와 맞춰보세요"}" onclick="event.stopPropagation();showPairHint('${c.id}',${k.i})">${pairChip(k,c.id,rd)}${rd?"맞물림":"조각"}</button>`;}).join("")}</div>
       <div class="bc-body">${esc(c.text)}</div>${mynote(c.id)}${cnote(c)}
-      ${c.unlocks&&!isPub?`<div class="unlocknote">${ICO.unlock} 이 카드를 <b>전체공개</b>하면 무언가 밝혀질 수 있습니다.</div>`:""}</div>`; });
-    h+=buildSwipe(slides); }
+      ${c.unlocks&&!isPub?`<div class="unlocknote">${ICO.unlock} 이 카드를 <b>전체공개</b>하면 무언가 밝혀질 수 있습니다.</div>`:""}</div>`; };
+  /* ★ 도구는 «장비창» 이다 — 넘겨 보는 카드가 아니라 격자에 놓인 물건이다.
+     칸을 늘 그려 두는 것이 요점이다. 빈 칸이 보여야 «아직 안 채운 자리» 가 있다는 걸
+     알고, 물건이 하나 늘 때 어디가 찼는지도 눈에 남는다. 카드탭은 그대로 스와이프다. */
+  if(tool){
+    h+=invGrid(cards);
+    h+=cards.length
+      ? slideOf(cards.find(c=>c.id===toolSel)||cards[0])
+      : `<div class="panel-note">아직 얻은 도구가 없어요. 수수께끼를 풀면 이 칸이 하나씩 찹니다.</div>`;
+  }
+  else if(!cards.length){
+    h+=`<div class="panel-note">${bel
+      ?`아직 열린 ${esc(label)}이 없어요. 조사 페이즈에 ${esc(label)}을 열면 여기 모입니다.`
+      :"아직 조사한 단서가 없어요. 조사 페이즈에 카드를 열면 여기에 계속 쌓입니다."}</div>`;
+  }
+  else{ h+=buildSwipe(cards.map(slideOf)); }
   // 카드탭에서만 「대화에 올리기」·「바꾸기」가 선다. 도구는 내려놓는 물건이 아니다.
   const pubN=(STATE.revealed||[]).length, canAct=!bel&&!tool&&myRoleValid()&&clueCards().length;
   h+=`</div>${canAct?`<div class="mfoot">
