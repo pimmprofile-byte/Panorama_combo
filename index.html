@@ -2100,6 +2100,24 @@
   .dc{position:relative}
   .dc .dc-qa{position:absolute;right:6px;top:6px;padding:1px 5px;font-size:10px;
     border:1px solid #c9c2ab;color:#efe9d6;background:#141310;z-index:2}
+  /* 아이템 수수께끼 — 조사턴을 안 쓰는 자리라, 조사 카드와 결이 달라야 한다.
+     파낸 홈(눌린 판) 위에 물음이 새겨져 있고 그 아래에 입력 한 칸. */
+  .puz-q{padding:14px 15px;border:1px solid var(--line);background:var(--bg2);
+    box-shadow:inset 2px 2px 0 rgba(0,0,0,.5);font-size:15px;line-height:1.8;
+    color:var(--ink);word-break:keep-all;white-space:pre-line}
+  .puz-in{display:flex;gap:8px;margin-top:12px}
+  .puz-in input{flex:1 1 auto;min-width:0;background:var(--bg2);border:1px solid var(--line);
+    color:var(--gold-b);font-family:var(--pix);font-size:16px;padding:10px 12px;letter-spacing:.06em;
+    box-shadow:inset 2px 2px 0 rgba(0,0,0,.5)}
+  .puz-in input:focus{outline:none;border-color:var(--case-line)}
+  .puz-msg{min-height:1.3em;margin-top:9px;font-size:13px;color:var(--ember-b)}
+  .puz-note{margin-top:4px;font-size:12px;color:var(--muted)}
+  .puz-hint{margin-top:10px;padding:10px 12px;border-left:2px solid var(--cold);
+    background:rgba(195,186,176,.06);font-size:13.5px;line-height:1.7;color:var(--sub);word-break:keep-all}
+  /* 현황판의 잠긴 아이템 칸 */
+  .dc.puz{border-style:dashed;border-color:color-mix(in srgb,var(--gold) 40%,var(--line))}
+  .dc.puz .wh{color:var(--gold-b)}
+  .dc.puz .st{color:var(--gold-b)}
   .qa-peek{margin-top:10px;padding:10px;border:1px dashed #c9c2ab;background:#141310}
   .qa-peek .qk{color:#efe9d6;font-size:11px;letter-spacing:.08em;margin-bottom:5px}
   .qa-peek .qh{color:#b8b2a2;font-size:12px;margin-top:7px;line-height:1.6}
@@ -4063,6 +4081,14 @@ function cardState(c){
   if(sealedLoc(c.loc)) return {k:"lock", label:"물에 잠김", act:""};
   // 판이 때가 되면 스스로 여는 자리. 뒤지는 것이 아니라 «열리는 것»을 기다린다.
   if(c.auto) return {k:"lock", label:"때가 되면 열립니다", act:""};
+  // 아이템 — 조사턴으로는 못 연다. 수수께끼를 푸는 것이 곧 여는 방법이고,
+  // 토론만 아니면 판이 끝날 때까지 언제든 다시 붙을 수 있다.
+  if(c.locked){
+    if(!roundOk) return {k:"lock", label:`조사 R${c.round}에 열림`, act:""};
+    if(!myRoleValid()) return {k:"lock", label:"관전 중", act:""};
+    if(!(STATE&&STATE.puzzleOpen)) return {k:"lock", label:"토론 중에는 못 풉니다", act:""};
+    return {k:"puzzle", label:"수수께끼를 푼다", act:`openPuzzle('${c.id}')`};
+  }
   // ap 가 0인 페이즈(토론·종막)에도 지도를 열어볼 수 있게 되면서, 눌러봤자 서버가 막는
   // '조사하기'가 뜨는 자리가 생겼다. 그럴 땐 아예 누를 수 없게 두고 언제 열리는지만 말한다.
   if(roundOk&&reqOk&&myRoleValid()&&ap>0&&!apOut&&myTurn) return {k:"open", label:"조사하기", act:`investigate('${c.id}')`};
@@ -4387,8 +4413,13 @@ function dashCard(c){
       <span class="wh">${avaHTML(w,"xs")}${esc(w.name||"")} 쥐고 있음</span></button>`; }
   // cardState 의 잠김 사유에는 '내 차례 아님'처럼 내 사정이 섞여 있다. 현황판은 판 전체를
   // 읽는 자리라 카드 쪽 사정만 적는다 — 나머지는 그냥 아직 아무도 안 본 카드다.
+  if(st.k==="puzzle") return `<button class="dc puz act${fr}" onclick="openPuzzle('${c.id}')">
+    ${qk}<span class="sp">${spot}</span>
+    <span class="wh"><i>${ICO.lock}</i>수수께끼 — 조사턴을 안 씁니다</span>
+    <span class="st">풀기 ›</span></button>`;
   let why="아직 아무도 보지 않음", dim=false;
-  if(c.auto){ why="때가 되면 판이 엽니다 — 뒤질 수 없음"; dim=true; }
+  if(c.locked){ why="수수께끼를 풀어야 열립니다"; dim=true; }
+  else if(c.auto){ why="때가 되면 판이 엽니다 — 뒤질 수 없음"; dim=true; }
   else if(sealedLoc(c.loc)){ why="물에 잠김 — 닿을 수 없음"; dim=true; }
   else if(c.round>(STATE.round||0)){ why=`조사 R${c.round}에 열림`; dim=true; }
   else if((c.needs||(c.requires?[c.requires]:[])).some(r=>!discoveredIds().has(r))){
@@ -4460,6 +4491,67 @@ function ensureCardBack(){
     document.body.classList.add("hasback");
   });
 }
+/* ── 아이템 수수께끼 ─────────────────────────────────────────────
+   조사턴을 안 쓴다. 토론만 아니면 판이 끝날 때까지 몇 번이든 붙을 수 있고,
+   맞히면 그 카드가 «푼 사람의» 인벤토리로 들어간다(손패 상한 밖).
+   판정은 전부 서버가 한다 — 답은 이 파일 어디에도 없다. */
+let puzTries={};
+async function openPuzzle(cid){
+  const c=(SCEN.cardCatalog||[]).find(x=>x.id===cid); if(!c) return;
+  let d={items:[]};
+  try{ d=await (await fetch(`/api/puzzle/${encodeURIComponent(myRoleId)}?clientId=${encodeURIComponent(clientId)}`)).json(); }catch(e){}
+  const row=(d.items||[]).find(x=>x.id===cid);
+  if(!row){ banner(d.why||"지금은 풀 수 없습니다"); return; }
+  puzTries[cid]=row.tries||0;
+  const m=document.createElement("div");
+  m.className="modal on"; m.onclick=e=>{ if(e.target===m) m.remove(); };
+  m.innerHTML=`<div class="box" onclick="event.stopPropagation()">
+    <div class="mhead"><div class="mh-t"><span class="mh-eb">${esc(row.locName||"")}</span>
+      <h2>${esc(row.spot||"수수께끼")}</h2>
+      <span class="mh-sub">조사턴을 쓰지 않습니다 · 맞히면 내 인벤토리로</span></div>
+      <button class="mh-x" onclick="this.closest('.modal').remove()">${ICO.close}</button></div>
+    <div class="mbody">
+      <div class="puz-q">${mdB(esc(row.prompt||""))}</div>
+      <div class="puz-in">
+        <input id="puzAns" type="text" autocomplete="off" placeholder="답을 적으세요" enterkeyhint="done">
+        <button class="btn primary" onclick="puzSend('${cid}')">맞춰 보기</button>
+      </div>
+      <div class="puz-msg" id="puzMsg">${row.tries?`${row.tries}번 틀렸습니다.`:""}</div>
+      ${row.hint?`<div class="puz-hint">${esc(row.hint)}</div>`
+        :`<div class="puz-note">${d.hintAfter||3}번 틀리면 한 줄이 열립니다.</div>`}
+    </div></div>`;
+  document.body.appendChild(m);
+  setTimeout(()=>{ const i=$("puzAns"); if(i){ i.focus();
+    i.onkeydown=ev=>{ if(ev.key==="Enter") puzSend(cid); }; } },60);
+}
+async function puzSend(cid){
+  const i=$("puzAns"); if(!i) return;
+  const v=i.value.trim(); if(!v) return;
+  i.value=""; i.disabled=true;
+  let r={};
+  try{ r=await post("/api/puzzle",{cardId:cid,roleId:myRoleId,clientId,answer:v}); }catch(e){ r={error:"network"}; }
+  i.disabled=false; i.focus();
+  const msg=$("puzMsg");
+  if(r&&r.ok){
+    document.querySelectorAll(".modal.on").forEach(m=>m.remove());
+    sfx("open");
+    banner("풀었습니다 — 인벤토리에 들어왔습니다.");
+    await poll(); openCard(cid);
+    return;
+  }
+  if(r&&r.error){ if(msg) msg.textContent=r.error; return; }
+  puzTries[cid]=(r&&r.tries)||0;
+  if(msg) msg.textContent=`틀렸습니다 — ${puzTries[cid]}번째.`;
+  if(r&&r.hint){
+    const box=msg&&msg.parentNode;
+    if(box&&!box.querySelector(".puz-hint")){
+      const h=document.createElement("div"); h.className="puz-hint"; h.textContent=r.hint;
+      const n=box.querySelector(".puz-note"); if(n) n.remove();
+      box.appendChild(h);
+    }
+  }
+}
+
 function dashHTML(){
   ensureCardBack();
   const blocks=((SCEN.map)||[]).map(z=>{

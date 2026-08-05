@@ -91,6 +91,8 @@ def fresh_room() -> dict:
         # 중간 지목 — 판이 끝나기 전에 한 번 이름을 부르는 사건이 있다. 그 표는 사라지지
         # 않고 종막까지 따라간다. seq 를 같이 적어두는 건 그 막에서만 고칠 수 있게 하려고다.
         "vaultRead": [], "accuse1": {"seq": None, "picks": {}},
+        # 아이템 수수께끼를 배역별로 몇 번 틀렸는가. 세 번 틀리면 그 사람에게만 힌트가 열린다.
+        "puzzleTries": {},        # roleId -> {cardId: 틀린 횟수}
         # 1차 지목에서 압수된 소지품의 임자들. 한 번 압수되면 판이 끝날 때까지 펴져 있다.
         "seized": [],
         # 밤 — 각자 몰래 한 가지를 고르고, 그 조합이 그날 밤에 실제로 일어난 일을 정한다.
@@ -398,7 +400,14 @@ def public_state() -> dict:
             "dest": (_dest_state() if ph.get("key") in ("final", "decision", "reveal") else None),
             "decision": (_decision_state() if ph.get("key") in ("decision", "reveal") else None),
             "keepGoals": _keep_goal_results() if ph.get("key") in ("final", "reveal") else [],
-            "overLimit": {rid: max(0, len(cs) - _hand_limit()) for rid, cs in ROOM["hands"].items() if len(cs) > _hand_limit()},
+            # 아이템은 상한 밖이다 — _over_limit 과 같은 셈을 쓴다(예전엔 여기서만
+            # 손패 전체를 세어서, 도구를 하나 주우면 화면에 「넘쳤다」가 떴다).
+            "overLimit": {rid: _over_limit(rid) for rid in ROOM["hands"] if _over_limit(rid) > 0},
+            # 누가 도구를 몇 개 모았는가 — 이건 공개 정보다. 이 판의 시계다.
+            # 무엇이 나왔는지는 푼 사람만 안다(개수만 나간다).
+            "items": {rid: len(_inventory(rid)) for rid in ROOM["roles"] if _inventory(rid)},
+            "itemNeed": len(getattr(SC, "ESCAPE_ITEMS", []) or []),
+            "puzzleOpen": _puzzle_open_now()[0],
             "vault": _vault_public(),
             "turn": ROOM.get("turn") if ap > 0 else None,
             "turnOrder": _turn_order() if ap > 0 else [],
@@ -583,6 +592,9 @@ def scenario():
                          # gone  이 라운드부터는 그 자리가 «없다»(어제와 같은 방이 아니다)
                          "auto": bool(c.get("auto")), "hot": bool(c.get("hot")),
                          "gone": c.get("gone", 0),
+                         # locked  수수께끼를 풀어야 열리는 자리(조사턴을 안 쓴다)
+                         # item    탈출에 쓰는 도구. 손패 상한 밖의 «인벤토리» 로 들어간다
+                         "locked": bool(c.get("puzzle")), "item": bool(c.get("item")),
                          "requires": c.get("requires"), "obligatory": c.get("reveal") == "obligatory"}
                         for c in SC.CARDS]
     return d
@@ -1043,6 +1055,7 @@ def start_game(b: HostReq):
             if _ph0.get("gm"):
                 ROOM["table"].append({"kind": "gm", "broadcast": True, "text": _ph0["gm"]})
             _seed_alibi()
+        _reveal_autos()          # 오프닝(0라운드)에서 스스로 열리는 자리
         bump()
     return {"ok": True, "started": True}
 
@@ -1381,13 +1394,25 @@ def _hand_limit() -> int:
 
 
 def _split_hand(role_id: str):
-    """손패를 «일반 단서»와 «소지품» 두 칸으로 가른다. 상한이 서로 다르다."""
+    """손패를 «일반 단서»와 «소지품» 두 칸으로 가른다. 상한이 서로 다르다.
+
+    아이템(item)은 어느 쪽에도 안 든다 — 탈출에 쓰는 «인벤토리» 라서 상한이 없다.
+    여기 넣으면 손패 상한 1장짜리 판에서 도구를 하나 줍는 순간 판이 멈춘다.
+    """
     bl = set(_belong_locs())
     clue, belong = [], []
     for cid in ROOM["hands"].get(role_id, []):
         c = SC.get_card(cid) or {}
+        if c.get("item"):
+            continue
         (belong if c.get("loc") in bl else clue).append(cid)
     return clue, belong
+
+
+def _inventory(role_id: str) -> list:
+    """그 사람이 풀어서 얻은 도구들. 상한이 없고, 판이 끝날 때까지 손에 남는다."""
+    return [cid for cid in ROOM["hands"].get(role_id, [])
+            if (SC.get_card(cid) or {}).get("item")]
 
 
 def _over_limit(role_id: str) -> int:
@@ -1585,7 +1610,8 @@ def _crisis_blocking() -> bool:
     return bool(cr.get("open")) and cr.get("solved") is None
 
 
-def _try_investigate(role_id: str, card_id: str, enforce_ap: bool = True, enforce_turn: bool = False) -> str | None:
+def _try_investigate(role_id: str, card_id: str, enforce_ap: bool = True, enforce_turn: bool = False,
+                     _puzzle_bypass: bool = False) -> str | None:
     if _crisis_blocking():
         conf = _crisis_conf() or {}
         return f"「{conf.get('title', '비상')}」부터 넘겨야 합니다 — 그 사이에는 아무것도 못 뒤집니다"
@@ -1598,6 +1624,12 @@ def _try_investigate(role_id: str, card_id: str, enforce_ap: bool = True, enforc
         return lock
     if c.get("auto") and card_id not in ROOM["revealed"]:
         return "여기는 뒤져서 여는 자리가 아닙니다 — 때가 되면 판이 스스로 엽니다"
+    # 아이템은 조사턴으로 못 엽니다. 수수께끼를 푸는 것이 곧 여는 방법입니다 —
+    # 그래서 이 여섯 장은 조사 예산 밖에 있습니다.
+    if (c.get("puzzle") and card_id not in ROOM["revealed"] and not _puzzle_bypass
+            and not _holder_of(card_id)):
+        # 이미 누가 풀어 간 카드라면 아래 «임자» 안내가 더 맞는 말이다 — 그쪽에 양보한다.
+        return "여기는 뒤져서 여는 자리가 아닙니다 — 수수께끼를 풀어야 열립니다"
     if c.get("gone") and cur >= c["gone"] and card_id not in ROOM["hands"].get(role_id, []):
         return "그 자리는 이제 없습니다 — 어제와 같은 방이 아닙니다"
     if c["round"] > cur:
@@ -1750,6 +1782,29 @@ def _auto_combine() -> None:
     bump()
 
 
+def _reveal_autos() -> None:
+    """`auto` 카드를 때가 되면 판이 스스로 연다.
+
+    여태 이걸 여는 자리가 아무 데도 없었다 — `auto: True` 는 「뒤져서 못 연다」만 하고
+    「그럼 언제 열리나」를 아무도 안 했다. 그래서 A1(조각난 몸)처럼 사건의 첫 장이
+    판이 끝날 때까지 안 나왔고, 그걸 선행조건으로 건 A9 는 영영 잠겨 있었다.
+
+    규칙은 하나다 — 그 라운드가 왔고 구역이 열려 있으면 전체공개한다.
+    수수께끼가 걸린 아이템은 예외다. 그건 「때가 되면」이 아니라 「풀면」 열린다.
+    """
+    cur = current_round(ROOM["seq"])
+    for c in SC.CARDS:
+        if not c.get("auto") or c.get("puzzle"):
+            continue
+        if c["id"] in ROOM["revealed"] or c["round"] > cur:
+            continue
+        if _zone_lock(c.get("loc", ""), cur):
+            continue
+        if c.get("gone") and cur >= c["gone"]:
+            continue
+        _publish(c["id"])
+
+
 def _publish(card_id: str, by: str = "") -> None:
     """공개는 여기 한 곳으로 모인다 — 사건 기록도 여기서 낸다.
     호출 경로가 여럿이라(본인 공개·GM 공개·정리) 위쪽에서 내면 빠지는 길이 생긴다."""
@@ -1788,6 +1843,116 @@ def investigate(b: Investigate):
         if ap > 0 and ROOM.get("turn") == b.roleId and _round_checks(b.roleId, current_round(ROOM["seq"])) >= ap:
             _advance_turn()
     return {"card": SC.public_card(b.cardId)}
+
+
+class PuzzleTry(BaseModel):
+    cardId: str
+    roleId: str
+    clientId: str
+    answer: str = ""
+
+
+PUZZLE_HINT_AFTER = 3        # 이만큼 틀리면 그 사람에게만 힌트 한 줄이 열린다
+
+
+def _puzzle_open_now() -> tuple[bool, str]:
+    """지금 수수께끼를 풀 수 있는 때인가.
+
+    조사 페이즈에만 열어두면 「이번 턴에 못 풀면 다음 라운드까지 기다려라」가 되는데,
+    그건 퍼즐이 아니라 대기다. 그래서 **판이 끝날 때까지 언제든** 풀 수 있게 두고,
+    토론에서만 닫는다 — 토론은 서로 말로 맞춰 보는 자리이고, 그 시간에 각자 폰을
+    들여다보며 답을 찍고 있으면 토론이 아니게 된다.
+    """
+    ph = SC.phase_by_seq(ROOM["seq"]) or {}
+    if ph.get("key") == "talk":
+        return False, "토론 중에는 수수께끼를 풀 수 없습니다 — 지금은 서로 맞춰 보는 시간입니다"
+    return True, ""
+
+
+@app.get("/api/puzzle/{role_id}")
+def puzzle_list(role_id: str, clientId: str = ""):
+    """그 배역이 지금 시도할 수 있는 수수께끼들. **답은 절대 안 나갑니다.**
+
+    물음(prompt)은 이미 공개 카탈로그에 있는 몫이고, 여기서 더해 나가는 것은
+    「내가 몇 번 틀렸는가」와, 세 번 넘게 틀린 사람에게만 열리는 힌트 한 줄입니다.
+    """
+    r = ROOM["roles"].get(role_id)
+    if not r or r["clientId"] != clientId:
+        return JSONResponse({"error": "권한 없음"}, status_code=403)
+    ok, why = _puzzle_open_now()
+    cur = current_round(ROOM["seq"])
+    tries = ROOM.get("puzzleTries", {}).get(role_id, {})
+    held = set()
+    for cids in ROOM["hands"].values():
+        held.update(cids)
+    held.update(ROOM["revealed"])
+    out = []
+    for c in SC.CARDS:
+        p = c.get("puzzle")
+        if not p or c["id"] in held or c["round"] > cur:
+            continue
+        if _zone_lock(c.get("loc", ""), cur):
+            continue
+        n = int(tries.get(c["id"], 0))
+        row = {"id": c["id"], "spot": c.get("spot", ""), "locName": c.get("locName", ""),
+               "prompt": p.get("prompt", ""), "tries": n}
+        if n >= PUZZLE_HINT_AFTER:
+            row["hint"] = SC.puzzle_hint(c["id"]) if hasattr(SC, "puzzle_hint") else p.get("hint", "")
+        out.append(row)
+    return {"open": ok, "why": why, "hintAfter": PUZZLE_HINT_AFTER, "items": out}
+
+
+@app.post("/api/puzzle")
+def puzzle_answer(b: PuzzleTry):
+    """수수께끼를 푼다. 맞히면 그 카드가 **푼 사람의 인벤토리로** 들어간다.
+
+    조사턴을 안 쓴다 — 이 여섯 장은 조사 예산 밖의 물건이다.
+    """
+    with LOCK:
+        r = ROOM["roles"].get(b.roleId)
+        if not r or r["clientId"] != b.clientId:
+            return JSONResponse({"error": "그 배역으로 풀 수 없습니다"}, status_code=403)
+        ok, why = _puzzle_open_now()
+        if not ok:
+            return JSONResponse({"error": why}, status_code=409)
+        c = SC.get_card(b.cardId)
+        if not c or not c.get("puzzle"):
+            return JSONResponse({"error": "수수께끼가 없는 카드입니다"}, status_code=409)
+        cur = current_round(ROOM["seq"])
+        if c["round"] > cur:
+            return JSONResponse({"error": f"아직 열리지 않았습니다 (조사 R{c['round']})"}, status_code=409)
+        lock = _zone_lock(c.get("loc", ""), cur)
+        if lock:
+            return JSONResponse({"error": lock}, status_code=409)
+        if _holder_of(b.cardId) or b.cardId in ROOM["revealed"]:
+            return JSONResponse({"error": "이미 누군가 풀었습니다"}, status_code=409)
+
+        good = SC.check_puzzle(b.cardId, b.answer) if hasattr(SC, "check_puzzle") else False
+        tries = ROOM.setdefault("puzzleTries", {}).setdefault(b.roleId, {})
+        if not good:
+            tries[b.cardId] = int(tries.get(b.cardId, 0)) + 1
+            n = tries[b.cardId]
+            out = {"ok": False, "tries": n}
+            if n >= PUZZLE_HINT_AFTER:
+                out["hint"] = SC.puzzle_hint(b.cardId) if hasattr(SC, "puzzle_hint") else ""
+            bump()
+            return out
+
+        err = _try_investigate(b.roleId, b.cardId, enforce_ap=False, _puzzle_bypass=True)
+        if err:
+            return JSONResponse({"error": err}, status_code=409)
+        # 조사턴을 안 쓴다. _try_investigate 는 열어준 카드에 «이번 라운드» 도장을 찍는데,
+        # 남은 조사 수는 그 도장을 세어 구한다 — 그대로 두면 수수께끼가 조사턴을 먹는다.
+        # 묶음 형제들과 같은 방식으로 0라운드로 눕힌다.
+        ROOM["checkedRound"].setdefault(b.roleId, {})[b.cardId] = 0
+        # 「누가 무엇을 풀었는가」는 공개 정보다 — 도구를 몇 개 모았는지가 곧 판의 시계다.
+        # 다만 «무엇이 나왔는지» 는 푼 사람만 안다. 여기서는 물건 이름을 안 적는다.
+        who = (SC.get_character(b.roleId) or {}).get("name", b.roleId)
+        with _drip():
+            ROOM["table"].append({"kind": "system",
+                "text": f"{who}{_subj(who)} {c.get('locName','')}의 수수께끼를 풀고 무언가를 손에 넣었다."})
+        bump()
+    return {"ok": True, "card": SC.public_card(b.cardId)}
 
 
 @app.post("/api/mark")
@@ -3023,6 +3188,7 @@ def _advance():
             ROOM["seq"] += 1
             seq = ROOM["seq"]
             ph = SC.phase_by_seq(seq)
+            _reveal_autos()          # 이 막에 스스로 열리는 자리부터 편다
             il = SC.interlude_for(seq)
             if il:
                 ROOM["table"].append({"kind": "system", "broadcast": True,
