@@ -18,6 +18,9 @@
      꺼야 제 모습이 나온다. 16px 배수에서 가장 또렷하다. */
   @font-face{font-family:"NeoDunggeunmo";src:url("/assets/fonts/neodgm.woff2") format("woff2");
     font-weight:400;font-style:normal;font-display:block}
+  /* 작은 글자용. 12px 아래에서는 비트맵 획이 한 픽셀로 뭉개져 짧은 말이 서로 안 갈린다. */
+  @font-face{font-family:"PIMM Body";src:url("/assets/fonts/Pretendard-400.woff2") format("woff2");
+    font-weight:400;font-style:normal;font-display:swap}
 
   :root{
     /* 화면 안 — 브라운관 */
@@ -41,6 +44,9 @@
     /* 글꼴은 한 벌뿐이다. 비트맵 글꼴 옆에 다른 결이 서면 그 순간 90년대가 깨진다. */
     --pix:"NeoDunggeunmo","Neo둥근모","DungGeunMo",monospace;
     --serif:var(--pix); --sans:var(--pix); --mono:var(--pix);
+    /* 작은 글자만 이 글꼴로 샌다 — 되돌리려면 var(--pix) 로 바꾸면 된다.
+       플레이 화면(index.html)의 --ui 와 같은 값이다. */
+    --ui:"PIMM Body","Pretendard","Apple SD Gothic Neo",system-ui,sans-serif;
 
     --plogo:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 264 343'%3E%3Cpath fill='%2300ff99' d='M41 3 L226 3 L238 6 L247 11 L257 22 L262 35 L261 55 L249 90 L245 108 L242 113 L238 131 L234 139 L230 157 L227 162 L213 213 L211 215 L206 233 L201 241 L188 253 L177 256 L97 258 L90 275 L87 290 L76 322 L66 333 L49 340 L30 339 L20 334 L11 326 L3 309 L3 291 L19 236 L23 228 L27 210 L31 202 L35 184 L38 179 L42 161 L46 153 L58 109 L63 103 L137 104 L141 113 L126 158 L125 170 L129 175 L139 175 L146 161 L147 153 L165 97 L165 90 L159 84 L43 84 L28 80 L21 76 L13 68 L8 59 L6 51 L7 31 L10 23 L20 11 L26 7 Z'/%3E%3C/svg%3E");
     --shadow:2px 2px 0 var(--ink);
@@ -468,6 +474,29 @@
 
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
   @media(max-width:560px){ .toprail .mini span.full{display:none} .cta-host .arrow{display:none} }
+
+  /* ── 작은 글자만 프리텐다드 ────────────────────────────────────
+     플레이 화면과 같은 규칙이다. 13px 미만 규칙을 전수로 훑어 뽑고,
+     칩·상태줄처럼 짧은 말이 서는 자리를 손으로 더했다. */
+  .statusbar,
+  .eyebrow,
+  .cta-host .k,
+  .hostpill,
+  .scr-head p,
+  .art::after,
+  .plabel .tone,
+  .plabel .psub,
+  .chip,
+  .meta .sel,
+  .livetag,
+  .hc b,
+  .lockband span,
+  .adminbtn,
+  .adcard .adsub,
+  .adcard .adphint,
+  .adsub,
+  .adtab,
+  .adcp{font-family:var(--ui)}
 </style></head><body>
 
 <div class="stage">
