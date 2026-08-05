@@ -99,6 +99,18 @@ def fresh_room() -> dict:
         "night": {"open": False, "picks": {}, "result": None},
         # 질문지 — 순서대로 하나씩 묻는다. 안 물어진 것이 남는 게 이 막의 요점이다.
         "ask": {"open": False, "asked": [], "turn": None},
+        # 개발자 — 1차 범인지목의 최다 득표자가 그 자리를 받는다(§7-f). 아무도 못
+        # 밀어냈으면 빈 몸이 없어 «안 들어온다»(§7-h). 이 칸은 그 사람 본인 말고는
+        # 아무에게도 안 나간다 — 「누구인가」는 물론 「들어왔는가」조차.
+        "dev": {"decided": False, "id": "", "why": ""},
+        # 방탈출 — 열쇠 반쪽이 다 모이면 저절로 열린다. stage 가 이 막의 전부다.
+        #   ""(닫힘) → "locked"(보이지만 잠김) → "steps"(퍼즐) → "done"/"closed"
+        "escape": {"open": False, "stage": "", "equipped": [], "step": 0,
+                   "log": [], "done": None, "fails": 0, "placed": {}},
+        # 선지형 질문지 채점 — 답은 각자 것만, 결과는 채점한 뒤에 다 같이 본다.
+        "quiz": {"open": False, "answers": {}, "scored": False, "result": None},
+        # 자동으로 셀 수 있는 가점만 여기 쌓인다. 사람이 읽어주는 몫은 안 들어온다.
+        "scores": {},             # roleId -> {항목: 점수}
         "dest": {},               # roleId -> 향한 곳. 종막에서 각자 정하고, 다 정해야 열린다
         # 결재 결정문 — 자리마다 한 문장씩 고른다. 범인으로 지목된 사람은 결재권을 잃고
         # 그 칸은 남은 사람들의 투표로 찬다. picks 는 최종값, votes 는 잃은 칸의 표다.
@@ -149,13 +161,24 @@ def _sync_scenario_state() -> None:
     if not fn:
         return
     try:
-        fn({"night": dict(ROOM.get("night") or {}), "seq": ROOM.get("seq", 1)})
+        fn({"night": dict(ROOM.get("night") or {}), "seq": ROOM.get("seq", 1),
+            # 방탈출 판정과 인벤토리도 같은 방식으로 넘겨준다 — 사건이 진엔딩을
+            # 가를 때 「문이 열렸는가」를 물어보기 때문이다. 안 받는 사건에서는
+            # 이 두 칸이 그냥 무시된다.
+            "escape": dict(ROOM.get("escape") or {}),
+            "items": {rid: _inventory(rid) for rid in ROOM.get("roles", {})}})
     except Exception:                                   # noqa: BLE001
         pass
 
 
 def bump():
     ROOM["rev"] += 1
+    # 열쇠 반쪽이 다 모였는가 — 「모이면 저절로 열린다」라서 누가 무엇을 해서
+    # 모였는지는 안 따진다. 상태가 움직일 때마다 한 번씩 확인한다(열려 있으면 즉시 반환).
+    try:
+        _escape_try_open()
+    except Exception:                                   # noqa: BLE001 — 문 하나 때문에 판이 멈추면 안 된다
+        pass
     _sync_scenario_state()
 
 
@@ -375,6 +398,13 @@ def public_state() -> dict:
             "night": _night_public(),
             "ask": _ask_public(),
             "accuse1": _accuse1_public(),
+            # 방탈출 — 그 막이 열리기 전에는 None 이라 화면 자체가 안 뜬다.
+            # 정답은 여기에 한 톨도 안 실린다(고를 것과 물음만 나간다).
+            "escape": _escape_public(),
+            # 질문지 — 놓이기 전에는 None. 정답·남의 답·채점 결과는 때가 돼야 열린다.
+            "quiz": _quiz_public(),
+            # 화면이 「질문지가 놓였다(읽기만)」를 이 한 칸으로 본다.
+            "finalSheet": _final_sheet(),
             "sealed": list(ROOM.get("sealed") or []),
             "phase": {"seq": ph["seq"], "key": ph["key"], "name": ph["name"], "gm": ph["gm"], "ap": ap, "min": ph["min"],
                       "noMap": bool(ph.get("noMap")),
@@ -405,7 +435,11 @@ def public_state() -> dict:
             "overLimit": {rid: _over_limit(rid) for rid in ROOM["hands"] if _over_limit(rid) > 0},
             # 누가 도구를 몇 개 모았는가 — 이건 공개 정보다. 이 판의 시계다.
             # 무엇이 나왔는지는 푼 사람만 안다(개수만 나간다).
-            "items": {rid: len(_inventory(rid)) for rid in ROOM["roles"] if _inventory(rid)},
+            # 열쇠 반쪽은 도구가 아니라 입장권이라 이 셈에서 뺀다(§6) — 그건 문 앞에서만 센다.
+            "items": {rid: n for rid, n in
+                      ((r, len([c for c in _inventory(r)
+                                if not (SC.get_card(c) or {}).get("keyHalf")]))
+                       for r in ROOM["roles"]) if n},
             "itemNeed": len(getattr(SC, "ESCAPE_ITEMS", []) or []),
             "puzzleOpen": _puzzle_open_now()[0],
             "vault": _vault_public(),
@@ -580,6 +614,11 @@ def scenario():
     # 시나리오가 실어 보내더라도 여기서 걷어낸다. 그 사실은 /api/state 가
     # «그 배역 본인에게만» ageAsk 한 줄로 알린다.
     d.pop("ageInput", None)
+    # 선지형 질문지는 **정답을 달고 있다**(correct · bonus · correctIsDev · noDevKey).
+    # 원고가 그 표를 통째로 실어 보내더라도 여기서 물음과 선지만 남기고 걷어낸다 —
+    # 모두가 받는 대본에 정답이 실리면 종막의 채점이 아무 뜻이 없다.
+    if _quiz_on():
+        d["finalQuestions"] = _quiz_sheet()
     # 클라이언트는 STATE.scenarioId와 이걸 비교해 시나리오가 바뀐 걸 알아챈다.
     # 여태 어느 시나리오도 이 값을 안 실어 보내서, 호스트가 시나리오를 바꿔도
     # 다른 기기는 옛 대본을 그대로 들고 있었다.
@@ -919,13 +958,38 @@ def state(clientId: str = "", gm: int = 0, roleId: str = "", key: str = ""):
                 n += 1
             if ((ROOM.get("night") or {}).get("result")):
                 n += 1
+            # 문이 열렸으면 클리어 정보가 전원에게 한 장 열린다.
+            if (ROOM.get("escape") or {}).get("done"):
+                n += 1
+            # 개발자가 된 사람에게만 한 장 더. 남의 셈에는 안 붙는다.
+            if _dev_me(mine0):
+                n += 1
             st["extraN"] = n
+            # 자동으로 셀 수 있는 가점. 남의 것은 안 나간다.
+            sc = (ROOM.get("scores") or {}).get(mine0) or {}
+            if sc:
+                st["myScore"] = {"items": dict(sc), "total": sum(int(v) for v in sc.values())}
         # 자기가 이미 적었는지는 자기만 안다. 남이 무엇을 적었는지는 다 던진 뒤에 열린다.
         if st.get("accuse1") is not None:
             who = me
             # 내가 무엇을 적었는지는 언제든 나만 볼 수 있다. 남의 표는 종막까지 안 열린다.
             st["accuse1"]["mineDone"] = who in ((ROOM.get("accuse1") or {}).get("picks") or {})
             st["accuse1"]["mine"] = ((ROOM.get("accuse1") or {}).get("picks") or {}).get(who, "")
+        # 개발자 — «그 사람 본인에게만». 아닌 사람에게는 이 칸이 아예 없다.
+        # 「너는 개발자가 아니다」도, 「누군가 개발자가 됐다」도 안 나간다.
+        _dv = _dev_me(me)
+        if _dv:
+            st["dev"] = _dv
+            mc = _dev_my_cuts(me)
+            if mc:
+                # 그 사람 몫의 컷. 같은 id 의 공통 컷이 있으면 화면이 그것을 갈아 끼운다.
+                st["myCuts"] = list(st.get("myCuts") or []) + mc
+        # 방탈출 — 남는 열쇠가 내 것인지, 클리어 뒤의 내 몫이 무엇인지가 사람마다 다르다.
+        if st.get("escape") is not None and me:
+            st["escape"] = _escape_public(me)
+        # 질문지 — 내가 무엇을 적었는지는 나만 본다.
+        if st.get("quiz") is not None and me:
+            st["quiz"] = _quiz_public(me)
         # 소지품 — 내 것과, 압수돼 펴진 것만. 남의 주머니는 압수 전에는 안 보인다.
         _who = me
         _bl = _belongings_public(_who)
@@ -1187,6 +1251,13 @@ def sheet(role_id: str, clientId: str = ""):
         if r["clientId"] != clientId:
             return JSONResponse({"error": "자기 배역만 열람할 수 있습니다"}, status_code=403)
     s = SC.private_sheet(role_id)
+    # 개발자가 된 사람의 롤카드는 «갈아 끼워진다» — 덧붙는 것이 아니다. 개발자가 된
+    # 순간 예전 목표는 이미 다 아는 것이 되어 사라진다. 이 창구는 본인만 열 수 있으니
+    # 여기서 덮어도 남에게는 한 톨도 안 간다.
+    _dv = _dev_me(role_id)
+    if s and _dv and _dv.get("sheet"):
+        s.update(_dv["sheet"])
+        s["dev"] = True
     # 나이는 롤카드에도 «지금 값»으로 뜬다. 스스로 적는 배역이면 적어 넣은 것이,
     # 아니면 「신원미상」이 온다. 이 창구는 본인만 열 수 있으니 여기서는 ageInput 을 실어도 된다 —
     # 자기가 적을 수 있다는 건 자기가 알아야 할 일이다.
@@ -1414,16 +1485,25 @@ def _split_hand(role_id: str):
     clue, belong = [], []
     for cid in ROOM["hands"].get(role_id, []):
         c = SC.get_card(cid) or {}
-        if c.get("item"):
+        if _is_gear(c):
             continue
         (belong if c.get("loc") in bl else clue).append(cid)
     return clue, belong
 
 
+def _is_gear(card: dict) -> bool:
+    """상한 밖의 물건인가 — 도구(`item`)와 열쇠 반쪽(`keyHalf`).
+
+    열쇠 반쪽은 도구가 아니라 «입장권»이라 조합에는 안 쓴다. 그래도 손패 상한에
+    걸리면 안 된다 — 상한이 1장인 판에서 반쪽 하나를 주우면 그 자리에서 판이 멈춘다.
+    """
+    return bool((card or {}).get("item") or (card or {}).get("keyHalf"))
+
+
 def _inventory(role_id: str) -> list:
-    """그 사람이 풀어서 얻은 도구들. 상한이 없고, 판이 끝날 때까지 손에 남는다."""
+    """그 사람이 풀어서 얻은 도구·열쇠들. 상한이 없고, 판이 끝날 때까지 손에 남는다."""
     return [cid for cid in ROOM["hands"].get(role_id, [])
-            if (SC.get_card(cid) or {}).get("item")]
+            if _is_gear(SC.get_card(cid) or {})]
 
 
 def _over_limit(role_id: str) -> int:
@@ -1912,7 +1992,7 @@ def puzzle_list(role_id: str, clientId: str = ""):
         row = {"id": c["id"], "spot": c.get("spot", ""), "locName": c.get("locName", ""),
                "prompt": p.get("prompt", ""), "tries": n,
                # 무엇이 나오는지는 미리 안 말한다 — 「도구가 나온다」까지만.
-               "gives": bool(c.get("item") or (SC.get_card(p.get("grants") or "") or {}).get("item"))}
+               "gives": bool(_is_gear(c) or _is_gear(SC.get_card(p.get("grants") or "") or {}))}
         if n >= PUZZLE_HINT_AFTER:
             row["hint"] = SC.puzzle_hint(c["id"]) if hasattr(SC, "puzzle_hint") else p.get("hint", "")
         out.append(row)
@@ -2908,6 +2988,24 @@ def _seize_belongings() -> list:
     return cur
 
 
+def _accuse1_warn() -> None:
+    """지목 막에 들어설 때, 무엇이 걸려 있는지 «미리» 알린다.
+
+    위험을 알고도 이름을 부르는 것이 압박이고, 모르고 당하면 그냥 사고다. 알고
+    있으면 게임을 내려놓지 않는다 — 그래서 압수는 지목 «전에» 공지한다.
+
+    공개 범위도 같이 못 박는다. **소지품까지만이고 손패(조사카드)는 안 열린다** —
+    다 열리면 지목 한 번에 남은 목표가 통째로 0이 되고 이후가 소화경기가 된다.
+    소지품을 안 쓰는 사건에서는 이 줄이 아예 안 나간다.
+    """
+    if not (getattr(SC, "BELONGINGS", None) or {}):
+        return
+    txt = getattr(SC, "BELONGINGS_WARN", "") or (
+        "— 1차 범인지목입니다. 표를 가장 많이 받은 사람은 그 자리에서 «소지품»을 압수당합니다.\n"
+        "    압수된 소지품은 모두가 봅니다. 손패(조사카드)는 열리지 않습니다.")
+    ROOM["table"].append({"kind": "system", "broadcast": True, "text": txt})
+
+
 def _accuse1_public() -> dict | None:
     """그 막에서 던진 표. 판정은 안 한다 — 이 표는 종막까지 그대로 따라간다."""
     ph = SC.phase_by_seq(ROOM["seq"])
@@ -2964,8 +3062,903 @@ def accuse_interim(b: VoteReq):
                                       "text": "— 모두 적었습니다. 종이는 접힌 채로 봉투에 들어갔습니다.\n" + tail})
                 # 누구를 적었는지는 안 열어도, 제일 많이 불린 이름은 그 자리에서 값을 치른다.
                 _seize_belongings()
+                # 그리고 그 빈자리에 다른 것이 들어온다. 대화창에는 한 줄도 안 남는다.
+                _decide_dev_from_accuse()
+                _dev_fire_common_cut()
         bump()
     return {"ok": True, "accuse1": _accuse1_public()}
+
+
+# ══════════════════════════════════════════════════════════════════
+#  개발자 — 1차 범인지목의 대가
+# ══════════════════════════════════════════════════════════════════
+# 마을이 누군가를 범인으로 지목하면 그 자리가 legacy 로 표시되고, 안에 있던 것이
+# 지워진다. **빈 몸에 개발자가 들어온다.** 돌아올 명분이 필요 없다 — 나간 적이
+# 없고, 몸은 계속 마을에 있고 다른 것이 들어왔을 뿐이다.
+#
+# 아무도 못 밀어낸 판(동표)이나, 지울 자아가 없는 자리(플레이어)가 최다 득표인
+# 판에서는 **들어올 빈 몸이 없다 — 개발자는 안 들어온다.** 그것도 정상적인 판이다.
+#
+# 이 칸은 그 사람 본인 말고는 아무에게도 안 나간다. 「누가 개발자인가」는 물론
+# **「개발자가 들어왔는가」조차** 남의 화면에 실리면 안 된다 — 그게 새면 질문지
+# Q2(「있느냐 없느냐부터」)가 통째로 무의미해진다. 그래서 여기서는 대화창에도
+# 안 적고, 진행석이 읽는 사건 기록(_ev)에도 안 남긴다.
+#
+# 시나리오가 `DEV_FROM_ACCUSE = True` 를 적을 때만 돈다.
+def _dev_on() -> bool:
+    return bool(getattr(SC, "DEV_FROM_ACCUSE", False))
+
+
+def _dev_pool() -> list:
+    """개발자가 «들어갈 수 있는» 자리.
+
+    시나리오가 `DEV_PICK["pool"]` 로 적어 둔다. 안 적었으면 좌석 전부로 본다 —
+    누가 제외되는지는 사건의 사정이지 엔진이 알 일이 아니다.
+    """
+    dp = getattr(SC, "DEV_PICK", {}) or {}
+    pool = [r for r in (dp.get("pool") or []) if r in ROOM["roles"]]
+    return pool or list(ROOM["roles"])
+
+
+def _accuse1_tally() -> dict:
+    tally: dict[str, int] = {}
+    for t in ((ROOM.get("accuse1") or {}).get("picks") or {}).values():
+        tally[t] = tally.get(t, 0) + 1
+    return tally
+
+
+def _decide_dev_from_accuse() -> None:
+    """1차 범인지목의 결과로 개발자를 정한다. 한 판에 한 번만.
+
+    최다 득표자가 `pool` 안이면 그 사람이 개발자가 된다.
+    표가 갈리면(동표) 판이 아무도 못 밀어낸 것이므로 아무도 안 들어온다.
+    최다 득표자가 `pool` 밖이면 — 지울 자아가 없는 자리다 — 역시 안 들어온다.
+    """
+    if not _dev_on():
+        return
+    d = ROOM.setdefault("dev", {"decided": False, "id": "", "why": ""})
+    if d.get("decided"):
+        return
+    tally = _accuse1_tally()
+    if not tally:
+        return                     # 표가 하나도 없으면 아직 아무 일도 안 일어났다
+    top = max(tally.values())
+    lead = sorted(t for t, v in tally.items() if v == top)
+    pool = _dev_pool()
+    d["decided"] = True
+    d["seq"] = ROOM.get("seq")
+    if len(lead) != 1:             # 1:1:1 — 판이 못 정하면 빈 몸도 안 생긴다
+        d["id"], d["why"] = "", "tie"
+    elif lead[0] not in pool:      # 지울 자아가 없는 자리
+        d["id"], d["why"] = "", "empty"
+    else:
+        d["id"], d["why"] = lead[0], "top"
+
+
+def _dev_id() -> str:
+    """이 판의 개발자. 없으면 빈 문자열. **응답에 그대로 실으면 안 된다.**"""
+    d = ROOM.get("dev") or {}
+    return d.get("id", "") if (_dev_on() and d.get("decided")) else ""
+
+
+def _dev_me(role_id: str) -> dict | None:
+    """«그 사람 본인에게만» 가는 몫.
+
+    개발자가 아닌 사람에게는 None 이다 — 「아니다」라는 답조차 안 나간다.
+    """
+    if not _dev_on() or not role_id or _dev_id() != role_id:
+        return None
+    dp = getattr(SC, "DEV_PICK", {}) or {}
+    out = {"me": True, "title": dp.get("title", "관리자 모드"),
+           "note": dp.get("note", "")}
+    sheet = dp.get("sheet") or {}
+    if sheet:
+        out["sheet"] = sheet          # 롤카드가 갈아 끼워진다(기존 목표는 사라진다)
+    return out
+
+
+def _dev_my_cuts(role_id: str) -> list:
+    """개발자가 된 사람만 보는 컷 — `myCuts` 로 나간다.
+
+    방이 다 같이 보는 컷 목록에는 못 넣는다. 대신 «같은 id 의 공통 컷을 갈아 끼우는»
+    자리라, 원고가 `DEV_PICK["cutAll"]` 로 **모두가 보는 컷**을 하나 두면 그 자리에
+    이것이 덮인다 — 그러면 화면만 보고는 어느 갈래인지 알 수 없다.
+    """
+    if not _dev_me(role_id):
+        return []
+    dp = getattr(SC, "DEV_PICK", {}) or {}
+    key = dp.get("cut") or "dev"
+    fn = getattr(SC, "event_cut", None)
+    if not fn:
+        return []
+    try:
+        cuts = list(fn(key) or [])
+    except Exception:                                   # noqa: BLE001
+        cuts = []
+    if not cuts:
+        return []
+    return [{"id": dp.get("cutAll") or key, "cuts": cuts}]
+
+
+def _dev_fire_common_cut() -> None:
+    """개발자 개입 막의 **공통** 컷. 개발자가 들어왔든 안 들어왔든 «똑같이» 튼다.
+
+    들어온 판에서만 틀면 그 사실만으로 전원에게 공지가 된다(§7-h). 그래서 이 컷은
+    지목이 끝난 자리에서 결과와 상관없이 한 번 돈다. 원고가 `DEV_PICK["cutAll"]` 을
+    안 적었으면 아무 일도 안 일어난다.
+    """
+    key = (getattr(SC, "DEV_PICK", {}) or {}).get("cutAll")
+    if key:
+        _fire_cut(key)
+
+
+# ══════════════════════════════════════════════════════════════════
+#  방탈출 — 세상의 끝
+# ══════════════════════════════════════════════════════════════════
+# 열쇠 반쪽 둘이 «누구든» 인벤토리에 모이면 저절로 열린다. 열려도 아직 잠겨 있고,
+# 열쇠를 쥔 사람이 «장착»해야 풀린다. 그 뒤가 퍼즐이다 — 앞은 «도구를 고르는» 문제,
+# 마지막은 «어느 자리에 넣는가» 문제. 틀리면 문이 닫히고 판은 원래대로 돌아간다.
+#
+# 문안·정답은 전부 시나리오(`ESCAPE`)가 준다. 없는 사건에서는 이 화면이 아예 안 뜬다.
+# **정답은 어떤 응답에도 안 실린다** — 화면에 나가는 것은 물음과 고를 것뿐이다.
+def _escape_conf():
+    return getattr(SC, "ESCAPE", None)
+
+
+def _escape_keys() -> list:
+    """입장권 — 열쇠 반쪽들. 도구가 아니라 문을 «보이게» 하는 물건이라 따로 센다.
+
+    시나리오가 `ESCAPE["keys"]` 로 적어 두면 그것이 정본이다. 안 적었으면
+    카드의 `keyHalf` 표를 보고, 그것도 없으면 도구 이름에 「열쇠」가 든 것을 쓴다.
+    """
+    conf = _escape_conf() or {}
+    ks = [c for c in (getattr(SC, "KEY_HALVES", []) or []) if SC.get_card(c)]
+    if ks:
+        return ks
+    ks = [c for c in (conf.get("keys") or []) if SC.get_card(c)]
+    if ks:
+        return ks
+    ks = [c["id"] for c in SC.CARDS if c.get("keyHalf") or c.get("keyPart")]
+    if ks:
+        return ks
+    return [c["id"] for c in SC.CARDS if c.get("item") and "열쇠" in str(c.get("itemName") or "")]
+
+
+def _inv_all() -> dict:
+    """지금 «누구의» 인벤토리에 무엇이 있는가. {카드id: 배역id}"""
+    out = {}
+    for rid in ROOM["roles"]:
+        for cid in _inventory(rid):
+            out[cid] = rid
+    return out
+
+
+def _escape_state() -> dict:
+    return ROOM.setdefault("escape", {"open": False, "stage": "", "equipped": [], "step": 0,
+                                      "log": [], "done": None, "fails": 0, "placed": {}})
+
+
+def _escape_phase_seq() -> int:
+    """방탈출 막이 몇 번째 막인가. 없으면 0.
+
+    이 막은 **판의 고정 자리**에 있다 — 조건을 못 맞추면 통째로 지나가고 다음 막으로
+    이어진다. 성공도 실패도 건너뜀도 전부 그 다음 막으로 이어진다(종착점이 아니다).
+    """
+    for p in getattr(SC, "PHASES", []) or []:
+        if p.get("key") == "escape":
+            return int(p.get("seq", 0) or 0)
+    return 0
+
+
+def _escape_keys_ready() -> bool:
+    """열쇠 반쪽이 «누구든» 인벤토리에 다 모였는가."""
+    keys = _escape_keys()
+    if not keys:
+        return False
+    inv = _inv_all()
+    return all(k in inv for k in keys)
+
+
+def _phase_gate_ok(ph: dict) -> bool:
+    """그 막이 열릴 조건을 갖췄는가.
+
+    막에 `skipUnless` 가 붙어 있으면 그것이 정본이다 —
+    `{"inventoryHas": [카드id…], "need": "all"|"any"|숫자, "why": "…"}`.
+    적힌 카드가 **누구의 것이든** 인벤토리에 있으면 조건을 채운 것으로 본다.
+    조건을 못 채운 막은 **통째로 지나간다** — 막 이름조차 안 뜬다.
+
+    조건이 안 적힌 막은 언제나 열린다. 다만 방탈출 막만은, 조건을 안 적었어도
+    열쇠 반쪽이 모여야 열린다(그게 그 막의 뜻이다).
+    """
+    cond = ph.get("skipUnless") or {}
+    ids = [c for c in (cond.get("inventoryHas") or [])]
+    if not ids:
+        return _escape_keys_ready() if ph.get("key") == "escape" else True
+    inv = _inv_all()
+    have = [c for c in ids if c in inv]
+    need = cond.get("need", "all")
+    if isinstance(need, bool):
+        need = "all"
+    if isinstance(need, int):
+        return len(have) >= max(0, need)
+    return bool(have) if str(need) == "any" else len(have) == len(ids)
+
+
+def _escape_open(force: bool = False) -> bool:
+    """문을 연다(아직 잠긴 채로). 열쇠가 모자라면 False — 그 막은 건너뛴다."""
+    conf = _escape_conf()
+    if not conf:
+        return False
+    esc = _escape_state()
+    if esc.get("stage"):                       # 이미 열렸거나, 풀렸거나, 닫혔다
+        return bool(esc.get("open"))
+    if not (force or _escape_keys_ready()):
+        return False
+    esc["open"] = True
+    esc["stage"] = "locked"
+    with _drip():
+        ROOM["table"].append({"kind": "system", "broadcast": True,
+                              "text": conf.get("locked") or "세상의 끝... 이 보인다. 하지만 잠겨 있다."})
+        ROOM["table"].append({"kind": "system", "broadcast": True,
+                              "text": "    열쇠를 쥔 사람이 그것을 «장착»해야 열립니다."})
+    _ev("escape", state="locked")
+    return True
+
+
+def _escape_try_open() -> None:
+    """방탈출 막이 아직 «없는» 사건에서만 도는 폴백.
+
+    막이 `PHASES` 에 자리를 잡으면 그 막에 들어설 때만 열린다(위 `_escape_open`).
+    아직 그 막이 안 붙은 원고에서는 열쇠 둘이 모이는 순간 열어 준다 — 그래야
+    시나리오가 막을 얹기 전에도 이 기능을 굴려 볼 수 있다.
+    """
+    if _escape_phase_seq():
+        return
+    _escape_open()
+
+
+def _escape_shut_on_leave() -> None:
+    """방탈출 막을 떠난다. 못 풀고 나가면 문은 그냥 닫힌다 — 판은 다음 막으로 이어진다."""
+    esc = _escape_state()
+    if esc.get("stage") not in ("locked", "steps"):
+        return
+    conf = _escape_conf() or {}
+    esc["open"] = False
+    esc["stage"] = "closed"
+    esc["done"] = False
+    ROOM["table"].append({"kind": "system", "broadcast": True,
+                          "text": conf.get("shut") or "문은 열리지 않았다. 그 자리가 다시 닫힌다."})
+    _ev("escape", state="closed")
+
+
+def _escape_steps() -> list:
+    """이 문의 문제들. **답이 들어 있으므로 그대로 내보내면 안 된다.**
+
+    시나리오가 `ESCAPE["steps"]` 를 주면 그것이 정본이다. 아직 없으면
+    `slots` 와 `answer` 로 뼈대를 세운다 — 앞의 자리들은 「여기에 무엇을 꽂는가」
+    (도구를 고르는 문제)이고, 마지막은 「남은 하나를 어느 자리에 넣는가」다.
+    """
+    conf = _escape_conf() or {}
+    out = []
+    for i, s in enumerate(conf.get("steps") or []):
+        out.append({"id": s.get("id") or f"q{i+1}", "kind": s.get("kind") or "tool",
+                    "prompt": s.get("prompt", ""), "note": s.get("note", ""),
+                    "answer": s.get("answer")})
+    if out:
+        return out
+    slots = list(conf.get("slots") or [])
+    ans = dict(conf.get("answer") or {})
+    if not slots or not ans:
+        return []
+    for s in slots[:-1]:
+        out.append({"id": s.get("id", ""), "kind": "tool",
+                    "prompt": f'「{s.get("label") or s.get("id")}」 — 여기에 무엇을 꽂는가?',
+                    "note": s.get("note", ""), "answer": ans.get(s.get("id", ""), "")})
+    last = slots[-1]
+    out.append({"id": last.get("id", ""), "kind": "slot",
+                "prompt": "남은 것은 하나다 — 어느 자리에 넣는가?",
+                "note": "", "answer": last.get("id", "")})
+    code = conf.get("code") or {}
+    if code.get("require"):
+        out.append({"id": "code", "kind": "code", "prompt": code.get("prompt", ""),
+                    "note": "", "answer": code.get("answer")})
+    return out
+
+
+def _escape_tool_options() -> list:
+    """지금 낼 수 있는 도구들. 열쇠 반쪽과 이미 제자리에 꽂힌 것은 뺀다.
+
+    「누가 도구를 몇 개 모았는가」는 원래 공개 정보다. 문 앞에서는 무엇을 낼 수
+    있는지도 같이 봐야 고를 수 있으므로, 이 자리에서만 이름이 열린다.
+    """
+    esc = _escape_state()
+    keys = set(_escape_keys())
+    used = set((esc.get("placed") or {}).values())
+    out = []
+    for cid, rid in sorted(_inv_all().items()):
+        if cid in keys or cid in used:
+            continue
+        c = SC.get_card(cid) or {}
+        out.append({"id": cid, "name": c.get("itemName") or c.get("title", cid), "holder": rid})
+    return out
+
+
+def _escape_public(role_id: str = "") -> dict | None:
+    """방탈출 화면 몫. **정답은 한 톨도 안 실린다.**"""
+    conf = _escape_conf()
+    if not conf:
+        return None
+    esc = _escape_state()
+    if not esc.get("stage"):
+        return None                       # 아직 열리지 않았다 — 화면 자체가 안 뜬다
+    steps = _escape_steps()
+    keys = _escape_keys()
+    inv = _inv_all()
+    out = {"stage": esc.get("stage"), "open": bool(esc.get("open")),
+           "done": esc.get("done"), "fails": int(esc.get("fails", 0)),
+           "intro": conf.get("intro", ""),
+           "locked": conf.get("locked") or "세상의 끝... 이 보인다. 하지만 잠겨 있다.",
+           "slots": [{"id": s.get("id", ""), "label": s.get("label", ""), "note": s.get("note", "")}
+                     for s in (conf.get("slots") or [])],
+           "keys": [{"id": k, "name": (SC.get_card(k) or {}).get("itemName", ""),
+                     "equipped": k in [e.get("cardId") for e in (esc.get("equipped") or [])]}
+                    for k in keys],
+           "myKeys": [k for k in keys if role_id and inv.get(k) == role_id],
+           "placed": [{"slot": sid, "name": (SC.get_card(cid) or {}).get("itemName", "")}
+                      for sid, cid in (esc.get("placed") or {}).items()],
+           "log": list(esc.get("log") or [])[-8:],
+           "total": len(steps)}
+    if esc.get("stage") == "steps" and 0 <= esc.get("step", 0) < len(steps):
+        st = steps[esc["step"]]
+        row = {"n": esc["step"] + 1, "total": len(steps), "kind": st["kind"],
+               "prompt": st.get("prompt", ""), "note": st.get("note", "")}
+        if st["kind"] == "tool":
+            row["options"] = _escape_tool_options()
+        elif st["kind"] == "slot":
+            row["options"] = [{"id": s.get("id", ""), "label": s.get("label", ""),
+                               "note": s.get("note", "")} for s in (conf.get("slots") or [])]
+        else:
+            row["options"] = []            # 코드는 적어 넣는다
+        out["step"] = row
+    if esc.get("done"):
+        # 클리어 정보 — 여기서부터는 전원에게 열린다.
+        out["clear"] = conf.get("clear") or conf.get("after") or conf.get("ok", "")
+        out["bonus"] = int(conf.get("bonus", 5))
+        goals = conf.get("goals") or {}
+        if role_id and goals.get(role_id):
+            out["mineGoal"] = goals[role_id]      # 이 한 줄만 그 사람 몫이다
+    if esc.get("done") is False:
+        out["shut"] = conf.get("no", "문이 닫혔다.")
+    return out
+
+
+def _add_score(role_id: str, key: str, pts: int) -> None:
+    """자동으로 셀 수 있는 가점만 쌓는다."""
+    if not role_id:
+        return
+    row = ROOM.setdefault("scores", {}).setdefault(role_id, {})
+    row[key] = int(row.get(key, 0)) + int(pts)
+
+
+def _escape_finish(ok: bool) -> None:
+    conf = _escape_conf() or {}
+    esc = _escape_state()
+    esc["open"] = False
+    if not ok:
+        # 문이 닫힌다. 판은 원래대로 돌아간다 — 여기서 막을 되돌릴 것은 없다.
+        esc["stage"] = "closed"
+        esc["done"] = False
+        with _drip():
+            ROOM["table"].append({"kind": "system", "broadcast": True,
+                                  "text": conf.get("no") or "무언가가 제자리에 있지 않다. 문이 닫힌다."})
+        _ev("escape", state="closed")
+        return
+    esc["stage"] = "done"
+    esc["done"] = True
+    bonus = int(conf.get("bonus", 5))
+    for rid in (_human_roles() or list(ROOM["roles"])):
+        _add_score(rid, "escape", bonus)
+    with _drip():
+        ROOM["table"].append({"kind": "system", "broadcast": True,
+                              "text": conf.get("ok") or "문이 열린다."})
+        ROOM["table"].append({"kind": "system", "broadcast": True,
+                              "text": f"— 문이 열렸습니다. 모두에게 {bonus}점이 더해집니다.\n"
+                                      "    「내 정보 · 추가 정보」가 하나 늘었습니다."})
+    _fire_cut("escape:ok")
+    _ev("escape", state="done")
+
+
+# ══════════════════════════════════════════════════════════════════
+#  질문지 — 선지형 · 채점
+# ══════════════════════════════════════════════════════════════════
+# 「누가 범인인가」 하나만 물으면 개발자 축이 안 잡힌다. 선지로 묻고, 서로의 답이
+# 서로의 점수를 움직이게 한다 — 그래야 종막까지 서로를 못 놓는다.
+#
+# 원고의 `FINAL_QUESTIONS` 가 **선지형**(dict + options)이면 이 기능이 켜지고,
+# 옛 서술형(문자열 목록)이면 아무 일도 안 일어난다 — 예전 사건은 그대로 돈다.
+#
+#   {"id","q","options":[{"k","t"}],"correct":[선지키…],"bonus":{선지키: 점수},
+#    "points": 배점, "draft": True,
+#    "correctIsDev": True,   그 판의 «실제» 개발자 배역이 정답이 된다
+#    "noDevKey": "none",     개발자가 안 들어온 판에서는 이 선지가 정답
+#    "hitsDev": True}        개발자 감점을 세는 문항이 어느 것인가
+#
+# 개발자의 점수는 자기 답으로 안 만들어진다 — **다른 둘의 합**이 자기 점수이고,
+# **자기를 개발자로 맞힌 사람 수 × 20 을 뺀다**(비율이 아니라 고정 감점).
+# 그 셈의 값은 `SCORE_RULES["dev"]` 가 정한다.
+#
+# 원고가 이름을 어떻게 붙이든 읽는다 — 물음은 `q·text·t`, 선지는 `choices·options·opts`,
+# 선지 하나는 `{"id"|"k", "label"|"t"|"name"}` 이거나 그냥 문자열이다. 화면 쪽과
+# 원고 쪽이 서로 다른 이름을 쓰고 있어서, 엔진이 둘 다 받아 준다.
+_QUIZ_SECRETS = ("correct", "bonus", "correctIsDev", "noDevKey", "hitsDev", "answer")
+
+
+def _quiz_opts(q: dict) -> list:
+    for k in ("choices", "options", "opts"):
+        if q.get(k):
+            return list(q[k])
+    return []
+
+
+def _quiz_opt(o) -> dict:
+    if not isinstance(o, dict):
+        return {"k": str(o), "t": str(o)}
+    key = o.get("id") or o.get("k") or ""
+    return {"k": str(key), "t": str(o.get("label") or o.get("t") or o.get("name") or key)}
+
+
+def _quiz_text(q: dict) -> str:
+    return str(q.get("q") or q.get("text") or q.get("t") or "")
+
+
+def _quiz_questions() -> list:
+    return [q for q in (getattr(SC, "FINAL_QUESTIONS", []) or [])
+            if isinstance(q, dict) and _quiz_opts(q)]
+
+
+def _quiz_on() -> bool:
+    return bool(_quiz_questions())
+
+
+def _quiz_askable() -> list:
+    """답을 «받아야» 하는 문항의 id. 자리표시자(draft)는 세지 않는다."""
+    return [str(q.get("id") or "") for q in _quiz_sheet() if q.get("id")]
+
+
+def _quiz_qid(q: dict, i: int) -> str:
+    return str(q.get("id") or f"q{i + 1}")
+
+
+def _quiz_sheet() -> list:
+    """화면에 나가는 몫. **정답과 판정 키는 한 톨도 안 나간다.**
+
+    원고가 `final_questions_public()` 을 내주면 그것이 정본이다(자리표시자 문항은
+    거기서 이미 빠져 있고, **답안 배열의 순서도 그 결과의 순서**다). 안 내주는
+    사건에서는 서버가 같은 일을 손으로 한다 — 정답 키를 걷어내고 물음과 선지만 남긴다.
+    """
+    fn = getattr(SC, "final_questions_public", None)
+    if fn:
+        try:
+            return [dict(q) for q in (fn() or [])]
+        except Exception:                       # noqa: BLE001 — 질문지 하나 때문에 판이 멈추면 안 된다
+            pass
+    out = []
+    for i, q in enumerate(_quiz_questions()):
+        if q.get("draft"):
+            continue
+        out.append({"id": _quiz_qid(q, i), "q": _quiz_text(q), "note": q.get("note", ""),
+                    "options": [{"id": o["k"], "label": o["t"]} for o in
+                                (_quiz_opt(x) for x in _quiz_opts(q))]})
+    return out
+
+
+def _quiz_optmap() -> dict:
+    """`{문항id: {선지id}}` — 올라온 답이 실제로 있는 선지인지 보는 데만 쓴다."""
+    out = {}
+    for q in _quiz_sheet():
+        opts = [_quiz_opt(o) for o in _quiz_opts(q)]
+        out[str(q.get("id") or "")] = {o["k"] for o in opts}
+    return out
+
+
+def _quiz_correct(q: dict) -> set:
+    """그 문항의 정답 선지들. **이 값은 서버 밖으로 안 나간다.**
+
+    `correctIsDev` 가 붙은 문항은 정답이 판마다 다르다 — 개발자가 «들어온» 판에서는
+    그 배역이, 안 들어온 판에서는 `noDevKey` 선지가 정답이다.
+    """
+    ok = {k for k in (q.get("correct") or [])}
+    if q.get("correctIsDev"):
+        dev = _dev_id()
+        if dev:
+            ok.add(dev)
+        elif q.get("noDevKey"):
+            ok.add(q["noDevKey"])
+    return ok
+
+
+def _final_conf() -> dict:
+    return dict(getattr(SC, "FINAL_SHEET", {}) or {})
+
+
+def _quiz_show_seq() -> int:
+    """질문지를 «보여주기» 시작하는 막(`FINAL_SHEET["revealSeq"]`).
+
+    종막에만 있으면 무엇을 알아내야 하는지 모른 채 조사가 끝난다. 원고가 안 정했으면
+    방탈출 막(없으면 종막)부터 보여준다.
+    """
+    n = int(_final_conf().get("revealSeq") or getattr(SC, "QUIZ_SHOW_SEQ", 0) or 0)
+    if n:
+        return n
+    n = _escape_phase_seq()
+    if n:
+        return n
+    return _quiz_answer_seq()
+
+
+def _quiz_answer_seq() -> int:
+    """답을 «받는» 막(`FINAL_SHEET["answerSeq"]`). 안 정했으면 종막(`final`)이다."""
+    n = int(_final_conf().get("answerSeq") or 0)
+    if n:
+        return n
+    for p in getattr(SC, "PHASES", []) or []:
+        if p.get("key") == "final":
+            return int(p.get("seq", 0) or 0)
+    return 0
+
+
+def _quiz_answering() -> bool:
+    """지금이 답을 확정하는 자리인가. 그 전에는 질문지를 «읽기만» 한다(§7-g)."""
+    n = _quiz_answer_seq()
+    ph = SC.phase_by_seq(ROOM["seq"]) or {}
+    return bool(n) and ROOM["seq"] >= n and ph.get("key") != "reveal"
+
+
+def _quiz_notice() -> None:
+    """질문지가 놓이는 자리에서 한 번. 「내 점수가 남의 답에 깎인다」를 여기서 공표한다."""
+    q = ROOM.setdefault("quiz", {"open": False, "answers": {}, "scored": False, "result": None})
+    if q.get("open") or not _quiz_on():
+        return
+    q["open"] = True
+    conf = _final_conf()
+    txt = conf.get("intro") or getattr(SC, "QUIZ_NOTICE", "") or (
+        "질문지를 놓습니다. 지금은 «읽기만» 합니다 — 답은 종막에서 확정합니다.")
+    ROOM["table"].append({"kind": "system", "broadcast": True,
+                          "text": f'— {conf.get("title") or "질문지"} — {txt}'})
+    rule = conf.get("rule") or (
+        "★ 이 판에는 «남의 답에 내 점수가 깎이는» 문항이 있습니다."
+        if ((getattr(SC, "SCORE_RULES", {}) or {}).get("dev")) else "")
+    if rule:
+        ROOM["table"].append({"kind": "system", "broadcast": True, "text": rule})
+
+
+def _quiz_points_self() -> tuple:
+    """원고가 채점 함수를 안 내주는 사건용 — 서버가 직접 센다.
+
+    돌려주는 것: (`{배역: 점수}`, `{문항: [맞힌 배역…]}`, 감점 문항 id)
+    """
+    qs = _quiz_questions()
+    dconf = (getattr(SC, "SCORE_RULES", {}) or {}).get("dev") or {}
+    hit_q = dconf.get("hit_from") or next(
+        (_quiz_qid(q, i) for i, q in enumerate(qs) if q.get("hitsDev")), "")
+    answers = (ROOM.get("quiz") or {}).get("answers") or {}
+    seats = _human_roles() or list(ROOM["roles"])
+    pts, hits = {}, {}
+    for rid in seats:
+        picks = answers.get(rid) or {}
+        got = 0
+        for i, q in enumerate(qs):
+            if q.get("draft"):
+                continue
+            qid = _quiz_qid(q, i)
+            k = picks.get(qid, "")
+            if k and k in _quiz_correct(q):
+                got += int(q.get("points", 0) or 0)
+                hits.setdefault(qid, []).append(rid)
+            got += int((q.get("bonus") or {}).get(k, 0) or 0)
+        pts[rid] = got
+    return pts, hits, hit_q
+
+
+def _quiz_grade() -> dict | None:
+    """채점.
+
+    정답도 배점도 원고의 것이다 — 원고가 `score_final_answers(answers, dev_id)` 를
+    내주면 그것이 정본이고, 서버는 **개발자의 밑돈**만 얹는다. 그 밑돈은 질문지만으로
+    못 센다 — 「다른 두 사람의 «최종» 점수 합」이라 방이 쥔 다른 가점까지 세야 한다.
+    """
+    if not _quiz_on():
+        return None
+    dev = _dev_id()
+    answers = (ROOM.get("quiz") or {}).get("answers") or {}
+    seats = _human_roles() or list(ROOM["roles"])
+    sr = getattr(SC, "SCORE_RULES", {}) or {}
+    dconf = sr.get("dev") or {}
+    fn = getattr(SC, "score_final_answers", None)
+    res = None
+    if fn:
+        try:
+            res = fn({r: dict(answers.get(r) or {}) for r in seats}, dev_id=dev)
+        except Exception:                       # noqa: BLE001
+            res = None
+    if res:
+        pts = dict(res.get("points") or {})
+        hits = dict(res.get("hits") or {})
+        dsc = res.get("devScore") or {}
+        pen = int(dsc.get("penalty", 0) or 0)
+        floor = dsc.get("floor", dconf.get("floor"))
+        hit_q = dconf.get("hit_from", "")
+        nhit = int(res.get("devHits", 0) or 0)
+    else:
+        pts, hits, hit_q = _quiz_points_self()
+        per = abs(int(dconf.get("penalty_per_hit", -20) or -20))
+        nhit = len([r for r in (hits.get(hit_q) or []) if r != dev]) if (dev and hit_q) else 0
+        pen, floor = -per * nhit, dconf.get("floor")
+    rows = {}
+    for rid in seats:
+        # 방이 따로 쌓아 둔 가점(방탈출 등)도 최종 점수에 든다.
+        extra = sum(int(v) for v in (ROOM.get("scores", {}).get(rid) or {}).values())
+        own = int(pts.get(rid, 0) or 0)
+        rows[rid] = {"roleId": rid, "name": _person_name(rid), "quiz": own,
+                     "extra": extra, "total": own + extra, "dev": False,
+                     "picks": dict(answers.get(rid) or {})}
+    if dev and dev in rows:
+        # 개발자는 자기 점수를 못 얻는다 — 다른 둘의 «최종» 합이 밑돈이고,
+        # 거기서 자기를 맞힌 사람 수만큼 «고정»으로 깎인다.
+        others = [r for r in rows if r != dev]
+        base = sum(rows[r]["total"] for r in others)
+        total = base + pen
+        if floor is not None:
+            total = max(int(floor), total)
+        rows[dev].update({"dev": True, "quiz": 0, "base": base, "hits": nhit,
+                          "penalty": pen, "total": total,
+                          "formula": dconf.get("formulaKo", "")})
+    return {"rows": [rows[r] for r in seats if r in rows], "devId": dev,
+            "noDev": not dev, "hitQ": hit_q, "hits": hits}
+
+
+def _quiz_all_in() -> bool:
+    need = _quiz_askable()
+    answers = (ROOM.get("quiz") or {}).get("answers") or {}
+    seats = _human_roles()
+    if not seats or not need:
+        return False
+    return all(all((answers.get(r) or {}).get(q) for q in need) for r in seats)
+
+
+def _quiz_finish() -> None:
+    """채점한다. 결과는 «진상 공개»에서만 열린다 — 그 전에 열면 개발자가 그 자리에서 드러난다."""
+    q = ROOM.setdefault("quiz", {"open": False, "answers": {}, "scored": False, "result": None})
+    if q.get("scored") or not _quiz_on():
+        return
+    q["scored"] = True
+    q["result"] = _quiz_grade()
+    q["open"] = False
+    ROOM["table"].append({"kind": "system", "broadcast": True,
+                          "text": "— 질문지가 걷혔습니다. 채점은 엔딩에서 함께 봅니다."})
+    _ev("quiz", state="scored")
+
+
+def _final_sheet() -> dict | None:
+    """「질문지가 놓였다」 한 칸. 공개 = **읽기만** 되고 답은 아직 안 받는다(§7-g).
+
+    답을 받는 막(`FINAL_SHEET["answerSeq"]`)에 들어서면 이 칸이 닫힌다 —
+    화면이 그때부터 답을 받는 쪽으로 그린다.
+    """
+    if not _quiz_on():
+        return None
+    conf = _final_conf()
+    show = _quiz_show_seq()
+    open_ = bool(show and ROOM["seq"] >= show) and not _quiz_answering()
+    out = {"open": open_}
+    for k in ("title", "intro", "rule"):
+        if conf.get(k):
+            out[k] = conf[k]
+    return out
+
+
+def _quiz_public(role_id: str = "") -> dict | None:
+    """질문지 화면 몫. 정답도, 남의 답도, 채점 결과도 때가 되기 전에는 안 나간다."""
+    if not _quiz_on():
+        return None
+    ph = SC.phase_by_seq(ROOM["seq"]) or {}
+    q = ROOM.get("quiz") or {}
+    show = bool(q.get("open") or q.get("scored") or ROOM["seq"] >= _quiz_show_seq())
+    if not show:
+        return None
+    conf = _final_conf()
+    out = {"open": _quiz_answering() and not q.get("scored"),
+           "shown": True, "scored": bool(q.get("scored")),
+           "title": conf.get("title") or getattr(SC, "QUIZ_TITLE", "질문지"),
+           "note": conf.get("intro") or getattr(SC, "QUIZ_NOTE", ""),
+           "rule": conf.get("rule", ""),
+           "questions": _quiz_sheet(),
+           "answered": sorted((q.get("answers") or {}).keys()),
+           "voters": len(_human_roles())}
+    if role_id:
+        out["mine"] = dict((q.get("answers") or {}).get(role_id) or {})
+    if ph.get("key") == "reveal" and q.get("scored"):
+        out["result"] = q.get("result")            # 여기서만 열린다
+    return out
+
+
+def _quiz_from_list(answers: list) -> dict:
+    """화면이 보내는 «순서대로의 문자열 배열»을 선지 표로 옮긴다.
+
+    옛 서술 답과 같은 창구(`/api/final-answers`)로 올라오기 때문에, 번호가
+    `FINAL_QUESTIONS` 의 자리와 맞는다. 값은 선지 id 가 원칙이지만 이름으로 와도
+    받아 준다 — 화면 쪽과 원고 쪽이 서로 다른 이름을 쓰고 있어서다.
+    """
+    picks = {}
+    for i, q in enumerate(_quiz_sheet()):
+        qid = str(q.get("id") or "")
+        v = str((answers[i] if i < len(answers) else "") or "").strip()
+        if not (qid and v):
+            continue
+        opts = [_quiz_opt(o) for o in _quiz_opts(q)]
+        hit = next((o["k"] for o in opts if v in (o["k"], o["t"])), "")
+        if hit:
+            picks[qid] = hit
+    return picks
+
+
+class QuizPick(BaseModel):
+    roleId: str
+    clientId: str
+    answers: dict = {}        # {문항id: 선지키}
+
+
+@app.post("/api/quiz")
+def quiz_pick(b: QuizPick):
+    """질문지의 답을 낸다. 종막에서만 받는다 — 그 전에는 «읽기만» 하는 것이 이 판의 규칙이다."""
+    with LOCK:
+        if not _quiz_on():
+            return JSONResponse({"error": "이 사건에는 선지형 질문지가 없습니다"}, status_code=404)
+        r = ROOM["roles"].get(b.roleId)
+        if not r or r["clientId"] != b.clientId or r["mode"] != "human":
+            return JSONResponse({"error": "그 배역으로 답할 수 없습니다"}, status_code=403)
+        if not _quiz_answering():
+            return JSONResponse({"error": "종막에서 확정합니다"}, status_code=409)
+        q = ROOM.setdefault("quiz", {"open": False, "answers": {}, "scored": False, "result": None})
+        if q.get("scored"):
+            return JSONResponse({"error": "이미 걷혔습니다"}, status_code=409)
+        ok = _quiz_optmap()
+        picks = {}
+        for qid, k in (b.answers or {}).items():
+            if qid not in ok:
+                return JSONResponse({"error": f"없는 문항입니다 — {qid}"}, status_code=400)
+            if k and k not in ok[qid]:
+                return JSONResponse({"error": f"없는 선지입니다 — {qid}"}, status_code=400)
+            if k:
+                picks[qid] = k
+        q.setdefault("answers", {}).setdefault(b.roleId, {}).update(picks)
+        # 다 냈으면 그 자리에서 걷는다. 결과는 엔딩에서 함께 본다.
+        if _quiz_all_in():
+            _quiz_finish()
+        bump()
+    return {"ok": True, "quiz": _quiz_public(b.roleId)}
+
+
+class EscapeAct(BaseModel):
+    roleId: str
+    clientId: str
+    cardId: str = ""          # 장착할 열쇠 반쪽
+    pick: str = ""            # 이번 문제의 답(도구 id · 자리 id · 적어 넣은 코드)
+
+
+@app.post("/api/escape/equip")
+def escape_equip(b: EscapeAct):
+    """열쇠 반쪽을 문틀에 맞춘다. 반쪽이 다 맞물리면 잠긴 것이 풀린다."""
+    with LOCK:
+        conf = _escape_conf()
+        if not conf:
+            return JSONResponse({"error": "이 사건에는 그 문이 없습니다"}, status_code=404)
+        r = ROOM["roles"].get(b.roleId)
+        if not r or r["clientId"] != b.clientId or r["mode"] != "human":
+            return JSONResponse({"error": "그 배역으로 할 수 없습니다"}, status_code=403)
+        esc = _escape_state()
+        if esc.get("stage") != "locked":
+            return JSONResponse({"error": "지금 열쇠를 낼 자리가 아닙니다"}, status_code=409)
+        keys = _escape_keys()
+        if b.cardId not in keys:
+            return JSONResponse({"error": "그건 이 문의 열쇠가 아닙니다"}, status_code=409)
+        if b.cardId not in _inventory(b.roleId):
+            return JSONResponse({"error": "그 열쇠는 당신에게 없습니다"}, status_code=403)
+        done = [e.get("cardId") for e in (esc.get("equipped") or [])]
+        if b.cardId not in done:
+            esc.setdefault("equipped", []).append({"cardId": b.cardId, "roleId": b.roleId})
+            nm = (SC.get_card(b.cardId) or {}).get("itemName", "열쇠")
+            who = _person_name(b.roleId)
+            with _drip():
+                ROOM["table"].append({"kind": "system", "broadcast": True,
+                                      "text": f"{who}{_subj(who)} «{nm}»{_obj(nm)} 문틀에 맞췄다."})
+        if all(k in [e.get("cardId") for e in esc["equipped"]] for k in keys):
+            esc["stage"] = "steps"
+            esc["step"] = 0
+            with _drip():
+                ROOM["table"].append({"kind": "system", "broadcast": True,
+                                      "text": conf.get("unlocked") or "반쪽 둘이 맞물린다 — 잠긴 것이 풀렸다."})
+                if conf.get("intro"):
+                    ROOM["table"].append({"kind": "system", "broadcast": True, "text": conf["intro"]})
+            _ev("escape", state="steps")
+            if not _escape_steps():
+                # 아직 문제가 안 적힌 원고 — 열쇠만으로 열리는 문이 된다.
+                # 답할 것도 없는데 화면이 「답하시오」로 멈춰 서 있으면 판이 거기서 끝난다.
+                _escape_finish(True)
+        bump()
+    return {"ok": True, "escape": _escape_public(b.roleId)}
+
+
+@app.post("/api/escape/answer")
+def escape_answer(b: EscapeAct):
+    """이번 문제에 답한다. 틀리면 그 자리에서 문이 닫힌다.
+
+    도구를 고르는 문제는 «자기 인벤토리에 있는 것»만 낼 수 있다 — 없는 것을 꽂을 수는 없다.
+    """
+    with LOCK:
+        conf = _escape_conf()
+        if not conf:
+            return JSONResponse({"error": "이 사건에는 그 문이 없습니다"}, status_code=404)
+        r = ROOM["roles"].get(b.roleId)
+        if not r or r["clientId"] != b.clientId or r["mode"] != "human":
+            return JSONResponse({"error": "그 배역으로 할 수 없습니다"}, status_code=403)
+        esc = _escape_state()
+        if esc.get("stage") != "steps":
+            return JSONResponse({"error": "지금 답할 자리가 아닙니다"}, status_code=409)
+        steps = _escape_steps()
+        i = int(esc.get("step", 0))
+        if not steps or i >= len(steps):
+            return JSONResponse({"error": "답할 문제가 없습니다"}, status_code=409)
+        st = steps[i]
+        pick = (b.pick or "").strip()
+        if not pick:
+            return JSONResponse({"error": "고르지 않았습니다"}, status_code=400)
+        if st["kind"] == "tool":
+            # 고를 것은 인벤토리에서 뽑아 보여주지만, 막는 것은 «손에 있는가»까지만 본다.
+            # 원고가 도구 표시(item)를 아직 안 붙인 카드를 정답으로 적어두면, 조건을
+            # 인벤토리로 잠글 때 문이 영영 안 열리는 자리가 생긴다.
+            if pick not in (ROOM["hands"].get(b.roleId) or []):
+                return JSONResponse({"error": "그건 당신이 쥔 것이 아닙니다"}, status_code=403)
+            if pick in set((esc.get("placed") or {}).values()):
+                return JSONResponse({"error": "이미 꽂혀 있습니다"}, status_code=409)
+        ans = st.get("answer")
+        good = (pick in [str(a) for a in ans]) if isinstance(ans, (list, tuple, set)) \
+            else (pick == str(ans or ""))
+        who = _person_name(b.roleId)
+        if st["kind"] == "tool":
+            nm = (SC.get_card(pick) or {}).get("itemName", "무언가")
+            line = f"{who}{_subj(who)} «{nm}»{_obj(nm)} 꽂았다."
+        elif st["kind"] == "slot":
+            lb = next((s.get("label", pick) for s in (conf.get("slots") or []) if s.get("id") == pick), pick)
+            line = f"{who}{_subj(who)} 남은 것을 「{lb}」에 넣었다."
+        else:
+            line = f"{who}{_subj(who)} 코드를 눌렀다."
+        esc.setdefault("log", []).append(line)
+        with _drip():
+            ROOM["table"].append({"kind": "system", "broadcast": True, "text": line})
+        if not good:
+            fails = int(esc.get("fails", 0)) + 1
+            esc["fails"] = fails
+            if fails >= int(conf.get("tries", 1) or 1):
+                _escape_finish(False)
+                bump()
+                return {"ok": False, "escape": _escape_public(b.roleId)}
+            with _drip():
+                ROOM["table"].append({"kind": "system", "broadcast": True,
+                                      "text": conf.get("miss") or "들어가지 않는다. 다시 골라야 한다."})
+            bump()
+            return {"ok": False, "escape": _escape_public(b.roleId)}
+        if st["kind"] == "tool":
+            esc.setdefault("placed", {})[st["id"]] = pick
+        elif st["kind"] == "slot":
+            # 남은 하나가 그 자리에 들어갔다. 무엇이 남았는지는 인벤토리가 안다.
+            left = [o["id"] for o in _escape_tool_options()]
+            esc.setdefault("placed", {})[pick] = left[0] if len(left) == 1 else ""
+        esc["step"] = i + 1
+        if esc["step"] >= len(steps):
+            _escape_finish(True)
+        bump()
+    return {"ok": True, "escape": _escape_public(b.roleId)}
 
 
 @app.get("/api/hand/{role_id}")
@@ -3222,8 +4215,26 @@ def _advance():
         # 이미 모인 표로 셈한다. 안 그러면 소지품이 영영 안 열린 채로 판이 끝난다.
         if SC.phase_by_seq(ROOM["seq"]).get("key") == "accuse":
             _seize_belongings()
+            # 표가 다 모였으면 그 결과로 개발자가 정해진다. 아무에게도 안 알린다 —
+            # 본인 화면에만 뜬다(_dev_me).
+            _decide_dev_from_accuse()
+            _dev_fire_common_cut()
+        # 방탈출 막을 떠난다면, 못 푼 문은 여기서 닫힌다.
+        if SC.phase_by_seq(ROOM["seq"]).get("key") == "escape":
+            _escape_shut_on_leave()
+        # 답을 받는 막을 떠나면 질문지는 그 자리에서 걷힌다 — 한 사람이 안 냈어도 셈은 선다.
+        if _quiz_on() and _quiz_answering():
+            _quiz_finish()
         if ROOM["seq"] < len(SC.PHASES):
             ROOM["seq"] += 1
+            # 방탈출 막은 고정 자리에 있지만 «조건이 안 차면 통째로 지나간다».
+            # 열쇠 반쪽이 아무의 인벤토리에도 없으면 그 막은 아예 안 열리고
+            # 바로 다음 막(3차 조사)으로 이어진다 — 막 이름도 안 뜬다.
+            while (ROOM["seq"] < len(SC.PHASES)
+                   and not _phase_gate_ok(SC.phase_by_seq(ROOM["seq"]))):
+                _sk = SC.phase_by_seq(ROOM["seq"])
+                _ev("phase_skipped", name=_sk.get("name", ""), key=_sk.get("key", ""))
+                ROOM["seq"] += 1
             seq = ROOM["seq"]
             ph = SC.phase_by_seq(seq)
             _reveal_autos()          # 이 막에 스스로 열리는 자리부터 편다
@@ -3260,6 +4271,15 @@ def _advance():
                 _night_open()
             if ph.get("key") == "ask":
                 _ask_open()
+            if ph.get("key") == "escape":
+                # 여기까지 왔다는 것은 그 막의 조건을 채웠다는 뜻이다(위에서 걸렀다).
+                _escape_open(force=True)
+            if ph.get("key") == "accuse":
+                _accuse1_warn()
+            # 질문지는 종막 전에 «놓이기»만 한다. 무엇을 알아내야 하는지 알고
+            # 남은 막을 굴리라는 뜻이다(답은 종막에서 확정한다).
+            if _quiz_show_seq() and seq >= _quiz_show_seq():
+                _quiz_notice()
             ROOM["flood"] = _flood_for(seq)
             _drip_from(_drip0)
             bump()
@@ -3341,6 +4361,16 @@ def final_answers(b: FinalAnswers):
         if not r or r["clientId"] != b.clientId:
             return JSONResponse({"error": "그 배역의 답이 아닙니다"}, status_code=403)
         ROOM["finalAnswers"][b.roleId] = list(b.answers)
+        # 선지형 문항이 섞여 있으면 그 몫은 채점으로 간다. 서술은 예전처럼 기록으로만 남는다.
+        # 답이 «확정»되는 자리는 종막뿐이다 — 그 전에는 질문지를 읽기만 한다(§7-g).
+        if _quiz_on() and _quiz_answering():
+            q = ROOM.setdefault("quiz", {"open": False, "answers": {}, "scored": False, "result": None})
+            if not q.get("scored"):
+                picks = _quiz_from_list(list(b.answers))
+                if picks:
+                    q.setdefault("answers", {}).setdefault(b.roleId, {}).update(picks)
+                    if _quiz_all_in():
+                        _quiz_finish()
         bump()
     return {"ok": True, "answers": list(b.answers)}
 

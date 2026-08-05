@@ -2118,6 +2118,112 @@
   .dc.puz{border-style:dashed;border-color:color-mix(in srgb,var(--gold) 40%,var(--line))}
   .dc.puz .wh{color:var(--gold-b)}
   .dc.puz .st{color:var(--gold-b)}
+
+  /* ── 열쇠 표시 ─────────────────────────────────────────────────
+     퍼즐카드는 조사턴으로 여는 자리가 아니다. 점선 테두리만으로는 «지금은 못 여는
+     칸» 처럼 읽혀서, 열쇠를 붙여 «수수께끼로 여는 자리» 라는 걸 못 박는다.
+     SVG 에셋은 새로 만들지 않는다 — 5×9 비트맵을 box-shadow 로 찍어 그린다.
+     한 칸이 2px 이고, 아래 좌표가 그 비트맵이다.
+         . █ █ █ .      고리
+         █ . . . █
+         █ . . . █
+         . █ █ █ .
+         . . █ . .      대
+         . . █ . .
+         . . █ █ .      이빨
+         . . █ . .
+         . . █ █ .                                                        */
+  .kmk{display:inline-block;position:relative;width:10px;height:18px;flex:0 0 auto;
+    vertical-align:-4px}
+  .kmk::before{content:"";position:absolute;left:2px;top:0;width:2px;height:2px;
+    background:currentColor;
+    box-shadow:2px 0,4px 0,
+               -2px 2px,6px 2px,
+               -2px 4px,6px 4px,
+               0 6px,2px 6px,4px 6px,
+               2px 8px,2px 10px,
+               2px 12px,4px 12px,
+               2px 14px,
+               2px 16px,4px 16px}
+  /* 카드 어디에 붙어도 같은 딱지다 — 현황판 칸·큰 화면·손패가 같은 것을 본다.
+     8비트라 모서리는 각지고, 그림자는 blur 없이 2px 밀린다. */
+  .keytag{display:inline-flex;align-items:center;gap:5px;padding:2px 8px 2px 6px;
+    border:1px solid color-mix(in srgb,var(--gold) 55%,var(--line));
+    background:rgba(0,230,147,.10);color:var(--gold-b);
+    font-size:11px;font-weight:700;letter-spacing:.04em;
+    box-shadow:var(--shadow-sm)}
+  .keytag.cold{border-color:color-mix(in srgb,var(--cold) 45%,var(--line));
+    background:rgba(195,186,176,.10);color:var(--cold)}
+  /* 현황판 칸은 좁아서 딱지가 안 들어간다 — 모서리에 열쇠만 찍는다 */
+  .dc .keycorner{position:absolute;right:8px;top:8px;color:var(--gold-b);opacity:.9}
+  .dc.lock .keycorner{opacity:.55}
+  .dc:has(.dc-qa) .keycorner{top:28px}
+  /* 열쇠가 앉은 자리는 비워둔다 — 안 그러면 긴 제목이 그 밑으로 지나간다 */
+  .dc:has(.keycorner) .sp,.dc:has(.keycorner) .ti{padding-right:18px}
+
+  /* ── 조사 현황의 라운드 탭 ──────────────────────────────────────
+     밤이 없고 조사가 여러 번인 판에서는, 라운드가 섞여 한 줄로 늘어서면
+     «지금 뒤질 수 있는 자리» 와 «지난 라운드의 흔적» 이 구분이 안 된다.
+     라운드 수는 시나리오가 정한다 — 여기에 숫자를 박아두지 않는다. */
+  .dtabs{display:flex;gap:6px;margin:0 0 10px;flex-wrap:wrap}
+  .dtab{flex:1 1 0;min-width:104px;display:flex;align-items:center;justify-content:center;gap:6px;
+    padding:8px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:0;
+    color:var(--sub);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;
+    box-shadow:var(--shadow-sm);transition:.13s}
+  .dtab:hover{color:var(--ink)}
+  .dtab .dt-n{font-family:var(--mono);letter-spacing:.08em}
+  .dtab .dt-c{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .dtab .dt-now{font-size:10px;letter-spacing:.1em;color:var(--gold-b);
+    border:1px solid color-mix(in srgb,var(--gold) 45%,var(--line));padding:0 4px}
+  .dtab .kmk{width:7px;height:12px;vertical-align:-2px;opacity:.8}
+  .dtab.on{color:#fff;border-color:var(--gold);background:rgba(0,230,147,.12);
+    box-shadow:var(--shadow-sm),inset 0 1px 0 rgba(255,255,255,.08)}
+  .dtab.on .dt-c{color:var(--gold-b)}
+  /* 아직 안 열린 라운드 — 눌러볼 수는 있고, 대신 잠긴 판이 뜬다 */
+  .dtab.lk{border-style:dashed;color:var(--muted);box-shadow:none;background:var(--bg2)}
+  .dtab.on.lk{color:var(--cold);border-color:var(--cold);background:rgba(195,186,176,.10)}
+  .dlock{margin-top:2px;padding:20px 16px;text-align:center;background:var(--bg2);
+    border:1px dashed color-mix(in srgb,var(--gold) 34%,var(--line));
+    box-shadow:inset 2px 2px 0 rgba(0,0,0,.5)}
+  .dlock .kmk{color:var(--gold-b);opacity:.85;margin-bottom:8px}
+  .dlock .dl-t{font-family:var(--pix);font-size:17px;font-weight:800;color:var(--gold-b);letter-spacing:.04em}
+  .dlock .dl-d{margin-top:7px;font-size:12px;line-height:1.7;color:var(--muted)}
+
+  /* ── 종막 질문지 ────────────────────────────────────────────────
+     선지형이다. 2차 조사 뒤에 «공개» 되고(읽기만), 답은 종막에 «확정» 된다.
+     이 판의 압박은 채점 규칙 자체라, 그 한 줄이 문항보다 먼저 눈에 들어와야 한다. */
+  .fqwarn{margin:0 0 14px;padding:14px 15px;border:2px solid var(--ember);
+    background:linear-gradient(180deg,rgba(200,68,47,.16),rgba(200,68,47,.05));
+    box-shadow:var(--shadow-sm)}
+  .fqwarn .fw-t{font-family:var(--pix);font-size:19px;font-weight:800;line-height:1.45;
+    color:var(--ember-b);word-break:keep-all}
+  .fqwarn .fw-d{margin-top:7px;font-size:12px;line-height:1.7;color:var(--sub)}
+  .fqstate{display:inline-flex;align-items:center;gap:6px;margin-bottom:12px;padding:3px 9px;
+    border:1px solid var(--line);background:var(--panel2);color:var(--cold);
+    font-size:11px;letter-spacing:.1em;font-weight:700;box-shadow:var(--shadow-sm)}
+  .fq{margin-bottom:14px;padding:12px 13px;background:var(--panel);border:1px solid var(--line);
+    box-shadow:var(--shadow-sm)}
+  .fq .fq-q{font-size:14.5px;font-weight:800;color:var(--ink);line-height:1.6;word-break:keep-all}
+  .fq .fq-n{margin-top:4px;font-size:11.5px;color:var(--muted);line-height:1.6}
+  .fq-opts{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+  .fq-o{display:flex;align-items:center;gap:9px;width:100%;text-align:left;font-family:inherit;
+    background:var(--bg2);border:1px solid var(--line);border-radius:0;padding:10px 11px;
+    color:var(--ink);font-size:13.5px;cursor:pointer;transition:.13s}
+  .fq-o:hover{border-color:var(--cold)}
+  /* 라디오 꼭지도 픽셀이다 — 둥근 점을 두면 이 화면에서 혼자 다른 세계가 된다 */
+  .fq-o .fo-b{flex:0 0 auto;width:12px;height:12px;border:1px solid var(--case-line);
+    background:var(--bg);box-shadow:inset 1px 1px 0 rgba(0,0,0,.6)}
+  .fq-o.on{border-color:var(--gold);background:rgba(0,230,147,.10);color:#fff}
+  .fq-o.on .fo-b{background:var(--gold);border-color:var(--gold);box-shadow:none}
+  .fq-o[disabled]{cursor:default;opacity:.75}
+  .fq-o[disabled]:hover{border-color:var(--line)}
+  .fq-o.on[disabled]{opacity:1}
+  .fq-a{margin-top:10px;padding:9px 11px;background:var(--bg2);border-left:2px solid var(--gold);
+    font-size:13.5px;color:var(--gold-b);word-break:keep-all}
+  .fq-a.none{border-left-color:var(--line);color:var(--muted)}
+  .fq-foot{display:flex;align-items:center;gap:10px;margin-top:4px}
+  .fq-foot .ff-n{flex:1 1 auto;font-size:11.5px;color:var(--muted)}
+
   .qa-peek{margin-top:10px;padding:10px;border:1px dashed #c9c2ab;background:#141310}
   .qa-peek .qk{color:#efe9d6;font-size:11px;letter-spacing:.08em;margin-bottom:5px}
   .qa-peek .qh{color:#b8b2a2;font-size:12px;margin-top:7px;line-height:1.6}
@@ -2332,6 +2438,14 @@
   .mh-eb,
   .case-h,
   .zc-w,
+  .keytag,
+  .dtab .dt-c,
+  .dtab .dt-now,
+  .dlock .dl-d,
+  .fqwarn .fw-d,
+  .fqstate,
+  .fq .fq-n,
+  .fq-foot .ff-n,
   .filt{font-family:var(--ui)}
 </style>
 </head>
@@ -3157,7 +3271,10 @@ function vnArmAudio(){
 
 let vnCuts=[], vnAt=0, vnTimer=null, vnTyping=false, vnIsEvent=false;
 function vnBuildCuts(){
-  const cuts=(SCEN&&SCEN.openingCuts)||[];
+  const common=(SCEN&&SCEN.openingCuts)||[];
+  // 오프닝도 배역마다 갈릴 수 있다. 서버가 내 몫을 주면 그걸 쓰되, 컷 수는 공통에 맞춘다.
+  const mineOpen=(STATE&&STATE.myOpeningCuts)||null;
+  const cuts=(mineOpen&&mineOpen.length)?vnEvenOut(mineOpen,common.length,"opening"):common;
   if(cuts.length) return cuts.map(c=>({img:c.img||"",who:c.who||"",fx:c.fx||"",lines:c.lines||[],focus:c.focus||""}));
   const ls=String((SCEN&&SCEN.intro)||"").split("\n").map(s=>s.trim()).filter(Boolean);
   const out=[]; for(let i=0;i<ls.length;i+=2) out.push({img:"",who:"",fx:"",lines:ls.slice(i,i+2)});
@@ -3208,6 +3325,39 @@ function playCuts(cuts){
   $("vn").classList.add("on"); vnArmAudio(); vnRender();
   return true;
 }
+/* ── 배역마다 다른 컷 ─────────────────────────────────────────────
+   개발자 개입 같은 막에서는 당사자와 나머지가 «다른 것»을 봐야 한다. 서버가 그 사람
+   몫을 STATE.myCuts 로 따로 내려주면 같은 id 의 공통 컷을 그것으로 갈아 끼운다.
+   안 내려오면 예전처럼 공통 컷(STATE.cuts)이 전원에게 그대로 돈다.
+
+   ★ 갈래마다 «컷 수와 재생 시간이 같아야» 한다. 한쪽이 짧으면 화면만 보고도 어느
+     갈래인지가 새고, 「개발자가 없는 판」에서 컷을 건너뛰면 그 사실이 전원에게
+     공지된다. 그래서 여기서 컷 수를 공통 컷에 맞춰 두는 안전판을 둔다 — 이게 걸리면
+     시나리오가 잘못 쓰인 것이므로 콘솔에 남긴다. */
+function vnEvenOut(cuts, n, id){
+  const out=(cuts||[]).slice();
+  if(!n||out.length===n) return out;
+  console.warn(`[vn] 「${id}」 갈래마다 컷 수가 다릅니다 — 내 몫 ${out.length}컷 / 공통 ${n}컷.`
+    +" 화면만 보고는 어느 갈래인지 알 수 없어야 합니다. 시나리오에서 컷 수를 맞춰주세요.");
+  out.length=Math.min(out.length,n);
+  while(out.length<n){ const last=out[out.length-1]||{}; out.push({img:last.img||"",who:"",fx:"",lines:[]}); }
+  return out;
+}
+/* 지금 이 화면이 틀 컷 목록. 공통 컷 위에 내 몫을 덮어쓴 것이다. */
+function cutQueue(){
+  const common=(STATE&&STATE.cuts)||[];
+  const mine=(STATE&&STATE.myCuts)||[];
+  if(!mine.length) return common;
+  const left={}; mine.forEach(c=>{ if(c&&c.id) left[c.id]=c; });
+  const out=common.map(c=>{
+    const m=left[c.id]; if(!m) return c;
+    delete left[c.id];
+    return {id:c.id, cuts:vnEvenOut(m.cuts,(c.cuts||[]).length,c.id)};
+  });
+  // 공통에 짝이 없는 내 몫(나만 보는 밤의 결과 같은 것)은 뒤에 그대로 붙인다
+  mine.forEach(c=>{ if(c&&c.id&&left[c.id]) out.push(c); });
+  return out;
+}
 /* 폴링마다 불린다. 아직 안 본 컷 중 가장 오래된 것 하나만 튼다 —
    여러 개가 한꺼번에 밀려도 한 번에 하나씩, 조사 중이 아니면 아예 안 튼다. */
 function maybePlayCut(){
@@ -3215,7 +3365,7 @@ function maybePlayCut(){
   if((STATE.phase||{}).key==="open") return;          // 오프닝 자리는 오프닝 것이다
   if($("vn").classList.contains("on")) return;
   if(document.querySelector(".modal.on")) return;     // 카드 읽는 중에 화면을 뺏지 않는다
-  const q=(STATE.cuts||[]).filter(c=>!cutWasSeen(c.id));
+  const q=cutQueue().filter(c=>!cutWasSeen(c.id));
   if(!q.length) return;
   const c=q[0];
   cutMarkSeen(c.id);                                   // 열 때 표시한다 — 중간에 껐다 켜도 반복되지 않게
@@ -3490,7 +3640,8 @@ function showSpot(id){
   m.innerHTML=`<div class="box" onclick="event.stopPropagation()">
     <div class="mhead"><div class="mh-t"><span class="mh-eb">${esc(c.locName||"")}</span>
       <h2>${esc(c.spot||"이 자리")}</h2>
-      <span class="mh-sub">조사 R${c.round}${st.who?" · "+esc(st.who.name)+" 소지":""}</span></div>
+      <span class="mh-sub">조사 R${c.round}${st.who?" · "+esc(st.who.name)+" 소지":""}</span>
+      ${c.locked?`<div style="margin-top:6px">${keyTag("수수께끼로 여는 자리")}</div>`:""}</div>
       <button class="mh-x" onclick="this.closest('.modal').remove()">${ICO.close}</button></div>
     <div class="mbody">${body}</div>
     <div class="mfoot">${(qaOn&&!full)?`<button class="btn quiet" onclick="this.closest('.modal').remove();qaPeek('${c.id}')">QA 엿보기</button>`:""}
@@ -3773,8 +3924,8 @@ function buildGMBody(ph,cur,ap,k,checked,used,fresh){
     // 답이 어디로 가는지가 곧 진행석이 있다는 뜻이다 — 여기로 모아 펼쳐 보여준다.
     // 답안 자체는 GM 키가 있어야 읽히므로(서버가 그렇게 잠가 뒀다) 따로 불러온다.
     setTimeout(loadGMFinalAnswers,0);
-    return gmCinematic("종막 · 질문지", (SCEN.finalQuestions||[]).map((q,i)=>`${i+1}. ${q}`).join("\n"), "",
-      `각자 자기 기기에서 서술로 답합니다. 답은 이 진행석으로 모입니다.
+    return gmCinematic("종막 · 질문지", finalQs().map((q,i)=>`${i+1}. ${fqText(q)}`).join("\n"), "",
+      `${fqHasChoices()?"각자 자기 기기에서 선지를 하나씩 고릅니다":"각자 자기 기기에서 서술로 답합니다"}. 답은 이 진행석으로 모입니다.
        <div class="gm-ans" id="gmAnswers"><div class="gm-note">답안을 불러오는 중…</div></div>`);
   }
   if(k==="ask"){
@@ -3893,13 +4044,13 @@ async function loadGMFinalAnswers(){
   let d; try{ d=await (await fetch("/api/gm?key="+encodeURIComponent(gmKey))).json(); }catch(e){ d={error:"network"}; }
   if(!$("gmAnswers")) return;
   if(d.error){ box.innerHTML=`<div class="gm-note">답안을 열지 못했습니다 (${esc(d.error)}). <b>GM 키 바꾸기</b>로 키를 맞춰주세요.</div>`; return; }
-  const fa=d.finalAnswers||{}; const qs=SCEN.finalQuestions||[];
+  const fa=d.finalAnswers||{}; const qs=finalQs();
   const ids=(SCEN.characters||[]).filter(c=>(fa[c.id]||[]).length).map(c=>c.id);
   if(!ids.length){ box.innerHTML=`<div class="gm-note">아직 들어온 답안이 없습니다. 각자 제출하면 여기에 쌓입니다.</div>`; return; }
   box.innerHTML=ids.map(id=>{ const c=roleById(id)||{}; const a=fa[id]||[];
     return `<div class="gm-a" style="--ac:${c.color||"var(--gold)"}">
       <div class="ah">${avaHTML(c,"sm")} ${esc(c.name||id)}</div>
-      ${qs.map((q,i)=>`<div class="aq">${i+1}. ${esc(q)}</div><div class="ab">${esc((a[i]||"").trim()||"(무응답)")}</div>`).join("")}
+      ${qs.map((q,i)=>`<div class="aq">${i+1}. ${esc(fqText(q))}</div><div class="ab">${esc(fqAnswerText(q,(a[i]||"").trim())||"(무응답)")}</div>`).join("")}
     </div>`; }).join("")
     +`<div class="gm-note" style="margin-top:10px">${ids.length}명 제출 / 사람 배역 ${Object.keys(STATE.roles||{}).filter(r=>(STATE.roles[r]||{}).mode==="human").length}명</div>`;
 }
@@ -4047,10 +4198,13 @@ function renderPanel(ph){
     const pubc=(STATE.revealed||[]).filter(c=>!mineIds.has(c.id));
     const hcards=(myRoleValid()?myHand:[]).map(c=>({...c,_pub:false})).concat(pubc.map(c=>({...c,_pub:true})));
     p.innerHTML=`${handWarn()}<div class="clue-h"><h3>토론</h3><span class="pill" style="color:var(--me,var(--gold-b))">내 손패 ${myHand.length}</span>${pubc.length?`<span class="pill" style="color:var(--cold)">전체공개 ${pubc.length}</span>`:""}<span class="mspace"></span><button class="mrule" onclick="showTalkRule()" aria-label="토론 규칙">?</button></div>
-    <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px">${hcards.map(c=>`<div class="card" style="margin:0;padding:10px 12px;border-color:${c._pub?"#4b453d":"color-mix(in srgb,var(--me,var(--gold)) 42%,var(--line))"};background:${c._pub?"linear-gradient(160deg,#141d24,#111319)":"linear-gradient(160deg,color-mix(in srgb,var(--me,var(--gold)) 12%,#151413),#151413)"};cursor:pointer" onclick="openCard('${c.id}')"><span class="pill" style="color:${c._pub?"var(--cold)":"var(--me,var(--gold-b))"}">${c._pub?"전체공개":"내 손패"}</span> <b style="color:${c._pub?"var(--cold)":"var(--me,var(--gold-b))"}">${esc(c.title)}</b> <span class="pill">${esc(c.locName)}${c.spot?"·"+esc(c.spot):""}·R${c.round}</span>${comboBadge(c.id)}${pairsOf(c.id).map(k=>{
+    <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px">${hcards.map(c=>`<div class="card" style="margin:0;padding:10px 12px;border-color:${c._pub?"#4b453d":"color-mix(in srgb,var(--me,var(--gold)) 42%,var(--line))"};background:${c._pub?"linear-gradient(160deg,#141d24,#111319)":"linear-gradient(160deg,color-mix(in srgb,var(--me,var(--gold)) 12%,#151413),#151413)"};cursor:pointer" onclick="openCard('${c.id}')"><span class="pill" style="color:${c._pub?"var(--cold)":"var(--me,var(--gold-b))"}">${c._pub?"전체공개":"내 손패"}</span> <b style="color:${c._pub?"var(--cold)":"var(--me,var(--gold-b))"}">${esc(c.title)}</b> <span class="pill">${esc(c.locName)}${c.spot?"·"+esc(c.spot):""}·R${c.round}</span>${keyTagFor(c.id,true)}${comboBadge(c.id)}${pairsOf(c.id).map(k=>{
         const rd=pairReady(k,c.id);
         return `<button class="pill pair${rd?" rdy":""}" title="${rd?"짝이 지금 나와 있습니다 — 눌러서 맞춰보세요":"같은 조각을 단 카드를 찾으세요"}" onclick="event.stopPropagation();showPairHint('${c.id}',${k.i})">${pairChip(k,c.id,rd)}${rd?"맞물림":"조각"}</button>`;
       }).join("")}<div class="lead clip1">${esc(oneLine(c.text))}</div></div>`).join("")||'<div class="panel-note">아직 조사한 단서가 없어요. (조사 페이즈에 카드를 여세요.)</div>'}</div>`
+    // 질문지는 마지막 조사가 끝나면 «공개» 된다 — 읽기만 되고 답은 종막에 받는다(§7-g).
+    // 남은 토론 내내 이 문항을 겨냥해 움직이라고 놓는 자리다.
+    +(finalSheetOpen()?finalSheetHTML("preview"):"")
     +nextPhaseBlock(); }
   else if(k==="ask"){ renderAsk(p); }
   else if(k==="night"){ renderNight(p); }
@@ -4392,30 +4546,49 @@ function cardOpen(id){ return (STATE.revealed||[]).find(c=>c.id===id)||myHand.fi
 /* 이튿날(마지막 조사)에 새로 생긴 자리인가. 첫날에는 없던 카드라 눈에 띄어야 한다 —
    밤이 지나고 집에 남은 자국도 여기에 들어온다. */
 function isFresh(c){ return (c&&c.round)===3; }
+/* ── 열쇠 표시 ────────────────────────────────────────────────────
+   퍼즐카드는 «조사턴으로 뒤지는 자리»가 아니라 «수수께끼로 여는 자리»다. 그게 칸
+   하나만 봐도 갈리게 열쇠를 붙인다. 현황판·큰 화면·손패가 전부 이 함수를 쓴다 —
+   같은 카드가 자리마다 다른 얼굴이면 그 표시는 규칙이 아니라 장식이 된다.
+   시나리오의 puzzle 여부는 카탈로그의 locked 로 온다(server.py 가 그렇게 싣는다). */
+function isPuzzleCard(id){ const c=cardCat(id); return !!(c&&c.locked); }
+/* 열쇠 픽셀 하나. 글자 없이 자리만 좁을 때 쓴다(현황판 칸 모서리·탭). */
+function keyMark(cls){ return `<i class="kmk${cls?" "+cls:""}" aria-hidden="true"></i>`; }
+/* 글자가 붙은 딱지. cold = 이미 푼 카드(열쇠는 남기되 초록으로 부르지 않는다). */
+function keyTag(label, cold){
+  return `<span class="keytag${cold?" cold":""}" title="조사턴이 아니라 수수께끼로 여는 카드입니다">${keyMark()}${esc(label||"수수께끼")}</span>`;
+}
+/* 카드 한 장에 붙는 딱지 — 퍼즐카드가 아니면 아무것도 안 붙는다. */
+function keyTagFor(id, opened){
+  if(!isPuzzleCard(id)) return "";
+  return keyTag(opened?"수수께끼로 연 카드":"수수께끼", opened);
+}
 function dashCard(c){
   const st=cardState(c), full=cardOpen(c.id);
   const spot=esc(c.spot||c.locName||"")+(isFresh(c)?`<span class="fr">이튿날</span>`:"");
   const fr=(isFresh(c)?" fresh":"")+(c.hot?" hot":"");
+  // 퍼즐카드는 어느 상태로 뜨든 열쇠를 달고 다닌다 — 이미 푼 뒤에도 «그렇게 연 카드»다.
+  const key=c.locked?`<span class="keycorner">${keyMark()}</span>`:"";
   // QA — 아직 안 열린 자리는 여기서 바로 본문을 편다. 조사턴을 쓰지도, 손패에 넣지도 않는다.
   // 한 판에 열 수 있는 건 절반뿐인데 원고를 보려면 서른아홉 장을 다 읽어야 한다.
   const qk=(qaOn&&!full)?`<span class="dc-qa" role="button" tabindex="0" title="조사턴을 쓰지 않고 본문만 봅니다" onclick="event.stopPropagation();qaPeek('${c.id}')">엿보기</span>`:"";
   if(st.k==="pub") return `<button class="dc pub act${fr}" onclick="openCard('${c.id}')">
-    <span class="sp">${spot}</span><span class="ti">${esc((full&&full.title)||"")}${comboBadge(c.id)}</span>
+    ${key}<span class="sp">${spot}</span><span class="ti">${esc((full&&full.title)||"")}${comboBadge(c.id)}</span>
     ${full&&full.text?`<span class="tx clip1">${esc(oneLine(full.text))}</span>`:""}
     <span class="st">전체공개</span></button>`;
   if(st.k==="hand") return `<button class="dc mine act${fr}" onclick="openCard('${c.id}')">
-    <span class="sp">${spot}</span><span class="ti">${esc((full&&full.title)||"")}${comboBadge(c.id)}</span>
+    ${key}<span class="sp">${spot}</span><span class="ti">${esc((full&&full.title)||"")}${comboBadge(c.id)}</span>
     <span class="wh"><i>${ICO.card}</i>내 손패 · 비공개</span></button>`;
   if(st.k==="taken"){ const w=st.who||{};
     // 남이 쥔 카드는 임자만 말한다 — 제목이 새면 그 사람이 감출 것이 없어진다
     return `<button class="dc held act${fr}" style="--wc:${w.color||"var(--line)"}" onclick="showSpot('${c.id}')">
-      ${qk}<span class="sp">${spot}</span>
+      ${qk}${key}<span class="sp">${spot}</span>
       <span class="wh">${avaHTML(w,"xs")}${esc(w.name||"")} 쥐고 있음</span></button>`; }
   // cardState 의 잠김 사유에는 '내 차례 아님'처럼 내 사정이 섞여 있다. 현황판은 판 전체를
   // 읽는 자리라 카드 쪽 사정만 적는다 — 나머지는 그냥 아직 아무도 안 본 카드다.
   if(st.k==="puzzle") return `<button class="dc puz act${fr}" onclick="openPuzzle('${c.id}')">
     ${qk}<span class="sp">${spot}</span>
-    <span class="wh"><i>${ICO.lock}</i>수수께끼 — 조사턴을 안 씁니다</span>
+    <span class="wh">${keyMark()} 수수께끼 — 조사턴을 안 씁니다</span>
     <span class="st">풀기 ›</span></button>`;
   let why="아직 아무도 보지 않음", dim=false;
   if(c.locked){ why="수수께끼를 풀어야 열립니다"; dim=true; }
@@ -4427,8 +4600,10 @@ function dashCard(c){
       .map(r=>((SCEN.cardCatalog||[]).find(x=>x.id===r)||{}).spot||r);
     why=`먼저 찾아야 한다 — ${miss.join(", ")}`; dim=true; }
   // 아직 아무도 안 본 자리는 여기서 바로 조사한다. 지도를 눌러 들어가는 것과 같은 창이 뜬다.
-  return `<button class="dc none act${fr}${dim?" lock":""}" onclick="showSpot('${c.id}')">
-    ${qk}<span class="sp">${spot}</span><span class="st">${esc(why)}</span>
+  // 퍼즐카드는 아직 못 푸는 때에도 점선 테두리와 열쇠를 그대로 단다 — 「언젠가 열리는
+  // 조사칸」이 아니라 「조사턴으로는 영영 안 열리는 칸」이라는 게 미리 보여야 한다.
+  return `<button class="dc none act${fr}${c.locked?" puz":""}${dim?" lock":""}" onclick="showSpot('${c.id}')">
+    ${qk}${key}<span class="sp">${spot}</span><span class="st">${esc(why)}</span>
     ${dim?"":`<span class="dc-go">조사하기 ›</span>`}</button>`;
 }
 /* 지금까지 누구든 꺼낸 카드 — 선행 조건이 풀렸는지 보는 데 쓴다 */
@@ -4460,7 +4635,10 @@ function dashPass(c){
 }
 /* 거르개마다 몇 장이 걸리는지 — 고르기 전에 보여준다. 눌러보고 텅 비는 게 제일 답답하다. */
 function dashCounts(){
-  const all=((SCEN.map)||[]).flatMap(z=>zoneCards(z.loc));
+  // 거르개는 지금 보고 있는 라운드 안에서만 센다 — 탭에 안 뜨는 카드까지 세면
+  // 「3장」이라고 해놓고 눌렀을 때 텅 비는 자리가 생긴다.
+  const rounds=dashRounds(), sel=rounds.length>1?dashRoundSel(rounds):null;
+  const all=((SCEN.map)||[]).flatMap(z=>zoneCards(z.loc)).filter(c=>roundPass(c,sel));
   const n={}; const was=dashFilter;
   for(const [v] of DASH_FILTERS){ dashFilter=v; n[v]=all.filter(dashPass).length; }
   dashFilter=was; return n;
@@ -4507,7 +4685,7 @@ async function openPuzzle(cid){
   m.className="modal on"; m.onclick=e=>{ if(e.target===m) m.remove(); };
   m.innerHTML=`<div class="box" onclick="event.stopPropagation()">
     <div class="mhead"><div class="mh-t"><span class="mh-eb">${esc(row.locName||"")}</span>
-      <h2>${esc(row.spot||"수수께끼")}</h2>
+      <h2>${keyMark()} ${esc(row.spot||"수수께끼")}</h2>
       <span class="mh-sub">조사턴을 쓰지 않습니다 · 맞히면 내 인벤토리로</span></div>
       <button class="mh-x" onclick="this.closest('.modal').remove()">${ICO.close}</button></div>
     <div class="mbody">
@@ -4552,10 +4730,67 @@ async function puzSend(cid){
   }
 }
 
+/* ── 조사 라운드 탭 ───────────────────────────────────────────────
+   밤이 없고 조사가 여러 번인 판에서는, 라운드가 섞여 한 줄로 늘어서면 «지금 뒤질 수
+   있는 자리»와 «지난 라운드의 흔적»이 구분이 안 된다. 그래서 현황판을 라운드로 가른다.
+
+   ★ 라운드 수는 시나리오가 정한다 — 여기에 2를 박아두지 않는다. 다음 사건은 셋일 수
+     있다. 읽는 순서는 시나리오가 확실히 말해주는 쪽부터다:
+       ① SCEN.apByRound  (AP_BY_ROUND 의 키)
+       ② SCEN.phases[].round
+       ③ 카드의 round — 위 둘이 안 실려 와도 이건 늘 온다(마지막 보루)
+     ①②는 지금 public_scenario 에 안 실려 있다. 실리면 그쪽이 먼저 쓰인다. */
+function dashRounds(){
+  const s=new Set();
+  const ap=(SCEN&&SCEN.apByRound)||null;
+  if(ap) Object.keys(ap).forEach(k=>{ const n=+k; if(n>0) s.add(n); });
+  if(!s.size) (SCEN.phases||[]).forEach(p=>{ const n=+p.round; if(n>0) s.add(n); });
+  if(!s.size) (SCEN.cardCatalog||[]).forEach(c=>{ const n=+c.round; if(n>0) s.add(n); });
+  const cr=+((STATE&&STATE.round)||0); if(cr>0) s.add(cr);
+  return Array.from(s).sort((a,b)=>a-b);
+}
+/* 라운드 이름. 시나리오가 이름을 주면 그걸 쓰고(roundNames), 없으면 「1차」. */
+function roundName(n){
+  const m=(SCEN&&SCEN.roundNames)||null;
+  return (m&&(m[n]||m[String(n)]))||`${n}차`;
+}
+/* 지금 보고 있는 라운드. 아무것도 안 고르면 판이 서 있는 라운드를 따라간다 —
+   라운드가 넘어가면 손으로 고른 것도 풀린다(새 라운드가 열렸는데 옛 탭에 갇히지 않게). */
+let dashRound=null, dashRoundAt=-1;
+function dashRoundSel(rounds){
+  const cur=(STATE&&STATE.round)||0;
+  if(dashRoundAt!==cur){ dashRoundAt=cur; dashRound=null; }
+  if(dashRound!=null&&rounds.indexOf(dashRound)>=0) return dashRound;
+  if(rounds.indexOf(cur)>=0) return cur;
+  return rounds.length?rounds[rounds.length-1]:1;
+}
+function setDashRound(n){
+  if(n===dashRoundSel(dashRounds())) return;
+  dashRound=n; dashRoundAt=(STATE&&STATE.round)||0;
+  keepScroll();
+  const d=$("dash"); if(d) d.innerHTML=dashHTML();
+}
+/* 그 라운드에 딸린 카드인가. 라운드가 하나뿐인 판에서는 아무것도 안 거른다. */
+function roundPass(c, sel){ return sel==null || (c&&c.round)===sel; }
+function dashTabs(rounds, sel, cur){
+  const all=rounds.length?((SCEN.map)||[]).flatMap(z=>zoneCards(z.loc)):[];
+  return `<div class="dtabs" role="tablist" aria-label="조사 라운드">`+rounds.map(r=>{
+    const open=r<=cur, on=r===sel;
+    const n=all.filter(c=>c.round===r).length;
+    return `<button class="dtab${on?" on":""}${open?"":" lk"}" role="tab" aria-selected="${on?"true":"false"}"
+      onclick="setDashRound(${r})">
+      <span class="dt-n">${esc(roundName(r))}</span>
+      ${open?`<span class="dt-c">${n}장</span>`:keyMark()}
+      ${r===cur?`<span class="dt-now">지금</span>`:""}</button>`;
+  }).join("")+`</div>`;
+}
 function dashHTML(){
   ensureCardBack();
+  const rounds=dashRounds(), cur=(STATE&&STATE.round)||0;
+  const many=rounds.length>1;
+  const sel=many?dashRoundSel(rounds):null;
   const blocks=((SCEN.map)||[]).map(z=>{
-    const cards=zoneCards(z.loc); if(!cards.length) return "";
+    const cards=zoneCards(z.loc).filter(c=>roundPass(c,sel)); if(!cards.length) return "";
     const done=cards.filter(c=>{ const k=cardState(c).k; return k!=="open"&&k!=="lock"; }).length;
     const list=cards.filter(dashPass);
     if(!list.length) return "";
@@ -4565,10 +4800,18 @@ function dashHTML(){
       <div class="dcards">${list.map(dashCard).join("")}</div></div>`;
   }).join("");
   const f=DASH_FILTERS.find(x=>x[0]===dashFilter)||DASH_FILTERS[0];
-  return `<div class="dashhead"><span class="dh-t">조사 현황</span>
+  // 아직 안 열린 라운드 — 눌러볼 수는 있게 두고, 대신 언제 열리는지만 말한다.
+  const locked=(many&&sel>cur)
+    ? `<div class="dlock">${keyMark()}
+        <div class="dl-t">${esc(roundName(sel))} 조사에 열립니다</div>
+        <div class="dl-d">여기 놓일 자리는 아직 이 마을에 없습니다.<br>
+          판은 <b>${esc(roundName(cur||rounds[0]))}</b> 조사에 서 있어요.</div></div>`
+    : "";
+  return `<div class="dashhead"><span class="dh-t">조사 현황${many?` · ${esc(roundName(sel))}`:""}</span>
       <button class="dfilt${dashFilter==="all"?"":" on"}" onclick="openDashFilter()">
         <span class="fi">${ICO.filter}</span><span class="fk">필터</span><span class="fv">${esc(f[1])}</span></button>
-    </div>${blocks||`<div class="panel-note" style="margin-top:10px">${esc(f[3])}</div>`}`;
+    </div>${many?dashTabs(rounds,sel,cur):""}${locked
+      ||blocks||`<div class="panel-note" style="margin-top:10px">${esc(f[3])}</div>`}`;
 }
 /* ── 조사 턴 (순번 강제 + 넘기기) ── */
 /* 이번 라운드에 아직 조사할 사람이 남았는가 · 손패가 넘치는 사람이 있는가.
@@ -4772,7 +5015,9 @@ function openCard(id){ const pub=(STATE.revealed||[]).find(c=>c.id===id); const 
   const inHand=!!hand&&!pub;
   $("cardBox").innerHTML=`<div class="mhead">
       <div class="mh-t"><span class="mh-eb">${pub?"전체공개 단서":"손패 · 비공개"}</span>
-        <h2>${esc(c.title)}${c.bait?' <span class="pill">※미끼?</span>':''}</h2>${comboOf(c.id)?`<div style="margin-top:6px">${comboBadge(c.id)}</div>`:""}
+        <h2>${esc(c.title)}${c.bait?' <span class="pill">※미끼?</span>':''}</h2>${
+        // 수수께끼로 연 카드는 큰 화면에서도 열쇠를 단다 — 현황판에서 본 표시가 그대로 따라온다
+        (comboOf(c.id)||isPuzzleCard(c.id))?`<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${comboBadge(c.id)}${keyTagFor(c.id,true)}</div>`:""}
         <span class="mh-sub">${esc(c.locName)}${c.spot?" · "+esc(c.spot):""} · R${c.round}</span></div>
       <button class="mh-x" onclick="closeModal('cardModal')" aria-label="닫기">${ICO.close}</button></div>
     <div class="mbody">${pairsOf(c.id).length?`<div class="pchips">${pairsOf(c.id).map(k=>
@@ -5296,7 +5541,7 @@ function renderNight(p){
   if(n.done){
     // 아침 이야기(비주얼노벨)를 아직 안 봤으면 결과부터 들이밀지 않는다.
     // 「밤 · 지나갔다」가 먼저 뜨고 그 뒤에 이야기가 나오면 순서가 뒤집힌 것으로 읽힌다.
-    if(((STATE&&STATE.cuts)||[]).some(c=>c.id==="night:done"&&!cutWasSeen(c.id))){
+    if(cutQueue().some(c=>c.id==="night:done"&&!cutWasSeen(c.id))){
       p.innerHTML=`<div class="card nightcard">
         <div class="nt-kick">${esc(n.kick||"밤")}</div>
         <h2>${esc(n.title||"")}</h2>
@@ -5390,6 +5635,123 @@ async function acSend(){
   if(r&&r.error){ banner(r.error); return; }
   banner(""); acSel=""; await poll();
 }
+/* ── 종막 질문지 ──────────────────────────────────────────────────
+   선지형이다. 시나리오가 선지를 주면 라디오로 그리고, 안 주면 예전 서술 입력으로
+   그대로 떨어진다 — 시나리오 쪽이 아직 서술형인 동안에도 이 화면은 안 깨진다.
+
+   받는 모양(넉넉하게 읽는다. 어느 이름으로 오든 걸린다):
+     "문자열"                                    → 서술형(예전 그대로)
+     {q|text|t, choices|options|opts:[...], note} → 선지형
+     선지 하나: "문자열"  또는  {id|value, label|text|line}
+   답으로 서버에 보내는 것은 «선지의 id» 다(채점이 글자가 아니라 id 로 붙게). */
+/* draft = 아직 안 정한 문항. 서버가 이미 걷어내지만, 화면에서도 한 번 더 뺀다 —
+   원고를 쓰는 중에 «미정» 이 판에 뜨는 것보다 안 뜨는 쪽이 낫다. */
+function finalQs(){ return ((SCEN&&SCEN.finalQuestions)||[]).filter(q=>!(q&&typeof q==="object"&&q.draft)); }
+function fqText(q){ return q&&typeof q==="object" ? String(q.q||q.text||q.t||"") : String(q==null?"":q); }
+function fqNote(q){ return q&&typeof q==="object" ? String(q.note||q.hint||"") : ""; }
+function fqChoices(q){
+  if(!q||typeof q!=="object") return [];
+  const raw=q.choices||q.options||q.opts||[];
+  return (raw||[]).map((o,i)=> (o&&typeof o==="object")
+    ? {id:String(o.id!=null?o.id:(o.value!=null?o.value:(o.label||o.text||i))),
+       label:String(o.label||o.text||o.line||o.id||"")}
+    : {id:String(o), label:String(o)});
+}
+/* 저장된 답 한 칸을 사람이 읽는 말로. 선지 id 로 저장되므로 되짚어 준다. */
+function fqAnswerText(q, v){
+  const s=String(v==null?"":v); if(!s) return "";
+  const ch=fqChoices(q).find(o=>o.id===s||o.label===s);
+  return ch?ch.label:s;
+}
+function fqHasChoices(){ return finalQs().some(q=>fqChoices(q).length); }
+/* 질문지가 이미 «공개» 되었는가 — §7-g. 2차 조사가 끝나면 보여만 주고, 답은 종막에 받는다.
+   서버가 신호를 주면 그걸 따르고(STATE.finalSheet.open), 없으면 마지막 조사 막을
+   지났는지로 본다. 막 번호도 라운드 수도 시나리오에서 읽는다 — 숫자를 박지 않는다. */
+function finalSheetOpen(){
+  if(!finalQs().length) return false;
+  const fs=(STATE&&STATE.finalSheet)||null;
+  const ph=(STATE&&STATE.phase)||{}, k=ph.key||"", seq=+ph.seq||0;
+  if(fs&&typeof fs.open==="boolean") return fs.open;
+  // FINAL_SHEET 를 그대로 내려주는 판본 — revealSeq 막부터 answerSeq 앞까지가 «공개»다
+  if(fs&&fs.revealSeq) return seq>=(+fs.revealSeq) && seq<(+fs.answerSeq||Infinity);
+  if(k==="final"||k==="reveal") return false;          // 종막은 답을 받는 화면이 따로 있다
+  const inv=(SCEN.phases||[]).filter(p=>p.key==="invest").map(p=>+p.seq);
+  if(!inv.length) return false;
+  return seq > Math.max.apply(null,inv);
+}
+/* 이 판의 압박은 채점 규칙 자체다 — 문항보다 이게 먼저 눈에 들어와야 한다(§7-d·7-g). */
+function fqWarnHTML(){
+  // 큰 글씨 한 줄은 고정이다 — 이게 이 판의 압박이라 사건마다 달라질 자리가 아니다.
+  // 그 밑의 설명만 시나리오가 갈아 끼울 수 있다(FINAL_SHEET 의 rule).
+  const rule=((STATE&&STATE.finalSheet)||{}).rule||"";
+  return `<div class="fqwarn"><div class="fw-t">내 점수가 남의 답에 따라 깎일 수 있습니다</div>
+    <div class="fw-d">${rule?esc(rule):`이 질문지는 각자 따로 채점되지 않습니다. 남이 무엇을 적어내는가가
+      내 점수에 그대로 얹히고, 그대로 깎입니다 — <b>종막까지 서로를 놓을 수 없습니다.</b>`}</div></div>`;
+}
+/* 고른 것은 화면에만 둔다. 서버로는 «제출» 을 눌러야 간다. */
+let fqPick={};
+function fqPickOne(i, id){
+  fqPick[i]=(fqPick[i]===id?"":id);
+  renderPanel._sig=null; applyState();
+}
+function fqReady(){
+  const qs=finalQs();
+  return qs.every((q,i)=>{
+    if(!fqChoices(q).length) return true;              // 서술 칸은 강제하지 않는다
+    return !!fqPick[i];
+  });
+}
+/* mode: "preview" = 읽기만(2차 조사 뒤) · "answer" = 답을 받는다(종막) */
+function finalSheetHTML(mode){
+  const qs=finalQs(); if(!qs.length) return "";
+  const preview=(mode!=="answer");
+  const mine=myRoleValid();
+  const done=mine&&!preview&&finalSubmitted(myRoleId);
+  const saved=done?(finalAnswersOf(myRoleId)||[]):null;
+  const fs=(STATE&&STATE.finalSheet)||{};
+  const title=fs.title||(preview?"질문지 · 미리 보기":"종막 · 질문지");
+  let h=`<div class="card"><h2>${esc(title)}</h2>`;
+  h+=`<div class="fqstate">${preview?"공개됨 · 답은 종막에 받습니다":"지금 답을 확정합니다"}</div>`;
+  h+=fqWarnHTML();
+  if(fs.intro) h+=`<div class="mlead" style="white-space:pre-wrap">${esc(fs.intro)}</div>`;
+  if(preview) h+=`<div class="mlead">여기까지가 오늘 물어볼 것 전부입니다. <b>지금은 고를 수 없습니다</b> —
+    남은 시간 동안 이 문항을 겨냥해 움직이세요.</div>`;
+  qs.forEach((q,i)=>{
+    const ch=fqChoices(q);
+    h+=`<div class="fq"><div class="fq-q">${i+1}. ${esc(fqText(q))}</div>`;
+    if(fqNote(q)) h+=`<div class="fq-n">${esc(fqNote(q))}</div>`;
+    if(ch.length){
+      const cur=done?String(saved&&saved[i]||""):(fqPick[i]||"");
+      const lock=preview||done||!mine;
+      h+=`<div class="fq-opts">`+ch.map(o=>{
+        const on=(cur===o.id||cur===o.label);
+        return `<button class="fq-o${on?" on":""}"${lock?" disabled":""}
+          ${lock?"":`onclick="fqPickOne(${i},'${String(o.id).replace(/'/g,"&#39;")}')"`}>
+          <span class="fo-b"></span><span class="fo-n">${esc(o.label)}</span></button>`;
+      }).join("")+`</div>`;
+      if(done) h+=`<div class="fq-a${cur?"":" none"}">적어낸 답 — ${esc(fqAnswerText(q,cur)||"(무응답)")}</div>`;
+    }else if(done){
+      h+=`<div class="fq-a${(saved&&saved[i])?"":" none"}" style="white-space:pre-wrap">${esc((saved&&saved[i])||"(무응답)")}</div>`;
+    }else if(!preview&&mine){
+      h+=`<div class="q-block" style="margin:10px 0 0"><textarea id="qa${i}"></textarea></div>`;
+    }
+    h+=`</div>`;
+  });
+  if(preview){
+    h+=`<div class="panel-note">답은 <b>종막</b>에 받습니다. 여기서 고쳐 적을 일은 없어요.</div>`;
+  }else if(!mine){
+    h+=`<div class="panel-note">관전 중 — 배역을 맡은 사람만 답합니다.</div>`;
+  }else if(done){
+    h+=`<div class="panel-note">적었습니다. 판이 끝나면 다 같이 읽습니다.</div>`;
+  }else{
+    const ready=fqReady();
+    h+=`<div class="fq-foot"><span class="ff-n">${fqHasChoices()
+      ? (ready?"다 골랐습니다. 내면 되돌릴 수 없습니다.":"선지 문항은 하나씩 다 골라야 냅니다.")
+      : "한 문항 이상 적어야 냅니다."}</span>
+      <button class="btn ember"${(fqHasChoices()&&!ready)?" disabled":""} onclick="submitFinal()">제출</button></div>`;
+  }
+  return h+`</div>`;
+}
 function renderFinal(p){
   const mine=myRoleValid();
   const lead="배역으로서 서술로 답하고, 그 아래에 한 사람의 이름을 적습니다.<br>"
@@ -5406,15 +5768,10 @@ function renderFinal(p){
       <div class="panel-note" style="margin-top:10px">이 표는 그대로 남아 있습니다.
         ${a1.tie?"표가 갈렸습니다 — 아직 한 사람으로 모이지 않았어요.":`지금까지 이 판의 이름은 <b>${esc(nameOf(a1.lead[0]))}</b>입니다.`}</div></div>`;
   }
-  h+=`<div class="card"><h2>종막 · 질문지</h2><div class="mlead">${lead}</div>`;
-  if(mine&&finalSubmitted(myRoleId)){
-    const a=finalAnswersOf(myRoleId)||[];
-    h+=`<div class="panel-note">적었습니다. 판이 끝나면 다 같이 읽습니다.</div>`
-      +SCEN.finalQuestions.map((q,i)=>`<div class="q-block"><div class="q">${i+1}. ${esc(q)}</div><div class="b" style="white-space:pre-wrap;opacity:.85">${esc(a[i]||"(무응답)")}</div></div>`).join("");
-  }
-  else if(mine){ h+=SCEN.finalQuestions.map((q,i)=>`<div class="q-block"><div class="q">${i+1}. ${esc(q)}</div><textarea id="qa${i}"></textarea></div>`).join("")+`<div style="text-align:right"><button class="btn ember" onclick="submitFinal()">제출</button></div>`; }
-  else h+=`<div class="panel-note">관전 중 — 배역을 맡은 사람만 답합니다.</div>`;
-  h+=`</div>`;
+  // 선지형이면 질문지 화면이 통째로 그쪽으로 간다. 서술형 시나리오에서는
+  // 예전 안내(lead)가 그대로 필요해서 그 한 줄만 위에 남긴다.
+  if(!fqHasChoices()) h+=`<div class="card"><div class="mlead">${lead}</div></div>`;
+  h+=finalSheetHTML("answer");
   p.innerHTML=accuseHTML()+destHTML()+h+readyHTML();
 }
 
@@ -5519,7 +5876,14 @@ function finalAnswerRoles(){
 }
 /* 클로드에 그대로 붙여넣는 한 덩어리. 앞머리에 무엇을 해달라는지부터 적는다 —
    붙여넣는 사람이 따로 설명을 보태지 않아도 되게. */
-async function submitFinal(){ if(gradeBusy)return; const answers=SCEN.finalQuestions.map((q,i)=>($("qa"+i)?$("qa"+i).value.trim():"")); if(answers.every(a=>!a)){ await say({title:"답이 비어 있습니다",body:"한 문항 이상 적어주세요.",ok:"알겠습니다"}); return; } gradeBusy=true; banner("제출 중…"); const r=await post("/api/final-answers",{roleId:myRoleId,clientId,answers}); gradeBusy=false; if(r&&r.error){banner("제출 오류: "+r.error); return;} localStorage.setItem("pmb.final."+myRoleId,JSON.stringify(answers));
+/* 선지 문항은 «고른 선지의 id», 서술 문항은 적은 글이 그대로 간다.
+   보내는 모양은 예전과 같은 문자열 배열이라 /api/final-answers 는 안 건드린다. */
+async function submitFinal(){ if(gradeBusy)return;
+  const qs=finalQs();
+  const answers=qs.map((q,i)=> fqChoices(q).length ? (fqPick[i]||"") : ($("qa"+i)?$("qa"+i).value.trim():""));
+  const miss=qs.map((q,i)=>[q,i]).filter(([q,i])=>fqChoices(q).length&&!answers[i]);
+  if(miss.length){ await say({title:"아직 안 고른 문항이 있습니다",body:`${miss.map(([q,i])=>`${i+1}번`).join(", ")} — 하나씩 골라주세요.`,ok:"알겠습니다"}); return; }
+  if(answers.every(a=>!a)){ await say({title:"답이 비어 있습니다",body:"한 문항 이상 적어주세요.",ok:"알겠습니다"}); return; } gradeBusy=true; banner("제출 중…"); const r=await post("/api/final-answers",{roleId:myRoleId,clientId,answers}); gradeBusy=false; if(r&&r.error){banner("제출 오류: "+r.error); return;} localStorage.setItem("pmb.final."+myRoleId,JSON.stringify(answers));
   // 낼 곳이 없는데 '제출 완료'라고 하지 않는다 — 어디로 갔는지를 그대로 말한다
   banner("적었습니다.");
   // 제출 여부는 로컬에만 남아 패널 서명에 안 잡힌다 — 손으로 한 번 무효화해야 화면이 바뀐다
@@ -5719,7 +6083,8 @@ function renderDecision(p){
   } else {
     h+=`<div class="card"><div class="panel-note">아직 정하지 않은 칸이 있습니다. 다 차야 넘어갑니다.</div></div>`;
   }
-  p.innerHTML=h+nextPhaseBlock();
+  // 공개된 질문지는 이 막에서도 눈앞에 있어야 한다 — 무엇을 겨냥하고 고르는지가 이 판이다.
+  p.innerHTML=h+(finalSheetOpen()?finalSheetHTML("preview"):"")+nextPhaseBlock();
 }
 async function sendDecision(seatId,optId){
   const r=await post("/api/decision",{roleId:myRoleId,clientId,targetRoleId:seatId+":"+optId});
@@ -6620,7 +6985,7 @@ function showMyHand(tab){
       return `<div class="bigcard clue">
       <div class="bc-eyebrow">${isPub?"전체공개":"손패 · 비공개"}</div>
       <div class="bc-title" style="color:var(--me,var(--gold-b))">${esc(c.title)}</div>
-      <div class="bc-tags"><span class="pill">${esc(c.locName)}</span>${c.spot?`<span class="pill">${esc(c.spot)}</span>`:''}<span class="pill">R${c.round}</span>${comboBadge(c.id)}${pairsOf(c.id).map(k=>{const rd=pairReady(k,c.id);
+      <div class="bc-tags"><span class="pill">${esc(c.locName)}</span>${c.spot?`<span class="pill">${esc(c.spot)}</span>`:''}<span class="pill">R${c.round}</span>${keyTagFor(c.id,true)}${comboBadge(c.id)}${pairsOf(c.id).map(k=>{const rd=pairReady(k,c.id);
         return `<button class="pill pair${rd?" rdy":""}" title="${rd?"짝이 지금 나와 있습니다":"같은 조각을 단 카드와 맞춰보세요"}" onclick="event.stopPropagation();showPairHint('${c.id}',${k.i})">${pairChip(k,c.id,rd)}${rd?"맞물림":"조각"}</button>`;}).join("")}</div>
       <div class="bc-body">${esc(c.text)}</div>${mynote(c.id)}${cnote(c)}
       ${c.unlocks&&!isPub?`<div class="unlocknote">${ICO.unlock} 이 카드를 <b>전체공개</b>하면 무언가 밝혀질 수 있습니다.</div>`:""}</div>`; });
