@@ -3253,13 +3253,21 @@ function applyState(){
   // 확정되면 각자 제 자리로 — 배역이 있으면 플레이 화면, 배역 없이 진행석만 켠 기기는 진행석으로.
   // 딱 한 번만 밀어준다. 매번 밀면 시작 뒤엔 로비로 못 돌아가서 헤더의 '배역' 버튼이
   // 눌러도 되돌아오는 죽은 버튼이 되고, 진행석 토글도 손댈 수 없다.
+  /* ★ 빗장은 «실제로 옮겨간 다음» 에 건다.
+     예전엔 조건에 들어오자마자 seated=true 를 박았다. 그런데 시작 직후 폴링 한 번이
+     started=true 이면서 아직 내 배역이 안 실려 왔거나(myRoleValid() 거짓) 진행석도
+     아닌 상태로 들어올 수 있다 — 그 한 번에 빗장만 걸리고 아무 데도 안 밀린다.
+     다음 폴링에서 배역이 실려 와도 !seated 가 거짓이라 지나가고, 판이 시작됐는데
+     로비에 갇힌다. 오프닝(#vn)은 화면과 무관한 층이라 그걸 닫으면 로비가 그대로
+     드러나서 「다시 배역 선택창이 나온다」로 보였다. */
   if(!STATE.started) seated=false;
   else if(scr==="lobby"&&!seated){
-    seated=true;
-    if(myRoleValid()){ go("play"); return; }
-    if(gmOn){ go("gm"); return; }
+    if(myRoleValid()){ seated=true; go("play"); return; }
+    if(gmOn){ seated=true; go("gm"); return; }
   }
-  if(scr==="lobby"){ renderLobby(); maybeAutoStart(); }
+  /* 배역이 다 차면 저절로 뜨던 시작 확인창은 뺐다 — 사람이 「이대로 진행하기」를
+     누를 때만 뜬다. 단추가 화면 밖으로 밀려 안 보이던 것이 진짜 문제였다. */
+  if(scr==="lobby"){ renderLobby(); }
   else if(scr==="gm"){ renderGM(); maybePhaseFx(STATE.phase||{}); }
   else if(scr==="play"){
     const ph=STATE.phase||{};
