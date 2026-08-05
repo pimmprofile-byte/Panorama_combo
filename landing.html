@@ -208,8 +208,13 @@
 
   /* 사건 카드 — 90년대 소프트웨어 상자다. 베이지 라벨 위에 그림 창이 한 칸 파여 있다.
      둘뿐인 목록에 무한 캐러셀을 돌리면 같은 그림이 계속 되돌아와 어지럽다. 나란히 편다. */
+  /* 한 칸의 «최소»가 곧 몇 줄로 설 것인가를 정한다. 예전에는 46% 였는데, 그러면
+     화면이 아무리 좁아도 무조건 두 장이 나란히 선다 — 폰에서 포스터가 173px 까지
+     쪼그라들어 그림칸이 155px 이 됐다. 상자 그림이 그 크기면 무슨 판인지 안 읽힌다.
+     이제는 «한 장이 설 만한 폭» 을 최소로 잡는다. 그만한 자리가 두 벌 안 나오는
+     화면에서는 한 줄에 한 장이 서고, 포스터가 창 폭을 그대로 받는다. */
   .rail{display:grid;gap:clamp(9px,2.2vw,18px);padding:18px 0 20px;align-items:stretch;
-    grid-template-columns:repeat(auto-fit,minmax(min(46%,230px),1fr))}
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
   .poster{scroll-snap-align:none;width:100%;height:100%;text-align:left;padding:0;color:inherit;
     display:flex;flex-direction:column;
     background:var(--case);border:1px solid var(--ink);
