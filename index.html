@@ -5258,8 +5258,10 @@ function renderDecision(p){
     h+=`<div class="card dseat${done?" sealed":""}">
       <div class="ds-h"><span class="ds-n">${i+1}</span>
         <div><h2 style="margin:0">${esc(seat.seat||nameOf(rid))}</h2>
-        ${/* 칸 이름이 곧 사람 이름인 사건이 있다 — 그때 이름을 두 번 적으면 군더더기다 */""}
-        <div class="ds-who">${esc(seat.seat===nameOf(rid)?"":nameOf(rid))}${isBarred?" · 제 칸을 잃음":(isMine?" · 내 칸":"")}</div></div>
+        ${/* 칸 이름이 곧 사람 이름인 사건이 있다 — 그때 이름을 두 번 적으면 군더더기다.
+             이름이 빠져도 가운뎃점이 덩그러니 남으면 안 되므로 조각을 모아서 잇는다 */""}
+        <div class="ds-who">${esc([seat.seat===nameOf(rid)?"":nameOf(rid),
+              isBarred?"제 칸을 잃음":(isMine?"내 칸":"")].filter(Boolean).join(" · "))}</div></div>
         ${done?`<span class="pill ok">정함</span>`:(isBarred?`<span class="pill">${nvote}/${d.voters} 표</span>`:`<span class="pill">대기</span>`)}
       </div>
       <div class="ds-q">${esc(decQ(seat))}</div>`;
