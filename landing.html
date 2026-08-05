@@ -371,8 +371,14 @@
   .adcard h3{font-family:var(--serif);font-weight:800;font-size:1.4rem;margin:0 0 4px}
   .adcard .adsub{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;color:var(--faint);margin-bottom:18px}
   .adform{display:flex;gap:9px;margin-top:6px}
-  .adform input{flex:1;min-width:0;background:var(--screen2);border:1px solid var(--line2);color:var(--bone);border-radius:0;padding:11px 13px;font-size:.95rem;letter-spacing:.2em}
+  /* 글자 16px 아래로 내리지 않는다 — iOS 는 그보다 작은 입력칸을 누르면 화면을
+     확대해 버리고, 손을 떼도 안 되돌린다. 그 뒤로는 판 전체가 확대된 채로 남는다. */
+  .adform input{flex:1;min-width:0;background:var(--screen2);border:1px solid var(--line2);color:var(--bone);border-radius:0;padding:11px 13px;font-size:16px;letter-spacing:.2em}
   .adform input:focus{outline:none;border-color:var(--case-line)}
+  /* 나중에 생길 입력칸까지 한 번에 막아 둔다. 이 한 줄이 없으면 새 칸을 만들 때마다
+     같은 사고가 되풀이된다 — 모바일에서 한 번 확대되면 되돌릴 길이 없다. */
+  textarea,select,input[type="text"],input[type="password"],input[type="search"],
+  input[type="number"],input[type="tel"],input:not([type]){font-size:16px}
   .adform button{background:var(--blood);color:#fff;border:none;border-radius:0;padding:0 18px;font-weight:800}
   .aderr{color:var(--blood-bri);font-size:.78rem;margin-top:10px;min-height:1.1em}
   .adclose{margin-top:18px;width:100%;background:none;border:1px solid var(--line2);color:var(--bone-dim);border-radius:0;padding:11px;font-size:.85rem}
