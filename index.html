@@ -4958,7 +4958,12 @@ function victimCardHTML(){
         <div class="scrim"><div class="nm">${esc(v.name||"")}</div>
           <div class="jb">${esc(meta)}</div></div></div>
       <div class="tg">${esc(v.tagline||"")}</div></div>
-    <div class="vic-facts">${(v.facts||[]).map(f=>`<div class="vf">${esc(f)}</div>`).join("")}
+    ${/* 사건마다 이 칸을 «facts 목록» 으로도 쓰고 «line 한 덩이» 로도 써 왔다.
+         line 만 적은 사건에서는 여태 이 칸이 통째로 비어서, 시신을 처음 봤을 때
+         눈에 들어오는 것 — 그 카드의 본론 — 이 화면에 아예 안 떴다. 둘 다 받는다. */""}
+    <div class="vic-facts">${((v.facts&&v.facts.length)?v.facts
+        :String(v.line||"").split("\n").map(x=>x.trim()).filter(Boolean))
+      .map(f=>`<div class="vf">${mdB(esc(f))}</div>`).join("")}
       </div></div>`;
 }
 /* 사건 현장과 피해자 — 오프닝에서 한 번 스치고 마는 게 아니라 언제든 돌아와 본다. */
