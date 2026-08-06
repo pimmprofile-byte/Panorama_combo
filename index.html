@@ -1943,7 +1943,10 @@
      한 번 구워 레이어로 올려두고 투명도만 건드린다. */
   #vn .vn-flash{position:absolute;inset:0;pointer-events:none;opacity:0;
     will-change:opacity;transform:translateZ(0)}
-  #vn .vn-stage.fx-alarm .vn-flash{background:radial-gradient(120% 90% at 50% 40%,rgba(224,60,42,.55),transparent 70%);
+  /* ★ 사이렌 붉은막은 «반쯤»만 든다. 첫 컷이 창백한 새벽 지붕이라 그 위에 순빨강을
+     끼얹으면 그림과 따로 논다 — 연출이 아니라 오류처럼 보인다. 가운데를 더 비우고
+     (70% → 60%) 봉우리도 낮춘다. 흔들림과 소리는 그대로라 «놀람»은 안 죽는다. */
+  #vn .vn-stage.fx-alarm .vn-flash{background:radial-gradient(120% 90% at 50% 40%,rgba(214,74,54,.34),transparent 60%);
     animation:vnAlarm 1.15s ease-out 3}
   #vn .vn-stage.fx-thud  .vn-flash{background:#000;animation:vnBlack .5s ease-out 1}
   #vn .vn-stage.fx-static .vn-flash{background:repeating-linear-gradient(0deg,rgba(255,255,255,.09) 0 1px,transparent 1px 3px);
@@ -1967,7 +1970,7 @@
     #vn .vn-stage.fx-nightfall .vn-flash{animation:none;opacity:.94}
     #vn .vn-stage.fx-nightfall .vn-sprite.show{animation:none;opacity:0}
   }
-  @keyframes vnAlarm{0%,100%{opacity:0}45%{opacity:1}}
+  @keyframes vnAlarm{0%,100%{opacity:0}45%{opacity:.78}}
   @keyframes vnBlack{0%{opacity:1}100%{opacity:0}}
   @keyframes vnStatic{0%,100%{opacity:0}50%{opacity:.85}}
   @keyframes vnRise{0%{opacity:0;transform:translateY(30%)}60%{opacity:1}100%{opacity:.35;transform:none}}
