@@ -1501,9 +1501,11 @@ async function admAssetsLoad(which){
   const ktabs=kinds.map(k=>`<button class="adtab${k.key===admPart?" on":""}"
       onclick="admPart='${k.key}';admGrp='';admAssetsLoad()">${ADM_ESC(k.name)}<span class="n">${k.items.length}</span></button>`).join("");
 
+  /* 묶음이 하나뿐이어도 줄을 띄운다 — 지금은 「VN1」 하나뿐이지만 그 한 칸이
+     «오프닝은 첫 시퀀스이고 뒤가 더 붙는다»를 말해 준다. */
   const grps=[...new Set((cur.items||[]).map(it=>it.group||""))].filter(Boolean);
   let list=cur.items||[], gtabs="";
-  if(grps.length>1){
+  if(grps.length){
     if(grps.indexOf(admGrp)<0) admGrp=grps[0];
     list=list.filter(it=>(it.group||"")===admGrp);
     gtabs=`<div class="adtabs sub">${grps.map(g=>{
