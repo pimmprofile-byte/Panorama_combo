@@ -230,6 +230,8 @@ MAP = [
     {"loc": "E", "name": "하늘 끝", "icon": "", "opensFrom": "A", "art": "sky"},
     {"loc": "F", "name": "규칙시험실", "icon": "", "opensFrom": "A", "art": "lab"},
     {"loc": "G", "name": "바다 끝", "icon": "", "opensFrom": "D", "art": "sea"},
+    # ★ 이 구역만 판 도중에 그림이 갈립니다. 다만 그 표는 아래 ROOMS 에 답니다 —
+    #   화면으로 나가는 것은 그쪽이고, MAP 의 art 는 검수용 메모입니다.
     {"loc": "H", "name": "모니터 정원", "icon": "", "opensFrom": "D", "art": "garden"},
 ]
 
@@ -243,7 +245,13 @@ ROOMS = [
     {"key": "E", "loc": "E", "name": "하늘 끝", "art": "sky"},
     {"key": "F", "loc": "F", "name": "규칙시험실", "art": "lab"},
     {"key": "G", "loc": "G", "name": "바다 끝", "art": "sea"},
-    {"key": "H", "loc": "H", "name": "모니터 정원", "art": "garden"},
+    # ★ 판 도중에 «그림이 갈리는» 유일한 구역입니다. 방탈출(6막)을 지나 3차 조사(7막)에
+    #   들어서면 art2 로 바뀝니다 — 화면들이 노이즈로 뒤덮이고 벽에 시스템 로그가
+    #   또렷하게 뜹니다. 처음부터 그 그림을 깔면 1차 조사에서 벌써 「여기가 게임 속」이
+    #   읽혀 버립니다. 문을 열고 돌아온 뒤에야 읽히는 것이 이 판의 순서입니다.
+    #   규약은 화면 쪽 roomArt() 입니다 — art2 와 art2At(막 번호) 두 칸.
+    {"key": "H", "loc": "H", "name": "모니터 정원",
+     "art": "garden", "art2": "garden2", "art2At": 7},
 ]
 
 # ── 해금 공간 ─────────────────────────────────────────────────────
@@ -2573,8 +2581,12 @@ def public_scenario() -> dict:
                  "opensFrom": z.get("opensFrom", "")} for z in MAP],
         "victimCard": VICTIM_CARD, "sceneNote": SCENE_NOTE,
         "mapLabel": "이 마을",
+        # ★ art2/art2At 은 그 표를 «든 방만» 싣습니다. 안 갈리는 방에 빈 칸을 얹어
+        #   보내면 화면이 「여기도 갈리는 방」으로 읽을 여지를 남깁니다.
         "rooms": [{"key": r["key"], "loc": r["loc"], "name": r["name"], "art": r["art"],
-                   "needPod": False} for r in ROOMS],
+                   "needPod": False,
+                   **({"art2": r["art2"], "art2At": int(r.get("art2At", 0))} if r.get("art2") else {})}
+                  for r in ROOMS],
         # 잠긴 구역에서 읽히는 줄. **여는 조건은 절대 안 담습니다.**
         "sealedWhy": {k: g.get("why", "") for k, g in ZONE_GATES.items()},
         # 화면의 이름표. 이 판은 「어제/오늘」로 굴러갑니다.

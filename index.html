@@ -1853,7 +1853,10 @@
   #vn .vn-bg.body{--vnk:#24080b}
   #vn .vn-bg.scene{--vnk:#231017}
   /* 「그림 없음」 표 — 그림을 실제로 찾은 컷(인라인 url 이 붙은 컷)에는 안 뜬다 */
-  #vn .vn-bg:not([style*="url"])::after{content:"그림 없음";position:absolute;
+  /* ★ 「그림 없음」은 «그림을 안 정한 컷»에만 뜬다(.nopic). 예전엔 url 이 아직
+     안 붙었다는 것만 보고 띄워서, 처음 들어온 기기에서 내려받는 동안 오프닝
+     한복판에 이 글자가 떴다. 기다리는 것과 없는 것은 다른 일이다. */
+  #vn .vn-bg.nopic::after{content:"그림 없음";position:absolute;
     left:50%;top:32%;transform:translateX(-50%);
     font-family:var(--mono);font-size:1.5cqw;letter-spacing:.34em;line-height:1;
     color:rgba(235,230,220,.42);border:1px solid rgba(235,230,220,.22);padding:.8cqw 1.6cqw}
@@ -2003,7 +2006,7 @@
     #vn .vn-sprite{height:40%;bottom:30cqw;right:6cqw;border-radius:0}
     #vn .vn-emo{font-size:20cqw;width:52cqw;height:40%;bottom:30cqw;right:6cqw}
     #vn .vn-emo::after{font-size:2.6cqw;bottom:2.5cqw}
-    #vn .vn-bg:not([style*="url"])::after{font-size:3.2cqw;top:26%;padding:1.6cqw 3cqw}
+    #vn .vn-bg.nopic::after{font-size:3.2cqw;top:26%;padding:1.6cqw 3cqw}
     #vn .vn-vig{box-shadow:inset 0 0 28cqw 10cqw rgba(0,0,0,.85)}
   }
   @media(prefers-reduced-motion:reduce){
@@ -4642,16 +4645,23 @@ function vnRender(){
   const sid=(STATE&&STATE.scenarioId)||"";
   const stage=$("vnStage"), bg=$("vnBg"), sp=$("vnSprite"), emo=$("vnEmo");
 
-  bg.className="vn-bg "+(cut.img||"");
-  bg.style.backgroundImage="";
+  /* ★ 그림이 아직 안 받아졌다고 칸부터 비우지 «않는다».
+     처음 들어온 기기에서는 오프닝이 도는 동안 그림을 내려받는 중이라, 여기서 비우면
+     한복판에 「그림 없음」이 떴다 — 비주얼노벨에서 그것만큼 몰입을 깨는 것이 없다.
+     앞 컷 그림을 그대로 깔아둔 채 기다렸다가, 받아지는 순간 덮는다.
+     컷이 그림을 아예 안 들고 있을 때(.nopic)만 바탕색으로 돌아간다. */
+  bg.className="vn-bg "+(cut.img||"")+(cut.img?"":" nopic");
+  if(!cut.img) bg.style.backgroundImage="";
   // 16:9 원본을 세로 화면에 깔면 좌우가 잘린다. 컷이 focus 를 주면 그쪽을 남긴다.
   bg.style.backgroundPosition=({left:"20% center",right:"80% center",
                                 top:"center 20%",bottom:"center 80%"}[cut.focus])||"center";
   bg.classList.remove("show"); void bg.offsetWidth; bg.classList.add("show");
   if(sid&&cut.img){
-    // 이미지가 실제로 있을 때만 덧입힌다(없으면 위의 그라데이션이 그대로 남는다)
     findAsset(`/assets/${sid}_opening_${cut.img}`, url=>{
-      if(url && vnCuts[vnAt]===cut) bg.style.backgroundImage=`url("${url}")`;
+      if(vnCuts[vnAt]!==cut) return;
+      // 못 찾았으면 그제야 비운다 — 앞 컷을 계속 붙들고 있으면 그게 이 컷인 줄 안다
+      if(url){ bg.style.backgroundImage=`url("${url}")`; bg.classList.remove("nopic"); }
+      else { bg.style.backgroundImage=""; bg.classList.add("nopic"); }
     });
   }
 
@@ -4794,10 +4804,17 @@ function pinAt(id, i, n){
   // 아래 띠는 문 핀 자리다. 카드가 거기까지 내려오면 서로 겹친다.
   return [Math.max(8,Math.min(92,x)), Math.max(18,Math.min(70,y))];
 }
+/* 한 구역이 판 도중에 «다른 그림»으로 갈리는 자리. 시나리오가 art2 와 art2At(막 번호)를
+   주면, 그 막부터는 그쪽을 깐다. 모니터 정원이 방탈출 뒤에 달라지는 것이 이 규약이다 —
+   같은 방을 다시 갔을 때 뭔가 변해 있는 것을 «말로 알리지 않고» 보여주기 위해서다. */
+function roomArt(room){
+  const at=+((STATE&&STATE.phase&&STATE.phase.seq)||0);
+  return (room.art2 && at>=+(room.art2At||0)) ? room.art2 : room.art;
+}
 function openRoom(key){
   const room=roomByKey(key); if(!room) return;
   roomAt=key;
-  findAsset(`/assets/${STATE.scenarioId}_room_${room.art}`, url=>{
+  findAsset(`/assets/${STATE.scenarioId}_room_${roomArt(room)}`, url=>{
     if(!url){ openZoneList(room.loc); return; }     // 그림이 없으면 목록으로
     paintRoom(room, url);
   });
@@ -4833,7 +4850,7 @@ function paintRoom(room, url){
    없으니 우리가 돌린다. 폰을 옆으로 눕히면 그대로 꽉 찬 방이 된다. */
 function roomWide(key){
   const room=roomByKey(key); if(!room) return;
-  findAsset(`/assets/${STATE.scenarioId}_room_${room.art}`, url=>{
+  findAsset(`/assets/${STATE.scenarioId}_room_${roomArt(room)}`, url=>{
     if(!url) return;
     const cards=roomCards(room);
     const pins=cards.map((c,i)=>{ const st=cardState(c), p=pinAt(c.id,i,cards.length);
