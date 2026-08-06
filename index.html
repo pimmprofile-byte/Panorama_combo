@@ -3318,6 +3318,24 @@
     font-variant-numeric:tabular-nums}
   .immbox .imm-n b{color:var(--ink)}
 
+  /* ── 메모 (인물정보 셋째 칸) ─────────────────────────────────── */
+  .memobox{margin:0 0 14px;padding:12px 13px;border:1px solid var(--case-e);
+    background:linear-gradient(180deg,var(--scr3),var(--scr2));
+    box-shadow:inset 1px 1px 0 rgba(255,255,255,.045),2px 2px 0 rgba(0,0,0,.4)}
+  .memobox .memo-h{display:flex;align-items:center;gap:7px;
+    font-family:var(--pix);font-size:13.5px;font-weight:800;color:var(--me,var(--gold-b))}
+  .memobox .memo-h .ic{width:1.1em;height:1.1em}
+  .memobox .memo-g{margin:9px 0 0;padding-left:1.15em;display:flex;flex-direction:column;gap:6px}
+  .memobox .memo-g li{font-size:13px;line-height:1.7;color:var(--ink);word-break:keep-all}
+  .memobox .memo-g li.memo-none{color:var(--muted);font-size:12.5px}
+  .memopad{width:100%;margin-top:8px;resize:vertical;min-height:180px;
+    background:var(--scr-d);border:1px solid var(--case-e);color:var(--ink);
+    border-radius:0;padding:11px 12px;font-family:var(--read);font-size:16px;line-height:1.75;
+    box-shadow:inset 2px 2px 0 rgba(0,0,0,.5)}
+  .memopad:focus{outline:none;border-color:var(--me,var(--gold))}
+  .memo-s{min-height:1.5em;margin-top:6px;text-align:right;
+    font-family:var(--ui);font-size:11.5px;color:var(--good)}
+
   /* ── 입력칸의 바닥은 16px ──────────────────────────────────────
      손가락으로 쓰는 기기에서 입력칸 글자가 16px 아래면 사파리가 화면을 확대하고,
      손을 떼도 되돌리지 않는다. user-scalable=no 는 iOS 10 부터 무시되므로
@@ -7131,6 +7149,7 @@ function showWho(keepTab){
   const npcSec=npcs?`<div class="npch">앉을 수 없는 자리</div>
       <div class="mlead sm">이 둘은 배역이 아닙니다. 이들이 아는 것은 <b>조사 카드로만</b> 들어옵니다.</div>${npcs}`:"";
   const body=whoTab==="case" ? whoCaseHTML()
+    : whoTab==="memo" ? whoMemoHTML()
     : `<div class="mlead">누가 어디를 뒤졌는지는 테이블이 다 압니다. <b>무엇을 찾았는지는 본인만</b> 알아요 — ${ICO.lock}는 자리만 아는 카드입니다.</div>${rows}${npcSec}`;
   $("whoBox").innerHTML=`<div class="mhead sheeth">
       <div class="sh-id"><span class="sh-nm" style="color:var(--cold)">${ICO.people} 인물정보</span>
@@ -7138,11 +7157,44 @@ function showWho(keepTab){
       <div class="shtabs">
         <button class="shtab${whoTab==="cast"?" on":""}" onclick="whoGo('cast')">이 자리의 사람들<span class="n">${(SCEN.characters||[]).length}${(SCEN.npcs||[]).length?"+"+SCEN.npcs.length:""}</span></button>
         <button class="shtab${whoTab==="case"?" on":""}" onclick="whoGo('case')">사건 현장과 피해자</button>
+        ${myRoleValid()?`<button class="shtab${whoTab==="memo"?" on":""}" onclick="whoGo('memo')">메모</button>`:""}
       </div></div>
     <div class="mbody">${body}</div>`;
   $("whoBox").style.setProperty("--mt","var(--cold)");
   if(whoTab==="case") paintScene("#whoBox .viccard");
+  if(whoTab==="memo") wireMemo();
   openModal("whoModal");
+}
+/* ── 메모 ──────────────────────────────────────────────────────────
+   인물정보의 셋째 칸. 남이 무엇을 쥐고 있는지 보다가 바로 적는 자리라 여기 둔다 —
+   적으려고 창을 옮기면 방금 본 것이 화면에서 사라진다.
+   맨 위에는 «내 캐릭터의 목표» 가 고정으로 박혀 있다. 판이 길어지면 자기가 무엇을
+   하러 앉았는지부터 잊는다. 목표는 시나리오가 정한 그대로다(private_sheet.goals) —
+   여기서 새로 쓰지 않는다. 그 표가 곧 채점표라, 두 벌로 두면 반드시 어긋난다.
+   ★ 메모는 이 기기에만 남는다. 서버로 안 보낸다 — 남이 볼 수 있게 되는 순간
+     그건 메모가 아니라 발언이다. */
+function memoKey(){ return `pmb.memo.${(STATE&&STATE.roomId)||""}.${myRoleId||""}`; }
+function memoLoad(){ try{ return localStorage.getItem(memoKey())||""; }catch(e){ return ""; } }
+function memoSave(v){ try{ localStorage.setItem(memoKey(),v); }catch(e){} }
+function whoMemoHTML(){
+  const g=(sheetRole&&sheetRole.goals)||[];
+  const goals=g.length
+    ? g.map(x=>`<li>${esc(typeof x==="string"?x:(x.t||""))}</li>`).join("")
+    : `<li class="memo-none">「내 정보」를 한 번 열면 여기 목표가 뜹니다.</li>`;
+  return `<div class="memobox">
+      <div class="memo-h">${ICO.goal} 내 캐릭터의 목표</div>
+      <ul class="memo-g">${goals}</ul>
+    </div>
+    <div class="mlead sm">아래는 <b>이 기기에만</b> 남는 메모입니다 — 아무에게도 안 보입니다.</div>
+    <textarea id="memoPad" class="memopad" rows="10" placeholder="누가 무엇을 쥐고 있는지, 말이 어긋난 자리, 다음에 물어볼 것…"></textarea>
+    <div class="memo-s" id="memoSaved"></div>`;
+}
+function wireMemo(){
+  const t=$("memoPad"); if(!t) return;
+  t.value=memoLoad();
+  const mark=()=>{ const s=$("memoSaved"); if(s){ s.textContent="적은 대로 남았습니다";
+    clearTimeout(wireMemo._t); wireMemo._t=setTimeout(()=>{ if(s) s.textContent=""; },1400); } };
+  t.addEventListener("input",()=>{ memoSave(t.value); mark(); });
 }
 
 function showSwap(){
