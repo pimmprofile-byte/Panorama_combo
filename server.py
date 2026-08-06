@@ -730,9 +730,41 @@ def admin_cards(key: str = "", scenarioId: str = ""):
 # JSON을 따로 만들어 두면 문서와 화면이 언젠가 갈라진다 — 그래서 파싱해서 쓴다.
 # (사건id, 화면 이름, pending/ 밑 폴더 이름, 탭 색, 이미지 생성 시드)
 # 사건을 하나 붙일 때마다 pending/<폴더>/ 에 구역.md · 카드.md 를 두고 여기 한 줄 적는다.
-_ASSET_SETS = [
-    ("template", "빈 판", "template_빈판", "#c99a4e", 4040),
-]
+# 사건마다 색과 시드를 못박아 둔다 — 한 사건 안의 그림들이 한 세트로 보이려면
+# 시드가 같아야 하고, 관리자 화면에서 사건을 색으로 가르면 눈이 덜 헤맨다.
+# 여기 없는 사건도 목록에는 뜬다(아래 _asset_sets 참고) — 색과 시드만 기본값이 된다.
+_ASSET_TINT = {
+    "template":     ("#c99a4e", 4040),
+    "rule_the_day": ("#00e693", 6060),
+    "combo":        ("#8a7fe0", 7070),
+}
+# 옛 이름의 폴더. pending/{sid}/ 로 옮기기 전까지 이쪽도 같이 본다.
+_ASSET_LEGACY = {"template": "template_빈판"}
+
+
+def _asset_sets() -> list:
+    """어느 사건들의 프롬프트를 보여줄 것인가 — «시나리오 등록부»를 그대로 따른다.
+
+    예전에는 이 목록이 코드에 박혀 있어서, 사건을 하나 더 써도 관리자 화면에는
+    안 나타났다. 프롬프트를 써 두고도 「어디서 보지?」가 되던 자리다.
+    폴더는 pending/{sid}/ 를 먼저 보고, 없으면 옛 이름을 본다.
+    """
+    root = _HERE / "pending"
+    out = []
+    try:
+        metas = scenarios.meta_list()
+    except Exception:
+        metas = []
+    for m in metas:
+        sid = m.get("id") or ""
+        if not sid:
+            continue
+        folder = sid if (root / sid).is_dir() else _ASSET_LEGACY.get(sid, sid)
+        hue, seed = _ASSET_TINT.get(sid, ("#8f8a78", 1010))
+        out.append((sid, m.get("title") or sid, folder, hue, seed))
+    if not out:
+        out.append(("template", "빈 판", "template_빈판", "#c99a4e", 4040))
+    return out
 _ASSET_CACHE: dict = {"stamp": None, "data": None}
 
 
@@ -802,11 +834,21 @@ def _asset_prompts() -> dict:
                 common[k] = f[idx].strip()
 
     scen = []
-    for sid, name, folder, hue, seed in _ASSET_SETS:
+    for sid, name, folder, hue, seed in _asset_sets():
         d = root / folder
         zp, kp = d / "구역.md", d / "카드.md"
+        # 폴더 안의 «나머지» 마크다운도 다 읽는다 — 오프닝 컷처럼 구역도 카드도 아닌
+        # 묶음이 사건마다 생긴다. 파일을 하나 더 두면 화면에 한 칸이 더 생기게 둔다.
+        extras = []
+        if d.is_dir():
+            for src in sorted(d.glob("*.md")):
+                if src.name in ("구역.md", "카드.md"):
+                    continue
+                items = _asset_parse(src)
+                if items:
+                    extras.append({"name": src.stem, "items": items})
         tone = ""
-        for src in (zp, kp):
+        for src in [zp, kp] + [d / f"{e['name']}.md" for e in extras]:
             if not src.exists():
                 continue
             for f in _asset_fences(src.read_text(encoding="utf-8")):
@@ -816,10 +858,12 @@ def _asset_prompts() -> dict:
             if tone:
                 break
         zones, cards = _asset_parse(zp), _asset_parse(kp)
-        for it in zones + cards:
+        allit = zones + cards + [it for e in extras for it in e["items"]]
+        for it in allit:
             it["have"] = (_HERE / "assets" / it["file"]).exists()
         scen.append({"id": sid, "name": name, "hue": hue, "seed": seed,
-                     "tone": tone, "zones": zones, "cards": cards})
+                     "tone": tone, "zones": zones, "cards": cards, "extras": extras,
+                     "n": len(allit)})
 
     data = {"common": common, "scen": scen}
     _ASSET_CACHE["stamp"], _ASSET_CACHE["data"] = stamp, data

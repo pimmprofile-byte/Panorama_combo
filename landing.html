@@ -392,7 +392,13 @@
   .adtabs{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 16px}
   .adtab{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;background:var(--screen2);
     border:1px solid var(--line2);color:var(--bone-dim);border-radius:0;padding:7px 13px}
-  .adtab.on{color:#14120f;background:var(--case-ink);border-color:var(--case-e);font-weight:800}
+  /* ★ --case-ink 를 판으로 쓰면 안 된다. 이 파일에서 그건 «잉크»(#12130f, 거의 검정)의
+     별명이라, 그 위에 #14120f 글자를 얹으면 검정 위 검정이 된다 — 지금 보고 있는 꼭지가
+     통째로 까만 상자로 보이던 자리다. (같은 이름이 index.html 에서는 «밝은 글자»를
+     뜻한다. 이름이 같고 뜻이 반대라, 여기서는 값을 직접 짚는다.) */
+  .adtab.on{color:var(--ink);background:var(--case-hi);border-color:var(--ink);font-weight:800}
+  .adtab .n{margin-left:6px;opacity:.65;font-weight:400}
+  .adtab.on .n{opacity:.75}
   .adzone{margin-top:20px}
   .adzone > h4{font-family:var(--serif);font-size:1.05rem;margin:0 0 9px;color:var(--bone);
     border-bottom:1px solid var(--line2);padding-bottom:7px}
@@ -466,7 +472,8 @@
   .adcp{font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;background:var(--screen2);
     border:1px solid var(--line2);color:var(--bone-dim);border-radius:0;padding:6px 11px}
 
-  .adcp.k{background:var(--case-ink);border-color:var(--case-e);color:#14120f;font-weight:800}
+  /* 위와 같은 함정 — 「합쳐서 복사」가 까만 상자로 보이던 자리다 */
+  .adcp.k{background:var(--case-hi);border-color:var(--ink);color:var(--ink);font-weight:800}
   .adcp.done{background:#2f6b62!important;border-color:#2f6b62!important;color:#fff!important}
   .adphint{font-size:.74rem;line-height:1.7;color:var(--faint);margin:0 0 14px;word-break:keep-all}
   .adphint b{color:var(--brass)}
@@ -1441,6 +1448,7 @@ async function admAssetsLoad(which){
       return;
     }
     ASSETS=d;
+    showAssetTabs();          // 목록이 이제 왔다 — 꼭지를 사건 수만큼 다시 세운다
   }
   const b=$("admassets"); if(!b) return;
 
@@ -1464,21 +1472,38 @@ async function admAssetsLoad(which){
     });
     return out.join("");
   };
-  const done=[...sc.zones,...sc.cards].filter(x=>x.have).length;
-  b.innerHTML=`<div class="adsub">${ADM_ESC(sc.title||sc.name)} · 구역 ${sc.zones.length} · 카드 ${sc.cards.length}${done?` · 설치됨 ${done}`:""} · 시드 ${sc.seed}</div>
+  const allit=[...sc.zones,...sc.cards,...(((sc.extras)||[]).flatMap(e=>e.items))];
+  const done=allit.filter(x=>x.have).length;
+  b.innerHTML=`<div class="adsub">${ADM_ESC(sc.title||sc.name)} · 모두 ${allit.length}장${
+      sc.zones.length?` · 구역 ${sc.zones.length}`:""}${sc.cards.length?` · 카드 ${sc.cards.length}`:""}${
+      ((sc.extras)||[]).map(e=>` · ${ADM_ESC(e.name)} ${e.items.length}`).join("")
+    }${done?` · 설치됨 ${done}`:""} · 시드 ${sc.seed}</div>
     ${sc.tone?admAssetBlock(sc.name+" 톤 블록","앞머리 다음, 본문 앞에 붙습니다",sc.tone,sc.id):""}
     ${sc.zones.length?`<div class="adzone"><h4>구역 배경<span class="n">${sc.zones.length}장</span></h4>${group(sc.zones,"zone")}</div>`:""}
-    ${sc.cards.length?`<div class="adzone"><h4>조사카드<span class="n">${sc.cards.length}장</span></h4>${group(sc.cards,"card")}</div>`:""}`;
+    ${sc.cards.length?`<div class="adzone"><h4>조사카드<span class="n">${sc.cards.length}장</span></h4>${group(sc.cards,"card")}</div>`:""}
+    ${((sc.extras)||[]).map(e=>`<div class="adzone"><h4>${ADM_ESC(e.name)}<span class="n">${e.items.length}장</span></h4>${group(e.items,"card")}</div>`).join("")}`;
+}
+/* 탭 목록 — 서버가 준 사건들을 그대로 쓴다.
+   예전에는 ["common","template"] 두 개가 코드에 박혀 있어서, 사건을 하나 더 쓰고
+   프롬프트를 넣어도 관리자 화면에는 안 나타났다. 「어디서 보지?」가 되던 자리다.
+   ASSETS 가 아직 안 왔으면 공통 하나만 세우고, 도착하면 다시 그린다. */
+function admAssetIds(){ return ["common",...((ASSETS&&ASSETS.scen)||[]).map(x=>x.id)]; }
+function admAssetName(id){
+  if(id==="common") return "공통 사양";
+  const sc=((ASSETS&&ASSETS.scen)||[]).find(x=>x.id===id);
+  return (sc&&(sc.name||sc.id))||id;
 }
 function showAssetBrowser(){
-  const ids=["common","template"];
-  const nm={common:"공통 사양",template:"빈 판"};
-  const tabs=ids.map(id=>`<button class="adtab${id===admAsset?" on":""}" onclick="admAssetsLoad('${id}');showAssetTabs()">${nm[id]}</button>`).join("");
+  const ids=admAssetIds();
+  if(ids.indexOf(admAsset)<0) admAsset=ids[0];
+  const tabs=ids.map(id=>`<button class="adtab${id===admAsset?" on":""}" onclick="admAssetsLoad('${id}');showAssetTabs()">${ADM_ESC(admAssetName(id))}<span class="n">${admAssetCount(id)}</span></button>`).join("");
   $("adcard").className="adcard wide crt-flick";
-  $("adcard").innerHTML=`<h3>에셋 프롬프트</h3><div class="adsub">GRAPHIC-NOVEL · 앞머리 + 톤 + 본문</div>
-    <div class="adphint">그림은 <b>실사가 아니라 잉크 그래픽노블</b>입니다. 프롬프트 하나는
-      <b>앞머리 + 톤 블록 + 본문</b> 세 조각이라, <b>합쳐서 복사</b>가 그 셋을 이어 붙여 줍니다.
-      「본문만」은 이미 앞머리를 걸어둔 창에 이어 붙일 때 쓰세요.</div>
+  $("adcard").innerHTML=`<h3>에셋 프롬프트</h3><div class="adsub">사건별 · 앞머리 + 톤 + 본문</div>
+    <div class="adphint">프롬프트 하나는 <b>앞머리 + 톤 블록 + 본문</b> 세 조각이라,
+      <b>합쳐서 복사</b>가 그 셋을 이어 붙여 줍니다. 「본문만」은 이미 앞머리를 걸어둔 창에
+      이어 붙일 때 쓰세요.<br>
+      <b>화풍은 사건마다 다릅니다</b> — 잉크 그래픽노블인 판도 있고 픽셀아트인 판도 있습니다.
+      각 사건의 문서 맨 앞에 그 판의 앞머리가 적혀 있으니 그것을 쓰세요.</div>
     <div class="adtabs" id="admassettabs">${tabs}</div>
     <div class="adtabs"><button class="adtab" onclick="showCardBrowser()">조사카드</button><button class="adtab" onclick="showRoleBrowser()">배역</button><button class="adtab" onclick="showAdminPanel()">← 사건 정본</button></div>
     <div id="admassets"></div>
@@ -1487,9 +1512,19 @@ function showAssetBrowser(){
   admAssetsLoad();
 }
 /* 탭만 다시 칠한다 — 목록을 통째로 다시 그리면 스크롤이 위로 튄다. */
+function admAssetCount(id){
+  if(id==="common") return "";
+  const sc=((ASSETS&&ASSETS.scen)||[]).find(x=>x.id===id);
+  return sc&&sc.n?String(sc.n):"";
+}
 function showAssetTabs(){
-  const ids=["common","template"];
   const t=$("admassettabs"); if(!t) return;
+  const ids=admAssetIds();
+  // 목록 자체가 늘어났으면(ASSETS 가 늦게 도착) 꼭지를 새로 세운다
+  if(t.children.length!==ids.length){
+    t.innerHTML=ids.map(id=>`<button class="adtab${id===admAsset?" on":""}" onclick="admAssetsLoad('${id}');showAssetTabs()">${ADM_ESC(admAssetName(id))}<span class="n">${admAssetCount(id)}</span></button>`).join("");
+    return;
+  }
   [...t.children].forEach((b,i)=>b.classList.toggle("on",ids[i]===admAsset));
 }
 
