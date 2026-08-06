@@ -3146,11 +3146,15 @@
      같이 하는 물건이라, 폭을 다 쓰는 이 띠에 걸면 통째로 왼쪽으로 밀린다. */
   .coachtip{position:absolute;left:0;right:0;bottom:100%;margin-bottom:11px;z-index:7;
     text-align:center;pointer-events:none;animation:bobY 1.9s ease-in-out infinite}
-  .coachtip>span{position:relative;display:inline-block;
+  .coachtip>span{position:relative;display:inline-block;max-width:100%;
     background:var(--case-h);color:var(--case-fg);padding:8px 14px;
     border:1px solid var(--case-e);box-shadow:2px 2px 0 rgba(0,0,0,.55);
     font-family:var(--ui);font-size:12.5px;font-weight:800;letter-spacing:.01em;
-    word-break:keep-all}
+    line-height:1.55;word-break:keep-all;white-space:normal}
+  /* 두 번째 줄 — 견본 문장. 입력칸에 넣으면 잘리는 것을 여기서 통째로 보여준다. */
+  .coachtip>span>i{display:block;margin-top:5px;padding-top:5px;
+    border-top:1px solid color-mix(in srgb,var(--case-e) 30%,transparent);
+    font-style:normal;font-weight:400;font-size:12px;color:var(--case-fg2)}
   .coachtip>span::after{content:"";position:absolute;left:50%;bottom:-5px;
     transform:translateX(-50%) rotate(45deg);width:10px;height:10px;
     background:var(--case-h);border-right:1px solid var(--case-e);border-bottom:1px solid var(--case-e)}
@@ -8006,11 +8010,12 @@ function subjP(name){ const ch=(name||"").slice(-1).charCodeAt(0);
   if(isNaN(ch)||ch<0xAC00||ch>0xD7A3) return "이";
   return ((ch-0xAC00)%28)?"이":"가"; }
 function sayHint(c){
-  /* 아직 한마디도 안 한 사람에게는 «자기소개 견본»이 먼저다. 대화록이 끝나고 처음
-     입을 여는 자리라, 무엇을 쓰면 되는지가 칸 안에 들어 있어야 손이 움직인다.
-     한 번이라도 말한 뒤에는 여느 안내로 돌아간다 — 견본이 계속 남아 있으면 잔소리다. */
-  const ex=(STATE&&STATE.introHint)||"";
-  if(c&&ex&&!saidYet()) return `자기소개를 해주세요. 예시: ${ex}`;
+  /* 아직 한마디도 안 한 사람에게는 «자기소개를 하라»는 말이 먼저다.
+     한 번이라도 말한 뒤에는 여느 안내로 돌아간다 — 계속 남아 있으면 잔소리다.
+     ★ 예시 문장은 여기 안 넣는다. 한 줄짜리 입력칸에 마흔 자를 넣으면 뒤가 잘려
+       「자기소개를 해주세요. 예시: 데이비드다. 다음 관리…」에서 끝난다 — 정작
+       보여주려던 견본이 안 보인다. 예시는 위 말풍선(introCoach)이 통째로 보여준다. */
+  if(c&&(STATE&&STATE.introHint)&&!saidYet()) return "자기소개를 해주세요";
   return c?`${c.name}${subjP(c.name)} 되어 말하세요…`:"배역을 골라야 말할 수 있어요";
 }
 /* 내가 이 판에서 배역으로 한마디라도 했는가. 대화 기록에 내 줄이 있으면 한 것이다. */
@@ -8033,7 +8038,7 @@ function introCoachKey(){ const r=(STATE&&STATE.roomId)||""; return (r&&myRoleId
      key  한 번만 뜨게 기억할 자리. 빈 문자열이면 매번 뜬다
    ★ 가리개는 대화창 «안»에 붙인다. 화면 전체에 fixed 로 깔면 탭(z-index 60)이
      그 위에 있어서 아무것도 안 어두워진다. */
-function chatCoach(el, text, key){
+function chatCoach(el, text, key, sub){
   const box=$("chatFullBox"); if(!box||!$("chatModal").classList.contains("on")) return;
   const comp=box.querySelector(".composer"); if(!comp||!el) return;
   if(box.querySelector(".coachdim")) return;              // 이미 떠 있다
@@ -8044,7 +8049,7 @@ function chatCoach(el, text, key){
   comp.classList.add("coachon");
   el.classList.add("coachpick");
   const tip=document.createElement("div"); tip.className="coachtip";
-  tip.innerHTML=`<span>${esc(text)}</span>`;
+  tip.innerHTML=`<span>${esc(text)}${sub?`<i>${esc(sub)}</i>`:""}</span>`;
   comp.appendChild(tip);
 }
 function endChatCoach(){
@@ -8060,7 +8065,11 @@ function introCoach(){
   if(!myRoleValid()) return;
   const ta=$("chatFullInput"); if(!ta||ta.disabled) return;
   ta.placeholder=sayHint(roleById(myRoleId));
-  chatCoach(ta, "여기에 직접 쳐서 자기소개를 하세요", introCoachKey());
+  /* 예시는 말풍선이 통째로 보여준다 — 한 줄짜리 입력칸에 넣으면 뒤가 잘린다.
+     여기는 폭을 다 쓰고 줄도 바뀌므로 마흔 자가 그대로 들어간다. */
+  const ex=(STATE&&STATE.introHint)||"";
+  chatCoach(ta, "여기에 직접 쳐서 자기소개를 하세요", introCoachKey(),
+            ex?`예시 — ${ex}`:"");
   try{ ta.focus({preventScroll:true}); }catch(e){ ta.focus(); }
 }
 /* 「2차 조사로」·「종막으로」 — 받침에 따라 갈린다(ㄹ 받침은 「로」). */
