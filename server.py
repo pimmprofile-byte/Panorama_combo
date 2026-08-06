@@ -784,7 +784,10 @@ def _asset_parse(path: Path) -> list:
     out, group, i = [], "", 0
     while i < len(lines):
         line = lines[i]
-        m = re.match(r"^#\s+\d+\.\s*(.+)$", line)
+        # 「# 5. 오프닝 컷」 · 「# 3-2. 2차 조사 — 20장」 둘 다 묶음 제목이다.
+        # 마디 번호에 하이픈을 허용하는 것은 한 문서 안에서 묶음을 더 잘게 가르기
+        # 위해서다 — 마흔 장이 한 목록에 쏟아지면 찾는 것이 일이 된다.
+        m = re.match(r"^#\s+\d+(?:[.\-]\d+)*\.\s*(.+)$", line)
         if m:
             group = re.sub(r"\s*—.*$", "", m.group(1)).strip()
         if line.startswith("### "):
