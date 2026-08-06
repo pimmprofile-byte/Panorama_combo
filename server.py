@@ -119,6 +119,10 @@ def fresh_room() -> dict:
         # 적힌 값은 인물정보에서 모두가 본다. 「누가 적을 수 있는가」는 이 방 상태에 안 담긴다.
         "ages": {},               # roleId -> 그 사람이 적어 넣은 나이
         "ready": [],              # 「결과 확인」을 누른 배역. 전원이 누르면 판이 다음으로 넘어간다
+        # 「몰입 완료」를 누른 배역. ready 와 «다른 물건»이다 — 이건 막을 넘기지 않는다.
+        # 오프닝에서 각자 제 시트를 끝까지 읽었는지만 센다. 전원이 누르면 그때서야
+        # 대화창이 열린다(그 전에는 읽는 자리다).
+        "immersed": [],
         "typing": None,
         "events": [],            # 진행 세션이 따라 읽는 사건 기록
         "podOpen": False,        # 특정 카드가 전체공개되면 지도에 탈출 포드가 드러난다
@@ -441,6 +445,7 @@ def public_state() -> dict:
             "checked": checked,
             "usedAP": used,
             "ready": _ready_state(),
+            "immersed": _immersed_state(),
             "belongLimit": _belong_limit(),
             # 구역 몫을 쓰는 조사 페이즈에서, 배역별로 어느 구역을 몇 장 열었는지.
             "quotaUsed": {rid: _quota_used(rid, cur) for rid in ROOM["roles"]},
@@ -1921,9 +1926,32 @@ def _try_investigate(role_id: str, card_id: str, enforce_ap: bool = True, enforc
         # 조사 페이즈에는 이 줄이 사람 수 × AP 만큼 쏟아져서 정작 오간 말을 밀어냈다.
         # 그 정보를 읽는 자리는 조사 현황판이다 — 거기 카드마다 「○○ 쥐고 있음」이
         # 적혀 있고, 그건 대화가 흐르고 나서도 안 사라진다.
+        # 이 카드가 구역의 «자물쇠» 였으면 그 자리에서 알린다. 수수께끼로 여는 구역만
+        # 그 줄이 있었는데, 뒤져서 나오는 자물쇠도 있다(규칙시험실). 알리지 않으면
+        # 지도에 없던 칸이 소리 없이 생겨서, 아무도 그게 언제 열렸는지 모른다.
+        _announce_zone(c)
         _auto_combine()
         bump()
     return None
+
+
+def _announce_zone(card: dict) -> None:
+    """이 카드가 열어 주는 구역이 있으면 대화창에 한 줄 남긴다.
+
+    자물쇠 카드가 «보이는» 순간 그 구역이 지도에 생긴다(_hidden_zones 참고).
+    그 사실을 말로 남기지 않으면 화면만 조용히 바뀐다 — 판이 커지는 순간은
+    누구나 알아야 하는 순간이다.
+    """
+    zone = (card or {}).get("unlockZone") or ""
+    if not zone:
+        return
+    zn = next((z.get("name") for z in (getattr(SC, "MAP", []) or [])
+               if z.get("loc") == zone), "") or zone
+    line = f"— 「{zn}」 구역이 열렸습니다."
+    # 두 번 안 적는다 — 수수께끼로 연 자리에서 이미 적었을 수 있다.
+    if any(r.get("text") == line for r in ROOM["table"][-12:]):
+        return
+    ROOM["table"].append({"kind": "system", "broadcast": True, "text": line})
 
 
 def _mark_toggle(role_id: str, card_id: str) -> str | None:
@@ -2340,6 +2368,42 @@ def _ready_state():
         return None
     rd = [r for r in (ROOM.get("ready") or []) if r in humans]
     return {"n": len(rd), "of": len(humans), "done": len(rd) >= len(humans), "mine": list(rd)}
+
+
+def _immersed_state():
+    """「몰입 완료」를 누른 사람들. 막을 넘기지 않는다 — 대화창 문을 여는 것뿐이다.
+
+    오프닝은 «읽는 자리»다. 각자 제 시트를 끝까지 읽기 전에 대화가 열리면
+    아무도 안 읽고 떠들기 시작한다. 셋이 다 읽었다고 말해야 문이 열린다.
+    """
+    humans = _human_roles()
+    if not humans:
+        return None
+    im = [r for r in (ROOM.get("immersed") or []) if r in humans]
+    return {"n": len(im), "of": len(humans), "done": len(im) >= len(humans), "mine": list(im)}
+
+
+@app.post("/api/immersed")
+def immersed_toggle(b: RoleReq):
+    """「몰입 완료」 토글. 전원이 누르면 대화창이 열린다(막은 그대로다)."""
+    with LOCK:
+        r = ROOM["roles"].get(b.roleId)
+        if not r or r["clientId"] != b.clientId or r["mode"] != "human":
+            return JSONResponse({"error": "그 배역으로 누를 수 없습니다"}, status_code=403)
+        im = ROOM.setdefault("immersed", [])
+        nm = (SC.get_character(b.roleId) or {}).get("name", b.roleId)
+        if b.roleId in im:
+            im.remove(b.roleId)
+        else:
+            im.append(b.roleId)
+            ROOM["table"].append({"kind": "system", "broadcast": True,
+                                  "text": f"{nm}{_subj(nm)} 배역을 다 읽었습니다."})
+            st = _immersed_state()
+            if st and st["done"]:
+                ROOM["table"].append({"kind": "system", "broadcast": True,
+                                      "text": "셋 다 준비됐습니다 — 이제 대화창에서 서로를 소개하세요."})
+        bump()
+        return {"ok": True, "immersed": _immersed_state()}
 
 
 @app.post("/api/swap")
@@ -4485,6 +4549,7 @@ def _advance():
     _ev("phase_leaving", name=SC.phase_by_seq(ROOM["seq"])["name"])
     with LOCK:
         ROOM["ready"] = []          # 준비 표시는 막마다 새로 받는다
+        ROOM["immersed"] = []       # 「몰입 완료」도 마찬가지 — 오프닝에서만 쓰지만 남겨두지 않는다
         # 막이 넘어갈 때 붙는 줄은 전부 판이 스스로 하는 말이다 — 밤의 결과, 압수,
         # 막 머리, GM, NPC가 꺼내는 말. 한 덩어리로 솟지 않게 표를 달아 내보낸다.
         _drip0 = len(ROOM["table"])
