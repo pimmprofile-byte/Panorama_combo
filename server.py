@@ -712,6 +712,18 @@ def admin_cards(key: str = "", scenarioId: str = ""):
             "gone": c.get("gone", 0), "day2": c.get("day2") or None,
             "requires": c.get("requires", ""), "unlocks": c.get("unlocks", ""),
             "title": c.get("title", ""), "text": c.get("text", ""), "hint": c.get("hint", ""),
+            # 검수 화면이 카드를 «갈래로» 세우는 데 쓰는 표들. 도구인지, 퍼즐인지,
+            # 그 퍼즐이 무엇을 여는지 — 이게 없으면 화면이 목록을 평평하게밖에 못 그린다.
+            "item": bool(c.get("item")), "itemName": c.get("itemName", ""),
+            "keyHalf": bool(c.get("keyHalf")), "startWith": c.get("startWith", ""),
+            "shared": bool(c.get("shared")), "vein": c.get("vein", ""),
+            "combo": list(c.get("combo") or []), "unlockZone": c.get("unlockZone", ""),
+            "puzzle": ({"prompt": c["puzzle"].get("prompt", ""),
+                        "answer": list(c["puzzle"].get("answer") or []),
+                        "hint": c["puzzle"].get("hint", ""),
+                        "grants": c["puzzle"].get("grants", ""),
+                        "publish": bool(c["puzzle"].get("publish"))}
+                       if c.get("puzzle") else None),
         })
     holders = {}
     for ch in getattr(m, "CHARACTERS", []):
@@ -719,9 +731,12 @@ def admin_cards(key: str = "", scenarioId: str = ""):
             holders.setdefault(cid, []).append(ch["name"])
     for c in cards:
         c["knownBy"] = holders.get(c["id"], [])
+    # 라운드를 «그 사건의 말»로 부른다. 없으면 화면이 옛 표(오늘/이튿날)로 되돌아간다 —
+    # 사건마다 막의 뜻이 달라서(잠수정은 1·3·9, 룰더데이는 1·2·3) 한 표로는 못 덮는다.
     return {"scenarioId": sid, "title": getattr(m, "TITLE", sid),
             "map": getattr(m, "MAP", []), "cards": cards,
             "pairs": getattr(m, "CARD_PAIRS", []),
+            "roundLabels": {str(k): v for k, v in (getattr(m, "ROUND_LABELS", {}) or {}).items()},
             "keepGoals": getattr(m, "KEEP_GOALS", {})}
 
 

@@ -428,6 +428,33 @@
   .adc.hot{border-color:color-mix(in srgb,var(--blood) 60%,var(--line2));
     background:linear-gradient(180deg,rgba(170,50,40,.16),var(--screen2) 72%)}
   .adc.rulecard{border-color:var(--brass)}
+  /* ── 퍼즐과 그 보상카드 ────────────────────────────────────────
+     둘은 «한 덩이»다. 목록에 따로 서 있으면 이 카드가 왜 여기 있는지를
+     읽는 사람이 매번 되짚어야 한다. 퍼즐 밑에 붙이고, 왼쪽에 한 줄을 그어
+     묶인 것을 보이고, 보상 쪽만 색을 달리한다. */
+  .adunit{display:flex;flex-direction:column;gap:0}
+  .adunit.haskid .adc:first-child{margin-bottom:0}
+  .adunit .adc.reward{margin-left:16px;margin-top:-1px;
+    border-color:color-mix(in srgb,var(--brass) 55%,var(--line2));
+    border-left-width:3px;
+    background:linear-gradient(180deg,rgba(201,154,78,.13),var(--screen2) 74%)}
+  .adc .cfr.kw{color:var(--brass);border-color:color-mix(in srgb,var(--brass) 55%,var(--line2));
+    background:rgba(201,154,78,.16)}
+  /* 라운드 딱지 — 1차·2차·3차가 눈으로 갈려야 한다 */
+  .adc .cfr.k3{color:#b7d9a8;border-color:rgba(183,217,168,.45);background:rgba(120,170,100,.14)}
+  /* 퍼즐 본문 — 답이 그대로 적히는 자리라 검수에서만 본다 */
+  .adc .cpz{margin-top:11px;padding:9px 12px;border-radius:0;
+    border:1px dashed color-mix(in srgb,var(--brass) 45%,var(--line2));
+    background:rgba(201,154,78,.07);font-size:.78rem;line-height:1.65;color:var(--bone-dim)}
+  .adc .cpz b{font-family:var(--mono);font-size:.55rem;letter-spacing:.1em;color:var(--brass);
+    margin-right:6px}
+  .adc .cpza{font-family:var(--mono);font-size:.66rem;letter-spacing:.04em;color:var(--brass);
+    margin-top:5px}
+  .adc .ctags i.t{color:#7fc8a9;border-color:rgba(127,200,169,.45)}
+  /* 전체 방 초기화 — 되돌릴 수 없는 단추라 다른 것들과 같은 얼굴이면 안 된다 */
+  .adwipe{border-color:var(--blood)!important;color:var(--blood-bri)!important}
+  .adwipe:hover{background:color-mix(in srgb,var(--blood) 22%,transparent)!important}
+  .adwipe:disabled{opacity:.5;cursor:default}
   .adc .ch{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin-bottom:3px}
   .adc .cid{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;color:var(--faint)}
   .adc .cti{font-family:var(--serif);font-weight:800;font-size:1rem;color:var(--bone)}
@@ -1208,66 +1235,132 @@ let admScen="template", admKey=localStorage.getItem("pmb.gmkey")||"";
 let admPart="vn";   // 에셋 프롬프트의 갈래 — 비주얼노벨 · 맵 · 조사카드 · 캐릭터
 let admGrp="";      // 그 갈래 안의 묶음 — VN1·VN2… / 1차 조사·2차 조사·3차 조사
 const ADM_ESC=t=>String(t==null?"":t).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+let ADMD=null;      // 마지막으로 받은 카드 묶음 — 탭을 갈아도 다시 안 받는다
+let admRnd="";      // 조사카드 갈래 — "" 전체 · "1"·"2"·"3" 라운드 · "item" 도구
 async function admLoad(sid){
-  if(sid) admScen=sid;
+  if(sid){ admScen=sid; ADMD=null; }
   const box=$("admcards"); if(box) box.innerHTML='<div class="adsub">불러오는 중…</div>';
-  let d;
-  try{ d=await (await fetch(`/api/admin/cards?scenarioId=${encodeURIComponent(admScen)}&key=${encodeURIComponent(admKey)}`)).json(); }
-  catch(e){ d={error:"network"}; }
+  let d=ADMD;
+  if(!d){
+    try{ d=await (await fetch(`/api/admin/cards?scenarioId=${encodeURIComponent(admScen)}&key=${encodeURIComponent(admKey)}`)).json(); }
+    catch(e){ d={error:"network"}; }
+  }
   const b=$("admcards"); if(!b) return;
   if(d.error){
+    ADMD=null;
     b.innerHTML=`<div class="aderr">카드를 열 수 없습니다 (${ADM_ESC(d.error)}).</div>
       <div class="adform"><input id="admk" type="password" placeholder="GM 키 (AGENT_KEY)" autocomplete="off">
       <button onclick="admSetKey()">확인</button></div>
       <div class="adsub" style="margin-top:10px">배포본은 서버에 넣어둔 AGENT_KEY가 필요합니다. 로컬은 빈 값으로 열립니다.</div>`;
-    const i=$("admk"); if(i){ i.value=admKey; i.onkeydown=ev=>{ if(ev.key==="Enter") admSetKey(); }; i.focus(); }
+    const i2=$("admk"); if(i2){ i2.value=admKey; i2.onkeydown=ev=>{ if(ev.key==="Enter") admSetKey(); }; i2.focus(); }
     return;
   }
-  const byLoc={}; (d.cards||[]).forEach(c=>{ (byLoc[c.loc]=byLoc[c.loc]||[]).push(c); });
-  const zones=(d.map||[]).map(z=>{
-    const cs=(byLoc[z.loc]||[]).slice().sort((x,y)=>(x.round-y.round)||x.id.localeCompare(y.id));
-    if(!cs.length) return "";
-    return `<div class="adzone"><h4>${ADM_ESC(z.name||z.loc)}<span class="n">${admBreak(cs)}</span></h4>
-      <div class="adcards">${cs.map(admCard).join("")}</div></div>`;
-  }).join("");
-  const loose=(d.cards||[]).filter(c=>!(d.map||[]).some(z=>z.loc===c.loc));
-  const pairs=(d.pairs||[]).map(p=>`<div class="adpair"><b>${ADM_ESC(p.key)}</b> — ${(p.cards||[]).join(" + ")} → ${ADM_ESC(p.conclusion||"")}</div>`).join("");
-  b.innerHTML=`<div class="adsub">${ADM_ESC(d.title)} · ${admBreak(d.cards||[])}</div>
-    ${zones}${loose.length?`<div class="adzone"><h4>구역 밖<span class="n">${admBreak(loose)}</span></h4><div class="adcards">${loose.map(admCard).join("")}</div></div>`:""}
-    ${pairs?`<div class="adzone"><h4>두 장이 만나야 나는 결론<span class="n">${(d.pairs||[]).length}쌍</span></h4>${pairs}</div>`:""}`;
+  ADMD=d;
+  ADM_RL=d.roundLabels||{};
+  const all=d.cards||[];
+  /* ★ 퍼즐이 여는 «보상카드» 는 따로 서 있으면 안 된다. 목록에서 빼서 부모 밑에
+     끼워 넣는다 — 예전에는 둘이 멀리 떨어져 있어서, 이 카드가 왜 여기 있는지
+     읽는 사람이 매번 되짚어야 했다. */
+  const rewardOf={};                       // 보상카드 id → 그 카드를 여는 퍼즐카드
+  all.forEach(c=>{ const g=c.puzzle&&c.puzzle.grants; if(g) rewardOf[g]=c.id; });
+  const byId={}; all.forEach(c=>byId[c.id]=c);
+  const isReward=c=>!!rewardOf[c.id];
+
+  const rounds=[...new Set(all.map(c=>c.round).filter(Boolean))].sort((a,b)=>a-b);
+  const tools=all.filter(c=>c.item||c.keyHalf);
+  const tabs=[["","전체",all.filter(c=>!isReward(c)).length]]
+    .concat(rounds.map(r=>[String(r),admKind(r)[0],all.filter(c=>c.round===r&&!isReward(c)).length]))
+    .concat(tools.length?[["item","도구",tools.length]]:[]);
+  if(!tabs.some(t=>t[0]===admRnd)) admRnd="";
+  const tabHTML=tabs.map(([k,n,c])=>`<button class="adtab${k===admRnd?" on":""}"
+      onclick="admRnd='${k}';admLoad()">${ADM_ESC(n)}<span class="n">${c}</span></button>`).join("");
+
+  /* 카드 한 장 + (있으면) 그 카드가 여는 보상카드를 한 덩이로 그린다 */
+  const unit=c=>{
+    const g=c.puzzle&&c.puzzle.grants, r=g&&byId[g];
+    return `<div class="adunit${r?" haskid":""}">${admCard(c)}${r?admCard(r,c.id):""}</div>`;
+  };
+
+  let body="";
+  if(admRnd==="item"){
+    body=`<div class="adzone"><h4>도구·열쇠<span class="n">${tools.length}장</span></h4>
+      <div class="adsub" style="margin:-4px 0 10px">인벤토리에 들어가는 카드입니다 — 손패 상한에 안 걸립니다.
+        열쇠 반쪽은 문에 꽂는 도구가 아니라 그 앞까지 가는 몫입니다.</div>
+      <div class="adcards">${tools.map(unit).join("")}</div></div>`;
+  }else{
+    const pick=all.filter(c=>!isReward(c)&&(!admRnd||String(c.round)===admRnd));
+    const byLoc={}; pick.forEach(c=>{ (byLoc[c.loc]=byLoc[c.loc]||[]).push(c); });
+    body=(d.map||[]).map(z=>{
+      const cs=(byLoc[z.loc]||[]).slice().sort((x,y)=>(x.round-y.round)||x.id.localeCompare(y.id));
+      if(!cs.length) return "";
+      return `<div class="adzone"><h4>${ADM_ESC(z.name||z.loc)}<span class="n">${admBreak(cs)}</span></h4>
+        <div class="adcards">${cs.map(unit).join("")}</div></div>`;
+    }).join("");
+    const loose=pick.filter(c=>!(d.map||[]).some(z=>z.loc===c.loc));
+    if(loose.length) body+=`<div class="adzone"><h4>구역 밖<span class="n">${admBreak(loose)}</span></h4>
+      <div class="adcards">${loose.map(unit).join("")}</div></div>`;
+    if(!admRnd){
+      const pairs=(d.pairs||[]).map(p=>`<div class="adpair"><b>${ADM_ESC(p.key)}</b> — ${(p.cards||[]).join(" + ")} → ${ADM_ESC(p.conclusion||"")}</div>`).join("");
+      if(pairs) body+=`<div class="adzone"><h4>두 장이 만나야 나는 결론<span class="n">${(d.pairs||[]).length}쌍</span></h4>${pairs}</div>`;
+    }
+  }
+  const nrw=Object.keys(rewardOf).length;
+  b.innerHTML=`<div class="adsub">${ADM_ESC(d.title)} · ${admBreak(all)}${
+      nrw?` · 보상카드 ${nrw}(퍼즐 밑에 붙어 있습니다)`:""}</div>
+    <div class="adtabs sub" style="margin:10px 0 2px">${tabHTML}</div>
+    ${body||'<div class="adsub" style="margin-top:14px">이 갈래에는 카드가 없습니다.</div>'}`;
 }
 /* 카드가 판에 «언제 나오는가» — 라운드 숫자 대신 이 이름으로 부른다.
    관리자 열람은 이걸로 분류하는 자리라, 카드마다 하나씩 붙는다. */
 const CARD_KIND={1:["오늘","k1"],3:["이튿날","k2"],9:["잠든 카드","k9"]};
-function admKind(r){ return CARD_KIND[r]||[`R${r}`,"k0"]; }
+let ADM_RL={};      // 서버가 준 라운드 이름표. 사건마다 막의 뜻이 다르다
+const ADM_KC={1:"k1",2:"k3",3:"k2",9:"k9"};
+function admKind(r){
+  const t=ADM_RL&&ADM_RL[String(r)];
+  if(t) return [t, ADM_KC[r]||"k0"];
+  return CARD_KIND[r]||[`R${r}`,"k0"];
+}
 /* 「7장 · 오늘 3 · 이튿날 4 · 자동공개 2」 — 세는 게 이 화면의 일이다.
    자동공개는 뒤져서 여는 카드가 아니라, 조사턴을 맞출 때 빼고 세야 한다.
    그래서 갈래 수에서도 빼고 따로 적는다. */
 function admBreak(cs){
   const inv=cs.filter(c=>!c.auto), au=cs.filter(c=>c.auto).length;
-  const br=[1,3,9].map(r=>{ const n=inv.filter(x=>x.round===r).length;
+  const rs=[...new Set(cs.map(c=>c.round).filter(Boolean))].sort((a,b)=>a-b);
+  const br=rs.map(r=>{ const n=inv.filter(x=>x.round===r).length;
     return n?`${admKind(r)[0]} ${n}`:""; }).filter(Boolean);
   if(au) br.push(`자동공개 ${au}`);
   return `${cs.length}장${br.length?` · ${br.join(" · ")}`:""}`;
 }
-function admCard(c){
+/* 카드 한 장. from 이 붙어 오면 «그 퍼즐이 연 보상카드» 라, 색과 이름표를 달리 준다. */
+function admCard(c,from){
   const [kn,kc]=admKind(c.round);
+  const pz=c.puzzle;
   const tags=[
     c.round?`<i>R${c.round}</i>`:"",
     c.reveal==="obligatory"?`<i>공개의무</i>`:"",
     c.bait?`<i class="b">미끼</i>`:"",
+    c.item?`<i class="t">도구 ${ADM_ESC(c.itemName||"")}</i>`:"",
+    c.keyHalf?`<i class="t">열쇠 반쪽 ${ADM_ESC(c.itemName||"")}</i>`:"",
+    c.startWith?`<i class="t">처음부터 ${ADM_ESC(c.startWith)}</i>`:"",
+    c.shared?`<i>전원 공유</i>`:"",
+    (c.combo||[]).length?`<i class="r">겹쳐 ${c.combo.map(ADM_ESC).join("+")}</i>`:"",
     c.requires?`<i class="r">선행 ${ADM_ESC(c.requires)}</i>`:"",
+    c.unlockZone?`<i class="r">구역해금 ${ADM_ESC(c.unlockZone)}</i>`:"",
     c.unlocks?`<i class="r">해금 ${ADM_ESC(c.unlocks)}</i>`:"",
     (c.knownBy||[]).length?`<i>미리 앎 ${c.knownBy.map(ADM_ESC).join("·")}</i>`:"",
   ].filter(Boolean).join("");
-  // 이튿날(마지막 조사)에 새로 생기는 자리는 갈라 보인다 — 첫날 덱과 섞이면 세기가 어렵다.
-  const fresh=(c.round===3&&!c.auto);
-  return `<div class="adc ${fresh?"fresh":""} ${c.hot?"hot":""} ${c.round===9?"sleep":""} ${c.bait?"bait":""} ${c.unlocks?"rulecard":""}">
+  const fresh=(c.round===3&&!c.auto&&!from);
+  return `<div class="adc ${from?"reward":""} ${fresh?"fresh":""} ${c.hot?"hot":""} ${c.round===9?"sleep":""} ${c.bait?"bait":""} ${c.unlocks?"rulecard":""}">
     <div class="ch"><span class="cid">${ADM_ESC(c.id)}</span><span class="cti">${ADM_ESC(c.title)}</span>
-      <span class="cks"><span class="cfr ${kc}">${kn}</span>${c.auto?'<span class="cfr ka">자동공개</span>':""}</span></div>
+      <span class="cks">${from?`<span class="cfr kw">보상 · ${ADM_ESC(from)}</span>`:""}<span class="cfr ${kc}">${kn}</span>${c.auto?'<span class="cfr ka">자동공개</span>':""}</span></div>
     <div class="cwhere">${ADM_ESC(c.locName||"")}${c.spot?" · "+ADM_ESC(c.spot):""}</div>
     <div class="ctx">${ADM_ESC(c.text)}</div>
     ${c.hint?`<div class="chint">${ADM_ESC(c.hint)}</div>`:""}
+    ${pz?`<div class="cpz"><b>퍼즐</b> ${ADM_ESC(pz.prompt)}
+      <div class="cpza">답 ${(pz.answer||[]).map(ADM_ESC).join(" / ")||"—"}${
+        pz.grants?` · 열리는 카드 ${ADM_ESC(pz.grants)}`:" · 보상은 이 카드의 도구"}${
+        pz.publish?" · 풀면 전체공개":""}</div>
+      ${pz.hint?`<div class="chint">${ADM_ESC(pz.hint)}</div>`:""}</div>`:""}
     ${c.day2?`<div class="cday2"><b>이튿날 판본</b>
       <div class="ctx">${ADM_ESC(c.day2.text||c.text)}</div>
       ${c.day2.hint?`<div class="chint">${ADM_ESC(c.day2.hint)}</div>`:""}</div>`:""}
@@ -1601,6 +1694,9 @@ function showAdminPanel(){
     <div class="adform"><input id="admk" type="password" placeholder="GM 키 (AGENT_KEY)" autocomplete="off">
       <button onclick="admCheckKey()">확인</button></div>
     <div class="adsub" id="admkst" style="margin-top:6px"></div>
+    <button class="adtab adwipe" id="adwipe" style="margin-top:10px;width:100%;padding:11px"
+      onclick="admWipeRoom()">⟲ 전체 방 초기화 — 진행 중인 판을 버리고 새로 시작</button>
+    <div class="adsub" id="adwipest" style="margin-top:6px"></div>
     <div class="adtabs" style="margin-top:12px">${qaTabs()}</div>
     <div class="adsub" style="margin-top:8px">QA 모드 — 한 기기가 세 좌석을 다 쥐고, 배역을 갈아끼우며 판을 처음부터 끝까지 돌려봅니다.
       「내 정보」·「내 단서」까지 그 배역 것으로 갈립니다.</div>
@@ -1637,6 +1733,25 @@ function admCheckKey(){
   const i=$("admk"); if(!i) return;
   admKey=i.value.trim(); try{ localStorage.setItem("pmb.gmkey",admKey); }catch(e){}
   admKeyStatus();
+}
+/* 서버의 방을 통째로 비운다. QA 중에 창을 닫고 새 링크로 다시 들어가면 앞의 판이
+   그대로 살아 있어서 좌석이 다 차 있고, 새 사람은 아무것도 못 한다 —
+   그때 여기를 누른다. 되돌릴 수 없으니 한 번 더 묻는다. */
+async function admWipeRoom(){
+  const s=$("adwipest"), b=$("adwipe");
+  if(!confirm("진행 중인 판을 버리고 방을 비웁니다.\n앉아 있던 사람들은 전부 자리에서 내려옵니다.\n\n계속할까요?")) return;
+  if(b){ b.disabled=true; }
+  if(s){ s.textContent="비우는 중…"; s.style.color=""; }
+  let ok=false, why="";
+  try{
+    const r=await fetch("/api/reset",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({clientId:"",key:admKey,force:true})});
+    ok=r.ok; if(!ok) why=(r.status===403?"열쇠가 안 통합니다":"서버가 "+r.status+" 로 답했습니다");
+  }catch(e){ why="서버에 못 닿았습니다"; }
+  if(b){ b.disabled=false; }
+  const t=$("adwipest"); if(!t) return;
+  if(ok){ t.textContent="방을 비웠습니다 — 이제 아무나 호스트로 들어갈 수 있습니다."; t.style.color="#1a6b47"; }
+  else { t.textContent="비우지 못했습니다 — "+why+"."; t.style.color="#a3372a"; }
 }
 /* QA 모드 입장 단추 — 사건 하나에 하나씩. 고른 사건으로 방을 열고 /play?qa=1 로 넘긴다. */
 function qaTabs(){
