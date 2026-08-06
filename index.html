@@ -3838,10 +3838,10 @@ function paintQA(){
   const holds=seats.filter(c=>(((STATE&&STATE.roles)||{})[c.id]||{}).mode==="human").length;
   b.innerHTML=`<span class="qa-tag">QA</span><span class="qa-lbl">시점</span>${chips}
     <span class="qa-sp"></span>
-    <button class="qa-x hot${inv?"":" dim"}" onclick="qaAuto('')"
-      title="좌석에 앉은 배역 전부를 한 번에 돌립니다">전원 자동조사</button>
-    <button class="qa-x hot" onclick="qaReadyAll()"
-      title="세 배역 몫의 「다음 페이즈」를 한 번에 누릅니다">전원 준비 ›</button>
+    <button class="qa-x hot" onclick="qaAct()"
+      title="이 막에서 해야 하는 일을 세 배역 몫으로 한 번에 합니다">자동행동 ▶</button>
+    <button class="qa-x" onclick="qaReadyAll()"
+      title="세 배역 몫의 「다음 페이즈」만 누릅니다">전원 준비 ›</button>
     <button class="qa-x" onclick="qaAllCards()">카드 전부</button>
     ${holds<seats.length?`<button class="qa-x" onclick="qaClaimAll()">자리 마저 쥐기</button>`:""}
     <button class="qa-x" onclick="qaAskKey()">키</button>
@@ -3855,6 +3855,53 @@ function paintQA(){
    ★ 열쇠는 hostKey() 다. gmKey 를 그대로 쓰면 GM 키를 안 넣고 들어온 로컬 검수판에서
      빈 문자열이 되어 서버가 호스트로 안 봐준다. */
 let qaAutoBusy=false;
+/* ── QA 자동행동 ──────────────────────────────────────────────────
+   막마다 «해야 하는 일» 이 다르다. 검수하는 사람이 그걸 외워서 시점을 세 번씩
+   갈아끼우며 손으로 누르고 있으면, 정작 보려던 다음 막까지 못 간다.
+   그래서 단추 하나가 지금 막이 요구하는 것을 세 배역 몫으로 다 한다.
+     오프닝  — 셋 다 「몰입 완료」 → 준비
+     조사    — 수수께끼를 풀고 조사턴을 다 쓴다 → 손패가 넘치면 정리 → 준비
+     그 밖   — 준비(전원 눌러야 넘어가는 막들)
+   ★ 조사턴 예산은 그대로 쓴다. 자동이라고 예산을 무시하면 검수한 것이 실제 판이
+     아니게 된다 — 「몇 장까지 열리는가」가 이 게임의 뼈대다. */
+async function qaAct(){
+  if(qaAutoBusy||qaBusy) return;
+  const k=((STATE&&STATE.phase)||{}).key||"";
+  if(k==="open"){
+    for(const id of qaSeats()){
+      const done=((STATE&&STATE.immersed)||{}).mine||[];
+      if(done.indexOf(id)>=0) continue;
+      const r=await post("/api/immersed",{roleId:id,clientId});
+      if(r&&r.error){ banner("QA — "+r.error); break; }
+    }
+    await poll();
+    banner("QA — 셋 다 읽은 것으로 표시했습니다.");
+    await qaReadyAll();
+    return;
+  }
+  if(k==="invest"){
+    await qaAuto("");
+    await qaTrimAll();
+    await qaReadyAll();
+    return;
+  }
+  await qaReadyAll();
+}
+/* 손패가 넘치는 자리를 알아서 정리한다 — 넘친 채로는 막이 안 넘어간다.
+   무엇을 내려놓을지는 검수에서 중요하지 않다. 앞에서부터 필요한 만큼 공개한다. */
+async function qaTrimAll(){
+  for(const id of qaSeats()){
+    for(let g=0; g<6; g++){
+      const n=+(((STATE&&STATE.overLimit)||{})[id]||0);
+      if(n<=0) break;
+      const hand=await (await fetch(`/api/hand/${id}?clientId=${encodeURIComponent(clientId)}`)).json().catch(()=>({}));
+      const cards=((hand&&hand.hand)||[]).filter(c=>!c.item&&!c.keyHalf).slice(0,n);
+      if(!cards.length) break;
+      for(const c of cards) await post("/api/publish",{cardId:c.id,roleId:id,clientId});
+      await poll();
+    }
+  }
+}
 async function qaAuto(roleId){
   if(qaAutoBusy) return; qaAutoBusy=true;
   try{
@@ -8085,6 +8132,9 @@ function renderChat(boxId){
    높이 차이로 재는 건 못 믿는다 — 자판이 열릴 때 innerHeight 도 같이 줄어드는 브라우저가 있어
    차이가 0으로 나온다. 그냥 입력칸에 초점이 있는가로 판단한다. */
 function setKbd(up){
+  /* 자판이 화면을 먹는 기기에서만 쓴다. 컴퓨터에서는 칸에 초점이 가도 화면이
+     안 줄어드는데, 그때 하단바를 감추면 «누르다 보니 하단탭이 사라졌다» 가 된다. */
+  if(up && !(window.matchMedia && matchMedia("(pointer:coarse)").matches)) up=false;
   const h=document.documentElement;
   if(h.classList.contains("kbd")===up) return;
   h.classList.toggle("kbd",up);
@@ -8203,7 +8253,9 @@ function introCoach(){
   const ex=(STATE&&STATE.introHint)||"";
   chatCoach(ta, "여기에 직접 쳐서 자기소개를 하세요", introCoachKey(),
             ex?`예시 — ${ex}`:"");
-  try{ ta.focus({preventScroll:true}); }catch(e){ ta.focus(); }
+  /* ★ 여기서 초점을 «주지 않는다». 칸에 초점이 가면 html.kbd 가 서고 하단바가
+     통째로 사라진다 — 자판이 없는 컴퓨터에서는 그냥 하단바가 없어진 것이다.
+     안내가 이미 그 칸을 밝혀 놓았으니 누를 자리는 눈에 보인다. */
 }
 /* 「2차 조사로」·「종막으로」 — 받침에 따라 갈린다(ㄹ 받침은 「로」). */
 function toP(w){ const ch=(w||"").slice(-1).charCodeAt(0);
