@@ -1097,6 +1097,11 @@ def state(clientId: str = "", gm: int = 0, roleId: str = "", key: str = ""):
         if st.get("myRole"):
             st["podMarked"] = _pod_marked(st["myRole"])
             st["podCodeOk"] = bool(ROOM["podCode"].get(st["myRole"]))
+            # 자기소개 견본 한 줄. «자기 것만» 간다 — 남의 것까지 실으면 아직 안 한
+            # 소개를 미리 읽게 되고, 그러면 첫마디의 값이 없어진다.
+            _si = (getattr(SC, "SELF_INTRO", {}) or {}).get(st["myRole"], "")
+            if _si:
+                st["introHint"] = _si
         # 호스트 자리를 지키는 신호는 «진짜» 호스트만 남긴다. 열쇠로 서 있는 사람이
         # 이걸 갱신하면, 정작 사라진 호스트의 자리가 영영 안 비어서 아무도 못 이어받는다.
         _real_host = bool(clientId) and ROOM.get("host") == clientId
@@ -1139,6 +1144,10 @@ def _seed_alibi() -> None:
                 # 「여기서 한 번 끊는다」 — 대화창이 여기서 멈춰 서고 「계속」을 기다린다
                 if a.get("stop"):
                     row["stop"] = True
+                # 이 줄을 지나고 나면 화면이 «뭔가를 가르친다». 무엇을 어떻게 가르치는지는
+                # 화면이 안다 — 여기서는 이름표만 실어 보낸다(지금은 "selfIntro" 하나).
+                if a.get("coach"):
+                    row["coach"] = a["coach"]
                 ROOM["table"].append(row)
                 continue
             # 배역이 아닌 사람도 이 자리에 선다 — 마부도 왕진의도 그날 아침 어디 있었는지를 말한다.
