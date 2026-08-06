@@ -1,55 +1,71 @@
 # 룰더데이 `rule_the_day` — 오프닝 비주얼노벨 컷 9장
 
-앞에 **`00_화풍_공통.md` §3** 을 붙이지 **않습니다.** 오프닝 컷은 구역 배경도
-카드 그림도 아니라 규격이 따로입니다 — 아래 **블록 C** 를 씁니다.
-그 뒤에 **톤 블록**, 그 뒤에 개별 본문을 잇습니다. 시드 `6060`.
+**이 시나리오만 화풍이 다릅니다.** `00_화풍_공통.md` 의 잉크 그래픽노블 사양을
+붙이지 **않습니다** — 여기는 **픽셀아트**입니다. 아래 블록 C 를 씁니다.
+붙이는 순서는 **블록 C → 톤 블록 → 컷 본문**. 시드 `6060`.
 
 ---
 
-## 0. 이 판이 어떻게 생긴 곳인가
+## 0. 왜 픽셀아트인가 — 이게 이 판의 설계다
 
-**게임 속 세상입니다.** 다만 화면 안에서 그것을 «말하지» 않습니다 — 이 판의 진상이
-거기에 걸려 있어서, 첫 컷부터 픽셀이나 UI가 보이면 그 자리에서 판이 끝납니다.
+이 판의 진상은 **「여기가 게임 속 세상」** 입니다.
 
-마을은 손으로 지은 것처럼 어설프게 이어 붙어 있습니다. 관리자실 옆에 기록보관소가
-있고, 그 너머에 오락실 상가가 있고, 마을 한쪽에 잠수함이 통째로 박혀 있습니다.
-사람들은 모두 이름에 「데이」를 답니다. 시대는 어디에도 안 맞습니다 — 낡은 나무와
-황동 손잡이 옆에 매끈한 흰 패널이 아무렇지 않게 붙어 있습니다.
+처음에는 그것을 감추려고 「픽셀 금지」로 잡았습니다. 되돌립니다. 감추는 방법이
+틀렸습니다 — 한두 컷에만 게임 티가 나면 그게 튀어서 단서가 되지만, **처음부터
+끝까지 전부 픽셀아트면 그건 단서가 아니라 그냥 이 게임의 화풍**입니다. 배역 초상도
+이미 픽셀아트로 그려져 있어서, 오프닝만 다른 결로 가면 오히려 그쪽이 이질적입니다.
 
-**이 세상의 유일한 «틀린 것»은 부서지는 방식입니다.** 사람이 죽으면 피가 아니라
-조각이 납니다. 각진 파편과, 그 둘레에 뜬 반짝이는 알갱이. 그것만 그리면 됩니다.
+그리고 판이 끝나고 나면 그 화풍이 **처음부터 깔려 있던 복선**이 됩니다.
+「아, 우리는 처음부터 게임 화면을 보고 있었구나.」 감춘 것이 아니라 **눈앞에 두고도
+못 알아보게** 한 것이고, 그게 이 판이 하려는 일입니다.
+
+그래서 규칙이 뒤집힙니다.
+
+> **픽셀은 금지가 아니라 «사양» 입니다. 대신 «UI 는» 절대 안 그립니다.**
+
+체력바 · 대사창 · 커서 · 메뉴 · 아이콘 같은 «게임의 인터페이스»는 안 그립니다.
+그건 화풍이 아니라 **말**이고, 그 말을 그림이 하면 그때는 진짜로 단서가 됩니다.
+(실제 대사창은 화면이 따로 얹습니다. 그림 안에 또 그리면 두 겹이 됩니다.)
+
+---
+
+## 1. 이 판이 어떻게 생긴 곳인가
+
+마을은 손으로 지은 것처럼 어설프게 이어 붙어 있습니다. 관리자실 옆에 기록보관소,
+그 너머에 오락실 상가, 마을 한쪽에 잠수함이 통째로 박혀 있습니다. 사람들은 이름에
+모두 「데이」를 답니다. 시대는 어디에도 안 맞습니다 — 바랜 나무와 황동 손잡이 옆에
+매끈한 흰 패널이 아무렇지 않게 붙어 있습니다.
+
+**이 세상에서 사람은 피를 흘리지 않고 조각납니다.** 각진 파편과 그 둘레에 뜬
+반짝이는 알갱이. 그것만 그리면 됩니다.
 
 ### 색
 
 - **주광** — 이른 아침의 창백한 빛. 그림자가 아직 길다
 - **바탕** — 바랜 나무 · 황동 · 때 낀 흰 페인트. 채도가 낮다
-- **그림자** — 차갑다. 푸른 기가 도는 회색
-- **악센트** — **인광 초록**(#00FF99) 딱 하나. 관리자의 것이고, 그가 부서진 자리에서만
-  샌다. 다른 색을 악센트로 쓰지 않는다
-- **금지** — 픽셀 · 도트 · 스캔라인 · UI 창 · 체력바 · 글자 · 로고 · 현대의 전자기기
-
-### 톤 블록 — 매번 붙이세요
-
-```
-The place: a small hand-made town where nothing quite matches. Weathered timber
-and brass fittings sit right next to smooth white panelling, as if the place was
-assembled from parts of different worlds. Early morning, pale and cold, long
-shadows still lying across the ground.
-
-The light: thin dawn light from a low sun. Shadows are cool, bluish grey.
-
-Accent colour, used sparingly and only where the administrator has broken:
-a phosphor green (#00FF99).
-
-Do not draw pixels, dot-matrix, scanlines, interface windows, health bars,
-logos, or any modern electronics. This must not look like a video game.
-```
+- **그림자** — 차갑다. 푸른 기가 도는 회색. **디더링**으로 만든다
+- **악센트** — **인광 초록 `#00FF99`** 딱 하나. 관리자의 것이고 그가 부서진
+  자리에서만 샌다. 다른 색을 악센트로 쓰지 않는다
+- **배역 색** — 사람이 나오는 컷에서 림라이트로만 아주 조금.
+  데이비드 `#2CD8FF` · 데이먼 `#FF5FD3` · 데이지 `#FF8A3D`
 
 ---
 
-## 1. 장수와 파일명
+## 2. 규격
 
-화면이 찾는 이름은 `rule_the_day_opening_{키}` 입니다. 확장자는 `.webp` 를 씁니다.
+| | |
+|---|---|
+| 비율 | **16:9** |
+| 내부 해상도 | **480 × 270** — 진짜 픽셀 크기가 이것입니다 |
+| 출력 | 그 그림을 **니어리스트 네이버로 ×4** 해서 1920×1080 로 냅니다. 흐릿해지면 안 됩니다 |
+| 팔레트 | **32~40색.** 그 안에서 다 해결합니다 |
+| 파일 | `rule_the_day_opening_{키}.webp`, 장당 400KB 이하 |
+| 아래 1/5 | **비웁니다.** 거기 대사가 얹힙니다 |
+| 사람 | **넣어도 됩니다.** (구역 배경과 다른 점입니다) |
+
+---
+
+## 3. 장수와 파일명
 
 | # | 키 | 파일명 | 무엇이 보이는 컷인가 |
 |---|---|---|---|
@@ -65,31 +81,54 @@ logos, or any modern electronics. This must not look like a video game.
 
 ---
 
-## 2. 블록 C — 오프닝 컷용 앞머리
+## 4. 블록 C — 오프닝 컷용 앞머리 (매번 먼저 붙입니다)
 
 ```
-Inked graphic-novel illustration. Clean, confident black outlines. Shading is
-built from cross-hatching, not from gradients. Flat, cel-like colour with a
-little painterly modelling over it. Low saturation throughout.
-Not photographic, not 3D rendered, not anime, not watercolour, and not a comic
-page — one single illustration with no panel borders and no gutters.
+Hand-crafted PIXEL ART, in the manner of a late-90s point-and-click adventure
+background. Authentic low-resolution work: the native canvas is 480x270 and the
+image is presented upscaled 4x with nearest-neighbour, so every pixel is a hard
+square with clean edges. No blur, no soft gradients, no photographic texture,
+no 3D render, no anime cel shading, no vector smoothness.
 
-This is a CINEMATIC STILL from the opening of a murder-mystery game. 16:9,
-1920x1080. It is shown full-bleed behind a line of dialogue that sits across the
-BOTTOM FIFTH of the frame, so keep the bottom fifth quiet — no important detail
-down there — and let the subject sit in the upper two thirds.
-Figures are allowed in these stills, unlike the location plates.
+Shading is built from DITHERING — ordered and hand-placed checkerboard and noise
+patterns between flat colours — not from smooth blends. Outlines are dark,
+one pixel wide, with selective hand-placed anti-aliasing only where a curve
+needs it. Limited palette of 32 to 40 colours, low saturation, cohesive across
+the whole set.
 
-No text anywhere in the image: no signs, no labels, no lettering, no numbers, no
-watermark, no signature. Where a sign or a document would carry writing, draw
-the writing as illegible pen strokes or printed marks only.
+This is a CINEMATIC STILL from the opening of a murder-mystery game. 16:9.
+It is shown full-bleed behind a line of dialogue that sits across the BOTTOM
+FIFTH of the frame, so keep the bottom fifth quiet — no important detail down
+there — and let the subject sit in the upper two thirds.
+Figures are allowed in these stills.
+
+Draw the SCENE ONLY. No game interface of any kind: no dialogue box, no text
+box, no health bar, no menu, no cursor, no icons, no button prompts, no HUD.
+No text anywhere in the image: no signs, no labels, no lettering, no numbers,
+no watermark, no signature. Where a sign or a document would carry writing, draw
+the writing as a few illegible pixel strokes only.
 
 The moment is described below.
 ```
 
+### 톤 블록 — 블록 C 뒤에 붙입니다
+
+```
+The place: a small hand-made town where nothing quite matches. Weathered timber
+and brass fittings sit right next to smooth white panelling, as if the place was
+assembled from parts of different worlds. Early morning, pale and cold, long
+shadows still lying across the ground.
+
+The light: thin dawn light from a low sun. Shadows are cool bluish grey, built
+with dithering.
+
+Accent colour, used sparingly and only where the administrator has broken:
+a phosphor green (#00FF99). It is the only saturated colour in the set.
+```
+
 ---
 
-## 3. 컷별 본문
+## 5. 컷별 본문
 
 ### 1 · `shout` — 아침, 소리가 터진다
 
@@ -99,10 +138,11 @@ The moment is described below.
 ```
 Dawn over the town's low rooftops, seen from just above the eaves. Something has
 just made a sound loud enough to shake the air: birds burst upward off the
-ridgelines in a scatter, a loose shutter is still swinging, dust lifts off a
-gutter. The source of the sound is out of frame and no person is visible.
-The composition points down and to the right, toward wherever the sound came
-from. Cold blue morning shadow on the near roofs, thin gold on the far ones.
+ridgelines in a scatter of small dark pixel shapes, a loose shutter is still
+swinging, dust lifts off a gutter. The source of the sound is out of frame and
+no person is visible. The composition points down and to the right, toward
+wherever the sound came from. Cold blue dithered shadow on the near roofs, a
+thin band of warm light on the far ones.
 ```
 
 ### 2 · `town` — 마을 전체가 듣는다
@@ -115,9 +155,9 @@ A wide view down the town's main way at dawn, empty of people. The buildings do
 not match: weathered timber houses with brass fittings stand beside smooth white
 panelled structures, and further back the hull of a full-size submarine sits
 half-buried in the ground as if it had always been part of the street. Everything
-is quiet and still, caught in the second after a loud noise. Long cold shadows
-run across the road toward the viewer. Keep the bottom fifth of the frame plain
-road.
+is quiet and still, caught in the second after a loud noise. Long cold dithered
+shadows run across the road toward the viewer. Keep the bottom fifth of the
+frame plain road.
 ```
 
 ### 3 · `office` — 관리자실
@@ -128,10 +168,10 @@ road.
 ```
 A heavy door standing ajar at the end of a short corridor, seen straight on from
 a few steps back. The room beyond is dark and nothing inside can be made out,
-except a thin phosphor-green light leaking through the gap and lying in a narrow
-stripe across the floorboards toward the viewer. The doorframe is scuffed and
-one hinge has been wrenched. Cross-hatched shadow crowds the corridor. The green
-is the only saturated colour in the frame.
+except a thin phosphor-green light leaking through the gap and lying as a narrow
+hard-edged stripe across the floorboards toward the viewer. The doorframe is
+scuffed and one hinge has been wrenched. Heavy dithered shadow crowds the
+corridor. The green is the only saturated colour in the frame.
 ```
 
 ### 4 · `megaphone` — 확성기를 든 데이지
@@ -145,8 +185,9 @@ megaphone up to her mouth with both hands, mid-shout. She is dressed subtly
 wrong for this place — her clothes are plainer and newer than everything around
 her. Her expression is calm and ordinary, almost helpful; there is no fear in it.
 Seen from slightly below, three-quarters, so the megaphone reads large. Behind
-her the room falls away into hatching, and a faint green glow comes from
-somewhere below the frame edge, lighting her from underneath.
+her the room falls away into dither and darkness, and a faint green glow comes
+from somewhere below the frame edge, lighting her from underneath. A thin warm
+orange (#FF8A3D) rim light traces her shoulder.
 ```
 
 ### 5 · `shards` — 조각난 관리자
@@ -158,10 +199,10 @@ somewhere below the frame edge, lighting her from underneath.
 The floor of a room, seen from above at a steep angle. A human figure has come
 apart into angular fragments — hard-edged shards, like a statue broken along
 straight lines, scattered outward in a rough human shape. There is no blood
-anywhere. Fine bright particles hang in the air just above the pieces, drifting,
-lit phosphor green. Enough of a shoulder and a hand remains to read as a person;
-no face is present in any fragment. Cold grey floorboards, cross-hatched shadow
-crowding in from the edges.
+anywhere. Small bright single-pixel particles hang in the air just above the
+pieces, drifting, phosphor green. Enough of a shoulder and a hand remains to read
+as a person; no face is present in any fragment. Cold grey floorboards, dithered
+shadow crowding in from the edges.
 ```
 
 ### 6 · `spear` — 거꾸로 박힌 삼지창
@@ -172,10 +213,11 @@ crowding in from the edges.
 ```
 Close on a trident driven into the centre of the broken figure, shaft standing
 upright. It is inverted: the three prongs are the part buried in the body, and
-the blunt butt of the shaft points at the sky. The metal is old and pitted. Fine
-green particles drift up along the shaft. The angle is low and close, looking up
-the length of the shaft, so the wrongness of the direction is unmistakable.
-Everything behind it collapses into hatching.
+the blunt butt of the shaft points at the sky. The metal is old and pitted,
+described with a few hard pixel highlights. Green particles drift up along the
+shaft. The angle is low and close, looking up the length of the shaft, so the
+wrongness of the direction is unmistakable. Everything behind it falls into
+dithered darkness.
 ```
 
 ### 7 · `under` — 몸 아래 깔린 것
@@ -188,8 +230,8 @@ Very close on the floor at the edge of the broken figure. A single hard corner o
 some flat object protrudes from beneath the fragments — just an edge and a sliver
 of its surface, not enough to tell what it is. The boards under it are pressed
 and scored where its weight has sat. A hand reaches into frame from the top and
-stops short of touching it. Shallow depth: the corner is sharp, the rest is
-shadow and hatching.
+stops short of touching it. The corner is drawn with the crispest pixels in the
+frame; everything else is softer dithering and shadow.
 ```
 
 ### 8 · `border` — 경계가 닫힌다
@@ -200,10 +242,10 @@ shadow and hatching.
 ```
 The outskirts of the town at dawn, looking outward past the last building. The
 open land beyond has gone wrong: the air itself has set, like a sheet of dull
-glass standing in the middle of nowhere, and everything past it is flattened and
-colourless. A few of the same bright green particles hang caught inside it,
-motionless. Near side warm and ordinary, far side dead. No fence, no door, no
-wall — only the air, ended.
+glass standing in the middle of nowhere, and everything past it is flattened into
+fewer colours and coarser dithering, as if that part of the world were drawn with
+less care. A few bright green particles hang caught inside it, motionless. Near
+side ordinary, far side dead. No fence, no door, no wall — only the air, ended.
 ```
 
 ### 9 · `three` — 셋이 마주 선다
@@ -213,21 +255,28 @@ wall — only the air, ended.
 
 ```
 Three figures standing in a dim room, spaced well apart, each turned slightly
-toward the other two: a tall young man in a worn apprentice's coat, a small
-thin boy whose face gives nothing away, and a young woman in plainer, newer
-clothes holding a brass megaphone at her side. None of them stands close to
-another. Between and below them, out of focus, lie the angular fragments and the
-drifting green particles. Seen at eye level from a little way back so all three
-read at once. Keep the bottom fifth of the frame clear.
+toward the other two: a tall young man in a worn apprentice's coat, a small thin
+boy whose face gives nothing away, and a young woman in plainer, newer clothes
+holding a brass megaphone at her side. None of them stands close to another.
+Between and below them lie the angular fragments and the drifting green
+particles. Seen at eye level from a little way back so all three read at once.
+Each figure carries one thin rim light in its own colour and nothing more —
+cyan (#2CD8FF) on the tall man, magenta (#FF5FD3) on the boy, orange (#FF8A3D)
+on the woman. Keep the bottom fifth of the frame clear.
 ```
 
 ---
 
-## 4. 리젝 규칙 (오프닝 컷 한정)
+## 6. 리젝 규칙 (오프닝 컷 한정)
 
-- 픽셀 · 도트 · 스캔라인 · UI 창이 보이면 **리젝**. 이 판의 진상이 거기 걸려 있다
-- 피가 보이면 **리젝**. 이 세상 사람은 «조각» 난다
+- **부드러운 그러데이션 · 블러 · 안티에일리어싱 범벅이면 리젝.** 픽셀 하나하나가
+  각진 정사각형으로 보여야 합니다 — 「픽셀아트 느낌」이 아니라 픽셀아트입니다
+- **게임 인터페이스가 그려져 있으면 리젝** — 대사창 · 체력바 · 커서 · 메뉴 · 아이콘.
+  화풍은 픽셀이되 «게임의 UI» 는 그림 안에 없습니다
+- 글자가 읽히려고 시도한 흔적이 있으면 **리젝** (뭉갠 픽셀 자국은 통과)
+- **피가 보이면 리젝.** 이 세상 사람은 «조각» 난다
 - 파편에 얼굴이 남아 있으면 **리젝**
 - 초록이 관리자가 부서진 자리 말고 다른 데서 쓰이면 **리젝**
 - 아래 1/5 에 중요한 것이 있으면 **리젝** — 거기 대사가 얹힌다
 - 9번 컷에서 셋이 붙어 서 있으면 **리젝**. 이 판은 서로를 의심하는 자리다
+- 아홉 장의 팔레트가 서로 안 맞으면 **리젝**. 한 세트로 보여야 합니다
