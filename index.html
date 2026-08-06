@@ -3127,8 +3127,21 @@
     animation:fade .28s ease both;cursor:pointer}
   .composer.coachon{position:relative;z-index:6;
     box-shadow:0 0 0 2px var(--gold),0 0 0 7px rgba(0,230,147,.16)}
-  .composer.coachon textarea{border-color:var(--gold);background:var(--scr);color:var(--ink)}
   .composer.coachon textarea::placeholder{color:var(--sub);opacity:1}
+  /* 줄 안에서 «이것»을 짚을 때. 밝히는 것은 한 군데뿐이다 */
+  .composer.coachon .coachpick{border-color:var(--gold);background:var(--scr);color:var(--ink);
+    box-shadow:0 0 0 2px rgba(0,230,147,.35)}
+  /* 카드 올리기 — 말과 같은 줄에 선다. 네모난 판에 굵은 십자 하나. */
+  .composer .plusbtn{flex:0 0 auto;width:38px;height:38px;padding:0;border-radius:0;
+    font-family:var(--pix);font-size:20px;line-height:1;cursor:pointer;
+    background:linear-gradient(180deg,var(--case-h),var(--case-b));
+    border:1px solid var(--case-e);color:var(--case-fg);
+    box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.5)}
+  .composer .plusbtn:hover{background:var(--case-h)}
+  .composer .plusbtn:active{transform:translate(2px,2px);box-shadow:none;
+    background:linear-gradient(180deg,var(--case-b),var(--case-h))}
+  .composer .plusbtn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;transform:none}
+  .composer .plusbtn:focus-visible{outline:2px solid var(--case-line);outline-offset:2px}
   /* ★ 기존 bob 키프레임을 쓰면 안 된다 — 그건 translateX(-50%) 로 «가운데 맞춤»까지
      같이 하는 물건이라, 폭을 다 쓰는 이 띠에 걸면 통째로 왼쪽으로 밀린다. */
   .coachtip{position:absolute;left:0;right:0;bottom:100%;margin-bottom:11px;z-index:7;
@@ -3883,6 +3896,7 @@ async function qaPeek(id){
 
 function applyState(){
   if(!STATE)return;
+  kbdGuard();          // 하단바가 감춰진 채 굳어 있으면 여기서 되돌린다(1.5초마다)
   // 내 배역은 서버 말을 따른다. 로컬 기억과 어긋나면 서버가 맞다 —
   // 잡은 직후 폴링이 먼저 오면 내 카드가 '참여 중'으로 보이던 원인이었다.
   const wasRole=myRoleId;
@@ -5419,6 +5433,12 @@ async function releaseRole(){
    방을 새로 열어도 이게 남아 있으면 지난 판이 그대로 이어져 보인다. gmKey만 남긴다(다시 치기 번거로우니). */
 function wipeLocal(keepKey){
   const keep=keepKey?localStorage.getItem("pmb.gmkey"):null;
+  /* ★ 기기 신원(pmb.cid)은 «절대» 안 지운다. 이건 방의 것이 아니라 이 기기의 것이다.
+     지우면 다음에 페이지를 열 때 새 번호가 발급되고, 서버는 그 사람을 처음 보는 사람으로
+     본다 — 앉아 있던 자리는 옛 번호의 것이고 판은 이미 시작돼 새로 앉지도 못한다.
+     그게 「새로고침 한 번에 배역 선택으로 돌아가고 그때부터 다 먹통」의 정체다.
+     QA 는 시작할 때마다 방을 새로 열므로 매번 그 자리를 밟았다. */
+  const cid=localStorage.getItem("pmb.cid");
   // QA 검수 모드는 방이 갈려도 유지한다 — 방을 새로 열어가며 처음부터 다시 도는 게 검수의 일이라,
   // 여기서 꺼지면 매번 허브로 돌아가 다시 켜야 한다. 끄는 문은 QA 띠의 「QA 끄기」 하나다.
   const qa=localStorage.getItem("pmb.qa");
@@ -5427,6 +5447,7 @@ function wipeLocal(keepKey){
      아무 말 없이 QA 를 꺼 버린다 — 사람 눈에는 그냥 안 켜지는 것이다. */
   const ks=localStorage.getItem("pmb.gmkeyset");
   Object.keys(localStorage).filter(k=>k.indexOf("pmb.")===0).forEach(k=>localStorage.removeItem(k));
+  if(cid!=null) localStorage.setItem("pmb.cid",cid);
   if(keep!=null) localStorage.setItem("pmb.gmkey",keep);
   if(keepKey&&ks!=null) localStorage.setItem("pmb.gmkeyset",ks);
   if(qa!=null) localStorage.setItem("pmb.qa",qa);
@@ -6660,6 +6681,9 @@ let swapGive=null, swapTake=null, swapBusy=false;
 let sharePick=null, shareBusy=false;
 function showShare(){
   if(!myRoleValid()) return;
+  // 안내를 보고 눌러서 왔다 — 가리개를 걷는다. 안 걷으면 이 창을 닫았을 때
+  // 대화창이 어두운 채로 남아 「고장났나」가 된다.
+  endChatCoach();
   sharePick=null; shareBusy=false;
   const mineIds=new Set(myHand.map(c=>c.id));
   const pubc=(STATE.revealed||[]).filter(c=>!mineIds.has(c.id));
@@ -6717,6 +6741,10 @@ function showChatFull(){
       </div>
     <div class="chat" id="chatFull"></div>
     <div class="composer">
+      <!-- 카드를 짚어 올리는 문. 말과 같은 줄에 있어야 «말하면서 짚는 것»으로 읽힌다 —
+           내 단서 탭 안에만 있던 때는 그런 게 있는 줄도 모르고 판이 끝났다. -->
+      <button class="plusbtn" id="chatPlus" onpointerdown="event.preventDefault()"
+        onclick="showShare()" aria-label="카드 올리기" title="테이블 위 카드를 짚어 올립니다">+</button>
       <textarea id="chatFullInput" rows="1" placeholder="배역을 골라야 말할 수 있어요"></textarea>
       <button class="btn gold" onpointerdown="event.preventDefault()" onclick="humanSayFrom('chatFullInput')">전송</button>
     </div>`;
@@ -6724,10 +6752,26 @@ function showChatFull(){
   const ok=myRoleValid(), c=ok?roleById(myRoleId):null;
   const ta=$("chatFullInput"); ta.disabled=!ok;
   ta.placeholder=sayHint(c);
+  paintChatLock();
   ta.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); humanSayFrom("chatFullInput"); }});
+  // 짚을 카드가 하나도 없으면 문을 안 연다 — 눌러도 아무 일 없는 단추는 고장으로 읽힌다
+  const pb=$("chatPlus"); if(pb) pb.disabled=!ok||!(myHand.length||(STATE.revealed||[]).length);
   openModal("chatModal");
   renderChat("chatFull");
   const box=$("chatFull"); box.scrollTop=box.scrollHeight;
+  // 토론에 들어와 대화창을 처음 열면 «카드를 짚는 길»부터 알려준다
+  setTimeout(shareCoach,260);
+}
+/* ── 토론 첫 화면의 안내 ──────────────────────────────────────────
+   토론은 판이 아니라 사람이 끌고 가는 자리다(그래서 자동 대사를 뺐다).
+   그러면 처음 앉은 사람에게는 «무엇을 근거로 말하나»가 안 보인다 — 테이블 위 카드를
+   짚어 올리는 길이 그 답이라, 토론에 들어와 대화창을 처음 열 때 그 단추를 짚어준다. */
+function shareCoach(){
+  const ph=(STATE&&STATE.phase)||{};
+  if(ph.key!=="talk"||!myRoleValid()) return;
+  if(!(STATE.revealed||[]).length) return;        // 짚을 것이 아직 없다
+  const pb=$("chatPlus"); if(!pb||pb.disabled) return;
+  chatCoach(pb, "전체공개된 테이블 위 카드를 올리며 진행할 수 있습니다.", `pmb.scoach.${(STATE&&STATE.roomId)||""}.${myRoleId}`);
 }
 async function humanSayFrom(id){
   if(!myRoleValid()) return;
@@ -7772,6 +7816,22 @@ function repaintChat(){
   if($("chatModal")&&$("chatModal").classList.contains("on")) renderChat("chatFull");
   if($("gmChat")) renderChat("gmChat");
   paintChatBadge();
+  paintChatLock();
+}
+/* ── 흘러가는 동안은 못 친다 ────────────────────────────────────────
+   알리바이 대화록이 한 줄씩 흐르는 동안 사람이 끼어들면, 그 말이 시신 앞에서 오간
+   말 사이에 박혀 누가 언제 한 말인지가 통째로 어긋난다. 지금은 «읽는» 자리다.
+   흘릴 것이 남아 있는 동안(멈춰 선 자리 포함) 입력칸을 잠근다 —
+   다 흐르고 나면 저절로 풀린다. */
+function chatLocked(){ return !!dripHeld(); }
+function paintChatLock(){
+  const ta=$("chatFullInput"); if(!ta) return;
+  const lock=chatLocked(), ok=myRoleValid();
+  ta.disabled=!ok||lock;
+  const pb=$("chatPlus");
+  if(pb) pb.disabled=!ok||lock||!(myHand.length||((STATE&&STATE.revealed)||[]).length);
+  if(lock){ ta.placeholder=dripPaused?"「계속」을 눌러 마저 들으세요":"지금은 듣는 중입니다…"; }
+  else if(ok) ta.placeholder=sayHint(roleById(myRoleId));
 }
 /* 「계속」 — 한 대목이 끝나는 자리에서 판이 스스로 멈춰 선다. 알리바이 한 바퀴가
    끝나고 자기소개로 넘어가는 자리처럼, 성격이 다른 대목이 이어 붙으면 어디서
@@ -7875,7 +7935,10 @@ function renderChat(boxId){
     d.innerHTML=`<button class="btn gold sm" onclick="dripGoBtn()">계속 ›</button>`;
     box.appendChild(d);
   }
-  if((near&&(added||tym))||dripPaused) box.scrollTop=box.scrollHeight;
+  /* ★ 「계속」이 떠 있다고 바닥으로 끌어내리지 않는다. 그 단추는 «위엣것을 다 읽고»
+     누르라는 것인데, 올려서 읽으려 하면 매 그리기마다 도로 내려와 읽을 수가 없었다.
+     그러면 단추가 있을 이유가 없다. 바닥에 붙어 있던 사람만 계속 붙여 둔다. */
+  if(near&&(added||tym||dripPaused)) box.scrollTop=box.scrollHeight;
 }
 /* 키보드가 올라오면 화면이 줄어든다(dvh). 그때 대화창이 읽던 자리에 그대로 있으면
    방금 온 말이 위로 밀려 사라진 것처럼 보인다 — 바닥에 붙어 있었으면 계속 바닥에 붙인다. */
@@ -7902,9 +7965,21 @@ document.addEventListener("focusin", e=>{
 document.addEventListener("focusout", e=>{
   if(!(e.target && e.target.tagName==="TEXTAREA")) return;
   // 전송 단추를 누른 것뿐이면 곧바로 초점이 돌아온다 — 한 박자 뒤에 확인한다.
-  setTimeout(()=>{ const a=document.activeElement;
-    if(!(a && a.tagName==="TEXTAREA" && !a.disabled)) setKbd(false); }, 120);
+  setTimeout(kbdGuard, 120);
 });
+/* ── 하단바가 사라진 채로 남지 않게 ──────────────────────────────────
+   자판이 올라와 있는 동안 하단바를 감춘다(html.kbd). 그런데 그 표식을 «내리는» 길이
+   textarea 의 focusout 하나뿐이라, 초점을 쥔 칸이 사라지는 경로에서는 그 이벤트가
+   안 오고 표식만 남았다 — 대화창에서 「+」로 올리기 창을 열면 그 안에도 textarea 가
+   있어서 focusout 이 「아직 칸에 있다」로 읽히고, 그 창을 닫는 순간 표식이 굳는다.
+   사람 눈에는 «뭘 누르다 보니 하단탭이 사라졌다» 다.
+   그래서 «지금 진짜로 칸에 초점이 있는가»를 따로 확인한다. 이 함수는 여러 자리에서
+   불려도 안전하다 — 상태가 같으면 setKbd 가 아무것도 안 한다. */
+function kbdGuard(){
+  const a=document.activeElement;
+  const on=!!(a && a.tagName==="TEXTAREA" && !a.disabled && a.offsetParent!==null);
+  setKbd(on);
+}
 /* 대화 목록을 누르면 자판이 내려간다 — 읽으려고 누른 것이지 쓰려던 게 아니다. */
 document.addEventListener("pointerdown", e=>{
   if(!document.documentElement.classList.contains("kbd")) return;
@@ -7952,29 +8027,41 @@ function saidYet(){
      그 위에 있어서 아무것도 안 어두워진다. 창 안에 붙이면 그 창의 층에서 논다.
    ★ 한 번만 뜬다. 판(roomId)과 배역으로 기억한다 — 새로고침해도 다시 안 나온다. */
 function introCoachKey(){ const r=(STATE&&STATE.roomId)||""; return (r&&myRoleId)?`pmb.icoach.${r}.${myRoleId}`:""; }
-function introCoach(){
-  if(!myRoleValid()) return;
+/* 대화창 안에서 한 군데만 남기고 어둡게 한다.
+     el   밝힐 것 — 입력줄(.composer) 안의 무엇이든. 그 줄이 통째로 올라온다
+     text 말풍선에 적을 한 줄
+     key  한 번만 뜨게 기억할 자리. 빈 문자열이면 매번 뜬다
+   ★ 가리개는 대화창 «안»에 붙인다. 화면 전체에 fixed 로 깔면 탭(z-index 60)이
+     그 위에 있어서 아무것도 안 어두워진다. */
+function chatCoach(el, text, key){
   const box=$("chatFullBox"); if(!box||!$("chatModal").classList.contains("on")) return;
-  const comp=box.querySelector(".composer"), ta=$("chatFullInput");
-  if(!comp||!ta||ta.disabled) return;
+  const comp=box.querySelector(".composer"); if(!comp||!el) return;
   if(box.querySelector(".coachdim")) return;              // 이미 떠 있다
-  const k=introCoachKey();
-  try{ if(k&&localStorage.getItem(k)==="1") return; if(k) localStorage.setItem(k,"1"); }catch(e){}
-  ta.placeholder=sayHint(roleById(myRoleId));
+  try{ if(key&&localStorage.getItem(key)==="1") return; if(key) localStorage.setItem(key,"1"); }catch(e){}
   const dim=document.createElement("div"); dim.className="coachdim";
-  dim.onclick=endIntroCoach;
+  dim.onclick=endChatCoach;
   box.appendChild(dim);
   comp.classList.add("coachon");
+  el.classList.add("coachpick");
   const tip=document.createElement("div"); tip.className="coachtip";
-  tip.innerHTML=`<span>여기에 직접 쳐서 자기소개를 하세요</span>`;
+  tip.innerHTML=`<span>${esc(text)}</span>`;
   comp.appendChild(tip);
-  try{ ta.focus({preventScroll:true}); }catch(e){ ta.focus(); }
 }
-function endIntroCoach(){
+function endChatCoach(){
   const box=$("chatFullBox"); if(!box) return;
   const d=box.querySelector(".coachdim"); if(d) d.remove();
   const c=box.querySelector(".composer"); if(c) c.classList.remove("coachon");
   const t=box.querySelector(".coachtip"); if(t) t.remove();
+  box.querySelectorAll(".coachpick").forEach(e=>e.classList.remove("coachpick"));
+}
+/* 옛 이름 — 자기소개 안내를 부르던 자리들이 아직 이 이름을 쓴다 */
+function endIntroCoach(){ endChatCoach(); }
+function introCoach(){
+  if(!myRoleValid()) return;
+  const ta=$("chatFullInput"); if(!ta||ta.disabled) return;
+  ta.placeholder=sayHint(roleById(myRoleId));
+  chatCoach(ta, "여기에 직접 쳐서 자기소개를 하세요", introCoachKey());
+  try{ ta.focus({preventScroll:true}); }catch(e){ ta.focus(); }
 }
 /* 「2차 조사로」·「종막으로」 — 받침에 따라 갈린다(ㄹ 받침은 「로」). */
 function toP(w){ const ch=(w||"").slice(-1).charCodeAt(0);
@@ -8911,7 +8998,8 @@ function openModal(id){
   $(id).classList.add("on"); markDock(id,true);
   winTitle($(id));
 }
-function closeModal(id){ $(id).classList.remove("on"); markDock(id,false); }
+/* 창을 닫으면 그 안의 입력칸도 같이 사라진다 — 자판 표식을 여기서 한 번 되짚는다 */
+function closeModal(id){ $(id).classList.remove("on"); markDock(id,false); setTimeout(kbdGuard,0); }
 boot();
 </script>
 </body>

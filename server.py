@@ -4438,6 +4438,10 @@ def _seed_phase_lines(seq: int) -> None:
     if not hasattr(SC, "memory_up_to"):
         return
     ph = SC.phase_by_seq(seq)
+    # 사람끼리 떠드는 자리에는 판이 끼어들지 않는다. 어느 막이 그런 자리인지는
+    # 사건이 정한다(AUTO_LINES_OFF) — 엔진에 "talk" 를 박아두면 다음 사건에서 못 푼다.
+    if ph.get("key") in tuple(getattr(SC, "AUTO_LINES_OFF", ()) or ()):
+        return
     when = ph.get("name", "")
     solved = (ROOM.get("crisis") or {}).get("solved")
     for c in SC.CHARACTERS:
