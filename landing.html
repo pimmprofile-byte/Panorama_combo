@@ -1202,6 +1202,7 @@ function submitAdmin(){
    이 파일 안에 그대로 적혀 있어서 잠금이 되지 않기 때문이다.
    AGENT_KEY를 안 걸어둔 로컬 판에서는 빈 값으로 그냥 열린다. */
 let admScen="template", admKey=localStorage.getItem("pmb.gmkey")||"";
+let admPart="vn";   // 에셋 프롬프트의 갈래 — 비주얼노벨 · 맵 · 조사카드 · 캐릭터
 const ADM_ESC=t=>String(t==null?"":t).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 async function admLoad(sid){
   if(sid) admScen=sid;
@@ -1389,9 +1390,20 @@ function admCopyFallback(text,done){
   ta.remove();
 }
 /* 앞머리 + 톤 + 본문. 이 순서가 규약이다. */
-function admAssetFull(sc,it,kind){
-  const head=(kind==="zone"?ASSETS.common.zone:ASSETS.common.card)||"";
-  return [head, sc&&sc.tone, ADM_BARE(it.body)].filter(Boolean).join("\n\n");
+/* 「합쳐서 복사」 — 앞머리 + 톤 + 본문.
+   ★ 앞머리는 «그 사건의 것»이 먼저다. 공통 문서의 블록은 사건이 제 앞머리를
+     안 들고 있을 때만 쓴다 — 여태 무조건 공통을 씌워서, 픽셀아트로 쓴 판도
+     잉크 그래픽노블 사양이 붙어 나왔다. */
+/* 「합쳐서 복사」 — 앞머리 + 갈래 덧붙임 + 톤 + 본문. 「복사」는 본문만이다.
+   ★ 앞머리는 «그 사건의 것»이 먼저다. 공통 문서의 블록은 사건이 제 앞머리를
+     안 들고 있을 때만 쓴다 — 여태 무조건 공통을 씌워서, 픽셀아트로 쓴 판도
+     잉크 그래픽노블 사양이 붙어 나왔다.
+   ★ 갈래마다 덧붙는 줄이 따로 있다(구역 배경의 「사람 없음·가운데 비움」).
+     화풍은 판 전체의 것이고 그 줄은 그 갈래의 것이라, 둘을 갈라 둔다. */
+function admAssetFull(sc,it,kind,part){
+  const head=(sc&&sc.head)||(kind==="zone"?ASSETS.common.zone:ASSETS.common.card)||"";
+  const k=((sc&&sc.kinds)||[]).find(x=>x.key===part);
+  return [head, k&&k.add, sc&&sc.tone, ADM_BARE(it.body)].filter(Boolean).join("\n\n");
 }
 function admAssetItem(sc,it,kind){
   const notes=[
@@ -1406,14 +1418,18 @@ function admAssetItem(sc,it,kind){
     <div class="pbody">${ADM_MARK(it.body)}</div>
     <div class="pacts">
       <button class="adcp k" onclick="admAssetCopy(this,'${sc.id}','${kind}','${ADM_ESC(it.file)}','full')">합쳐서 복사</button>
-      <button class="adcp" onclick="admAssetCopy(this,'${sc.id}','${kind}','${ADM_ESC(it.file)}','body')">본문만</button>
+      <button class="adcp" onclick="admAssetCopy(this,'${sc.id}','${kind}','${ADM_ESC(it.file)}','body')">복사</button>
       <button class="adcp" onclick="admAssetCopy(this,'${sc.id}','${kind}','${ADM_ESC(it.file)}','file')">파일명</button>
     </div>${notes}</div>`;
 }
 function admAssetCopy(btn,sid,kind,file,what){
   const sc=(ASSETS&&ASSETS.scen||[]).find(x=>x.id===sid); if(!sc) return;
-  const it=(kind==="zone"?sc.zones:sc.cards).find(x=>x.file===file); if(!it) return;
-  if(what==="full") admCopy(admAssetFull(sc,it,kind),btn);
+  // 구역·카드 말고 «그 밖의 묶음»(오프닝 컷 등)에서도 찾는다 — 안 찾으면 그 칸의
+  // 단추가 아무 일도 안 한다.
+  const pool=[...(sc.zones||[]),...(sc.cards||[]),
+              ...((sc.extras||[]).flatMap(e=>e.items||[]))];
+  const it=pool.find(x=>x.file===file); if(!it) return;
+  if(what==="full") admCopy(admAssetFull(sc,it,kind,admPart),btn);
   else if(what==="body") admCopy(ADM_BARE(it.body),btn);
   else admCopy(it.file,btn);
 }
@@ -1472,21 +1488,26 @@ async function admAssetsLoad(which){
     });
     return out.join("");
   };
-  const allit=[...sc.zones,...sc.cards,...(((sc.extras)||[]).flatMap(e=>e.items))];
+  /* 한 사건 안에서도 갈래를 나눈다 — 비주얼노벨 · 맵 · 조사카드 · 캐릭터.
+     한 화면에 다 쏟으면 스무 장 넘는 목록이 되고, 그러면 찾는 것이 일이 된다. */
+  const kinds=sc.kinds||[];
+  if(!kinds.length){ b.innerHTML='<div class="adsub">이 사건에는 아직 프롬프트가 없습니다.</div>'; return; }
+  if(!kinds.some(k=>k.key===admPart)) admPart=kinds[0].key;
+  const cur=kinds.find(k=>k.key===admPart)||kinds[0];
+  const ktabs=kinds.map(k=>`<button class="adtab${k.key===admPart?" on":""}"
+      onclick="admPart='${k.key}';admAssetsLoad()">${ADM_ESC(k.name)}<span class="n">${k.items.length}</span></button>`).join("");
+  const allit=kinds.flatMap(k=>k.items);
   const done=allit.filter(x=>x.have).length;
-  b.innerHTML=`<div class="adsub">${ADM_ESC(sc.title||sc.name)} · 모두 ${allit.length}장${
-      sc.zones.length?` · 구역 ${sc.zones.length}`:""}${sc.cards.length?` · 카드 ${sc.cards.length}`:""}${
-      ((sc.extras)||[]).map(e=>` · ${ADM_ESC(e.name)} ${e.items.length}`).join("")
-    }${done?` · 설치됨 ${done}`:""} · 시드 ${sc.seed}</div>
+  b.innerHTML=`<div class="adsub">${ADM_ESC(sc.name)} · 모두 ${allit.length}장${
+      done?` · 설치됨 ${done}`:""} · 시드 ${sc.seed}</div>
+    ${sc.head?admAssetBlock(sc.name+" 앞머리","이 사건의 화풍 사양 — 모든 프롬프트 맨 앞에 붙습니다",sc.head,sc.id+"-head"):""}
     ${sc.tone?admAssetBlock(sc.name+" 톤 블록","앞머리 다음, 본문 앞에 붙습니다",sc.tone,sc.id):""}
-    ${sc.zones.length?`<div class="adzone"><h4>구역 배경<span class="n">${sc.zones.length}장</span></h4>${group(sc.zones,"zone")}</div>`:""}
-    ${sc.cards.length?`<div class="adzone"><h4>조사카드<span class="n">${sc.cards.length}장</span></h4>${group(sc.cards,"card")}</div>`:""}
-    ${((sc.extras)||[]).map(e=>`<div class="adzone"><h4>${ADM_ESC(e.name)}<span class="n">${e.items.length}장</span></h4>${group(e.items,"card")}</div>`).join("")}`;
+    <div class="adtabs">${ktabs}</div>
+    <div class="adzone">${group(cur.items,cur.front||"card")}</div>`;
 }
 /* 탭 목록 — 서버가 준 사건들을 그대로 쓴다.
    예전에는 ["common","template"] 두 개가 코드에 박혀 있어서, 사건을 하나 더 쓰고
-   프롬프트를 넣어도 관리자 화면에는 안 나타났다. 「어디서 보지?」가 되던 자리다.
-   ASSETS 가 아직 안 왔으면 공통 하나만 세우고, 도착하면 다시 그린다. */
+   프롬프트를 넣어도 관리자 화면에는 안 나타났다. 「어디서 보지?」가 되던 자리다. */
 function admAssetIds(){ return ["common",...((ASSETS&&ASSETS.scen)||[]).map(x=>x.id)]; }
 function admAssetName(id){
   if(id==="common") return "공통 사양";

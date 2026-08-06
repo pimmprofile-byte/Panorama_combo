@@ -223,14 +223,14 @@ FRAGMENT_NOTICE = "머릿속에 글자가 하나 떠올랐다 — 아래 「내 
 # 그리고 그건 신비한 장소가 아니라 **버그를 잡는 자리**입니다. 규칙시험실과 같은 결로
 # 읽혀야 합니다 — 정비실에 가깝습니다.
 MAP = [
-    {"loc": "A", "name": "관리자실", "icon": ""},
-    {"loc": "B", "name": "기록보관소", "icon": ""},
-    {"loc": "C", "name": "아케이드상가", "icon": ""},
-    {"loc": "D", "name": "잠수함", "icon": ""},
-    {"loc": "E", "name": "하늘 끝", "icon": "", "opensFrom": "A"},
-    {"loc": "F", "name": "규칙시험실", "icon": "", "opensFrom": "A"},
-    {"loc": "G", "name": "바다 끝", "icon": "", "opensFrom": "D"},
-    {"loc": "H", "name": "모니터 정원", "icon": "", "opensFrom": "D"},
+    {"loc": "A", "name": "관리자실", "icon": "", "art": "office"},
+    {"loc": "B", "name": "기록보관소", "icon": "", "art": "archive"},
+    {"loc": "C", "name": "아케이드상가", "icon": "", "art": "arcade"},
+    {"loc": "D", "name": "잠수함", "icon": "", "art": "sub"},
+    {"loc": "E", "name": "하늘 끝", "icon": "", "opensFrom": "A", "art": "sky"},
+    {"loc": "F", "name": "규칙시험실", "icon": "", "opensFrom": "A", "art": "lab"},
+    {"loc": "G", "name": "바다 끝", "icon": "", "opensFrom": "D", "art": "sea"},
+    {"loc": "H", "name": "모니터 정원", "icon": "", "opensFrom": "D", "art": "garden"},
 ]
 
 # 구역 배경 그림. art 값이 파일명이 됩니다 — assets/rule_the_day_room_{art}.webp.

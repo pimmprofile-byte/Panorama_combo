@@ -834,36 +834,71 @@ def _asset_prompts() -> dict:
                 common[k] = f[idx].strip()
 
     scen = []
+    # 한 사건의 프롬프트는 네 갈래다. 파일 이름이 곧 갈래다 —
+    # 문서를 하나 더 두면 화면에 칸이 하나 더 생긴다.
+    KINDS = [("vn", "비주얼노벨", "비주얼노벨.md", "card"),
+             ("map", "맵", "구역.md", "zone"),
+             ("card", "조사카드", "카드.md", "card"),
+             ("cast", "캐릭터", "캐릭터.md", "card")]
     for sid, name, folder, hue, seed in _asset_sets():
         d = root / folder
-        zp, kp = d / "구역.md", d / "카드.md"
-        # 폴더 안의 «나머지» 마크다운도 다 읽는다 — 오프닝 컷처럼 구역도 카드도 아닌
-        # 묶음이 사건마다 생긴다. 파일을 하나 더 두면 화면에 한 칸이 더 생기게 둔다.
-        extras = []
+        kinds, seen_files = [], set()
+        for key, kname, fname, front in KINDS:
+            src = d / fname
+            items = _asset_parse(src)
+            seen_files.add(fname)
+            if items:
+                kinds.append({"key": key, "name": kname, "front": front, "items": items})
+        # 이름이 안 맞는 문서도 버리지 않는다 — 제 이름으로 칸을 하나 만든다
         if d.is_dir():
             for src in sorted(d.glob("*.md")):
-                if src.name in ("구역.md", "카드.md"):
+                if src.name in seen_files:
                     continue
                 items = _asset_parse(src)
                 if items:
-                    extras.append({"name": src.stem, "items": items})
-        tone = ""
-        for src in [zp, kp] + [d / f"{e['name']}.md" for e in extras]:
-            if not src.exists():
-                continue
-            for f in _asset_fences(src.read_text(encoding="utf-8")):
-                if "The place" in f:
-                    tone = f.strip()
-                    break
-            if tone:
+                    kinds.append({"key": src.stem, "name": src.stem, "front": "card", "items": items})
+        # 이 사건의 «앞머리»와 «톤 블록». 문서 안의 코드펜스에서 줍는다 —
+        #   톤   = "The place:" 로 시작하는 덩어리
+        #   앞머리 = 그 밖의 첫 덩어리 (화풍 사양. 사건마다 다르다)
+        # ★ 앞머리는 «비주얼노벨.md» 를 먼저 본다. 파일 이름 순으로 훑으면 구역.md 가
+        #   먼저 걸려서, 화풍 사양이 아니라 「구역 배경 덧붙임」이 앞머리로 올라간다.
+        #   화풍은 판 전체의 것이고, 갈래마다 덧붙는 줄은 그 갈래의 것이다.
+        # 앞머리를 사건이 스스로 들고 있어야 한다. 여태 공통 문서의 잉크 그래픽노블
+        # 블록을 모두에게 씌워서, 픽셀아트로 쓴 판도 「합쳐서 복사」를 누르면
+        # 잉크 그래픽노블 사양이 붙어 나왔다.
+        def _fences_of(fn):
+            src = d / fn
+            return _asset_fences(src.read_text(encoding="utf-8")) if src.exists() else []
+
+        tone, head = "", ""
+        order = ["비주얼노벨.md", "구역.md", "카드.md", "캐릭터.md"]
+        if d.is_dir():
+            order += [x.name for x in sorted(d.glob("*.md")) if x.name not in order]
+        for fn in order:
+            for f in _fences_of(fn):
+                t = f.strip()
+                if "The place" in t:
+                    tone = tone or t
+                elif not head:
+                    head = t
+            if tone and head:
                 break
-        zones, cards = _asset_parse(zp), _asset_parse(kp)
-        allit = zones + cards + [it for e in extras for it in e["items"]]
+        # 갈래마다 «자기 문서의» 덧붙임 한 덩이. 앞머리·톤이 아닌 것 중 첫 번째다.
+        for k in kinds:
+            fn = {"vn": "비주얼노벨.md", "map": "구역.md",
+                  "card": "카드.md", "cast": "캐릭터.md"}.get(k["key"], k["key"] + ".md")
+            k["add"] = next((t for t in (f.strip() for f in _fences_of(fn))
+                             if t and "The place" not in t and t != head), "")
+
+        allit = [it for k in kinds for it in k["items"]]
         for it in allit:
             it["have"] = (_HERE / "assets" / it["file"]).exists()
+        # 옛 이름 두 개는 그대로 남긴다 — 이 값을 읽는 자리가 아직 있다
+        zones = next((k["items"] for k in kinds if k["key"] == "map"), [])
+        cards = next((k["items"] for k in kinds if k["key"] == "card"), [])
         scen.append({"id": sid, "name": name, "hue": hue, "seed": seed,
-                     "tone": tone, "zones": zones, "cards": cards, "extras": extras,
-                     "n": len(allit)})
+                     "tone": tone, "head": head, "kinds": kinds,
+                     "zones": zones, "cards": cards, "n": len(allit)})
 
     data = {"common": common, "scen": scen}
     _ASSET_CACHE["stamp"], _ASSET_CACHE["data"] = stamp, data
