@@ -696,6 +696,22 @@
   /* 상단 방 코드 — 눌러서 초대 링크를 복사한다 */
   .rmid.copyable{cursor:pointer;text-decoration:underline;text-underline-offset:2px;
     text-decoration-style:dotted}
+  /* ── 방 코드 (배역 선택 위) ────────────────────────────────────────
+     함께할 사람을 부르는 자리다. 코드는 크게, 설명은 작게 — 눈이 코드부터 잡는다.
+     자리가 다 차면 화면에서 사라진다(paintLobbyRoom). */
+  .roomcode{border:1px solid var(--case-e);background:var(--case-h);color:var(--case-fg);
+    padding:11px 13px;margin:0 0 14px;box-shadow:2px 2px 0 var(--case-e)}
+  .roomcode .rc-line{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .roomcode .rc-code{font-family:var(--pix,var(--mono));font-size:clamp(20px,6vw,28px);
+    letter-spacing:.22em;line-height:1.1;color:var(--case-fg);font-weight:800}
+  .roomcode .rc-say{flex:1 1 210px;min-width:0;font-size:12.5px;line-height:1.6;
+    color:var(--case-fg2);word-break:keep-all}
+  .roomcode .rc-say b{color:var(--case-fg)}
+  .roomcode .rc-acts{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+  .roomcode .rc-b{flex:1 1 140px;font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;
+    background:var(--case-b);border:1px solid var(--case-e);color:var(--case-fg);
+    border-radius:0;padding:9px 12px;box-shadow:2px 2px 0 var(--case-e)}
+  .roomcode .rc-b:active{transform:translate(2px,2px);box-shadow:none}
   .dock{display:flex;gap:3px;border-top:1px solid var(--case-e);background:var(--case-b);
     box-shadow:inset 0 1px 0 var(--case-h);
     padding:5px 4px calc(5px + env(safe-area-inset-bottom))}
@@ -3379,6 +3395,9 @@
     <div class="head"><span class="t serif">배역 선택</span><span class="pill" id="lobbyScen" style="cursor:pointer" title="사건 허브로 돌아가기" onclick="location.href='/'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.4h18M3 14.6h18M8 5v14M16 5v14"/></svg> <span id="lobbyScenName"></span> · 홈으로</span><span class="sp"></span><span class="startnowslot" id="lobbyStartNow"></span></div>
     <!-- 두 문장이라 두 줄로 끊는다. 폭에 맡기면 「내 비밀 정보는 이 / 기기에만」처럼
          한 덩이 한가운데가 갈라진다 — 읽는 눈이 거기서 한 번 걸린다. -->
+    <!-- 방 코드. 자리가 다 차면 스스로 사라진다 — 부를 사람이 없는데 코드가
+         남아 있으면 화면만 무거워진다. -->
+    <div class="roomcode" id="lobbyRoom" hidden></div>
     <div class="lead">각자 자기 기기에서 배역을 고르세요.<br>내 비밀 정보는 이 기기에만 보입니다.</div>
     <div id="lobbyList"></div>
     <!-- 진행석(GM) 문. 이 사건에서는 안 쓰기로 해서 gmSeatOffered() 가 통째로 감춘다.
@@ -5223,6 +5242,28 @@ function allSeated(){
    다시 그리지 않고 클래스만 토글하므로 폴링(1.5초)마다 깜빡이지 않는다. */
 /* 머리줄 오른쪽의 시작 단추. 배역 목록을 다시 그리든 안 그리든 늘 같이 손본다 —
    이 자리는 #lobbyList 밖(머리줄)이라 목록의 갱신 경로에 얹혀 가지 않는다. */
+/* ── 방 코드 ────────────────────────────────────────────────────
+   함께할 사람을 부르는 자리에 코드가 있어야 한다 — 여기가 셋이 모이는 화면이다.
+   ★ 자리가 다 차면 감춘다. 그때부터 코드는 부를 사람이 없는 값이고, 남겨 두면
+     화면 위쪽을 계속 먹는다. 판이 시작된 뒤에도 마찬가지다. */
+function paintLobbyRoom(){
+  const b=$("lobbyRoom"); if(!b) return;
+  const done = allSeated() || !!(STATE&&STATE.started);
+  if(!roomCode || done){ b.hidden=true; b.innerHTML=""; return; }
+  const left=(SCEN&&SCEN.characters||[]).filter(c=>((STATE.roles||{})[c.id]||{}).mode==="open").length;
+  b.hidden=false;
+  b.innerHTML=`<div class="rc-line"><b class="rc-code">${esc(roomCode)}</b>
+      <span class="rc-say">이 코드를 알려주세요. 참가자로 입장해 코드를 넣으면 같은 방에 들어옵니다.${
+        left?` <b>남은 자리 ${left}</b>`:""}</span></div>
+    <div class="rc-acts">
+      <button class="rc-b" onclick="copyRoomCode()">코드 복사</button>
+      <button class="rc-b" onclick="copyInvite()">초대 링크 복사</button>
+    </div>`;
+}
+async function copyRoomCode(){
+  try{ await navigator.clipboard.writeText(roomCode); banner("방 코드 "+roomCode+" 를 복사했습니다."); }
+  catch(e){ try{ prompt("아래를 복사해 주세요", roomCode); }catch(e2){ banner(roomCode); } }
+}
 function paintStartNow(){
   const s=$("lobbyStartNow"); if(!s) return;
   const h=startNowHTML(); if(s.innerHTML!==h) s.innerHTML=h;
@@ -5249,6 +5290,7 @@ function renderLobby(force){
       <div class="qaslot">${qaLobbyHTML()}</div>`;
     wireRoleSwipe();
     paintLobbyFold(host);
+    paintLobbyRoom();
     paintStartNow();
     return;
   }
@@ -5267,6 +5309,7 @@ function renderLobby(force){
      자리를 채우는 평범한 판에서는 다 차도 모양이 안 바뀌었다 — 그 경로는 카드를
      다시 안 그리고 상태만 덧입히기 때문이다. 다 찬 순간이 바로 이 경로다. */
   paintLobbyFold(host);
+  paintLobbyRoom();
   paintStartNow();
   const sb=host.querySelector(".startslot"), nb=startBoxHTML();
   if(sb&&sb.innerHTML!==nb) sb.innerHTML=nb;
