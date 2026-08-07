@@ -1129,19 +1129,31 @@ function clearQA(){
 function qaIsOn(){ try{ return localStorage.getItem("pmb.qa")==="1"; }catch(e){ return false; } }
 /* ★ QA 표시는 이 «기기» 에 남는 값이라, 켠 사람이 안 끄면 다음 판까지 따라간다.
    부팅 검사(qaVerify)는 열쇠가 통하면 안 끄는데, 에셋을 보려고 GM 키를 넣어 둔
-   기기는 늘 통과한다 — 그래서 손으로 끌 자리가 여기 있어야 한다. */
+   기기는 늘 통과한다 — 그래서 손으로 만질 자리가 여기 있어야 한다.
+   ★ 한 번 «끄기 전용» 으로 만들었다가 물렀다. 꺼져 있을 때 단추가 회색으로 죽어
+     있으면, 눌러 본 사람에게는 「눌러도 아무 일이 없다」와 구별이 안 된다.
+     양쪽으로 도는 스위치로 두면 누를 때마다 무언가는 바뀐다. */
 function paintQABtn(){
   const b=$("adqaoff"); if(!b) return;
   const on=qaIsOn();
-  b.textContent = on ? "⏻ QA 모드 끄기 — 지금 켜져 있음" : "⏻ QA 모드 — 꺼져 있음";
+  b.textContent = on ? "⏻ QA 모드 켜짐 — 눌러서 끄기" : "⏻ QA 모드 꺼짐 — 눌러서 켜기";
   b.classList.toggle("on",on);
-  b.disabled=!on;
+  b.disabled=false;
 }
 function admQAOff(){
-  if(!qaIsOn()) return;
-  clearQA();
+  const was=qaIsOn();
+  if(was){ clearQA(); }
+  else { try{ localStorage.setItem("pmb.qa","1"); }catch(e){} paintQABtn(); }
+  const now=qaIsOn();
   const t=$("adwipest");
-  if(t){ t.textContent="이 기기의 QA 표시를 껐습니다 — 다음 판은 평범하게 열립니다."; t.style.color="#1a6b47"; }
+  if(!t) return;
+  if(now){
+    t.textContent="QA 모드를 켰습니다 — 다음에 여는 판에서 한 기기가 세 자리를 다 쥡니다.";
+    t.style.color="#8e3a7a";
+  }else{
+    t.textContent="QA 모드를 껐습니다 — 게임 창을 새로고침하면 평범한 판으로 돌아옵니다.";
+    t.style.color="#1a6b47";
+  }
 }
 async function roomPost(url,body){
   try{ return await (await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},

@@ -3812,8 +3812,18 @@ function applyGM(){
 let qaOn=false, qaRole=null, qaCards=null, qaBusy=false;
 try{
   const _qp=new URLSearchParams(location.search);
-  if(_qp.get("qa")==="1") localStorage.setItem("pmb.qa","1");
-  if(_qp.get("qa")==="0") localStorage.removeItem("pmb.qa");
+  const _q=_qp.get("qa");
+  if(_q==="1") localStorage.setItem("pmb.qa","1");
+  if(_q==="0"){ localStorage.removeItem("pmb.qa"); localStorage.removeItem("pmb.qarole"); }
+  /* ★ 읽었으면 주소에서 뗀다. 안 떼면 그 창은 새로고침할 때마다 ?qa=1 을 다시 읽어서
+     QA 가 되살아난다 — 관리자창에서 껐는데 게임 창을 새로고치면 또 켜져 있던 자리다.
+     켜고 끄는 것은 이제 저장된 값(pmb.qa) 하나가 정하고, 주소는 그 값을 «한 번»
+     건드리는 스위치일 뿐이다. */
+  if(_q!=null){
+    _qp.delete("qa");
+    const _r=location.pathname+(_qp.toString()?"?"+_qp.toString():"")+location.hash;
+    try{ history.replaceState(null,"",_r); }catch(e){}
+  }
   qaOn=localStorage.getItem("pmb.qa")==="1";
   qaRole=localStorage.getItem("pmb.qarole")||null;
 }catch(e){}
@@ -3876,7 +3886,8 @@ async function qaReadyAll(){
 /* 끄기 — 흔적을 지우고 새로 연다. 남겨두면 다음 판에 켜진 채로 들어간다. */
 function qaOff(){
   try{ localStorage.removeItem("pmb.qa"); localStorage.removeItem("pmb.qarole"); }catch(e){}
-  location.href="/play";
+  // 방 코드는 지키고 qa 만 뗀다 — 코드를 잃으면 이 기기가 남의 방으로 떨어진다
+  location.href="/play"+(roomCode?("?room="+encodeURIComponent(roomCode)):"");
 }
 /* 상단 띠 — 「QA 모드다」와 「지금 누구로 보고 있다」를 한 줄에 같이 박는다. */
 function paintQA(){
