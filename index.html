@@ -6956,8 +6956,7 @@ function setDashFilter(v){
   if(v===dashFilter) return;
   dashFilter=v;
   // 거르면 목록 길이가 확 바뀐다 — 읽던 자리를 잃지 않게 붙들어 둔다.
-  keepScroll();
-  const d=$("dash"); if(d) d.innerHTML=dashHTML();
+  keepScroll(); dashRepaint();
 }
 async function openDashFilter(){
   const n=dashCounts();
@@ -7108,8 +7107,18 @@ function dashRoundSel(rounds){
 function setDashRound(n){
   if(n===dashRoundSel(dashRounds())) return;
   dashRound=n; dashRoundAt=(STATE&&STATE.round)||0;
-  keepScroll();
-  const d=$("dash"); if(d) d.innerHTML=dashHTML();
+  keepScroll(); dashRepaint();
+}
+/* ★ 현황판을 다시 그리는 자리는 둘이다. 예전 지도 화면에서는 #dash 라는 칸이
+   따로 있어서 그 안만 갈면 됐는데, CCTV 판때기와 토론 화면에서는 현황판이
+   화면에 «직접 박혀» 있다 — 거기서는 #dash 가 아예 없어서 라운드 탭도 필터도
+   눌리기만 하고 아무 일이 안 났다. 2차에서 「1차」를 눌러도 2차가 그대로
+   서 있던 것이 이것이다. 칸이 없으면 화면을 통째로 다시 그린다. */
+function dashRepaint(){
+  const d=$("dash");
+  if(d){ d.innerHTML=dashHTML(); return; }
+  renderPanel._sig=null;
+  try{ renderPanel((STATE&&STATE.phase)||{}); }catch(e){}
 }
 /* 그 라운드에 딸린 카드인가. 라운드가 하나뿐인 판에서는 아무것도 안 거른다. */
 function roundPass(c, sel){ return sel==null || (c&&c.round)===sel; }
