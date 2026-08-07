@@ -875,25 +875,35 @@
   .newzone .nz-n{font-size:13px;font-weight:700;color:var(--ink)}
   .newzone .nz-d{flex:1 0 100%;font-size:11.5px;color:var(--sub)}
 
-  /* 소지품, 처음 열었을 때의 한 덩이. 창 «안»에 서므로 어둠막을 안 깐다 —
-     설명이 가리키는 것(카드와 발치 단추 셋)이 그 아래에 있어야 한다. */
-  .handguide{margin:0 0 12px;padding:11px 13px;cursor:pointer;
-    border:1px solid color-mix(in srgb,var(--gold) 44%,var(--line));border-radius:2px;
-    background:linear-gradient(180deg,rgba(0,230,147,.12),var(--scr-d));
-    box-shadow:inset 1px 1px 0 rgba(255,255,255,.05),2px 2px 0 rgba(0,0,0,.4)}
-  .handguide .hg-k{display:flex;align-items:center;font-family:var(--mono);
-    font-size:10px;letter-spacing:.14em;color:var(--gold-b)}
-  .handguide .hg-k .x{margin-left:auto;font-family:var(--ui);letter-spacing:0;
-    font-size:11px;font-weight:700;color:var(--sub)}
-  .handguide .hg-t{margin-top:7px;font-size:13px;line-height:1.65;color:var(--ink)}
-  .handguide .hg-l{margin:9px 0 0;padding-left:17px;font-size:12.5px;line-height:1.7;color:var(--sub)}
-  .handguide .hg-l b{color:var(--ink)}
-  /* 그 안내가 떠 있는 동안에는 카드에 테를 둘러 «이것을 말하는 중»을 짚는다 */
-  .bigcard.clue.gd{outline:2px solid color-mix(in srgb,var(--gold) 62%,transparent);
-    outline-offset:3px;animation:gdRing 1.3s ease-in-out infinite}
-  @keyframes gdRing{0%,100%{outline-color:color-mix(in srgb,var(--gold) 62%,transparent)}
-                    50%{outline-color:color-mix(in srgb,var(--gold) 22%,transparent)}}
-  @media(prefers-reduced-motion:reduce){ .bigcard.clue.gd{animation:none} }
+  /* ── 창 안의 짚어 주기 ─────────────────────────────────────────
+     어둠막 한 장을 창 «안»에 깔고, 짚은 것 하나만 그 위로 띄워 점멸시킨다.
+     하단바 안내와 같은 문법이다 — 어두워진 자리에서 초록으로 깜빡이는 것 하나. */
+  .tourdim{position:absolute;inset:0;z-index:84;background:rgba(4,3,3,.74);cursor:pointer;
+    animation:fade .22s ease both}
+  .tourhit{position:relative;z-index:86;border-radius:2px;
+    animation:tourPulse .9s steps(1) infinite}
+  @keyframes tourPulse{
+    0%,49%  {box-shadow:0 0 0 3px var(--signal),0 0 26px -2px var(--signal);filter:brightness(1.14)}
+    50%,100%{box-shadow:0 0 0 3px rgba(0,255,153,.22);filter:none}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .tourhit{animation:none;box-shadow:0 0 0 3px var(--signal)}
+  }
+  .tourtip{position:absolute;z-index:88;width:min(300px,82%);cursor:pointer;
+    background:var(--case-h);color:var(--case-fg);border:1px solid var(--case-e);
+    border-radius:2px;box-shadow:3px 3px 0 var(--case-e);padding:11px 13px 9px;
+    animation:fade .2s ease both}
+  .tourtip .tt-b{font-size:13.5px;line-height:1.6;word-break:keep-all;text-wrap:pretty}
+  .tourtip .tt-b b{font-weight:800}
+  .tourtip .tt-f{display:flex;align-items:center;margin-top:8px;
+    font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--case-fg2)}
+  .tourtip .tt-x{margin-left:auto;font-family:var(--ui);letter-spacing:0;
+    font-size:11px;font-weight:700}
+  /* 꼬리 — 짚은 것 쪽을 가리킨다 */
+  .tourtip::after{content:"";position:absolute;left:50%;translate:-50% 0;
+    border:7px solid transparent;border-top-color:var(--case-h);top:100%}
+  .tourtip.down::after{top:auto;bottom:100%;
+    border-top-color:transparent;border-bottom-color:var(--case-h)}
   .maphint{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:14;
     background:var(--case-h);color:var(--case-fg);border:1px solid var(--case-e);
     box-shadow:2px 2px 0 var(--case-e);border-radius:2px;
@@ -1358,6 +1368,18 @@
      색이 창마다 다른 계기등처럼 든다. 색은 팔레트 안에서만 고른다.
      blur 는 쓰지 않는다 — backdrop-filter/filter 는 이 게임에서 프레임 드랍의 원인이었다. */
   .modal{position:fixed;inset:0;background:rgba(6,5,4,.86);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}.modal.on{display:flex}
+  /* ★ 오프닝(튜토리얼)에서는 창이 «서서히» 뜬다. 몰입을 끝내고 대화창으로 넘어가는
+     대목이 제일 크게 바뀌는 자리인데, 딱 하고 갈아치우면 화면이 튄 것처럼 읽힌다.
+     0.5초에 걸쳐 밝아지며 한 뼘 올라온다. 게임이 도는 동안에는 안 건다 —
+     조사 중에 창을 여닫는 것은 «움직임»이 아니라 «손놀림»이라 빠른 쪽이 맞다. */
+  .modal.softin.on{animation:modalSoft .5s cubic-bezier(.22,.9,.24,1) both}
+  .modal.softin.on .win{animation:modalSoftWin .5s cubic-bezier(.22,.9,.24,1) both}
+  @keyframes modalSoft{from{opacity:0}to{opacity:1}}
+  @keyframes modalSoftWin{from{opacity:0;transform:translateY(10px) scale(.985)}
+                          to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){
+    .modal.softin.on,.modal.softin.on .win{animation:none}
+  }
   /* 구역창 위에 겹쳤을 때는 어둠막을 옅게 — 어둠막이 두 겹이면 뒤가 새까매져서
      방을 안 닫은 뜻이 사라진다. 뒤졌던 자리가 비쳐야 «그 방에서 나왔다»가 된다. */
   #cardModal.overmap{background:rgba(6,5,4,.52)}
@@ -3736,22 +3758,11 @@
   .immbox.ready .imm-cue{display:none}
   .sw-slide.on .immbox.ready .imm-cue{display:inline-block}
   /* ── 「몰입 완료」가 붙는 장 ──────────────────────────────────────
-     단추가 화면 밖으로 밀려나면 끝까지 읽고도 못 누른다 — 「다음이 없는데
-     왜 안 넘어가지」로 게임이 멈춘다. 이 장에서만 글을 한 단 줄여 단추를
-     화면 안으로 끌어온다. 줄이는 쪽은 읽고 나면 다시 안 볼 «진행 팁»이다. */
-  .withimm .bigcard{padding-top:12px;padding-bottom:10px}
-  .withimm .bc-eyebrow{display:none}          /* 「한눈에」 — 탭에 이미 적혀 있다 */
-  .withimm .bc-title{font-size:15.5px!important;margin-bottom:2px}
-  .withimm .tiplist{margin-top:6px;gap:0}
-  .withimm .tipitem{padding:5px 0 5px 15px;font-size:11.8px;line-height:1.5}
-  .withimm .tipitem::before{top:5px;left:0}
-  .withimm .immbox{margin-top:9px;padding:10px 12px 9px}
-  .withimm .immbox .imm-t{font-size:13px}
-  .withimm .immbox .imm-d{margin-top:3px;font-size:11px;line-height:1.5}
-  .withimm .immbox .advpips{margin:7px 0 1px}
-  .withimm .immbox .imm-go{margin-top:6px}
-  .withimm .immbox .imm-n{margin-top:4px}
-  .withimm .immbox .imm-cue{margin-bottom:6px;padding:5px 10px;font-size:11px}
+     ★ 한때 이 장에서만 글을 한 단 줄여(.withimm 아래 열두 줄) 단추를 화면 안으로
+       끌어왔다. 그런데 글자 크기와 여백을 한꺼번에 갈아치우는 겹이라, 이 장에
+       들어설 때마다 브라우저가 배치를 통째로 다시 재고 다시 칠했다 — 여기서만
+       유독 버벅이던 원인이 그것이다. 그리고 항목이 셋으로 줄면 줄일 필요도
+       없어진다. 겹은 자리를 묶는 데만 쓰고 크기는 안 건드린다. */
 
   /* ── 메모 (인물정보 셋째 칸) ─────────────────────────────────── */
   .memobox{margin:0 0 14px;padding:12px 13px;border:1px solid var(--case-e);
@@ -8228,6 +8239,7 @@ function showWho(keepTab){
   if(whoTab==="case") paintScene("#whoBox .viccard");
   if(whoTab==="memo") wireMemo();
   openModal("whoModal");
+  setTimeout(()=>{ try{ whoTour(); }catch(e){} },220);
 }
 /* ── 메모 ──────────────────────────────────────────────────────────
    인물정보의 셋째 칸. 남이 무엇을 쥐고 있는지 보다가 바로 적는 자리라 여기 둔다 —
@@ -10326,31 +10338,111 @@ function invGrid(cards){
   return s+`</div>`;
 }
 function toolPick(id){ toolSel=id; showMyHand("tool"); }
-/* ── 소지품, 처음 열었을 때 ────────────────────────────────────────
-   하단바 안내는 «여기로 오라»까지만 한다. 정작 들어와서는 이 칸이 무엇을 하는
-   자리인지 아무도 말해 주지 않아서, 카드 한 장을 보고 그냥 닫고 나갔다 —
-   발치의 단추 셋이 무엇인지 모르는 채로.
-   한 번만 뜨고, 누르면 다시 안 뜬다. 배역마다 따로 센다. */
-function handGuideKey(){ return "pmb.handguide."+(myRoleId||""); }
-function handGuideSeen(){ try{ return localStorage.getItem(handGuideKey())==="1"; }catch(e){ return false; } }
-function handGuideAck(){
-  try{ localStorage.setItem(handGuideKey(),"1"); }catch(e){}
-  const g=$("handGuide"); if(g) g.remove();
-  document.querySelectorAll("#handBox .bigcard.clue.gd").forEach(x=>x.classList.remove("gd"));
+/* ── 창 안의 짚어 주기(tour) ───────────────────────────────────────
+   하단바 안내(paintCoach)는 «어느 칸으로 가라»까지만 말한다. 이건 그 안에 들어온
+   뒤의 이야기다 — 이 단추가 무슨 일을 하는지 하나씩 짚는다.
+
+   ★ 한 번에 하나. 짚은 것만 어둠막 위로 떠오르고, 아무 데나 누르면 다음으로
+     간다. 다 지나가면 끝났다고 적어 두고 두 번 다시 안 뜬다(배역마다 따로).
+   ★ 어둠막과 말풍선은 창 «안»에 붙인다. 창은 position:fixed 라 그 안에서
+     absolute 가 창을 기준으로 서고, 무엇보다 같은 층 안에 있어야 짚은 것이
+     어둠막 위로 뜬다 — 창 밖에 붙이면 창이 통째로 어둠막을 이겨 버린다.
+   ★ 자리는 «잴 때마다» 다시 잡는다. 창이 구르면 짚은 것도 같이 움직인다. */
+let tour=null;                       // {modal, steps, i, key}
+function tourSeen(key){ try{ return localStorage.getItem("pmb.tour."+key+"."+(myRoleId||""))==="1"; }catch(e){ return false; } }
+function tourMark(key){ try{ localStorage.setItem("pmb.tour."+key+"."+(myRoleId||""),"1"); }catch(e){} }
+function tourEnd(run){
+  if(!tour) return;
+  const t=tour, done=t.onDone; tour=null;
+  const m=$(t.modal);
+  if(m){ m.querySelectorAll(".tourdim,.tourtip").forEach(x=>x.remove());
+         m.querySelectorAll(".tourhit").forEach(x=>x.classList.remove("tourhit")); }
+  tourMark(t.key);
+  if(run!==false&&done) try{ done(); }catch(e){}
 }
-function handGuideHTML(pubN){
-  if(handGuideSeen()) return "";
-  return `<div class="handguide" id="handGuide" onclick="handGuideAck()">
-    <div class="hg-k">소지품 · 처음 열었습니다 <span class="x">눌러서 닫기</span></div>
-    <div class="hg-t">조사해서 찾아낸 카드가 여기 쌓입니다. <b>나만 봅니다</b> —
-      내가 말하지 않으면 저절로 새어 나가지 않습니다.</div>
-    <ul class="hg-l">
-      <li><b>대화에 올리기</b> — 이 카드를 <b>모두에게</b> 펼칩니다. 되돌릴 수 없습니다.</li>
-      ${pubN?`<li><b>테이블 위 카드와 바꾸기</b> — 이미 펼쳐진 카드 하나를 가져오고
-        내 카드 하나를 대신 내놓습니다.</li>`:""}
-      <li><b>카드 내려놓기</b> — 손패가 상한을 넘쳤을 때만 켜집니다. 고른 카드가
-        전체공개로 나갑니다.</li>
-    </ul></div>`;
+function tourGo(d){
+  if(!tour) return;
+  tour.i+=(d==null?1:d);
+  if(tour.i>=tour.steps.length){ tourEnd(); return; }
+  tourPaint();
+}
+function tourPaint(){
+  const t=tour; if(!t) return;
+  const m=$(t.modal); if(!m||!m.classList.contains("on")){ tourEnd(false); return; }
+  m.querySelectorAll(".tourhit").forEach(x=>x.classList.remove("tourhit"));
+  let dim=m.querySelector(".tourdim");
+  if(!dim){ dim=document.createElement("div"); dim.className="tourdim";
+            dim.onclick=e=>{ e.stopPropagation(); tourGo(); }; m.appendChild(dim); }
+  let tip=m.querySelector(".tourtip");
+  if(!tip){ tip=document.createElement("div"); tip.className="tourtip";
+            tip.onclick=e=>{ e.stopPropagation(); tourGo(); }; m.appendChild(tip); }
+  const st=t.steps[t.i];
+  const el=(typeof st.el==="function")?st.el():st.el;
+  if(!el||!el.isConnected){ tourGo(); return; }
+  el.classList.add("tourhit");
+  try{ el.scrollIntoView({block:"center",behavior:"auto"}); }catch(e){}
+  tip.innerHTML=`<div class="tt-b">${st.tip}</div>
+    <div class="tt-f"><span class="tt-n">${t.i+1}/${t.steps.length}</span>
+      <span class="tt-x">${t.i+1<t.steps.length?"눌러서 다음 ›":"눌러서 닫기"}</span></div>`;
+  // 자리 — 짚은 것 «위»에 두되, 위가 좁으면 아래로 내린다
+  const mb=m.getBoundingClientRect(), r=el.getBoundingClientRect();
+  tip.style.left="0px"; tip.style.top="0px";                 // 재기 전에 초기화
+  const th=tip.offsetHeight||70, tw=tip.offsetWidth||240;
+  const above=(r.top-mb.top)>th+16;
+  tip.style.top=(above ? r.top-mb.top-th-10 : r.bottom-mb.top+10)+"px";
+  let x=r.left-mb.left+r.width/2-tw/2;
+  x=Math.max(10, Math.min(mb.width-tw-10, x));
+  tip.style.left=x+"px";
+  tip.classList.toggle("down", !above);
+}
+function tourStart(key, modal, steps, onDone){
+  /* ★ 이미 도는 중이면 손대지 않는다. 창은 폴링마다 다시 그려질 수 있는데,
+     그때마다 여기로 들어오면 짚어 주기가 첫 칸으로 되돌아간다 — 눌러도 안
+     넘어가는 것처럼 보인다. */
+  if(tour&&tour.key===key) return;
+  if(tourSeen(key)||!steps||!steps.length){ if(onDone) try{ onDone(); }catch(e){} return; }
+  tour={key, modal, steps, i:0, onDone};
+  tourPaint();
+}
+/* 소지품 — 카드 한 장과 발치의 단추 셋. 실제로 «그려져 있는» 것만 짚는다. */
+function handTour(){
+  const box=$("handBox"); if(!box) return;
+  const TXT=[["대화에 올리기","이 카드를 <b>모두에게</b> 펼칩니다. 한 번 올리면 되돌릴 수 없어요."],
+             ["테이블 위 카드와 바꾸기","이미 펼쳐진 카드 하나를 가져오고, 내 카드 하나를 대신 내놓습니다."],
+             ["카드 내려놓기","손패가 상한을 넘쳤을 때 켜집니다. 고른 카드가 <b>전체공개</b>로 나갑니다."]];
+  /* ★ 요소를 그대로 붙들면 창이 다시 그려지는 순간 죽은 것을 가리킨다.
+     «찾는 방법»으로 들고 있으면 다시 그려도 그 자리를 다시 찾는다. */
+  const find=sel=>()=>document.querySelector(sel);
+  const findBtn=k=>()=>[...document.querySelectorAll("#handBox .mfoot .btn")]
+                        .find(b=>b.textContent.indexOf(k)>=0)||null;
+  const steps=[];
+  if(box.querySelector(".sw-slide.on .bigcard.clue")||box.querySelector(".bigcard.clue"))
+    steps.push({el:find("#handBox .sw-slide.on .bigcard.clue, #handBox .bigcard.clue"),
+      tip:"조사해서 찾아낸 카드가 여기 쌓입니다. <b>나만 봅니다</b> — 내가 말하지 않으면 저절로 새어 나가지 않아요."});
+  TXT.forEach(([k,t])=>{
+    if([...box.querySelectorAll(".mfoot .btn")].some(b=>b.textContent.indexOf(k)>=0))
+      steps.push({el:findBtn(k), tip:t});
+  });
+  tourStart("hand","handModal",steps,()=>{
+    // 소지품을 다 들었으면 그다음은 인물정보다 — 그 칸으로 데려간다
+    setTimeout(()=>{ try{ coachDone("hand"); showWho(); }catch(e){} },260);
+  });
+}
+/* 인물정보 — 남의 자리에서 «무엇이 보이고 무엇이 안 보이는가»가 전부다. */
+function whoTour(){
+  const box=$("whoBox"); if(!box) return;
+  const find=sel=>()=>document.querySelector(sel);
+  const has=sel=>!!box.querySelector(sel);
+  const steps=[];
+  const P=[
+    [".whorow", "이 게임의 인물들입니다. 각자 <b>무엇을 쥐고 있는지</b>가 여기 모입니다."],
+    [".wc.held", "남이 쥔 카드는 <b>어디서 나왔는지</b>만 보입니다. 무엇인지는 끝내 안 나와요 — 물어보거나 심문해야 합니다."],
+    [".wc.tool", "도구는 <b>개수만</b> 보입니다. 무엇인지도, 어디서 났는지도 알 수 없어요."],
+    [".wknown", "이 마을 사람들이 그 인물에 대해 <b>이미 아는 것</b>입니다."],
+    [".wc.pub", "<b>전체공개</b>된 카드입니다. 눌러 보면 내용까지 나옵니다."],
+  ];
+  P.forEach(([sel,tip])=>{ if(has(sel)) steps.push({el:find("#whoBox "+sel), tip}); });
+  tourStart("who","whoModal",steps);
 }
 /* 탭마다 «지금 보고 있는 카드» 하나. 다시 그릴 때 그 자리로 되돌리는 데 쓴다. */
 let handAt={clue:null, tool:null, belong:null};
@@ -10396,12 +10488,10 @@ function showMyHand(tab){
     </div>`;
   }
   h+=`<div class="mbody">`;
-  const _guide=(!bel&&!tool)?handGuideHTML((STATE.revealed||[]).length):"";
-  h+=_guide;
   if(tool) h+=`<div class="toolnote">도구는 손패 상한과 상관없습니다 — 몇 개든 게임이 끝날 때까지 들고 있습니다.</div>`;
   const slideOf=c=>{
       const isPub=bel&&!(myHand||[]).some(x=>x.id===c.id);
-      return `<div class="bigcard clue${_guide?" gd":""}">
+      return `<div class="bigcard clue">
       <div class="bc-eyebrow">${isPub?"전체공개":"손패 · 비공개"}</div>
       <div class="bc-title" style="color:var(--me,var(--gold-b))">${esc(c.title)}</div>
       <div class="bc-tags"><span class="pill">${esc(c.locName)}</span>${c.spot?`<span class="pill">${esc(c.spot)}</span>`:''}<span class="pill">R${c.round}</span>${keyTagFor(c.id,true)}${comboBadge(c.id)}${pairsOf(c.id).map(k=>{const rd=pairReady(k,c.id);
@@ -10449,6 +10539,9 @@ function showMyHand(tab){
   $("handBox").style.setProperty("--mt","var(--me,var(--gold))");
   openModal("handModal");
   wireSwipe($("handBox"), {start, onIdx:k=>{ handAt[seat]=(cards[k]||{}).id||null; }});
+  /* 카드 칸에 카드가 실제로 있을 때만 짚는다 — 빈 칸을 두고 설명할 것이 없다.
+     창이 다 서고 나서 재야 자리가 맞으므로 한 박자 뒤에 부른다. */
+  if(!bel&&!tool&&cards.length) setTimeout(()=>{ try{ handTour(); }catch(e){} },220);
 }
 
 /* 초대 링크 — 코드가 박힌 주소를 통째로 준다. 코드만 불러 주는 것보다 빠르고,
@@ -10795,6 +10888,8 @@ new MutationObserver(rs=>{ rs.forEach(r=>r.addedNodes.forEach(dressWin)); })
 
 function openModal(id){
   setTimeout(()=>{ try{ paintCoach(); paintMapHint(); }catch(e){} },0);
+  /* 오프닝에서만 부드럽게 — 그 뒤로는 손놀림이라 빠른 쪽이 맞다 */
+  try{ $(id).classList.toggle("softin", inOpening()&&!coachOff()); }catch(e){}
   measureDock();
   if($(id).classList.contains("overdock")) closeTabs(id);
   $(id).classList.add("on"); markDock(id,true);
