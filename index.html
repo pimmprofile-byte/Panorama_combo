@@ -822,7 +822,15 @@
   /* 짚어 준 칸 말고는 안 눌린다. 안내가 도는 동안 여기저기로 튀지 않게 하는 자물쇠다. */
   .dock.coachlock .dk{pointer-events:none}
   .dock.coachlock .dk.callout{pointer-events:auto}
-  .dock .dk.callout{z-index:56;color:var(--case-fg)}
+  /* ★ 짚어 준 칸은 오프닝의 하이라이트와 «같은 결»로 점멸한다. 여태 여기만
+     베이지 판으로 떠 있어서, 오프닝에서 초록으로 깜빡이던 안내가 조사화면으로
+     넘어오는 순간 다른 물건이 됐다 — 같은 뜻이면 같은 모양이어야 한다.
+     안내 말풍선과 이 점멸은 한 함수(paintCoach)가 같이 세우고 같이 걷는다. */
+  .dock .dk.callout{z-index:56;color:var(--case-fg);
+    animation:dkDim 1.15s steps(1) infinite}
+  @media(prefers-reduced-motion:reduce){
+    .dock .dk.callout{animation:none;background:#7fe9bd}
+  }
   .dock .dk.callout .i{stroke:var(--case-fg)}
   .dock .dk.callout::before{content:"";position:absolute;inset:-3px -1px;border-radius:2px;
     background:var(--case-h);border:1px solid var(--case-e);z-index:-1;
@@ -980,6 +988,28 @@
     padding:9px 15px;font-size:13px;line-height:1.5;text-align:center;border-radius:2px;
     box-shadow:3px 3px 0 rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .22s,transform .22s}
   .banner.on{opacity:1;transform:translate(-50%,0)}
+
+  /* ── GM 진행 안내 · 위에서 내려오는 띠 ────────────────────────────
+     GM 지문은 대화가 아니라 진행 안내다. 대화창 딱지로 부르면 «누가 말을 걸었다»로
+     읽히고, 조사화면을 짚어 주는 중이면 화면 두 곳이 동시에 깜빡인다.
+     그래서 대화 셈에서 빼고(chatLines) 여기로 내려보낸다.
+     갈 곳이 없는 안내라 누르면 «읽었다»는 뜻이고, 그대로 위로 올라가며 사라진다. */
+  .gmbar{position:fixed;left:50%;top:0;transform:translate(-50%,-120%);z-index:82;
+    width:min(94vw,520px);cursor:pointer;
+    background:linear-gradient(180deg,var(--case-b),var(--case-h));
+    border:1px solid var(--case-e);border-top:0;border-radius:0 0 2px 2px;
+    box-shadow:0 6px 0 -3px rgba(0,0,0,.5),inset 0 -1px 0 var(--case-lo);
+    padding:calc(10px + env(safe-area-inset-top)) 14px 11px;
+    transition:transform .34s cubic-bezier(.22,.9,.24,1),opacity .2s}
+  .gmbar.on{transform:translate(-50%,0)}
+  .gmbar .gb-k{display:flex;align-items:center;gap:7px;
+    font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+    color:var(--case-fg2);text-transform:uppercase}
+  .gmbar .gb-k .x{margin-left:auto;font-family:var(--ui);letter-spacing:0;font-size:11px;font-weight:700}
+  .gmbar .gb-t{margin-top:5px;font-size:13.5px;line-height:1.62;color:var(--case-fg);
+    white-space:pre-line;
+    display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  @media(prefers-reduced-motion:reduce){ .gmbar{transition:opacity .2s} }
 
   /* 오프닝/토론 패널 */
   .intro{white-space:pre-line;font-size:15px;line-height:1.95;color:#dddcdb;border-left:2px solid var(--ember);padding-left:14px}
@@ -1281,6 +1311,15 @@
      색이 창마다 다른 계기등처럼 든다. 색은 팔레트 안에서만 고른다.
      blur 는 쓰지 않는다 — backdrop-filter/filter 는 이 게임에서 프레임 드랍의 원인이었다. */
   .modal{position:fixed;inset:0;background:rgba(6,5,4,.86);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}.modal.on{display:flex}
+  /* 구역창 위에 겹쳤을 때는 어둠막을 옅게 — 어둠막이 두 겹이면 뒤가 새까매져서
+     방을 안 닫은 뜻이 사라진다. 뒤졌던 자리가 비쳐야 «그 방에서 나왔다»가 된다. */
+  #cardModal.overmap{background:rgba(6,5,4,.52)}
+  /* 그리고 구역창은 «뒤로 물러난다» — 조금 줄고 어두워진다. 두 창이 같은 크기로
+     겹치면 제목줄만 두 줄 보여서 창틀이 깨진 것처럼 읽힌다. 한 단 물러나 있어야
+     「저 뒤에 아까 그 방이 있다」가 된다. */
+  #mapModal .win{transition:transform .22s ease,filter .22s ease}
+  #mapModal.behind .win{transform:scale(.955);filter:brightness(.55) saturate(.8)}
+  @media(prefers-reduced-motion:reduce){ #mapModal .win{transition:none} }
   /* 창틀은 .win 이 지고, .box 는 그 안에 든 «브라운관»(=.winbody)이다.
      크기 규칙(max-width·max-height)은 전부 .win 으로 올라갔다 — 창틀이 크기를 정하고
      화면은 그 안을 채운다. .box 에 남는 것은 어두운 판과 잉크 테뿐이다. */
@@ -2302,8 +2341,10 @@
   /* 토론 중에 여는 조사 화면 — 조사 페이즈에서 보던 그대로를 감싸기만 한다.
      구역 팝업(#mapModal)은 DOM 에서 이 뒤에 있어 이 위로 뜬다. */
   #lookModal .win{max-width:min(97vw,1180px);width:97vw}
-  /* 카드 팝업은 무엇 위에서 열리든 맨 앞이다 — 구역 팝업 뒤로 숨지 않게. */
-  #cardModal{z-index:70}
+  /* 카드 팝업은 무엇 위에서 열리든 맨 앞이다 — 구역 팝업 뒤로 숨지 않게.
+     ★ 70 으로 두었더니 아래 .modal:not(.overdock) 이 «같은 70» 이라 무승부가 났고,
+       무승부는 문서 순서가 가른다 — 뒤에 적힌 구역창이 이겼다. 한 칸 올린다. */
+  #cardModal{z-index:72}
   /* 확대해 끌어보는 배치도 — 넘치는 만큼은 이 틀이 물고 있어야 한다.
      여태 전용 규칙이 없어서 확대하면 그림이 팝업 밖으로 삐져나갔다. */
   .mzoom{overflow:hidden;border:1px solid var(--line);border-radius:2px;background:#100f0d;touch-action:none}
@@ -3744,6 +3785,7 @@
   <!-- QA 검수 모드 전용 띠. 평소 게임에서는 그리지도 않는다(qaOn 이 아니면 hidden 그대로). -->
   <div class="qabar" id="qabar" hidden></div>
   <div class="banner" id="banner"></div>
+  <div class="gmbar" id="gmBar" hidden onclick="gmBarAck()" role="status"></div>
   <div class="winbody" id="playBody"><div class="ppanel" id="ppanel"></div></div>
   <nav class="dock" id="dock">
     <button class="dk here" onclick="dockHome()">
@@ -3864,6 +3906,7 @@ let clientId=localStorage.getItem("pmb.cid");
 if(!clientId){clientId="c"+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);localStorage.setItem("pmb.cid",clientId);}
 let myRoleId=localStorage.getItem("pmb.role")||null;
 let sheetSeenSeq=null;   // 첫 폴링에서 배역에 맞춰 읽어들인다
+let sheetSeenSig=null;   // 마지막으로 본 «내 정보의 내용». 이게 달라져야 점이 켜진다
 
 const $=id=>document.getElementById(id);
 
@@ -4189,7 +4232,7 @@ async function qaSee(id){
   qaRole=id;
   try{ localStorage.setItem("pmb.qarole",id); localStorage.setItem("pmb.role",id); }catch(e){}
   myRoleId=id;
-  myHand=[]; handSeen=null; sheetSeenSeq=null; lobbyBuilt="";
+  myHand=[]; handSeen=null; sheetSeenSeq=null; sheetSeenSig=null; lobbyBuilt="";
   crAns=[]; askSel=""; acSel=""; belongKeep=[]; trimPick=null; sharePick=null;
   chatDrawn={}; renderPanel._sig=null; lastRev=-1; fxSeq=STATE?STATE.seq:null;
   closeTabs(); document.querySelectorAll(".modal.on").forEach(m=>m.classList.remove("on"));
@@ -4613,7 +4656,10 @@ function applyState(){
       +(toolCards().length?` · 도구 ${toolCards().length}`:"");
     const hb=$("dkHand"); hb.classList.toggle("on", overLimit()>0);
     hb.textContent=overLimit()>0?"!":"";
-    $("dkSheet").classList.toggle("on",(sheetSeenSeq!=null&&STATE.seq>sheetSeenSeq)||hasUnseenTab());
+    /* 아직 안 열어 본 탭이 있거나(처음), 내용이 실제로 늘었을 때만 켠다. */
+    $("dkSheet").classList.toggle("on",
+      hasUnseenTab() || (sheetSeenSig!=null && sheetSeenSig!==sheetSig()));
+    paintGmBar();
     paintTimeline();
     centerTurnRail();
     popMyLine();
@@ -4782,8 +4828,50 @@ function advBar(label,cls){
 /* 대화는 제 탭이 있다 — 조사화면에 미리보기를 겹쳐 두지 않는다.
    대신 안 읽은 말이 몇 마디인지만 하단바에 얹는다. */
 let chatSeen=0;
-function chatLines(){ return (STATE&&STATE.table||[]).filter(m=>m.kind==="ai"||m.kind==="human"||m.kind==="gm").length; }
+/* 대화창 알림이 세는 것 — «사람과 인물이 한 말»뿐이다.
+   ★ GM 지문(kind="gm")은 뺀다. 그건 대화가 아니라 진행 안내라, 딱지가 붙으면
+     화면 두 곳이 동시에 깜빡인다 — 조사화면을 짚어 주는 중에 대화창까지 부르면
+     어디를 보라는 말인지 알 수 없다. 안내는 대화창을 열면 거기 그대로 있다. */
+function chatLines(){ return (STATE&&STATE.table||[]).filter(m=>m.kind==="ai"||m.kind==="human").length; }
 function markChatSeen(){ chatSeen=chatLines(); paintChatBadge(); }
+/* ── GM 진행 안내를 위에서 내려보낸다 ──────────────────────────────
+   ★ «흘러간 줄»만 본다(chatRows). 아직 붙잡혀 있는 줄을 미리 띄우면 대화창보다
+     이 띠가 먼저 말해 버린다.
+   ★ 한 번에 한 줄. 여러 줄이 몰리면 마지막 것만 세운다 — 지난 안내를 차례로
+     보여 주는 자리가 아니다. 전문은 대화창에 그대로 남아 있다.
+   ★ «읽었다»는 이 기기에만 남는다. 옆 사람이 읽었다고 내 띠가 걷히면 그건
+     내가 읽은 것이 아니다. */
+let gmBarAt=null;        // null 이면 «아직 첫 폴링 전» — 그 한 번은 안 띄우고 자리만 잡는다
+/* ★ 흘려보내기(chatRows)를 거치지 않는다. 흘려보내기는 «대화창을 보고 있을 때만»
+   나아가는데, 그 말은 대화창을 안 열어 두면 이 띠도 영영 안 내려온다는 뜻이다 —
+   대화창을 안 봐도 진행 안내는 닿아야 해서 만든 자리인데 앞뒤가 뒤집힌다.
+   GM 지문은 막이 열릴 때 붙는 «안내»라 오간 말의 박자와 상관이 없다. */
+function gmLast(){
+  const rows=(STATE&&STATE.table)||[];
+  for(let i=rows.length-1;i>=0;i--){ if(rows[i].kind==="gm") return rows[i]; }
+  return null;
+}
+function gmBarAck(){
+  const el=$("gmBar"); if(!el) return;
+  el.classList.remove("on");
+  setTimeout(()=>{ if(!el.classList.contains("on")) el.hidden=true; },380);
+}
+function paintGmBar(){
+  const el=$("gmBar"); if(!el) return;
+  const m=gmLast();
+  const n=m?nOf(m):-1;
+  /* 들어오자마자 밀려 있던 안내는 안 띄운다 — 이미 지난 막의 것일 수 있고,
+     들어온 사람에게 첫 화면이 남의 안내로 덮이는 것은 환영이 아니다. */
+  if(gmBarAt===null){ gmBarAt=n; return; }
+  if(!m || n<=gmBarAt) return;             // 새것이 없으면 손대지 않는다
+  gmBarAt=n;
+  el.innerHTML=`<div class="gb-k">진행 안내<span class="x">눌러서 닫기</span></div>
+    <div class="gb-t">${esc(String(m.text||m.line||""))}</div>`;
+  el.hidden=false;
+  void el.offsetWidth;
+  el.classList.add("on");
+  try{ sfx("chat"); }catch(e){}
+}
 function paintChatBadge(){
   const b=$("dkChat"); if(!b) return;
   const n=Math.max(0, chatLines()-chatSeen);
@@ -6229,7 +6317,7 @@ function wipeLocal(keepKey){
   if(keepKey&&ks!=null) localStorage.setItem("pmb.gmkeyset",ks);
   if(qa!=null) localStorage.setItem("pmb.qa",qa);
   qaRole=null;
-  myRoleId=null; sheetSeenSeq=null; myHand=[]; handSeen=null; lobbyBuilt="";
+  myRoleId=null; sheetSeenSeq=null; sheetSeenSig=null; myHand=[]; handSeen=null; lobbyBuilt="";
   chatDrawn={}; renderPanel._sig=null; lastRev=-1;
 }
 async function resetRoom(){
@@ -7471,7 +7559,21 @@ function objp(w){ if(!w) return "를"; const cd=w.charCodeAt(w.length-1);
   return (cd>=0xAC00&&cd<=0xD7A3&&(cd-0xAC00)%28)?"을":"를"; }
 /* 조사하면 구역 팝업은 할 일을 다했다 — 닫고, 방금 뽑은 카드를 그 자리에 띄운다.
    예전엔 팝업이 남아 카드를 가려서, 뭘 뽑았는지 보려면 직접 닫고 손패를 열어야 했다. */
-async function investigate(id){ const r=await post("/api/investigate",{cardId:id,roleId:myRoleId,clientId}); if(r&&r.error){banner(r.error);sfx("bad");return;} banner(""); sfx("card"); closeModal("mapModal"); await poll(); openCard(id); }
+/* ★ 예전에는 여기서 구역창을 닫았다. 그러면 「조사하기」를 누른 순간 뒤의 방이
+   통째로 사라지고 카드가 튀어나와서, 한 프레임 동안 화면이 무너진 것처럼 보였다 —
+   실제로 오류로 오해할 만한 그림이었다. 방은 그 자리에 둔다. 카드를 닫으면 뒤졌던
+   그 방으로 되돌아온다. 한 방을 두 번 뒤지고 싶을 때도 있다.
+   ★ 대신 방을 다시 그린다 — 방금 뒤진 자리의 핀이 색을 바꿔야 «여기는 봤다»가
+     남는다. 그림은 이미 받아 둔 것이라 다시 안 받는다. */
+async function investigate(id){
+  const r=await post("/api/investigate",{cardId:id,roleId:myRoleId,clientId});
+  if(r&&r.error){ banner(r.error); sfx("bad"); return; }
+  banner(""); sfx("card");
+  await poll();
+  const mm=$("mapModal");
+  if(mm&&mm.classList.contains("on")&&roomAt){ try{ openRoom(roomAt); }catch(e){} }
+  openCard(id);
+}
 function openCard(id){ const pub=(STATE.revealed||[]).find(c=>c.id===id); const hand=myHand.find(c=>c.id===id); const c=pub||hand; if(!c)return;
   const inHand=!!hand&&!pub;
   $("cardBox").innerHTML=`<div class="mhead">
@@ -7494,6 +7596,10 @@ function openCard(id){ const pub=(STATE.revealed||[]).find(c=>c.id===id); const 
   box.classList.remove("reveal","shock","bait","clue");
   void box.offsetWidth;
   box.classList.add("reveal", c.id==="A5"?"shock":(c.bait?"bait":"clue"));
+  const mm=$("mapModal");
+  const over=!!(mm&&mm.classList.contains("on"));
+  $("cardModal").classList.toggle("overmap", over);
+  if(mm) mm.classList.toggle("behind", over);
   openModal("cardModal");
 }
 /* 손패가 넘칠 때는 카드를 읽는 그 자리에서 바로 내려놓을 수 있어야 한다.
@@ -9023,6 +9129,7 @@ function repaintChat(){
   if($("gmChat")) renderChat("gmChat");
   paintChatBadge();
   paintChatLock();
+  paintGmBar();
 }
 /* ── 흘러가는 동안은 못 친다 ────────────────────────────────────────
    알리바이 대화록이 한 줄씩 흐르는 동안 사람이 끼어들면, 그 말이 시신 앞에서 오간
@@ -9601,13 +9708,40 @@ function wireSwipe(box, opt){
 function loadSheetSeen(){
   try{ sheetSeenSeq=parseInt(localStorage.getItem("pmb.sheetseen."+(myRoleId||""))||"-1",10); }catch(e){ sheetSeenSeq=-1; }
   if(isNaN(sheetSeenSeq)) sheetSeenSeq=-1;
+  try{ sheetSeenSig=localStorage.getItem("pmb.sheetsig."+(myRoleId||"")); }catch(e){ sheetSeenSig=null; }
+}
+/* ── 내 정보에 «새것»이 있는가 ────────────────────────────────────
+   ★ 예전에는 막 번호로 쟀다 — 막이 넘어가면 무조건 빨간 점이 켜졌다. 그런데 막이
+     넘어간다고 내 정보가 늘지는 않는다. 실제로 늘어나는 자리는 몇 안 된다:
+     압수된 소지품 · 금고에서 나온 서류 · 고갯짓의 답 · 그리고 개발자가 들어온 몸.
+     그 밖에는 아무것도 안 늘었는데 점만 켜져 있었고, 하루에 대여섯 번 그러면
+     그 점은 «봐야 할 것»이 아니라 배경이 된다 — 편하라고 만든 표시가 반대로
+     간다.
+   ★ 그래서 «내용 지문»으로 잰다. 시트가 읽는 값들을 한 줄로 묶어 두었다가,
+     그 줄이 달라졌을 때만 켠다. 조각(fragments)은 /api/sheet 에만 있어 여기서
+     못 세는데, 조각이 느는 자리는 늘 위 넷 중 하나와 같이 오므로 이 지문에
+     걸린다. */
+function sheetSig(){
+  const S=STATE||{};
+  const bl=S.belongings||null;
+  const vd=S.vault||null;
+  const ak=S.ask||null;
+  return JSON.stringify([
+    S.dev?1:0,                                        // 개발자가 들어왔다 — 몸이 통째로 갈린다
+    bl?[(bl.seized||[]).join(","),bl.mineSeized?1:0]:0,   // 압수
+    vd?(vd.docs||[]).length:0,                        // 금고 서류
+    ak?(ak.asked||[]).length:0,                       // 고갯짓
+    S.night?[S.night.done?1:0]:0                      // 그날 밤의 결과
+  ]);
 }
 function markSheetSeen(){
+  sheetSeenSig=sheetSig();
+  try{ localStorage.setItem("pmb.sheetsig."+(myRoleId||""),sheetSeenSig); }catch(e){}
+  /* 막 번호도 계속 적어 둔다 — 오프닝의 「내 정보를 읽어 주세요」 안내가 이걸 본다. */
   const s=(STATE&&STATE.seq!=null)?STATE.seq:0;
   if(s<=sheetSeenSeq) return;
   sheetSeenSeq=s;
   try{ localStorage.setItem("pmb.sheetseen."+(myRoleId||""),String(s)); }catch(e){}
-
 }
 /* 밤이 지난 게임의 아래칸 — 금고 서류를 다 읽었는지가 여기 뜬다.
    당주의 방을 여는 건 그 다음이다. */
@@ -10507,6 +10641,8 @@ function openModal(id){
 }
 /* 창을 닫으면 그 안의 입력칸도 같이 사라진다 — 자판 표식을 여기서 한 번 되짚는다 */
 function closeModal(id){ $(id).classList.remove("on"); markDock(id,false); setTimeout(kbdGuard,0);
+  // 단서창이 걷히면 뒤로 물러나 있던 구역창이 제자리로 돌아온다
+  if(id==="cardModal"){ const mm=$("mapModal"); if(mm) mm.classList.remove("behind"); }
   // 창이 닫힌 뒤에야 다음 안내가 설 자리가 생긴다
   setTimeout(()=>{ try{ paintCoach(); paintMapHint(); }catch(e){} },0); }
 boot();

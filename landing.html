@@ -1312,6 +1312,17 @@ function bootSkip(){
 function bootRun(){
   const b=$("boot"); if(!b) return;
   let seen=false; try{ seen=sessionStorage.getItem("pmb.booted")==="1"; }catch(e){}
+  /* ★ 새로고침은 «다시 켠» 것이다. 세션 표시만 보고 있었더니 한 탭에서 두 번째부터는
+     부팅이 통째로 안 돌았고, 소리도 같이 안 났다 — 「처음 킬 때만 소리가 난다」의
+     정체가 이것이다(소리가 아니라 부팅이 안 돈 것).
+     그렇다고 표시를 버릴 수는 없다. 게임에서 「홈으로」 돌아올 때마다 4초짜리
+     부팅이 다시 서면 그건 연출이 아니라 통행세다. 그래서 «어떻게 들어왔는가»로
+     가른다 — 주소창에 새로 치거나 새로고침한 것은 켠 것, 게임에서 돌아온 것은
+     같은 세션의 이동이다. */
+  try{
+    const nav=(performance.getEntriesByType("navigation")[0]||{}).type;
+    if(nav==="reload") seen=false;
+  }catch(e){}
   if(seen){ b.remove(); preloadArm(); return; }
   try{ sessionStorage.setItem("pmb.booted","1"); }catch(e){}
   b.hidden=false;
