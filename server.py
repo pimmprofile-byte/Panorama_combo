@@ -152,6 +152,7 @@ def fresh_room(sid: str = "") -> dict:
         # 오프닝에서 각자 제 시트를 끝까지 읽었는지만 센다. 전원이 누르면 그때서야
         # 대화창이 열린다(그 전에는 읽는 자리다).
         "immersed": [],
+        "chatIn": [],               # 오프닝에서 대화창에 들어온 사람들
         "typing": None,
         "events": [],            # 진행 세션이 따라 읽는 사건 기록
         "podOpen": False,        # 특정 카드가 전체공개되면 지도에 탈출 포드가 드러난다
@@ -599,6 +600,7 @@ def public_state() -> dict:
             "usedAP": used,
             "ready": _ready_state(),
             "immersed": _immersed_state(),
+            "chatIn": _chat_in_state(),
             "belongLimit": _belong_limit(),
             # 구역 몫을 쓰는 조사 페이즈에서, 배역별로 어느 구역을 몇 장 열었는지.
             "quotaUsed": {rid: _quota_used(rid, cur) for rid in ROOM["roles"]},
@@ -2749,6 +2751,40 @@ def _ready_state():
         return None
     rd = [r for r in (ROOM.get("ready") or []) if r in humans]
     return {"n": len(rd), "of": len(humans), "done": len(rd) >= len(humans), "mine": list(rd)}
+
+
+def _chat_in_state():
+    """오프닝에서 대화창에 «들어온» 사람들.
+
+    셋이 다 몰입을 끝냈다고 알리바이가 곧바로 흐르면, 아직 다른 화면에 있던
+    사람은 그 대목을 놓친 채로 남는다. 그렇다고 자동으로 창을 열어 주면 읽던
+    자리에서 끌려 나온다 — 사람이 제 손으로 들어오게 두고, 셋이 다 들어왔을 때
+    비로소 그 밤의 이야기가 시작된다.
+    ★ 이 표는 오프닝에서만 뜻이 있다. 막이 넘어가면 지워진다(_advance).
+    """
+    humans = _human_roles()
+    if not humans:
+        return None
+    ci = [r for r in (ROOM.get("chatIn") or []) if r in humans]
+    return {"n": len(ci), "of": len(humans),
+            "done": len(ci) >= len(humans), "mine": list(ci)}
+
+
+@app.post("/api/chat-in")
+def chat_in(b: RoleReq):
+    """「대화창을 열었다」고 알린다. 한 번 들어오면 그 막 동안 유지된다."""
+    with LOCK:
+        r = ROOM["roles"].get(b.roleId)
+        if not r or r["clientId"] != b.clientId or r["mode"] != "human":
+            return JSONResponse({"error": "그 배역이 아닙니다"}, status_code=403)
+        ci = ROOM.setdefault("chatIn", [])
+        if b.roleId not in ci:
+            ci.append(b.roleId)
+            if len(ci) >= len(_human_roles()):
+                ROOM["table"].append({"kind": "system", "broadcast": True,
+                                      "text": "셋이 다 모였습니다 — 그 밤의 이야기가 시작됩니다."})
+            bump()
+    return {"ok": True, "chatIn": _chat_in_state()}
 
 
 def _immersed_state():
@@ -4929,6 +4965,7 @@ def _advance():
     with LOCK:
         ROOM["ready"] = []          # 준비 표시는 막마다 새로 받는다
         ROOM["immersed"] = []       # 「몰입 완료」도 마찬가지 — 오프닝에서만 쓰지만 남겨두지 않는다
+        ROOM["chatIn"] = []         # 대화창 입장 표도 그 막에서만 뜻이 있다
         # 막이 넘어갈 때 붙는 줄은 전부 게임이 스스로 하는 말이다 — 밤의 결과, 압수,
         # 막 머리, GM, NPC가 꺼내는 말. 한 덩어리로 솟지 않게 표를 달아 내보낸다.
         _drip0 = len(ROOM["table"])
