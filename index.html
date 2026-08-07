@@ -839,15 +839,21 @@
      대화창이 «안 읽었다»로 계속 맥박치는 동안 조사화면도 같은 모양으로 깜빡이니,
      화면이 두 곳을 똑같이 가리키는 꼴이었다. 안내는 이 게임의 신호색(#00ff99)으로
      또렷하게, 맥박은 옅은 민트로 — 색이 다르면 뜻이 다르다. */
-  .dock .dk.callout{z-index:76;color:var(--case-fg);
-    animation:dkCall .9s steps(1) infinite}
-  @keyframes dkCall{
-    0%,49%  {background:var(--signal);color:#08120c;box-shadow:0 0 0 2px var(--signal)}
-    50%,100%{background:var(--case-b);color:var(--case-fg);box-shadow:none}
-  }
+  /* ★ 여기서 초록을 «칸의 배경»에 칠했더니 화면에는 안 보였다. 아래 ::before 가
+     베이지 판을 한 장 깔아 두는데, z-index:76 이 스택 문맥을 만들면서 그 판이
+     배경 «위»로 올라와 초록을 덮은 것이다(음수 z 자식은 배경보다 위에 그려진다).
+     초록은 그 «판»에 칠해야 보인다. */
+  .dock .dk.callout{z-index:76;color:var(--case-fg)}
   .dock .dk.callout .t{font-weight:800}
+  .dock .dk.callout::before{animation:dkCallPlate .9s steps(1) infinite}
+  @keyframes dkCallPlate{
+    0%,49%  {background:var(--signal);border-color:var(--signal);
+             box-shadow:2px 2px 0 var(--case-e),0 0 14px -2px var(--signal)}
+    50%,100%{background:var(--case-h);border-color:var(--case-e);
+             box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.5)}
+  }
   @media(prefers-reduced-motion:reduce){
-    .dock .dk.callout{animation:none;background:var(--signal);color:#08120c}
+    .dock .dk.callout::before{animation:none;background:var(--signal);border-color:var(--signal)}
   }
   /* ★ 안내가 도는 동안 다른 칸은 맥박치지 않는다. 한 번에 한 곳만 가리켜야
      그게 가리키는 것이 된다. */
@@ -868,6 +874,26 @@
     display:inline-flex;align-items:center;gap:6px}
   .newzone .nz-n{font-size:13px;font-weight:700;color:var(--ink)}
   .newzone .nz-d{flex:1 0 100%;font-size:11.5px;color:var(--sub)}
+
+  /* 소지품, 처음 열었을 때의 한 덩이. 창 «안»에 서므로 어둠막을 안 깐다 —
+     설명이 가리키는 것(카드와 발치 단추 셋)이 그 아래에 있어야 한다. */
+  .handguide{margin:0 0 12px;padding:11px 13px;cursor:pointer;
+    border:1px solid color-mix(in srgb,var(--gold) 44%,var(--line));border-radius:2px;
+    background:linear-gradient(180deg,rgba(0,230,147,.12),var(--scr-d));
+    box-shadow:inset 1px 1px 0 rgba(255,255,255,.05),2px 2px 0 rgba(0,0,0,.4)}
+  .handguide .hg-k{display:flex;align-items:center;font-family:var(--mono);
+    font-size:10px;letter-spacing:.14em;color:var(--gold-b)}
+  .handguide .hg-k .x{margin-left:auto;font-family:var(--ui);letter-spacing:0;
+    font-size:11px;font-weight:700;color:var(--sub)}
+  .handguide .hg-t{margin-top:7px;font-size:13px;line-height:1.65;color:var(--ink)}
+  .handguide .hg-l{margin:9px 0 0;padding-left:17px;font-size:12.5px;line-height:1.7;color:var(--sub)}
+  .handguide .hg-l b{color:var(--ink)}
+  /* 그 안내가 떠 있는 동안에는 카드에 테를 둘러 «이것을 말하는 중»을 짚는다 */
+  .bigcard.clue.gd{outline:2px solid color-mix(in srgb,var(--gold) 62%,transparent);
+    outline-offset:3px;animation:gdRing 1.3s ease-in-out infinite}
+  @keyframes gdRing{0%,100%{outline-color:color-mix(in srgb,var(--gold) 62%,transparent)}
+                    50%{outline-color:color-mix(in srgb,var(--gold) 22%,transparent)}}
+  @media(prefers-reduced-motion:reduce){ .bigcard.clue.gd{animation:none} }
   .maphint{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:14;
     background:var(--case-h);color:var(--case-fg);border:1px solid var(--case-e);
     box-shadow:2px 2px 0 var(--case-e);border-radius:2px;
@@ -10300,6 +10326,32 @@ function invGrid(cards){
   return s+`</div>`;
 }
 function toolPick(id){ toolSel=id; showMyHand("tool"); }
+/* ── 소지품, 처음 열었을 때 ────────────────────────────────────────
+   하단바 안내는 «여기로 오라»까지만 한다. 정작 들어와서는 이 칸이 무엇을 하는
+   자리인지 아무도 말해 주지 않아서, 카드 한 장을 보고 그냥 닫고 나갔다 —
+   발치의 단추 셋이 무엇인지 모르는 채로.
+   한 번만 뜨고, 누르면 다시 안 뜬다. 배역마다 따로 센다. */
+function handGuideKey(){ return "pmb.handguide."+(myRoleId||""); }
+function handGuideSeen(){ try{ return localStorage.getItem(handGuideKey())==="1"; }catch(e){ return false; } }
+function handGuideAck(){
+  try{ localStorage.setItem(handGuideKey(),"1"); }catch(e){}
+  const g=$("handGuide"); if(g) g.remove();
+  document.querySelectorAll("#handBox .bigcard.clue.gd").forEach(x=>x.classList.remove("gd"));
+}
+function handGuideHTML(pubN){
+  if(handGuideSeen()) return "";
+  return `<div class="handguide" id="handGuide" onclick="handGuideAck()">
+    <div class="hg-k">소지품 · 처음 열었습니다 <span class="x">눌러서 닫기</span></div>
+    <div class="hg-t">조사해서 찾아낸 카드가 여기 쌓입니다. <b>나만 봅니다</b> —
+      내가 말하지 않으면 저절로 새어 나가지 않습니다.</div>
+    <ul class="hg-l">
+      <li><b>대화에 올리기</b> — 이 카드를 <b>모두에게</b> 펼칩니다. 되돌릴 수 없습니다.</li>
+      ${pubN?`<li><b>테이블 위 카드와 바꾸기</b> — 이미 펼쳐진 카드 하나를 가져오고
+        내 카드 하나를 대신 내놓습니다.</li>`:""}
+      <li><b>카드 내려놓기</b> — 손패가 상한을 넘쳤을 때만 켜집니다. 고른 카드가
+        전체공개로 나갑니다.</li>
+    </ul></div>`;
+}
 /* 탭마다 «지금 보고 있는 카드» 하나. 다시 그릴 때 그 자리로 되돌리는 데 쓴다. */
 let handAt={clue:null, tool:null, belong:null};
 let handPollSig=null;
@@ -10344,10 +10396,12 @@ function showMyHand(tab){
     </div>`;
   }
   h+=`<div class="mbody">`;
+  const _guide=(!bel&&!tool)?handGuideHTML((STATE.revealed||[]).length):"";
+  h+=_guide;
   if(tool) h+=`<div class="toolnote">도구는 손패 상한과 상관없습니다 — 몇 개든 게임이 끝날 때까지 들고 있습니다.</div>`;
   const slideOf=c=>{
       const isPub=bel&&!(myHand||[]).some(x=>x.id===c.id);
-      return `<div class="bigcard clue">
+      return `<div class="bigcard clue${_guide?" gd":""}">
       <div class="bc-eyebrow">${isPub?"전체공개":"손패 · 비공개"}</div>
       <div class="bc-title" style="color:var(--me,var(--gold-b))">${esc(c.title)}</div>
       <div class="bc-tags"><span class="pill">${esc(c.locName)}</span>${c.spot?`<span class="pill">${esc(c.spot)}</span>`:''}<span class="pill">R${c.round}</span>${keyTagFor(c.id,true)}${comboBadge(c.id)}${pairsOf(c.id).map(k=>{const rd=pairReady(k,c.id);
@@ -10464,7 +10518,7 @@ const COACH_STEPS=[
    skip:()=> myCheckedIds().length>0},
   {k:"hand",  dk:1, tip:"찾아낸 카드는 「소지품」에 쌓입니다", open:()=>showMyHand(),
    when:()=> myCheckedIds().length>0},
-  {k:"who",   dk:4, tip:"다른 인물이 쥔 손패는 여기서 봅니다 — 내용은 안 보입니다",
+  {k:"who",   dk:4, tip:"다른 인물에 대한 내용은 여기서 봅니다",
    open:()=>showWho(),
    when:()=> myCheckedIds().length>0},
 ];
