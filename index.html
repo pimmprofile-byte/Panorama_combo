@@ -3378,6 +3378,17 @@
     font-family:var(--ui);font-size:12px;color:var(--muted)}
   .readfirst .rf-lock .ic{width:1.1em;height:1.1em}
   .readfirst .rf-go{margin-top:13px;width:100%;justify-content:center}
+  /* 이 마당에서 눌릴 수 있는 것이 이 단추 하나뿐일 때 켠다. 하단바의 「내 정보」를
+     부를 때 쓴 그 패턴(dkDim)과 같은 결이다 — steps(1) 이라 서서히가 아니라
+     «딱딱» 갈아치운다. 이 판에서 「여기를 누르라」는 늘 이 깜빡임이다. */
+  .btn.blink{animation:btnBlink 1.15s steps(1) infinite}
+  @keyframes btnBlink{
+    0%,49%  {background:#7fe9bd;color:var(--case-fg);border-color:var(--case-e)}
+    50%,100%{background:var(--case-b);color:var(--case-fg);border-color:var(--case-e)}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .btn.blink{animation:none;background:#7fe9bd;color:var(--case-fg)}
+  }
   /* 잠긴 하단바 칸 — 감추지 않는다. 없어진 것과 아직 못 여는 것은 다르다. */
   .dock .dk.locked{opacity:.4}
   .dock .dk.locked .i{stroke:var(--case-fg2)}
@@ -4385,6 +4396,8 @@ function applyState(){
     
     maybePhaseFx(ph);
   }
+  /* 셋이 자기소개를 마쳤으면 1차 조사를 저절로 연다 */
+  autoOpenAdvance();
   /* QA 「나머지 자동」 — 폴링 끝자락에 한 번 돈다. 안에서 스스로 꺼져 있는지,
      이미 도는 중인지 보므로 여기서는 조건 없이 부른다. */
   qaOthersTick();
@@ -5979,6 +5992,31 @@ function keepScroll(){
   };
   requestAnimationFrame(()=>{ put(); requestAnimationFrame(put); setTimeout(put,120); });
 }
+/* 오프닝 화면의 «꼬리» — 마당마다 다른 것이 붙는다.
+   brief 에서만 「내 정보 열기」가 서고, 그 단추가 점멸한다. 이 마당에서 하단바는
+   전부 잠겨 있으므로, 화면에서 눌릴 수 있는 것이 이 하나뿐이다. */
+function openPanelTail(){
+  const stg=openStage();
+  if(stg==="brief") return `<div class="card readfirst"><h2>다 읽었으면 당신이 누구인지 볼 차례입니다</h2>
+      <div class="rf-d">이 판은 배역으로 말하는 판입니다. 위의 사건과 피해자를 먼저 읽고,
+        <b>내 정보</b>를 처음부터 끝까지 넘겨 읽으세요.<br>
+        마지막 장의 <b>「몰입 완료!」</b>를 셋이 다 누르면 대화창이 열립니다.</div>
+      <div class="rf-lock">${ICO.lock} 그때까지 아래 탭은 모두 잠깁니다</div>
+      <button class="btn gold rf-go blink" onclick="briefGo()">${ICO.folder} 내 정보 열기 ›</button></div>`;
+  if(stg==="sheet") return `<div class="card readfirst"><h2>「내 정보」를 끝까지 읽으세요</h2>
+      <div class="rf-d">마지막 장의 <b>「몰입 완료!」</b>를 누르면 됩니다.
+        셋이 다 누르면 대화창이 열립니다 — 그때부터 서로를 소개합니다.</div>
+      <div class="rf-lock">${ICO.lock} 지금은 <b>내 정보</b>만 열립니다</div>
+      <button class="btn gold rf-go" onclick="showMySheet()">${ICO.folder} 내 정보 열기 ›</button></div>`;
+  if(stg==="talk") return `<div class="card readfirst"><h2>대화창에서 서로를 소개하세요</h2>
+      <div class="rf-d">사건 당시 <b>알리바이 대화록</b>이 대화창에 흐릅니다. 다 흐르고 나면
+        각자 배역으로 자기소개를 한 마디씩 하세요.<br>
+        셋이 다 말하면 <b>1차 조사</b>가 저절로 열립니다.</div>
+      <div class="rf-lock">${ICO.lock} 지금은 <b>대화창</b>만 열립니다</div>
+      <button class="btn gold rf-go blink" onclick="showChatFull()">${ICO.chat||ICO.folder} 대화창 열기 ›</button></div>`;
+  return `<div class="panel-note" style="text-align:center">사건 당시 <b>알리바이 대화록</b>은 대화창 맨 위에 남아 있습니다 — 언제든 올려서 다시 읽으세요.</div>
+     ${nextPhaseBlock()}`;
+}
 function renderPanel(ph){
   const p=$("ppanel"); const k=ph.key;
   // 매 폴링마다 통째로 다시 그리면 방 카드 애니메이션이 계속 재생돼 '깜빡임'이 생긴다.
@@ -5992,7 +6030,10 @@ function renderPanel(ph){
        이 화면이 다시 안 그려지고, 사람 표시가 안 채워진다 — 눌렀는데 아무 일도
        안 일어난 것으로 보인다. 그러면 한 번 더 누르고, 그건 «취소»다(토글이라서).
        그래서 셋이 아무리 눌러도 막이 안 넘어가는 자리가 됐다. */
-    STATE.ready&&[STATE.ready.n,STATE.ready.of,(STATE.ready.mine||[]).join("")]]);
+    STATE.ready&&[STATE.ready.n,STATE.ready.of,(STATE.ready.mine||[]).join("")],
+    /* 오프닝의 마당. 이게 바뀌면 화면 아래 안내가 통째로 바뀐다 — 안 넣으면
+       「내 정보 열기」를 눌러도 같은 카드가 그대로 서 있다. */
+    openStage()]);
   if(sig===renderPanel._sig) return;
   renderPanel._sig=sig;
   // 조사 한 번에 화면이 맨 위로 튀던 것 — 판을 통째로 다시 그리는 동안 높이가 0 이 되고,
@@ -6004,15 +6045,7 @@ function renderPanel(ph){
     const introHTML=chunks.map((c,i)=>`<p class="cine-p" style="animation-delay:${(i*0.9+0.15).toFixed(2)}s">${esc(c).replace(/\n/g,"<br>")}</p>`).join("");
     p.innerHTML=`<div class="card"><div class="clue-h"><h2 style="margin:0">사건 · 공통지문</h2><button class="btn sm" onclick="replayVN()">${ICO.play} 오프닝 보기</button></div><div class="cine-intro">${introHTML}</div></div>
     <div class="card"><h2>피해자</h2>${victimCardHTML()}</div>
-    ${openLocked()
-      ? `<div class="card readfirst"><h2>먼저 당신이 누구인지 읽으세요</h2>
-          <div class="rf-d">이 판은 배역으로 말하는 판입니다. <b>내 정보</b>를 처음부터 끝까지 넘겨 읽고,
-            마지막 장의 <b>「몰입 완료!」</b>를 눌러 주세요.<br>
-            셋이 다 누르면 대화창이 열립니다 — 그때부터 서로를 소개합니다.</div>
-          <div class="rf-lock">${ICO.lock} 그때까지 대화창·소지품·인물정보는 잠깁니다</div>
-          <button class="btn gold rf-go" onclick="showMySheet()">${ICO.folder} 내 정보 열기 ›</button></div>`
-      : `<div class="panel-note" style="text-align:center">사건 당시 <b>알리바이 대화록</b>은 대화창 맨 위에 남아 있습니다 — 언제든 올려서 다시 읽으세요.<br>대화창에서 배역으로 자기소개를 나누세요.</div>
-         ${nextPhaseBlock()}`}`;
+    ${openPanelTail()}`;
     paintScene("#ppanel .viccard");
     // 오프닝은 GM 보드(호스트 화면)에서만 재생한다 — 16:9 큰 화면에 띄워 다 같이 보는 연출이라,
     // 각자 폰에서 따로 돌면 소리가 겹치고 진행이 흩어진다.
@@ -7916,11 +7949,21 @@ async function toggleReady(){
      오프닝 안에서 자기소개까지 마친 뒤에 「다음 페이즈」로 넘어간다. */
 /* 잠긴 문을 두드렸을 때. 막되 «왜» 를 말하고 갈 곳을 같이 준다 —
    아무 말 없이 안 열리면 그건 고장이다. */
+/* 잠긴 칸을 눌렀을 때. 마당마다 «지금 해야 하는 것»을 말하고 그 자리로 데려간다.
+   brief 만은 데려가지 않는다 — 데려갈 자리가 지금 서 있는 화면이라서다. */
 function openBlocked(){
-  if(!openLocked()) return false;
-  banner("먼저 「내 정보」를 끝까지 읽어 주세요 — 다 읽으면 열립니다.");
+  const stg=openStage();
+  if(!stg) return false;
   try{ sfx("bad"); }catch(e){}
-  setTimeout(showMySheet,220);
+  if(stg==="brief"){
+    banner("먼저 사건을 읽어 주세요 — 아래 「내 정보 열기」를 누르면 이어집니다.");
+  }else if(stg==="sheet"){
+    banner("먼저 「내 정보」를 끝까지 읽어 주세요 — 다 읽으면 열립니다.");
+    setTimeout(showMySheet,220);
+  }else{
+    banner("지금은 대화창만 열립니다 — 셋이 자기소개를 마치면 조사가 열립니다.");
+    setTimeout(()=>{ try{ showChatFull(); }catch(e){} },220);
+  }
   return true;
 }
 /* 셋이 다 읽은 «그 순간» 한 번만 대화창으로 데려간다. 문이 열린 줄 모르고
@@ -7946,6 +7989,56 @@ function inOpening(){ return ((STATE&&STATE.phase)||{}).key==="open"; }
 function immDone(){ const s=immState(); return !s||!!s.done; }
 /* 지금 이 기기가 «읽는 중» 인가 — 잠글지 말지의 유일한 판단 */
 function openLocked(){ return inOpening() && myRoleValid() && !immDone(); }
+/* ── 오프닝의 세 마당 ──────────────────────────────────────────────
+   막이 오른 뒤 사람이 «한 번에 하나씩» 지나가게 한다. 마당마다 하단바에서
+   살아 있는 칸이 딱 하나다 — 지금 할 일이 하나뿐이라는 것을 화면이 몸으로 말한다.
+
+     brief  사건을 읽는다.      하단바 전부 잠김. 화면 아래 「내 정보 열기」만 산다
+     sheet  내 정보를 읽는다.   내 정보 칸만 산다(조사화면까지 잠근다)
+     talk   알리바이가 돈다.    대화창 칸만 산다
+
+   ★ 예전에는 오프닝이 통째로 한 마당이었다. 그러면 막이 오르자마자 하단바에
+     살아 있는 칸이 둘(조사화면·내 정보)이라, 처음 앉은 사람이 무엇부터 볼지를
+     스스로 정해야 했다 — 그건 안내가 아니라 선택지다.
+   ★ brief 를 지났는지는 이 기기가 기억한다. 서버에 물을 일이 아니다 —
+     «내가 사건을 읽었는가»는 나만 아는 것이고, 셋이 같이 넘어갈 일도 아니다. */
+function briefKey(){ const r=(STATE&&STATE.roomId)||""; return (r&&myRoleId)?`pmb.brief.${r}.${myRoleId}`:""; }
+function briefDone(){ const k=briefKey(); if(!k) return false;
+  try{ return localStorage.getItem(k)==="1"; }catch(e){ return false; } }
+function briefGo(){
+  const k=briefKey(); try{ if(k) localStorage.setItem(k,"1"); }catch(e){}
+  renderPanel._sig=null;                 // 안내 카드가 바뀐다 — 다시 그리게 한다
+  try{ paintSeat(); }catch(e){}          // 하단바 잠금이 한 칸 옮겨간다
+  showMySheet();
+}
+/* ── 자기소개가 한 바퀴 돌면 1차 조사가 열린다 ─────────────────────
+   ★ 예전에는 여기서 사람이 「다음 페이즈」를 눌러야 했다. 그런데 이 자리에서
+     해야 하는 일은 이미 끝났다 — 셋이 다 말했다는 것이 곧 «다 됐다»이고,
+     그걸 다시 한 번 눌러 확인시키는 것은 절차지 게임이 아니다.
+   ★ 각자 자기 몫만 누른다. 호스트를 기다리지 않는다 — 셋이 다 누르면 서버가
+     스스로 막을 넘긴다(/api/ready 가 원래 그렇게 생겼다).
+   ★ 한 판에 한 번만 보낸다. 폴링마다 보내면 토글이라 눌렀다 취소했다를 반복한다. */
+let openAdvAt=null;
+function autoOpenAdvance(){
+  const seq=(STATE&&STATE.seq);
+  if(openAdvAt!==seq){ openAdvAt=null; }
+  if(!inOpening()||!myRoleValid()||!introsAllSaid()) return;
+  if(openAdvAt===seq) return;
+  const mine=((STATE&&STATE.ready)||{}).mine||[];
+  if(mine.indexOf(myRoleId)>=0){ openAdvAt=seq; return; }
+  openAdvAt=seq;
+  post("/api/ready",{roleId:myRoleId,clientId}).then(()=>{ try{ poll(); }catch(e){} });
+}
+function openStage(){
+  if(!inOpening()||!myRoleValid()) return "";
+  if(!immDone()) return briefDone() ? "sheet" : "brief";
+  /* ★ 셋이 다 말했다고 여기서 풀지 않는다. 그 순간 막이 넘어가는 중이라
+     (autoOpenAdvance), 한 박자 동안 오프닝인데 아무것도 안 잠긴 화면이 뜬다.
+     막이 실제로 바뀔 때 inOpening() 이 저절로 거짓이 된다 — 그때 풀리면 된다. */
+  return "talk";
+}
+/* 그 마당에서 살아 있는 하단바 칸. brief 는 하나도 없다(-1). */
+const OPEN_LIVE={brief:-1, sheet:2, talk:3};
 function immMine(){ const s=immState(); return !!(s&&(s.mine||[]).indexOf(myRoleId)>=0); }
 async function toggleImmersed(){
   const r=await post("/api/immersed",{roleId:myRoleId,clientId});
@@ -8594,12 +8687,14 @@ function paintSeat(){
           me.style.setProperty("--mec", ok?c.color:"var(--muted)"); }
   const dk=($("dock")||{}).children||[];
   if(dk[1]) dk[1].classList.toggle("over", ok&&overLimit()>0);
-  /* 오프닝에서 아직 다 안 읽었으면 세 칸을 잠근다 — 내 정보(2)와 조사화면(0)만 남는다.
-     감추지 않고 «잠근 모양»으로 둔다. 없어진 것과 아직 못 여는 것은 다르다. */
-  const lock=openLocked();
-  [1,3,4].forEach(i=>{ if(dk[i]) dk[i].classList.toggle("locked", lock); });
-  // 읽어야 할 자리를 한 칸 짚어 준다 — 대화창 알림과 같은 결로 점멸한다.
-  if(dk[2]) dk[2].classList.toggle("callnow", lock);
+  /* 오프닝의 마당마다 «살아 있는 칸»이 하나다. 나머지는 잠근 모양으로 둔다 —
+     감추지 않는다. 없어진 것과 아직 못 여는 것은 다르다. */
+  const stg=openStage();
+  const live=stg?OPEN_LIVE[stg]:null;
+  [0,1,2,3,4].forEach(i=>{ if(dk[i]) dk[i].classList.toggle("locked", !!stg && i!==live); });
+  // 지금 눌러야 할 칸을 짚어 준다 — 대화창 알림과 같은 결로 점멸한다.
+  if(dk[2]) dk[2].classList.toggle("callnow", stg==="sheet");
+  if(dk[3]) dk[3].classList.toggle("callnow", stg==="talk");
 }
 /* 「오세린이」·「문재이가」 — 받침에 따라 조사가 갈린다. */
 function subjP(name){ const ch=(name||"").slice(-1).charCodeAt(0);
@@ -9506,18 +9601,21 @@ async function post(url,body){ try{ return await (await fetch(url,{method:"POST"
      해놓고 다른 데를 열 수 있으면 그건 안내가 아니라 제안이다. */
 const COACH_STEPS=[
   {k:"sheet", dk:2, lock:true, tip:"먼저 「내 정보」를 읽어 주세요", open:()=>showMySheet(),
-   when:()=> inOpening() && sheetSeenSeq!=null && sheetSeenSeq<(STATE.seq||0),
+   /* ★ brief 마당에서는 안 뜬다. 그 마당에서 짚어야 하는 것은 하단바가 아니라
+      화면 아래의 「내 정보 열기」 단추이고, 그건 그 단추가 스스로 점멸한다.
+      여기까지 하단바를 가리키면 짚어 준 자리가 둘이 된다. */
+   when:()=> openStage()==="sheet" && sheetSeenSeq!=null && sheetSeenSeq<(STATE.seq||0),
    skip:()=> !inOpening()},
   /* 다 읽고 창을 닫고 나온 사람. 「몰입 완료」는 시트 «안»에 있어서, 밖에서는
      누를 자리가 없다 — 그래서 다시 들여보내는 칸이 따로 필요하다. */
   {k:"imm",   dk:2, lock:true, tip:"다 읽었으면 「몰입 완료」를 눌러 주세요",
    open:()=>showMySheet(),
-   when:()=> openLocked() && allTabsRead() && !immMine(),
+   when:()=> openStage()==="sheet" && allTabsRead() && !immMine(),
    skip:()=> !openLocked() || immMine()},
   /* ★ «오프닝이 끝났는가» 가 아니라 «이 사람이 다 읽었는가» 로 본다. 몰입완료는
      막을 넘기지 않는다 — 막으로 재면 셋이 다 읽고 대화가 시작된 뒤에도
      이 안내가 안 뜬다. */
-  {k:"chat",  dk:3, tip:"여기서 이야기가 오갑니다", open:()=>showChatFull(),
+  {k:"chat",  dk:3, lock:true, tip:"여기서 이야기가 오갑니다", open:()=>showChatFull(),
    when:()=> !openLocked() && ((STATE.table||[]).length>0)},
   /* 조사화면은 «지금 서 있는 화면» 이지만, 여기까지 오는 동안 사람은 줄곧
      대화창 안에 있었다. 나올 자리를 한 번은 짚어 줘야 한다. */

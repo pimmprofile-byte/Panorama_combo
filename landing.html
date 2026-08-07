@@ -256,11 +256,18 @@
   @keyframes bootIn{from{opacity:0}to{opacity:1}}
 
   /* ② PANORAMA ESCAPE · GAME DAY */
+  /* ★ 파노라마 로고는 «흰색»이다. 이 판의 인광 초록은 GAME DAY 의 색이지 내는
+     쪽의 색이 아니다 — 여기서 초록을 입히면 파노라마가 이 게임의 일부처럼 읽힌다.
+     대신 브라운관 가로줄을 그 흰색 위에 그어 화면 안에 있는 것으로 만든다
+     (이 파일에서 «판때기 위의 무늬»는 늘 이 1px/3px 줄이다 — 제목줄과 관리자
+     카드의 머리줄이 같은 것을 쓴다). */
   .boot .pano{width:min(360px,78vw);aspect-ratio:1560/180;margin:0 auto;
-    background:var(--signal);
+    /* 두 칸 다 «불투명»이어야 한다. 줄을 반투명으로 두면 그 줄에서 바탕이 비쳐
+       글자가 끊어진 것으로 보인다 — 획이 7px 밖에 안 되는 로고라 더 그렇다. */
+    background:repeating-linear-gradient(180deg, #aebbb5 0 1px, #f4f8f6 1px 3px);
     -webkit-mask:url("/assets/panorama_logo.svg") center/contain no-repeat;
             mask:url("/assets/panorama_logo.svg") center/contain no-repeat;
-    filter:drop-shadow(0 0 16px rgba(0,255,153,.32));
+    filter:drop-shadow(0 0 18px rgba(255,255,255,.22));
     animation:bootIn .34s steps(2) both}
   /* 로고 아래 한 줄. 픽셀 글꼴이 아니라 프리텐다드다 — 이 줄은 «이 판의 목소리»가
      아니라 «회사의 목소리»라서, 글꼴이 다른 편이 맞다. 자간을 넓게 벌린다. */
