@@ -1087,12 +1087,20 @@ let admin=false;
    달고 가야 한다. 엔드포인트가 마흔 개라 하나씩 고치는 대신, 나가는 요청에 코드를
    붙이는 자리를 한 군데로 모은다 — 아래 fetch 껍데기가 그 자리다.
    코드가 없으면 아무것도 안 붙이고, 서버는 그때 기본 방을 준다(옛 링크가 안 끊긴다). */
+/* 서버가 코드로 받아주는 꼴. 게임 화면(index.html)과 같은 잣대를 쓴다. */
+const ROOM_CODE_RE=/^[A-Z0-9-]{2,8}$/;
 let roomCode=(()=>{
   try{
     const q=new URLSearchParams(location.search).get("room");
     if(q) { localStorage.setItem("pmb.room", q.trim().toUpperCase()); }
   }catch(e){}
-  try{ return localStorage.getItem("pmb.room")||""; }catch(e){ return ""; }
+  try{
+    const v=(localStorage.getItem("pmb.room")||"").trim().toUpperCase();
+    /* ★ 한때 게임 화면이 이 칸에 roomId(r + 여덟 자리)를 덮어썼다. 코드 꼴이
+       아니면 버린다 — 그 값을 실어 보내 봐야 서버는 기본 방을 준다. */
+    if(v && !ROOM_CODE_RE.test(v)){ localStorage.removeItem("pmb.room"); return ""; }
+    return v;
+  }catch(e){ return ""; }
 })();
 function setRoomCode(c){
   roomCode=(c||"").trim().toUpperCase();
