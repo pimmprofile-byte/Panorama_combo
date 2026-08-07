@@ -1205,6 +1205,10 @@
   /* 도구 칸 머리의 한 줄 — 여기만 상한이 «없다»는 것을 못 박는다. 카드탭에는 안 뜬다. */
   .toolnote{margin:0 0 12px;padding:9px 11px;border-left:2px solid var(--gold);
     background:rgba(0,230,147,.07);color:var(--sub);font-size:12.5px;line-height:1.65;word-break:keep-all}
+  /* 화면 «보는 법» 을 고르는 줄. 창 안의 .htabs 와 같은 단추를 쓰되,
+     여기는 창이 아니라 화면 한복판이라 좌우 여백과 밑줄을 뺀다. */
+  .vtabs{display:flex;gap:6px;margin:10px 0 2px}
+  .vtabs .htab{flex:1 1 0}
   .htabs{display:flex;gap:6px;padding:0 14px 11px;border-bottom:1px solid var(--line)}
   .htab{flex:1 1 0;padding:8px 6px;border-radius:2px;border:1px solid var(--line);background:var(--bg);
     color:var(--sub);font-size:13px;font-family:inherit;cursor:pointer;transition:.14s}
@@ -1510,6 +1514,11 @@
   /* 카드가 화면보다 길면 아래 끝은 아무도 못 본다 — 네비는 바닥에 붙어 따라온다. */
   .sw-top{position:absolute;top:17px;left:0;right:0;z-index:2;display:flex;justify-content:center;pointer-events:none}
   .sw-top .sw-dots{pointer-events:auto}
+  /* 몇 번째 장인가 — 오른쪽 위 구석. 점과 같은 줄 높이에 앉힌다. */
+  .sw-num{position:absolute;top:14px;right:10px;z-index:2;pointer-events:none;
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;
+    color:var(--case-fg);opacity:.55}
+  .sw-num b{font-weight:400;color:var(--me,var(--gold-b));opacity:1}
   .sw-dots{display:flex;gap:7px;justify-content:center;align-items:center;flex-wrap:wrap}
   .sw-dot{width:6px;height:6px;border-radius:0;background:#3a3734;transition:.22s;cursor:pointer}
   .sw-dot.on{background:var(--case-ink);box-shadow:1px 1px 0 rgba(0,0,0,.6)}
@@ -2090,8 +2099,8 @@
   /* ── 조사 현황판 ────────────────────────────────────────────
      구역마다 한 줄에 점과 얼굴만 찍어두던 판이었다 — 몇 장 중 몇 장인지는 보였지만
      '누가 무엇을 쥐었나'는 그 줄을 열어봐야 알았고, 그게 이 화면의 존재 이유였다.
-     조사카드를 전부 펼쳐놓고 카드마다 임자를 붙인다(관리자 훑어보기와 같은 결).
-     남의 손패는 임자만 보인다 — 제목·본문은 전체공개된 것만 나온다. */
+     조사카드를 전부 펼쳐놓고 카드마다 주인을 붙인다(관리자 훑어보기와 같은 결).
+     남의 손패는 주인만 보인다 — 제목·본문은 전체공개된 것만 나온다. */
   .dashhead{margin:16px 0 8px;font-size:13.5px;font-weight:700;color:var(--ink)}
   .dash{display:flex;flex-direction:column;gap:14px}
   .dz-h{display:flex;align-items:baseline;gap:8px;width:100%;text-align:left;cursor:pointer;
@@ -2684,7 +2693,29 @@
   .cctv .cc-rec{margin-left:auto;width:5px;height:5px;border-radius:50%;background:var(--bad);
     box-shadow:0 0 6px var(--bad);animation:ccRec 1.4s steps(1) infinite}
   @keyframes ccRec{0%,55%{opacity:1}56%,100%{opacity:.15}}
-  /* 이름표는 화면 «아래»에 얹는다 — 그림 위에 적으면 무엇이 찍혔는지가 안 보인다 */
+  /* ── 이름표를 화면 «밖»으로 ───────────────────────────────────
+     화면 안에 얹으면 두 가지가 같이 나빠진다. 이름표가 찍힌 것을 가리고,
+     안 가리려고 줄이면 이름이 안 읽힌다. 판때기는 어차피 칸 사이가 비어
+     있으니 그 여백에 내려놓는다 — 모니터 아래에 붙은 라벨이 된다.
+     ★ 카메라는 overflow:hidden 이다(흐르는 띠를 가둬야 해서). 그래서 이름표는
+       자식이 아니라 «판 위의 형제» 로 뽑는다 — 자식으로 두면 잘린다.
+     ★ 자리는 카메라 아래끝 바로 밑(--ly). 가장 좁은 틈이 2.8% 라 글자 높이가
+       그 안에 들어와야 한다 — 재서 맞췄다. */
+  .cctv .cc-lab{position:absolute;left:var(--x);top:var(--ly);transform:translateX(-50%);
+    pointer-events:none;white-space:nowrap;display:flex;align-items:center;gap:4px;
+    font-size:11px;line-height:1.05;font-weight:700;letter-spacing:-.01em;
+    color:#e8f2ee;padding:1px 5px;border-radius:2px;
+    background:rgba(6,11,9,.78);box-shadow:0 0 0 1px rgba(120,150,140,.22);
+    text-shadow:0 1px 2px #000}
+  .cctv .cc-lab b{font-family:var(--mono);font-weight:400;color:var(--gold-b)}
+  /* 조사 현황 n/n — 지도와 같은 표기다. 다 본 곳은 물러난다. */
+  .cctv .cc-lab i{font-family:var(--mono);font-style:normal;font-size:9.5px;
+    letter-spacing:.02em;color:var(--good)}
+  .cctv .cc-lab i.full{color:rgba(210,235,225,.5)}
+  .cctv .cc-lab.dead{opacity:.55}
+  @media(max-width:400px){ .cctv .cc-lab{font-size:10px;padding:0 4px;gap:3px}
+    .cctv .cc-lab i{font-size:9px} }
+  /* 그림 없는 판에서는 예전처럼 화면 «아래» 에 얹는다 */
   .cctv .cc-tag{position:absolute;left:0;right:0;bottom:0;padding:3px 5px;
     font-size:9.5px;line-height:1.25;color:#dfe8e4;text-align:left;
     background:linear-gradient(180deg,transparent,rgba(0,0,0,.82) 45%);
@@ -2762,7 +2793,7 @@
      .box 는 그 안의 어두운 화면이라 파인 안쪽 그림자만 남는다. */
   .modal .box{box-shadow:inset 2px 2px 0 rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.3)}
   /* ② 네 귀의 픽셀 코너 — 케이스에 박힌 나사머리 자리. 가상요소를 안 쓴다
-        (.bigcard.role::before 처럼 이미 임자가 있는 자리가 많다). 배경 레이어 넷이면 된다. */
+        (.bigcard.role::before 처럼 이미 주인이 있는 자리가 많다). 배경 레이어 넷이면 된다. */
   .card,.turnbar,.gm-guide{
     background-image:
       linear-gradient(var(--case-line),var(--case-line)),
@@ -3868,7 +3899,11 @@ const roleById=id=>(SCEN.characters||[]).find(c=>c.id===id)
 /* 피해자도 이름이 있는 사람이다. 지목표에는 그도 오른다 — 스스로 그랬을 수도 있으니까. */
 function victimAsPerson(){
   const v=(SCEN&&SCEN.victimCard)||{};
-  return {id:"victim", name:v.name||"피해자", job:v.job||"", color:"#b9a98f", avatar:""};
+  /* ★ 피해자도 «자기 색»이 있다. 여기서 회색을 박아 두었더니 지목 화면에서만
+       데이스트가 흰빛으로 서서, 이 게임에서 그 초록이 누구 것인지가 흐려졌다.
+       대본이 색을 주면 그 색을 쓴다 — 없을 때만 물러난 회색으로 세운다. */
+  return {id:"victim", name:v.name||"피해자", job:v.job||"",
+          color:v.color||"#b9a98f", avatar:""};
 }
 function allPersons(){
   return [...(SCEN.characters||[]), ...(SCEN.npcs||[]), victimAsPerson()];
@@ -4484,10 +4519,16 @@ function applyState(){
     renderPanel(ph);
     // 채팅
     if($("chatModal").classList.contains("on")) renderChat("chatFull");
-    // 소지품 탭은 남이 공개한 카드로도 늘어난다 — 열어둔 채로도 따라 움직여야 한다.
+    /* 소지품 탭은 남이 공개한 카드로도 늘어난다 — 열어둔 채로도 따라 움직여야 한다.
+       ★ 다만 «달라졌을 때만» 다시 그린다. 예전에는 폴링마다 통째로 다시 그렸는데,
+         다시 그리는 순간 스와이프가 처음으로 돌아가서 마지막 장을 읽고 있으면
+         1.5초마다 첫 장으로 끌려갔다. 목록이 그대로면 손대지 않는다. */
     if((belongLocs().length||hasToolDeck())&&$("handModal").classList.contains("on")
-       &&!document.querySelector("#handBox .swipe.drag"))
-      showMyHand(handTab);
+       &&!document.querySelector("#handBox .swipe.dragging")){
+      const hsig=JSON.stringify([handTab, myHand.map(c=>c.id),
+                                 (STATE.revealed||[]).map(c=>c.id), toolSel]);
+      if(hsig!==handPollSig){ handPollSig=hsig; showMyHand(handTab); }
+    }
     // 손패 수는 상단바가 아니라 여기서 센다 — 카드를 여는 자리와 세는 자리가 같아야 한다.
     // 도구는 상한 밖이라 이 숫자에 안 섞는다 — 섞으면 「4/1」처럼 늘 넘친 것으로 보인다.
     $("dkHandN").textContent=`${clueCount()}/${handLimit()}`
@@ -5544,7 +5585,7 @@ function roleCardState(c){
   // 카드의 버튼은 '고르는 일'만 한다. 내 정보 보기는 아래 바에 따로 있다.
   let badge="", btn="";
   /* 한 사람이 한 자리다 — 이미 쥔 배역이 있으면 다른 카드는 안 잡힌다.
-     남이 앉은 카드(「참여 중」)와는 뜻이 다르다. 저쪽은 «임자가 있다» 이고
+     남이 앉은 카드(「참여 중」)와는 뜻이 다르다. 저쪽은 «주인이 있다» 이고
      이쪽은 «내가 딴 데 앉아 있다» 라서, 표시도 갈라 둔다 — 그 배역의 색으로 점선을
      둘러 「이건 네 사정이다」로 읽히게 한다. 스와이프로 보는 건 그대로 된다. */
   const elsewhere=!mine&&!otherHuman&&myRoleValid();
@@ -6191,11 +6232,15 @@ function renderPanel(ph){
     const pubc=(STATE.revealed||[]).filter(c=>!mineIds.has(c.id));
     const hcards=(myRoleValid()?myHand:[]).map(c=>({...c,_pub:false})).concat(pubc.map(c=>({...c,_pub:true})));
     p.innerHTML=`${handWarn()}<div class="clue-h"><h3>토론</h3><span class="pill" style="color:var(--me,var(--gold-b))">내 손패 ${myHand.length}</span>${pubc.length?`<span class="pill" style="color:var(--cold)">전체공개 ${pubc.length}</span>`:""}<span class="mspace"></span><button class="mrule" onclick="showTalkRule()" aria-label="토론 규칙">?</button></div>
-    ${dashHTML()}
+    <div class="vtabs">
+      <button class="htab${talkView==="zone"?" on":""}" onclick="setTalkView('zone')">구획별로 보기</button>
+      <button class="htab${talkView==="list"?" on":""}" onclick="setTalkView('list')">리스트로 보기${hcards.length?` <b>${hcards.length}</b>`:""}</button>
+    </div>
+    ${talkView==="zone"?dashHTML():`
     <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px">${hcards.map(c=>`<div class="card" style="margin:0;padding:10px 12px;border-color:${c._pub?"#4b453d":"color-mix(in srgb,var(--me,var(--gold)) 42%,var(--line))"};background:${c._pub?"linear-gradient(160deg,#141d24,#111319)":"linear-gradient(160deg,color-mix(in srgb,var(--me,var(--gold)) 12%,#151413),#151413)"};cursor:pointer" onclick="openCard('${c.id}')"><span class="pill" style="color:${c._pub?"var(--cold)":"var(--me,var(--gold-b))"}">${c._pub?"전체공개":"내 손패"}</span> <b style="color:${c._pub?"var(--cold)":"var(--me,var(--gold-b))"}">${esc(c.title)}</b> <span class="pill">${esc(c.locName)}${c.spot?"·"+esc(c.spot):""}·R${c.round}</span>${keyTagFor(c.id,true)}${comboBadge(c.id)}${pairsOf(c.id).map(k=>{
         const rd=pairReady(k,c.id);
         return `<button class="pill pair${rd?" rdy":""}" title="${rd?"짝이 지금 나와 있습니다 — 눌러서 맞춰보세요":"같은 조각을 단 카드를 찾으세요"}" onclick="event.stopPropagation();showPairHint('${c.id}',${k.i})">${pairChip(k,c.id,rd)}${rd?"맞물림":"조각"}</button>`;
-      }).join("")}<div class="lead clip1">${esc(oneLine(c.text))}</div></div>`).join("")||'<div class="panel-note">아직 조사한 단서가 없어요. (조사 페이즈에 카드를 여세요.)</div>'}</div>`
+      }).join("")}<div class="lead clip1">${esc(oneLine(c.text))}</div></div>`).join("")||'<div class="panel-note">아직 조사한 단서가 없어요. (조사 페이즈에 카드를 여세요.)</div>'}</div>`}`
     // 질문지는 마지막 조사가 끝나면 «공개» 된다 — 읽기만 되고 답은 종막에 받는다(§7-g).
     // 남은 토론 내내 이 문항을 겨냥해 움직이라고 놓는 자리다.
     +(finalSheetOpen()?finalSheetHTML("preview"):"")
@@ -6527,10 +6572,19 @@ function boardCamHTML(x, isDark, art){
     <span class="cc-roll" aria-hidden="true"></span>
     ${sealed?`<span class="cc-dead"><b>NO SIGNAL</b></span>`:""}
     <span class="cc-top"><i class="cc-ch">CH${ch}</i>${(!sealed&&mine&&left>0)?`<i class="cc-rec"></i>`:""}</span>
-    <span class="cc-tag"><b>${esc(loc)}</b> ${esc(z.name||loc)}</span>
-    ${cards.length?`<span class="cc-n">${done}/${cards.length}</span>`:""}
+    ${art?"":`<span class="cc-tag"><b>${esc(loc)}</b> ${esc(z.name||loc)}</span>`}
+    ${(!art&&cards.length)?`<span class="cc-n">${done}/${cards.length}</span>`:""}
     ${fresh?`<span class="cc-new">NEW</span>`:""}
-  </button>`;
+  </button>${art?boardLabHTML(a, loc, z, cards.length, done, sealed):""}`;
+}
+/* 판때기 위의 이름표 — 카메라 «아래» 여백에 따로 선다(형제 요소).
+   자리는 카메라 아래끝에서 0.3% 만 띄운다. 칸 사이가 제일 좁은 곳이 2.8% 라
+   여기서 더 띄우면 아래 칸 액자에 올라탄다. */
+function boardLabHTML(a, loc, z, total, done, sealed){
+  const ly=(a[1]+(a[3]||0)/2+0.3).toFixed(2);
+  const n=total?`<i class="${done>=total?"full":""}">${done}/${total}</i>`:"";
+  return `<span class="cc-lab${sealed?" dead":""}" style="--x:${a[0]}%;--ly:${ly}%"
+      aria-hidden="true"><b>${esc(loc)}</b>${esc(z.name||loc)}${n}</span>`;
 }
 /* 그림은 뒤늦게 붙는다 — 확장자를 훑어야 해서다. 붙기 전에는 노이즈만 돈다. */
 function paintBoardArt(){
@@ -6703,7 +6757,7 @@ function wireZones(svg){
    전체공개된 것과 내 손패뿐이고, 그 둘만 여기서 찾아진다. */
 function cardOpen(id){ return (STATE.revealed||[]).find(c=>c.id===id)||myHand.find(c=>c.id===id)||null; }
 /* 카드 한 장의 현황판 칸 — 상태는 셋이다.
-   아직 아무도 안 봄 / 누가 쥐고 있음(임자만) / 전체공개(제목·본문). */
+   아직 아무도 안 봄 / 누가 쥐고 있음(주인만) / 전체공개(제목·본문). */
 /* 이튿날(마지막 조사)에 새로 생긴 자리인가. 첫날에는 없던 카드라 눈에 띄어야 한다 —
    밤이 지나고 집에 남은 자국도 여기에 들어온다. */
 function isFresh(c){ return (c&&c.round)===3; }
@@ -6762,11 +6816,11 @@ function dashCard(c){
     esc((full&&full.title)||"")+comboBadge(c.id),
     "나만 보고 있습니다 · 비공개");
   if(st.k==="taken"){ const w=st.who||{};
-    // 남이 쥔 카드는 임자만 말한다 — 제목이 새면 그 사람이 감출 것이 없어진다
+    // 남이 쥔 카드는 주인만 말한다 — 제목이 새면 그 사람이 감출 것이 없어진다
     return cell("held",` style="--wc:${w.color||"var(--line)"}"`,`showSpot('${c.id}')`,
       tag(esc(w.name||""),avaHTML(w,"xs")),
       `<span class="q">${esc(w.name||"누군가")} 쥐고 있음</span>`,
-      "내용은 임자만 봅니다"); }
+      "내용은 손패 주인만 확인할 수 있습니다"); }
   // cardState 의 잠김 사유에는 '내 차례 아님'처럼 내 사정이 섞여 있다. 현황판은 판 전체를
   // 읽는 자리라 카드 쪽 사정만 적는다 — 나머지는 그냥 아직 아무도 안 본 카드다.
   // 수수께끼로 여는 자리도 여기서는 «아직 아무도 안 본 칸»과 똑같이 선다. 누르면
@@ -6805,6 +6859,16 @@ const DASH_FILTERS=[
   ["hand", "누군가 쥔 카드",   "나와 남들이 손에 들고 안 내놓은 것",        "아무도 손에 쥐고 있지 않습니다."],
   ["pub",  "전체공개된 카드",  "테이블에 올라와 다 같이 읽는 것",           "아직 전체공개된 카드가 없습니다."],
 ];
+/* 토론 화면은 같은 것을 두 가지로 적는다 — 구획별 현황판과 카드 목록.
+   예전에는 둘이 연달아 섰는데, 그러면 아래로 한참 굴려야 끝이 나고 어느 쪽을
+   보고 있었는지도 잃는다. 한 번에 하나만 세운다. */
+let talkView="zone";
+function setTalkView(v){
+  if(v===talkView) return;
+  talkView=v; keepScroll();
+  renderPanel._sig=null;
+  try{ renderPanel((STATE&&STATE.phase)||{}); }catch(e){}
+}
 let dashFilter="all";
 function dashPass(c){
   if(dashFilter==="all") return true;
@@ -9191,10 +9255,13 @@ function buildSwipe(slides, always){
   const track=slides.map(x=>`<div class="sw-slide">${x}</div>`).join("");
   if(slides.length<2&&!always) return `<div class="swipe"><div class="sw-vp"><div class="sw-track">${track}</div></div></div>`;
   const dots=slides.map((_,i)=>`<span class="sw-dot${i===0?" on":""}" data-i="${i}"></span>`).join("");
+  /* ★ 점만으로는 «몇 번째»가 안 읽힌다 — 세 개짜리는 세어지지만 그 위로는 못 센다.
+       숫자를 오른쪽 위에 같이 둔다. 점은 «어디쯤», 숫자는 «몇 번째»를 맡는다. */
   return `<div class="swipe">
     <button class="sw-nav prev" aria-label="이전">‹</button>
     <button class="sw-nav next" aria-label="다음">›</button>
     <div class="sw-top"><div class="sw-dots">${dots}</div></div>
+    ${slides.length>1?`<div class="sw-num"><b class="sw-cur">1</b>/${slides.length}</div>`:""}
     <div class="sw-vp"><div class="sw-track">${track}</div></div></div>`;
 }
 /* 손가락을 따라 끌리다가 놓으면 붙는다. 문턱만 재서 툭 갈아치우면 넘긴 것이 아니라
@@ -9222,6 +9289,7 @@ function wireSwipe(box, opt){
   const paint=()=>{
     dots.forEach((d,k)=>d.classList.toggle("on",k===i));
     if(cnt) cnt.textContent=i+1;
+    if(opt.onIdx) opt.onIdx(i);
     // 끝 장이어도 건너갈 옆 탭이 있으면 화살표는 살려둔다
     if(prev) prev.disabled=i<=0&&!(opt.hasEdge&&opt.hasEdge(-1));
     if(next) next.disabled=i>=N-1&&!(opt.hasEdge&&opt.hasEdge(1));
@@ -9412,10 +9480,15 @@ async function showMySheet(){
   // 이 묶음의 이름은 시나리오가 정한다 — 망령은 기억을 되찾지만, 가라앉는 배의 사람들은
   // 잃은 기억이 없다. 거기서 늘어나는 건 이제 꺼내기로 한 말이다.
   const fragL=(SCEN&&SCEN.fragLabel)||"기억의 파편", fragE=(SCEN&&SCEN.fragEyebrow)||"떠오른 기억";
-  if(frags.length){ const fh=frags.map((f,i,arr)=>{ const isNew=(f.when===curPhase&&i===arr.length-1); return `<div class="frag${isNew?" newfrag":""}"><div class="w">${esc(fragL)} · ${esc(f.when)}${isNew?" · NEW":""}</div>${esc(f.text)}</div>`; }).join("");
+  /* ★ 최근에 생긴 것이 «위»다. 서버는 생긴 차례대로 쌓아 보내는데, 그대로 그리면
+       방금 떠오른 조각이 늘 맨 아래에 있어서 매번 끝까지 굴려야 닿았다.
+       새것인지는 뒤집기 «전»에 정한다 — 원래 순서의 마지막 하나가 새것이다. */
+  if(frags.length){ const lastI=frags.length-1;
+    const fh=frags.map((f,i)=>({f, isNew:(f.when===curPhase&&i===lastI)})).reverse()
+      .map(({f,isNew})=>`<div class="frag${isNew?" newfrag":""}"><div class="w">${esc(fragL)} · ${esc(f.when)}${isNew?" · NEW":""}</div>${esc(f.text)}</div>`).join("");
     // 판이 도는 동안 «늘어나는» 글이다. 훑는 자리(한눈에)가 아니라
     // 판 위에서 쓰는 자리(추가 정보)에 둔다 — 새로 생긴 것을 여기서 찾게 된다.
-    slides.push({tab:"extra", html:`<div class="bigcard role" style="--rc:${s.color}"><div class="bc-eyebrow">${esc(fragE)}</div><div class="bc-title" style="font-size:18px">${esc(fragL)}</div><div style="margin-top:14px">${fh}</div></div>`}); }
+    slides.push({tab:"extra", html:`<div class="bigcard role k-frag" style="--rc:${s.color}"><div class="bc-eyebrow">${esc(fragE)}</div><div class="bc-title" style="font-size:18px">${esc(fragL)}</div><div style="margin-top:14px">${fh}</div></div>`}); }
   // 4-b) 고갯짓 — 질문지의 결과.
   //       늘어나는 것들(조각·고갯짓)이 앞이고 늘 있는 것(배치도)이 뒤다 — 새로 생긴 걸 여기서 찾는다. 줄글로 적으면 여섯 줄이 뭉개져서 한 장으로 세운다.
   //       물은 것과 «아무도 안 물은 것»이 같은 무게로 보여야 한다 — 안 물어진 쪽이 이 막의 기록이다.
@@ -9582,6 +9655,7 @@ async function showMySheet(){
   hoist(/k-belong/);           // 소지품 — 늘 있고, 압수되면 판이 뒤집히는 자리
   hoist(/k-night/);            // 그날 밤
   hoist(/k-vault/);            // 그리고 그 앞에 금고 — 오늘 아침 다 같이 본 것이 제일 위다
+  hoist(/k-frag/);             // 맨 앞은 떠오른 것 — 이 탭에서 제일 자주 다시 펴보는 장이다
   // 「추가 정보」는 아직 빈 판에서도 자리를 지킨다. 판이 도는 중에 탭이 생겼다 없어졌다 하면
   // 탭 줄의 모양이 바뀌고, 어제까지 한 번이면 닿던 자리가 오늘은 두 번이 된다.
   if(!slides.some(x=>x.tab==="extra")){
@@ -9766,6 +9840,9 @@ function invGrid(cards){
   return s+`</div>`;
 }
 function toolPick(id){ toolSel=id; showMyHand("tool"); }
+/* 탭마다 «지금 보고 있는 카드» 하나. 다시 그릴 때 그 자리로 되돌리는 데 쓴다. */
+let handAt={clue:null, tool:null, belong:null};
+let handPollSig=null;
 /* 내 단서는 두 칸이다 — «카드»와 «도구».
    카드는 손패 상한이 있고(넘치면 내려놓아야 한다), 도구는 상한 밖이라 몇 개든 든다.
    그래서 한 목록에 섞어 두면 「몇 장까지」가 어느 쪽 이야기인지 알 수 없다.
@@ -9784,7 +9861,11 @@ function showMyHand(tab){
     else if(bsplit&&belongCards().length) handTab="belong";
   }
   const bel=handTab==="belong", tool=handTab==="tool";
-  const cards=bel?belongCards():(tool?toolCards():clueCards());
+  /* ★ 카드는 «방금 주운 것»부터 본다. 조사에서 막 뒤집은 카드를 확인하려고 여는
+       것이 대부분인데, 예전 순서로는 그게 늘 맨 뒤에 있어서 매번 끝까지 넘겨야
+       했다. 도구는 반대다 — 장비창은 자리가 고정이라 새 물건이 뒤에 붙어야
+       「어디가 찼는지」가 눈에 남는다. */
+  const cards=bel?belongCards():(tool?toolCards():clueCards().slice().reverse());
   const label=(SCEN&&SCEN.belongLabel)||"소지품";
   /* 머리에 적는 한 줄. ★ 도구탭에서는 상한 이야기를 «아예 꺼내지 않는다» —
      상한이 없는 칸에서 장수를 세어 보이면 없는 규칙을 만들어 낸다. */
@@ -9828,6 +9909,14 @@ function showMyHand(tab){
       :"아직 조사한 단서가 없어요. 조사 페이즈에 카드를 열면 여기에 계속 쌓입니다."}</div>`;
   }
   else{ h+=buildSwipe(cards.map(slideOf)); }
+  /* ★ 이 창은 폴링이 돌 때마다 다시 그려진다(남이 카드를 공개하면 목록이 는다).
+       그런데 다시 그리면 스와이프가 첫 장으로 돌아가서, 세 장 중 마지막 장을
+       읽고 있으면 1.5초마다 첫 장으로 끌려갔다. 보고 있던 «카드 id» 를 기억해
+       두었다가 그 자리로 되돌린다 — 번호가 아니라 카드로 기억해야 목록이 늘어도
+       읽던 장이 그대로 남는다. */
+  const seat=bel?"belong":(tool?"tool":"clue");
+  let start=cards.findIndex(c=>c.id===handAt[seat]);
+  if(start<0) start=0;
   // 카드탭에서만 「대화에 올리기」·「바꾸기」가 선다. 도구는 내려놓는 물건이 아니다.
   const pubN=(STATE.revealed||[]).length, canAct=!bel&&!tool&&myRoleValid()&&clueCards().length;
   h+=`</div>${canAct?`<div class="mfoot">
@@ -9835,7 +9924,8 @@ function showMyHand(tab){
     ${pubN?`<button class="btn" onclick="showSwap()">${ICO.swap} 테이블 위 카드와 바꾸기</button>`:""}</div>`:""}`;
   $("handBox").innerHTML=h;
   $("handBox").style.setProperty("--mt","var(--me,var(--gold))");
-  openModal("handModal"); wireSwipe($("handBox"));
+  openModal("handModal");
+  wireSwipe($("handBox"), {start, onIdx:k=>{ handAt[seat]=(cards[k]||{}).id||null; }});
 }
 
 /* 초대 링크 — 코드가 박힌 주소를 통째로 준다. 코드만 불러 주는 것보다 빠르고,

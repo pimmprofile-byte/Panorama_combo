@@ -2654,7 +2654,7 @@ def public_scenario() -> dict:
                  "opensFrom": z.get("opensFrom", "")} for z in MAP],
         "board": BOARD,
         "victimCard": VICTIM_CARD, "sceneNote": SCENE_NOTE,
-        "mapLabel": "이 마을",
+        "mapLabel": "마을 지도",
         # ★ art2/art2At 은 그 표를 «든 방만» 싣습니다. 안 갈리는 방에 빈 칸을 얹어
         #   보내면 화면이 「여기도 갈리는 방」으로 읽을 여지를 남깁니다.
         "rooms": [{"key": r["key"], "loc": r["loc"], "name": r["name"], "art": r["art"],

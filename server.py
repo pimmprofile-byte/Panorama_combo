@@ -122,7 +122,7 @@ def fresh_room(sid: str = "") -> dict:
         "vaultRead": [], "accuse1": {"seq": None, "picks": {}},
         # 아이템 수수께끼를 배역별로 몇 번 틀렸는가. 세 번 틀리면 그 사람에게만 힌트가 열린다.
         "puzzleTries": {},        # roleId -> {cardId: 틀린 횟수}
-        # 1차 지목에서 압수된 소지품의 임자들. 한 번 압수되면 판이 끝날 때까지 펴져 있다.
+        # 1차 지목에서 압수된 소지품의 주인들. 한 번 압수되면 판이 끝날 때까지 펴져 있다.
         "seized": [],
         # 밤 — 각자 몰래 한 가지를 고르고, 그 조합이 그날 밤에 실제로 일어난 일을 정한다.
         "night": {"open": False, "picks": {}, "result": None},
@@ -2234,7 +2234,7 @@ def _try_investigate(role_id: str, card_id: str, enforce_ap: bool = True, enforc
     # 그래서 이 여섯 장은 조사 예산 밖에 있습니다.
     if (c.get("puzzle") and card_id not in ROOM["revealed"] and not _puzzle_bypass
             and not _holder_of(card_id)):
-        # 이미 누가 풀어 간 카드라면 아래 «임자» 안내가 더 맞는 말이다 — 그쪽에 양보한다.
+        # 이미 누가 풀어 간 카드라면 아래 «주인» 안내가 더 맞는 말이다 — 그쪽에 양보한다.
         return "여기는 뒤져서 여는 자리가 아닙니다 — 수수께끼를 풀어야 열립니다"
     if c.get("gone") and cur >= c["gone"] and card_id not in ROOM["hands"].get(role_id, []):
         return "그 자리는 이제 없습니다 — 어제와 같은 방이 아닙니다"
@@ -2726,13 +2726,13 @@ def ready_toggle(b: RoleReq):
         if not r or r["clientId"] != b.clientId or r["mode"] != "human":
             return JSONResponse({"error": "그 배역으로 누를 수 없습니다"}, status_code=403)
         rd = ROOM.setdefault("ready", [])
-        nm = (SC.get_character(b.roleId) or {}).get("name", b.roleId)
         if b.roleId in rd:
             rd.remove(b.roleId)
         else:
             rd.append(b.roleId)
-            ROOM["table"].append({"kind": "system", "broadcast": True,
-                                  "text": f"{nm}{_subj(nm)} 결과 확인을 눌렀습니다."})
+            # 한 사람이 누를 때마다 줄을 남기지 않는다 — 셋이 누르면 같은 말이 세 줄
+            # 쌓이는데, 그 셋은 아무것도 안 알려 주고 대화만 밀어 올린다.
+            # «전원이 준비됐다» 한 줄이면 충분하다(아래).
         st = _ready_state()
         if st and st["done"]:
             ROOM["table"].append({"kind": "system", "broadcast": True,
@@ -2772,13 +2772,11 @@ def immersed_toggle(b: RoleReq):
         if not r or r["clientId"] != b.clientId or r["mode"] != "human":
             return JSONResponse({"error": "그 배역으로 누를 수 없습니다"}, status_code=403)
         im = ROOM.setdefault("immersed", [])
-        nm = (SC.get_character(b.roleId) or {}).get("name", b.roleId)
         if b.roleId in im:
             im.remove(b.roleId)
         else:
             im.append(b.roleId)
-            ROOM["table"].append({"kind": "system", "broadcast": True,
-                                  "text": f"{nm}{_subj(nm)} 배역을 다 읽었습니다."})
+            # 여기도 마찬가지 — 사람마다 한 줄씩이 아니라, 셋이 다 끝났을 때 한 줄.
             st = _immersed_state()
             if st and st["done"]:
                 ROOM["table"].append({"kind": "system", "broadcast": True,
