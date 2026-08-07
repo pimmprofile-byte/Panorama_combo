@@ -77,6 +77,12 @@
     --ink:#ecebe8;--sub:#a5a29d;--muted:#8a8781;
     --ember:#c8442f;--ember-b:#e7654c;--gold:#00e693;--gold-b:#5bffc2;--cold:#c3bab0;
     --signal:#00ff99;
+    /* ★ 「여기를 누르라」는 점멸에 쓰는 초록. --signal 원색을 그대로 칠했더니
+         화면에서 혼자 튀어나와 글을 못 읽게 만들었다 — 베이지 케이스 위에서 특히
+         심했다. 점멸은 «눈에 띄면» 되는 것이지 «제일 밝으면» 되는 것이 아니다.
+         하단바 맥박(dkDim)이 원래 쓰던 옅은 민트로 전부 맞춘다: 안내 점멸은 이
+         게임 어디서나 같은 색이어야 하고, 그 색은 원색이 아니라 틴트다. */
+    --sig-t:#7fe9bd;
     --good:#3fdfc4;--bad:#ff8f8f;--warn:#ffd479;
     /* 게임기 케이스 — 눌리는 판(b)·손이 닿은 판(h)·파인 테(e)·못 누르는 판(off) */
     /* 90년대 매킨토시의 베이지 플라스틱. 로비(landing.html)와 같은 값이다 —
@@ -788,12 +794,12 @@
   /* 베이지 판 위의 맥박. 예전 값(어두운 바탕용 밝은 초록 글자)은 케이스 위에서 사라졌다 —
      판을 초록으로 채우고 글자는 잉크로 두어 «칸이 밝아졌다 어두워진다»로 읽히게 한다. */
   @keyframes dkDim{
-    0%,49%  {background:#7fe9bd;color:var(--case-fg)}
+    0%,49%  {background:var(--sig-t);color:var(--case-fg)}
     50%,100%{background:var(--case-b);color:var(--case-fg)}
   }
   .dock .dk.unread .i{stroke:currentColor}
   @media(prefers-reduced-motion:reduce){
-    .dock .dk.unread{animation:none;background:#7fe9bd;color:var(--case-fg)} }
+    .dock .dk.unread{animation:none;background:var(--sig-t);color:var(--case-fg)} }
   .dock .dk .dot{position:absolute;top:5px;right:calc(50% - 18px);width:7px;height:7px;border-radius:0;
     background:var(--ember);display:none}
   .dock .dk .dot.on{display:block}
@@ -837,8 +843,12 @@
      안내 말풍선과 이 점멸은 한 함수(paintCoach)가 같이 세우고 같이 걷는다. */
   /* ★ 여기를 dkDim(안 읽은 말의 맥박)과 같은 것으로 두었더니 둘이 구분이 안 됐다.
      대화창이 «안 읽었다»로 계속 맥박치는 동안 조사화면도 같은 모양으로 깜빡이니,
-     화면이 두 곳을 똑같이 가리키는 꼴이었다. 안내는 이 게임의 신호색(#00ff99)으로
-     또렷하게, 맥박은 옅은 민트로 — 색이 다르면 뜻이 다르다. */
+     화면이 두 곳을 똑같이 가리키는 꼴이었다.
+     ★ 그래서 한때 안내만 신호색 원색(#00ff99)으로 올렸다. 그런데 그건 색으로 푼 게
+       아니라 밝기로 민 것이라, 조사화면 안내가 화면에서 혼자 떠올라 눈이 아팠다.
+       진짜 문제는 «둘이 동시에 뛰는 것»이었고 그건 따로 막았다 — 맥박은 네 번 뛰고
+       멎고(.dk.unread), 안내가 도는 동안에는 아예 재운다(.dock.coachon 아래).
+       한 번에 하나만 뛰면 색을 갈라 둘 이유가 없다. 둘 다 옅은 민트로 되돌린다. */
   /* ★ 여기서 초록을 «칸의 배경»에 칠했더니 화면에는 안 보였다. 아래 ::before 가
      베이지 판을 한 장 깔아 두는데, z-index:76 이 스택 문맥을 만들면서 그 판이
      배경 «위»로 올라와 초록을 덮은 것이다(음수 z 자식은 배경보다 위에 그려진다).
@@ -847,13 +857,13 @@
   .dock .dk.callout .t{font-weight:800}
   .dock .dk.callout::before{animation:dkCallPlate .9s steps(1) infinite}
   @keyframes dkCallPlate{
-    0%,49%  {background:var(--signal);border-color:var(--signal);
-             box-shadow:2px 2px 0 var(--case-e),0 0 14px -2px var(--signal)}
+    0%,49%  {background:var(--sig-t);border-color:var(--sig-t);
+             box-shadow:2px 2px 0 var(--case-e)}
     50%,100%{background:var(--case-h);border-color:var(--case-e);
              box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.5)}
   }
   @media(prefers-reduced-motion:reduce){
-    .dock .dk.callout::before{animation:none;background:var(--signal);border-color:var(--signal)}
+    .dock .dk.callout::before{animation:none;background:var(--sig-t);border-color:var(--sig-t)}
   }
   /* ★ 안내가 도는 동안 다른 칸은 맥박치지 않는다. 한 번에 한 곳만 가리켜야
      그게 가리키는 것이 된다. */
@@ -880,14 +890,18 @@
      하단바 안내와 같은 문법이다 — 어두워진 자리에서 초록으로 깜빡이는 것 하나. */
   .tourdim{position:absolute;inset:0;z-index:84;background:rgba(4,3,3,.74);cursor:pointer;
     animation:fade .22s ease both}
-  .tourhit{position:relative;z-index:86;border-radius:2px;
+  /* 짚은 것은 어둠막 위로 뜨되 «눌리지는» 않는다 — 설명을 읽는 중에 진짜로 눌리면
+     설명 위로 또 창이 뜬다. 어디를 눌러도 다음 칸으로만 간다.
+     .live 가 붙은 칸만 예외 — 「눌러 보라」고 말한 칸이다. */
+  .tourhit{position:relative;z-index:86;border-radius:2px;pointer-events:none;
     animation:tourPulse .9s steps(1) infinite}
+  .tourhit.live{pointer-events:auto}
   @keyframes tourPulse{
-    0%,49%  {box-shadow:0 0 0 3px var(--signal),0 0 26px -2px var(--signal);filter:brightness(1.14)}
-    50%,100%{box-shadow:0 0 0 3px rgba(0,255,153,.22);filter:none}
+    0%,49%  {box-shadow:0 0 0 3px var(--sig-t),0 0 18px -6px var(--sig-t)}
+    50%,100%{box-shadow:0 0 0 3px rgba(127,233,189,.20)}
   }
   @media(prefers-reduced-motion:reduce){
-    .tourhit{animation:none;box-shadow:0 0 0 3px var(--signal)}
+    .tourhit{animation:none;box-shadow:0 0 0 3px var(--sig-t)}
   }
   .tourtip{position:absolute;z-index:88;width:min(300px,82%);cursor:pointer;
     background:var(--case-h);color:var(--case-fg);border:1px solid var(--case-e);
@@ -1308,6 +1322,16 @@
      여기는 창이 아니라 화면 한복판이라 좌우 여백과 밑줄을 뺀다. */
   .vtabs{display:flex;gap:6px;margin:10px 0 2px}
   .vtabs .htab{flex:1 1 0}
+  /* 아직 오지 않은 판의 규칙을 미리 펴 보는 자리. 지금 눌리는 것들과 섞이면
+     «이걸 지금 하라»로 읽히므로, 테두리만 있는 얇은 줄로 둔다. */
+  .rulebtn{display:flex;align-items:center;justify-content:center;gap:7px;
+    width:100%;margin:11px 0 0;padding:9px 12px;border-radius:2px;
+    border:1px dashed color-mix(in srgb,var(--cold) 42%,var(--line));background:none;
+    font-family:inherit;font-size:12.5px;font-weight:700;letter-spacing:.01em;
+    color:var(--cold);cursor:pointer;word-break:keep-all}
+  .rulebtn .ic{width:1.05em;height:1.05em;flex:0 0 auto}
+  .rulebtn:hover{border-color:var(--cold);color:var(--ink)}
+  .rulebtn:active{transform:translateY(1px)}
   .htabs{display:flex;gap:6px;padding:0 14px 11px;border-bottom:1px solid var(--line)}
   .htab{flex:1 1 0;padding:8px 6px;border-radius:2px;border:1px solid var(--line);background:var(--bg);
     color:var(--sub);font-size:13px;font-family:inherit;cursor:pointer;transition:.14s}
@@ -3695,18 +3719,18 @@
      «딱딱» 갈아치운다. 이 게임에서 「여기를 누르라」는 늘 이 깜빡임이다. */
   .btn.blink{animation:btnBlink 1.15s steps(1) infinite}
   @keyframes btnBlink{
-    0%,49%  {background:#7fe9bd;color:var(--case-fg);border-color:var(--case-e)}
+    0%,49%  {background:var(--sig-t);color:var(--case-fg);border-color:var(--case-e)}
     50%,100%{background:var(--case-b);color:var(--case-fg);border-color:var(--case-e)}
   }
   @media(prefers-reduced-motion:reduce){
-    .btn.blink{animation:none;background:#7fe9bd;color:var(--case-fg)}
+    .btn.blink{animation:none;background:var(--sig-t);color:var(--case-fg)}
   }
   /* 잠긴 하단바 칸 — 감추지 않는다. 없어진 것과 아직 못 여는 것은 다르다. */
   .dock .dk.locked{opacity:.4}
   .dock .dk.locked .i{stroke:var(--case-fg2)}
   /* 지금 가야 할 칸 — 대화 알림과 같은 결로 점멸한다(같은 뜻이면 같은 모양이어야 한다) */
   .dock .dk.callnow{animation:dkDim 1.15s steps(1) infinite}
-  @media(prefers-reduced-motion:reduce){ .dock .dk.callnow{animation:none;background:#7fe9bd;color:var(--case-fg)} }
+  @media(prefers-reduced-motion:reduce){ .dock .dk.callnow{animation:none;background:var(--sig-t);color:var(--case-fg)} }
   /* 시트 맨 끝의 「몰입 완료!」 */
   .immbox{margin-top:18px;padding:15px 14px 14px;text-align:center;
     border:1px solid var(--case-e);background:linear-gradient(180deg,var(--scr3),var(--scr2));
@@ -3714,7 +3738,13 @@
   .immbox .imm-t{font-family:var(--pix);font-size:15px;font-weight:800;color:var(--ink)}
   .immbox .imm-d{margin-top:6px;font-size:12.5px;line-height:1.75;color:var(--sub);word-break:keep-all}
   .immbox .advpips{justify-content:center;margin:11px 0 3px;display:flex}
-  .immbox .imm-go{width:100%;justify-content:center;margin-top:8px}
+  /* ★ 한때 여기에 물건이 둘 있었다 — 위에 「다 읽었습니다 — 여기를 눌러 주세요」
+       말풍선, 아래에 「몰입 완료!」 단추. 둘이 같은 베이지 판에 같은 굵은 글씨라
+       어느 쪽이 눌리는 것인지 알 수가 없었다. 말은 위에 있고 기능은 아래에 있으니,
+       읽은 대로 위를 누르면 아무 일도 안 일어난다.
+       그래서 하나로 합친다: 말풍선이 서던 자리에 단추를 세우고 그 말을 단추가 한다.
+       상자 안에 눌리는 것은 이제 하나뿐이다. */
+  .immbox .imm-go{width:100%;justify-content:center;margin:0 0 11px}
   .immbox .imm-n{margin-top:7px;font-family:var(--ui);font-size:11.5px;color:var(--muted);
     font-variant-numeric:tabular-nums}
   .immbox .imm-n b{color:var(--ink)}
@@ -3724,39 +3754,22 @@
   .immbox.glow{border-color:var(--gold);
     box-shadow:0 0 0 1px var(--gold),0 0 22px -6px var(--gold)}
   /* 단추 자체가 점멸한다 — 하단바의 「내 정보」를 부를 때 쓴 그 패턴(dkDim)과
-     같은 결이다. steps(1) 이라 서서히가 아니라 «딱딱» 갈아치운다. 이 판에서
-     「여기를 누르라」는 늘 이 깜빡임이다. */
-  .sw-slide.on .immbox.ready .imm-go{animation:immBlink 1.15s steps(1) infinite}
-  @keyframes immBlink{
-    0%,49%  {background:#7fe9bd;color:var(--case-fg);border-color:var(--case-e)}
-    50%,100%{background:var(--case-b);color:var(--case-fg);border-color:var(--case-e)}
-  }
+     같은 결이다. steps(1) 이라 서서히가 아니라 «딱딱» 갈아치운다. 이 게임에서
+     「여기를 누르라」는 늘 이 깜빡임이다.
+     ★ @keyframes immBlink 은 위 btnBlink 과 한 글자도 다르지 않았다. 같은 것을
+       둘로 두면 한쪽만 고쳐지는 날이 온다 — .btn.blink 하나로 모은다. */
+  .sw-slide.on .immbox.ready .imm-go{animation:btnBlink 1.15s steps(1) infinite}
   /* 단추가 있는 탭으로 데려가는 길 */
   .immjump{display:block;width:100%;margin-top:14px;padding:11px 12px;
     border:1px solid var(--case-e);border-radius:2px;
     font-family:inherit;font-size:12.5px;font-weight:800;letter-spacing:.01em;
     color:var(--case-fg);cursor:pointer;word-break:keep-all;
     box-shadow:2px 2px 0 var(--case-e);
-    animation:immBlink 1.15s steps(1) infinite}
+    animation:btnBlink 1.15s steps(1) infinite}
   .immjump:active{transform:translate(2px,2px);box-shadow:none}
   @media(prefers-reduced-motion:reduce){
-    .immbox.glow .imm-go,.immjump{animation:none;background:#7fe9bd;color:var(--case-fg)}
+    .immbox.glow .imm-go,.immjump{animation:none;background:var(--sig-t);color:var(--case-fg)}
   }
-  /* max-width 를 안 걸었더니 상자보다 길어진 말풍선이 가운데 맞춤에 밀려 왼쪽으로
-     삐져나갔다 — 첫 글자가 화면 밖에서 잘렸다. */
-  .immbox .imm-cue{margin:0 0 9px;display:inline-block;max-width:100%;
-    background:var(--case-h);color:var(--case-fg);border:1px solid var(--case-e);
-    box-shadow:2px 2px 0 var(--case-e);border-radius:2px;word-break:keep-all;
-    font-size:12px;font-weight:800;padding:6px 12px;animation:bobY 1.9s ease-in-out infinite}
-  /* ★ @keyframes bob 을 그대로 갖다 썼더니 말풍선이 왼쪽으로 반쯤 밀려 첫 글자가
-     잘렸다 — 그 애니메이션은 «가운데 맞춤을 스스로 하는» 자리(.coach-tip)의 것이라
-     transform 에 translateX(-50%) 가 들어 있다. 여기는 부모가 가운데를 맞춰 주므로
-     위아래로만 흔드는 것이 따로 필요하다. */
-  @keyframes bobY{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-  @media(prefers-reduced-motion:reduce){ .immbox .imm-cue{animation:none} }
-  /* 그 장에 도착하기 전에는 말풍선도 안 뜬다 — 안 보이는 단추를 가리키는 말이다 */
-  .immbox.ready .imm-cue{display:none}
-  .sw-slide.on .immbox.ready .imm-cue{display:inline-block}
   /* ── 「몰입 완료」가 붙는 장 ──────────────────────────────────────
      ★ 한때 이 장에서만 글을 한 단 줄여(.withimm 아래 열두 줄) 단추를 화면 안으로
        끌어왔다. 그런데 글자 크기와 여백을 한꺼번에 갈아치우는 겹이라, 이 장에
@@ -4925,6 +4938,18 @@ function gmBarAck(){
   const el=$("gmBar"); if(!el) return;
   el.classList.remove("on");
   setTimeout(()=>{ if(!el.classList.contains("on")) el.hidden=true; },380);
+}
+/* 같은 띠에 한 줄을 직접 내려보낸다 — GM 지문이 아니라 «화면이 하는 말»이다.
+   튜토리얼 끝맺음처럼 대화창에 남길 이유가 없는 안내가 여기로 온다.
+   ★ gmBarAt 은 안 건드린다. 이건 대화 줄이 아니라서 번호가 없고, 여기서 손대면
+     다음 GM 지문이 지나간 것으로 오해된다. */
+function gmBarSay(kicker, text){
+  const el=$("gmBar"); if(!el) return;
+  el.innerHTML=`<div class="gb-k">${esc(kicker||"안내")}<span class="x">눌러서 닫기</span></div>
+    <div class="gb-t">${esc(String(text||""))}</div>`;
+  el.hidden=false;
+  void el.offsetWidth;
+  el.classList.add("on");
 }
 function paintGmBar(){
   const el=$("gmBar"); if(!el) return;
@@ -6542,6 +6567,7 @@ function renderPanel(ph){
     const pubc=(STATE.revealed||[]).filter(c=>!mineIds.has(c.id));
     const hcards=(myRoleValid()?myHand:[]).map(c=>({...c,_pub:false})).concat(pubc.map(c=>({...c,_pub:true})));
     p.innerHTML=`${handWarn()}<div class="clue-h"><h3>토론</h3><span class="pill" style="color:var(--me,var(--gold-b))">내 손패 ${myHand.length}</span>${pubc.length?`<span class="pill" style="color:var(--cold)">전체공개 ${pubc.length}</span>`:""}<span class="mspace"></span><button class="mrule" onclick="showTalkRule()" aria-label="토론 규칙">?</button></div>
+    <button class="rulebtn" onclick="showAccuseRule()">${ICO.lock} 1차 범인지목 규칙 확인하기</button>
     <div class="vtabs">
       <button class="htab${talkView==="zone"?" on":""}" onclick="setTalkView('zone')">구획별로 보기</button>
       <button class="htab${talkView==="list"?" on":""}" onclick="setTalkView('list')">리스트로 보기${hcards.length?` <b>${hcards.length}</b>`:""}</button>
@@ -6763,6 +6789,20 @@ function showTalkRule(){
   say({title:"토론하는 법", body:"아래 대화창에서 서로를 취조하세요.\n\n"
     +"내 손패는 알릴지 감출지 자유입니다. 전체공개 카드는 이미 모두가 보고 있어요.\n\n"
     +"카드를 누르면 내용이 열리고, 거기서 대화에 올릴 수 있습니다."});
+}
+/* 1차 지목의 규칙 — 그 판에 닿기 «전»에 읽어야 뜻이 있다. 첫 조사가 끝나고
+   토론이 시작될 때 이 자리에 단추 하나로 세워 둔다. 그 판에 가서야 규칙을 읽으면
+   이미 손패도 조사도 다 굳은 뒤다.
+   ★ 소지품을 쓰는 사건에서는 압수 규칙까지 같이 말한다 — 그게 이 표를 «지금부터»
+     겨냥해서 움직여야 하는 이유다. */
+function showAccuseRule(){
+  const bl=(STATE&&STATE.belongings)||null;
+  say({title:"1차 범인지목 — 규칙", body:
+    "토론이 끝나면 각자 몰래 한 사람의 이름을 적습니다. 비밀투표라, 무엇을 적었는지도 몇 표인지도 그 자리에서는 안 열립니다.\n\n"
+    +"전원이 적기 전에는 아무것도 안 보입니다 — 남의 표를 세어 가며 얹을 수 없다는 뜻입니다.\n\n"
+    +"★ 이 표는 지워지지 않습니다. 한 번 적으면 되돌릴 수 없고, 종막에서 열립니다."
+    +(bl?"\n\n★ 그리고 표를 가장 많이 받은 사람은 그 자리에서 「소지품을 압수당합니다」."
+         +" 표가 갈리면 갈린 사람 전부입니다 — 종막까지 잠들어 있는 표가 아닙니다.":"")});
 }
 function showInvestRule(){
   const ap=(STATE&&STATE.phase&&STATE.phase.ap)||0;
@@ -8172,7 +8212,8 @@ function whoHandNote(id){
 }
 function showWho(keepTab){
   if(openBlocked("who")) return;
-  coachDone("who");
+  /* ★ 소지품과 같은 이유로 여기서 coachDone("who") 를 안 부른다 —
+     칸을 끝낸 것으로 찍는 것은 창 안의 짚어 주기가 끝난 뒤다(whoTour 의 꼬리). */
   const lim=handLimit();
   const rows=(SCEN.characters||[]).map(c=>{
     const ids=((STATE.checked||{})[c.id])||[];
@@ -8240,6 +8281,10 @@ function showWho(keepTab){
   if(whoTab==="memo") wireMemo();
   openModal("whoModal");
   setTimeout(()=>{ try{ whoTour(); }catch(e){} },220);
+  /* 짚을 칸이 하나도 안 그려졌으면(배역 없이 들여다보는 자리) 그냥 끝낸 것으로
+     찍는다 — 안 찍으면 하단바가 영영 여기를 가리킨다. whoTour 가 시작됐으면
+     tour 가 서 있으므로 건드리지 않는다. */
+  setTimeout(()=>{ if(!tour) try{ coachDone("who"); }catch(e){} },320);
 }
 /* ── 메모 ──────────────────────────────────────────────────────────
    인물정보의 셋째 칸. 남이 무엇을 쥐고 있는지 보다가 바로 적는 자리라 여기 둔다 —
@@ -9413,8 +9458,10 @@ function renderChat(boxId){
   const tym=dripTypingMsg();
   if(tym) box.appendChild(typingRow(tym));
   if(dripPaused){
+    /* 이 단추가 떠 있는 동안 대화는 멈춰 서 있다 — 여기서 눌릴 것은 이것 하나뿐이다.
+       그러면 점멸시킨다. 이 게임에서 «누르라»는 늘 같은 깜빡임이다(.btn.blink). */
     const d=document.createElement("div"); d.className="dripgo";
-    d.innerHTML=`<button class="btn gold sm" onclick="dripGoBtn()">계속 ›</button>`;
+    d.innerHTML=`<button class="btn gold sm blink" onclick="dripGoBtn()">계속 ›</button>`;
     box.appendChild(d);
   }
   /* ★ 「계속」이 떠 있다고 바닥으로 끌어내리지 않는다. 그 단추는 «위엣것을 다 읽고»
@@ -10223,13 +10270,15 @@ function immBlockHTML(){
      ★ 그래서 «준비됐다(ready)»까지만 여기서 정하고, «지금 이 장에 서 있는가»는
        CSS 가 정한다(.sw-slide.on .immbox.ready). 그 장에 도착해야 빛난다. */
   const glow = !mine && allTabsRead();
+  /* ★ 말과 기능이 따로 서 있던 자리다 — 위에 「다 읽었습니다」 말풍선, 아래에
+       「몰입 완료!」 단추. 둘이 같은 판·같은 굵기라 어느 쪽이 눌리는지 알 수 없었고,
+       읽은 대로 위를 누르면 아무 일도 안 났다. 말을 단추가 하게 하고 하나만 남긴다. */
   return `<div class="immbox${glow?" ready":""}">
-    ${glow?`<div class="imm-cue">다 읽었습니다 — 여기를 눌러 주세요</div>`:""}
-    <div class="imm-t">여기까지가 당신입니다</div>
-    <div class="imm-d">끝까지 읽었으면 눌러 주세요. 셋이 다 누르면 대화창이 열립니다.</div>
-    <div class="advpips">${pips}</div>
     <button class="btn ${mine?"quiet":"gold"} imm-go" onclick="toggleImmersed()">
-      ${mine?"기다리는 중 — 취소":"몰입 완료!"}</button>
+      ${mine?"기다리는 중 — 취소":"다 읽었습니다 — 몰입 완료!"}</button>
+    <div class="imm-t">여기까지가 당신입니다</div>
+    <div class="imm-d">셋이 다 누르면 대화창이 열립니다.</div>
+    <div class="advpips">${pips}</div>
     <div class="imm-n"><b>${s.n}</b>/${s.of} 명</div></div>`;
 }
 /* 다 읽었는데 단추가 있는 탭이 아닌 곳에 서 있는 사람에게. 단추를 옮겨 오지
@@ -10351,14 +10400,18 @@ function toolPick(id){ toolSel=id; showMyHand("tool"); }
 let tour=null;                       // {modal, steps, i, key}
 function tourSeen(key){ try{ return localStorage.getItem("pmb.tour."+key+"."+(myRoleId||""))==="1"; }catch(e){ return false; } }
 function tourMark(key){ try{ localStorage.setItem("pmb.tour."+key+"."+(myRoleId||""),"1"); }catch(e){} }
+function tourOff(){ if(tourPaint._off){ try{ tourPaint._off(); }catch(e){} tourPaint._off=null; } }
 function tourEnd(run){
   if(!tour) return;
   const t=tour, done=t.onDone; tour=null;
+  tourOff();
   const m=$(t.modal);
   if(m){ m.querySelectorAll(".tourdim,.tourtip").forEach(x=>x.remove());
-         m.querySelectorAll(".tourhit").forEach(x=>x.classList.remove("tourhit")); }
+         m.querySelectorAll(".tourhit").forEach(x=>x.classList.remove("tourhit","live")); }
   tourMark(t.key);
   if(run!==false&&done) try{ done(); }catch(e){}
+  /* 이제 하단바가 말할 차례다 — 도는 동안 재워 뒀으니 여기서 깨운다 */
+  try{ paintCoach(); }catch(e){}
 }
 function tourGo(d){
   if(!tour) return;
@@ -10369,7 +10422,8 @@ function tourGo(d){
 function tourPaint(){
   const t=tour; if(!t) return;
   const m=$(t.modal); if(!m||!m.classList.contains("on")){ tourEnd(false); return; }
-  m.querySelectorAll(".tourhit").forEach(x=>x.classList.remove("tourhit"));
+  tourOff();
+  m.querySelectorAll(".tourhit").forEach(x=>x.classList.remove("tourhit","live"));
   let dim=m.querySelector(".tourdim");
   if(!dim){ dim=document.createElement("div"); dim.className="tourdim";
             dim.onclick=e=>{ e.stopPropagation(); tourGo(); }; m.appendChild(dim); }
@@ -10380,7 +10434,25 @@ function tourPaint(){
   const el=(typeof st.el==="function")?st.el():st.el;
   if(!el||!el.isConnected){ tourGo(); return; }
   el.classList.add("tourhit");
-  try{ el.scrollIntoView({block:"center",behavior:"auto"}); }catch(e){}
+  /* ★ 짚은 것은 «보이기만» 한다 — 설명을 읽는 중에 그 단추가 진짜로 눌리면
+       설명 위로 또 다른 창이 뜬다. 어디를 눌러도 다음 칸으로만 간다.
+     ★ 다만 «눌러 보라»고 하는 칸(tap)은 예외다. 그 칸은 실제로 눌리고,
+       눌리는 순간 짚어 주기를 먼저 끝낸다 — 창이 다시 그려지기 전에 걷어야
+       어둠막이 새 화면에 남지 않는다. */
+  if(st.tap){
+    el.classList.add("live");
+    const onTap=()=>{ tourEnd(); };
+    el.addEventListener("click", onTap, true);
+    tourPaint._off=()=>{ el.removeEventListener("click", onTap, true); };
+  }
+  /* ★ scrollIntoView 를 그냥 부르면 창이 아니라 «문서»까지 굴린다. 창은 fixed 라
+       제자리인데 뒤의 문서가 오르내려서, 발치의 단추 셋이 위아래로 흔들려 보였다.
+       이미 보이는 것은 굴리지 않는다. 안 보일 때만, 그것도 제일 가까운 자리로. */
+  try{
+    const vr=el.getBoundingClientRect(), br=m.getBoundingClientRect();
+    if(vr.top<br.top+8||vr.bottom>br.bottom-8)
+      el.scrollIntoView({block:"nearest",inline:"nearest",behavior:"auto"});
+  }catch(e){}
   tip.innerHTML=`<div class="tt-b">${st.tip}</div>
     <div class="tt-f"><span class="tt-n">${t.i+1}/${t.steps.length}</span>
       <span class="tt-x">${t.i+1<t.steps.length?"눌러서 다음 ›":"눌러서 닫기"}</span></div>`;
@@ -10404,45 +10476,67 @@ function tourStart(key, modal, steps, onDone){
   tour={key, modal, steps, i:0, onDone};
   tourPaint();
 }
-/* 소지품 — 카드 한 장과 발치의 단추 셋. 실제로 «그려져 있는» 것만 짚는다. */
+/* ★ 요소를 그대로 붙들면 창이 다시 그려지는 순간 죽은 것을 가리킨다.
+   «찾는 방법»으로 들고 있으면 다시 그려도 그 자리를 다시 찾는다. */
+function tourFind(sel){ return ()=>document.querySelector(sel); }
+function tourFindTxt(sel,k){
+  return ()=>[...document.querySelectorAll(sel)].find(b=>b.textContent.indexOf(k)>=0)||null;
+}
+/* 소지품 — 카드 한 장, 발치의 단추 셋, 그리고 도구 칸.
+   실제로 «그려져 있는» 것만 짚는다. 마지막 칸(도구)은 눌러 보게 두고,
+   눌리면 그것으로 소지품 이야기가 끝나고 하단바가 인물정보를 부른다. */
 function handTour(){
   const box=$("handBox"); if(!box) return;
-  const TXT=[["대화에 올리기","이 카드를 <b>모두에게</b> 펼칩니다. 한 번 올리면 되돌릴 수 없어요."],
-             ["테이블 위 카드와 바꾸기","이미 펼쳐진 카드 하나를 가져오고, 내 카드 하나를 대신 내놓습니다."],
-             ["카드 내려놓기","손패가 상한을 넘쳤을 때 켜집니다. 고른 카드가 <b>전체공개</b>로 나갑니다."]];
-  /* ★ 요소를 그대로 붙들면 창이 다시 그려지는 순간 죽은 것을 가리킨다.
-     «찾는 방법»으로 들고 있으면 다시 그려도 그 자리를 다시 찾는다. */
-  const find=sel=>()=>document.querySelector(sel);
-  const findBtn=k=>()=>[...document.querySelectorAll("#handBox .mfoot .btn")]
-                        .find(b=>b.textContent.indexOf(k)>=0)||null;
+  /* ★ 「대화에 올리기」는 카드를 펼치는 것이 아니다 — 어느 카드 얘기인지 짚어
+       주는 것뿐이고, 내용은 그대로 나만 본다(showShare 의 안내와 같은 말이어야
+       한다). 「모두에게 펼칩니다」라고 적어 두었던 것은 사실과 반대였다. */
+  const TXT=[
+    ["대화에 올리기",
+     "<b>내용은 안 펼쳐집니다.</b> 「이런 걸 하나 쥐고 있다」고 카드를 짚어 보이는 것뿐이에요 — 무엇인지는 여전히 나만 압니다."],
+    ["테이블 위 카드와 바꾸기",
+     "이미 <b>전체공개</b>된 카드 하나를 가져오고, 내 카드 하나를 대신 내놓습니다."],
+    ["카드 내려놓기",
+     "손패가 <b>상한을 넘쳤을 때만</b> 켜집니다. 고른 카드는 전체공개로 나갑니다."],
+  ];
   const steps=[];
-  if(box.querySelector(".sw-slide.on .bigcard.clue")||box.querySelector(".bigcard.clue"))
-    steps.push({el:find("#handBox .sw-slide.on .bigcard.clue, #handBox .bigcard.clue"),
+  if(box.querySelector(".bigcard.clue"))
+    steps.push({el:tourFind("#handBox .sw-slide.on .bigcard.clue, #handBox .bigcard.clue"),
       tip:"조사해서 찾아낸 카드가 여기 쌓입니다. <b>나만 봅니다</b> — 내가 말하지 않으면 저절로 새어 나가지 않아요."});
   TXT.forEach(([k,t])=>{
     if([...box.querySelectorAll(".mfoot .btn")].some(b=>b.textContent.indexOf(k)>=0))
-      steps.push({el:findBtn(k), tip:t});
+      steps.push({el:tourFindTxt("#handBox .mfoot .btn",k), tip:t});
   });
-  tourStart("hand","handModal",steps,()=>{
-    // 소지품을 다 들었으면 그다음은 인물정보다 — 그 칸으로 데려간다
-    setTimeout(()=>{ try{ coachDone("hand"); showWho(); }catch(e){} },260);
-  });
+  // 도구 칸 — 있는 게임에서만. 마지막 칸이라 «눌러 보라»로 둔다.
+  if([...box.querySelectorAll(".htabs .htab")].some(b=>b.textContent.indexOf("도구")>=0))
+    steps.push({el:tourFindTxt("#handBox .htabs .htab","도구"), tap:true,
+      tip:"수수께끼를 풀어 얻은 <b>도구</b>는 이 칸에 따로 쌓입니다 — 손패 상한 밖이라 몇 개든 들 수 있어요. <b>눌러서 열어 보세요.</b>"});
+  /* 다 들었으면 소지품 칸을 «끝낸 것»으로 찍는다. 인물정보는 열어 주지 않는다 —
+     하단바가 그 칸을 부르고, 사람이 눌러서 들어가는 것이 이 게임의 차례다. */
+  tourStart("hand","handModal",steps,()=>{ try{ coachDone("hand"); }catch(e){} });
 }
-/* 인물정보 — 남의 자리에서 «무엇이 보이고 무엇이 안 보이는가»가 전부다. */
+/* 인물정보 — 칸이 셋이다. 무엇이 어느 칸에 있는지만 짚는다. */
 function whoTour(){
   const box=$("whoBox"); if(!box) return;
-  const find=sel=>()=>document.querySelector(sel);
-  const has=sel=>!!box.querySelector(sel);
-  const steps=[];
-  const P=[
-    [".whorow", "이 게임의 인물들입니다. 각자 <b>무엇을 쥐고 있는지</b>가 여기 모입니다."],
-    [".wc.held", "남이 쥔 카드는 <b>어디서 나왔는지</b>만 보입니다. 무엇인지는 끝내 안 나와요 — 물어보거나 심문해야 합니다."],
-    [".wc.tool", "도구는 <b>개수만</b> 보입니다. 무엇인지도, 어디서 났는지도 알 수 없어요."],
-    [".wknown", "이 마을 사람들이 그 인물에 대해 <b>이미 아는 것</b>입니다."],
-    [".wc.pub", "<b>전체공개</b>된 카드입니다. 눌러 보면 내용까지 나옵니다."],
+  const T=[
+    ["이 자리의 사람들",
+     "누가 <b>어디를 뒤졌는지</b>가 여기 모입니다. 무엇을 찾았는지는 본인만 알아요 — 자물쇠는 자리만 아는 카드입니다."],
+    ["사건 현장과 피해자",
+     "현장과 피해자에 대해 <b>모두가 아는 것</b>입니다. 언제든 다시 볼 수 있어요."],
+    ["메모",
+     "떠오른 것을 적어 두는 칸입니다. <b>나만 봅니다.</b>"],
   ];
-  P.forEach(([sel,tip])=>{ if(has(sel)) steps.push({el:find("#whoBox "+sel), tip}); });
-  tourStart("who","whoModal",steps);
+  const steps=[];
+  T.forEach(([k,tip])=>{
+    if([...box.querySelectorAll(".shtabs .shtab")].some(b=>b.textContent.indexOf(k)>=0))
+      steps.push({el:tourFindTxt("#whoBox .shtabs .shtab",k), tip});
+  });
+  /* 여기까지가 이 게임을 굴리는 데 필요한 전부다. 마지막 한 줄을 띠로 내려보내고
+     짚어 주기를 아주 접는다 — 이 뒤로는 하단바가 잠기는 자리가 없다. */
+  tourStart("who","whoModal",steps,()=>{
+    try{ coachDone("who"); }catch(e){}
+    setTimeout(()=>{ try{ gmBarSay("안내",
+      "이제 각 조사 페이즈와 토론 페이즈를 진행하며, 사건의 진상에 다가갑니다."); }catch(e){} },320);
+  });
 }
 /* 탭마다 «지금 보고 있는 카드» 하나. 다시 그릴 때 그 자리로 되돌리는 데 쓴다. */
 let handAt={clue:null, tool:null, belong:null};
@@ -10454,7 +10548,10 @@ let handPollSig=null;
 function showMyHand(tab){
   if(!myRoleValid()){ banner("배역을 맡아야 단서가 있어요"); return; }
   if(openBlocked("hand")) return;
-  coachDone("hand");
+  /* ★ 여기서 coachDone("hand") 를 불렀다. 들어서자마자 이 칸을 «끝낸 것»으로
+       찍으니 다음 칸(인물정보)이 곧바로 익어, 창 안에서 설명을 읽는 내내 하단바
+       어둠막이 그 위를 덮고 아무 데나 누르면 인물정보로 끌려갔다.
+       끝났다고 찍는 것은 창 안의 짚어 주기가 끝난 뒤다 — 아래 꼬리를 보라. */
   const bsplit=belongLocs().length>0, tsplit=hasToolDeck();
   if(tab) handTab=tab;
   if(handTab==="belong"&&!bsplit) handTab="clue";
@@ -10540,8 +10637,11 @@ function showMyHand(tab){
   openModal("handModal");
   wireSwipe($("handBox"), {start, onIdx:k=>{ handAt[seat]=(cards[k]||{}).id||null; }});
   /* 카드 칸에 카드가 실제로 있을 때만 짚는다 — 빈 칸을 두고 설명할 것이 없다.
-     창이 다 서고 나서 재야 자리가 맞으므로 한 박자 뒤에 부른다. */
+     창이 다 서고 나서 재야 자리가 맞으므로 한 박자 뒤에 부른다.
+     ★ 짚어 줄 것이 없는 자리(빈 칸·도구 칸)에서는 그냥 이 칸을 끝낸 것으로 찍는다 —
+       안 찍으면 하단바가 영영 여기를 가리킨 채로 남는다. */
   if(!bel&&!tool&&cards.length) setTimeout(()=>{ try{ handTour(); }catch(e){} },220);
+  else if(!tour) coachDone("hand");
 }
 
 /* 초대 링크 — 코드가 박힌 주소를 통째로 준다. 코드만 불러 주는 것보다 빠르고,
@@ -10609,9 +10709,12 @@ const COACH_STEPS=[
   {k:"invest",dk:0, lock:true, tip:"여기에서 사건을 조사합니다", open:()=>dockHome(),
    when:()=> introsAllSaid() && ((STATE.phase||{}).key==="invest"),
    skip:()=> myCheckedIds().length>0},
-  {k:"hand",  dk:1, tip:"찾아낸 카드는 「소지품」에 쌓입니다", open:()=>showMyHand(),
+  /* ★ tour:true — 이 두 칸은 창 «안»에서 이야기가 이어진다(handTour/whoTour).
+     그래서 «끝났다»고 찍는 것도 그 안의 짚어 주기가 끝난 뒤고, 누른 직후에는
+     하단바를 한 박자 재워 둔다. */
+  {k:"hand",  dk:1, tour:true, tip:"찾아낸 카드는 「소지품」에 쌓입니다", open:()=>showMyHand(),
    when:()=> myCheckedIds().length>0},
-  {k:"who",   dk:4, tip:"다른 인물에 대한 내용은 여기서 봅니다",
+  {k:"who",   dk:4, tour:true, tip:"다른 인물에 대한 내용은 여기서 봅니다",
    open:()=>showWho(),
    when:()=> myCheckedIds().length>0},
 ];
@@ -10647,6 +10750,13 @@ function markCoach(step){
   v[step]=1; try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){}
 }
 function coachDone(step){ markCoach(step); paintCoach(); }
+/* 하단바를 잠깐 재워 둔다 — 창 안의 짚어 주기가 자리를 잡을 때까지의 틈이다.
+   ms 가 지나면 저절로 풀리므로, 짚어 주기가 안 뜨는 자리에서도 안 걸린다. */
+let coachHoldT=0;
+function coachHold(ms){
+  coachHoldT=Date.now()+(ms||700);
+  setTimeout(()=>{ try{ paintCoach(); }catch(e){} }, (ms||700)+40);
+}
 /* 튜토리얼을 통째로 끈 사람(QA 검수) */
 function coachOff(){ try{ return localStorage.getItem("pmb.notutor")==="1"; }catch(e){ return false; } }
 /* 지금 짚어 줄 칸. «아직 안 본 첫 칸» 하나다 — 조건이 안 찼으면 거기서 멈춘다.
@@ -10660,6 +10770,18 @@ function coachNext(){
        읽는 중인 물건이라 그 위를 덮으면 안 된다. 하단바 탭 창(대화·내정보·소지품·
        인물정보)은 «지금 서 있는 자리»라, 거기서 다음 자리를 가리키는 것이 안내다. */
   if(document.querySelector(".modal.on:not(.overdock)")) return null;
+  /* ★ 창 «안»에서 짚어 주는 중이면 하단바는 입을 다문다.
+       소지품에 들어서는 순간 그 칸이 «본 것»으로 찍히고, 그러면 다음 칸(인물정보)이
+       곧바로 익어 하단바 안내가 떴다 — 어둠막(z 74)이 소지품 창(z 60)을 통째로
+       덮으니, 소지품 설명을 읽으려고 아무 데나 누르면 그 어둠막이 눌려 인물정보로
+       끌려갔다. 「소지품 튜토리얼인데 바로 인물정보로 간다」가 그것이다.
+       칸을 끝냈다고 찍는 것은 창 안의 짚어 주기가 끝난 뒤다(tourEnd → onDone). */
+  if(tour) return null;
+  /* ★ 그런데 짚어 주기는 창이 다 선 «다음»에야 시작한다(한 박자 뒤). 그 틈이
+       비어 있으면 하단바가 먼저 다음 칸을 부른다 — 소지품에 막 들어선 순간
+       인물정보 어둠막이 한 번 번쩍이고 사라졌다. 창 안에서 짚어 줄 칸을 누른
+       직후에는 그 틈만큼 하단바를 붙잡아 둔다. */
+  if(coachHoldT && Date.now()<coachHoldT) return null;
   const v=coachSeen();
   for(const st of COACH_STEPS){
     if(v[st.k]) continue;
@@ -10687,7 +10809,7 @@ function paintCoach(){
   if(dock) dock.classList.add("coachon");
   const d=document.createElement("div"); d.className="coach"; d.id="coach";
   d.dataset.k=st.k;
-  d.onclick=()=>{ coachDone(st.k); st.open(); };
+  d.onclick=()=>{ if(st.tour) coachHold(700); coachDone(st.k); st.open(); };
   document.body.appendChild(d);
   const b=dock&&dock.children[st.dk];
   if(b){
@@ -10701,13 +10823,16 @@ function paintCoach(){
      ★ 다시 그릴 때마다 붙으므로 앞의 것을 반드시 떼어 낸다 — 안 그러면
        한 칸을 지날 때마다 리스너가 한 겹씩 쌓인다. */
     if(paintCoach._off){ paintCoach._off(); paintCoach._off=null; }
-    const onTap=()=>{ coachDone(st.k); };
+    /* ★ 창 «안»에서 이어지는 칸(tour)은 누른 뒤 잠깐 하단바를 재운다. 안 그러면
+       창이 서고 짚어 주기가 시작되기까지의 한 박자 사이에 하단바가 벌써 다음
+       칸을 불러, 방금 연 창 위로 어둠막이 한 번 번쩍인다. */
+    const onTap=()=>{ if(st.tour) coachHold(700); coachDone(st.k); };
     b.addEventListener("click", onTap, true);
     paintCoach._off=()=>{ b.removeEventListener("click", onTap, true); };
   }
   const tip=document.createElement("div"); tip.className="coach-tip"; tip.id="coachTip";
   tip.textContent=st.tip;
-  tip.onclick=()=>{ coachDone(st.k); st.open(); };
+  tip.onclick=()=>{ if(st.tour) coachHold(700); coachDone(st.k); st.open(); };
   document.body.appendChild(tip);
   const r=b?b.getBoundingClientRect():null;
   if(r){ tip.style.left=Math.min(innerWidth-90,Math.max(90,r.left+r.width/2))+"px";
@@ -10731,7 +10856,7 @@ function paintMapHint(){
   if(old) return;
   const el=document.createElement("div");
   el.className="maphint"; el.id="mapHint";
-  el.textContent="조사하고 싶은 곳을 눌러 주세요";
+  el.textContent="구역을 누르면 그 안을 조사할 수 있습니다";
   el.onclick=()=>coachDone("map");
   host.appendChild(el);
 }
