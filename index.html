@@ -696,9 +696,47 @@
   /* 상단 방 코드 — 눌러서 초대 링크를 복사한다 */
   .rmid.copyable{cursor:pointer;text-decoration:underline;text-underline-offset:2px;
     text-decoration-style:dotted}
-  /* ── 방 코드 (배역 선택 위) ────────────────────────────────────────
-     함께할 사람을 부르는 자리다. 코드는 크게, 설명은 작게 — 눈이 코드부터 잡는다.
-     자리가 다 차면 화면에서 사라진다(paintLobbyRoom). */
+  /* ── 방 코드 관문 ──────────────────────────────────────────────────
+     ★ 한 번 배역 선택창 «안»의 띠로 두었다가 물렀다. 띠로 두면 자리가 찰 때마다
+       띠가 생겼다 사라지면서 그 아래 격자가 통째로 밀려 올라갔다 내려온다 —
+       고르는 중에 판이 흔들린다.
+     지금은 앞으로 세운다. 사람이 다 모이기 전에 할 일은 «부르는 것» 하나뿐이라,
+     그 하나만 화면에 남기고 배역 선택창은 뒤에서 흑백으로 기다린다. 자리가 다
+     차면 관문이 스스로 걷히고, 그때 세 얼굴을 처음 본다 — 다 모인 판을 한 번에
+     보는 편이 한 자리씩 차는 걸 지켜보는 것보다 낫다.
+     코드는 걷힌 뒤에도 머리줄의 작은 알약(.rmpill)에 남는다 — 중간에 누가 나가면
+     다시 불러야 하니까. */
+  .roomgate{position:fixed;inset:0;z-index:70;display:grid;place-items:center;
+    padding:calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right))
+            calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+    background:rgba(9,10,12,.78);animation:gateIn .22s ease-out}
+  /* display 를 건 순간 [hidden] 이 안 먹는다 — 클래스 규칙이 브라우저 기본 판을
+     이긴다. 걷혔는데 어두운 막만 남아 화면 전체가 죽는 사고가 여기서 난다. */
+  .roomgate[hidden]{display:none}
+  @keyframes gateIn{from{opacity:0}to{opacity:1}}
+  .roomgate .roomcode{width:min(430px,100%);max-height:100%;overflow:auto;margin:0;
+    padding:20px 18px;box-shadow:5px 5px 0 rgba(0,0,0,.5)}
+  .roomgate .rg-h{font-size:15px;font-weight:800;color:var(--case-fg);margin:0 0 3px}
+  .roomgate .rg-k{font-family:var(--mono);font-size:.6rem;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--case-fg2);margin:0 0 14px}
+  .roomgate .rc-code{font-size:clamp(30px,11vw,42px)}
+  .roomgate .rc-line{margin:0 0 12px}
+  .roomgate .rg-left{margin-top:12px;padding-top:11px;border-top:1px dashed var(--case-e);
+    font-size:12.5px;color:var(--case-fg2)}
+  .roomgate .rg-left b{color:var(--case-fg)}
+  .roomgate .rg-peek{display:block;width:100%;margin-top:11px;background:none;border:0;
+    color:var(--case-fg2);font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;
+    text-decoration:underline;text-underline-offset:3px;padding:6px 0;cursor:pointer}
+  /* 뒤에서 기다리는 배역 선택창. 색을 빼고 손도 못 대게 한다 — 「아직 볼 때가
+     아니다」를 말로 하지 않고 화면으로 말한다. */
+  #s-lobby .wrap.gated{filter:grayscale(1) brightness(.86);pointer-events:none;user-select:none}
+  /* 머리줄에 남는 코드 알약. 색은 옆의 「홈으로」 알약과 같은 판을 쓴다 —
+     여기는 어두운 화면 안이라 케이스 색(var(--case-fg))을 쓰면 검은 글씨가
+     검은 판에 얹혀 안 보인다. */
+  .rmpill{cursor:pointer;font-family:var(--mono);letter-spacing:.14em;font-weight:800;
+    color:var(--ink)}
+  /* ── 방 코드 판 ────────────────────────────────────────────────────
+     함께할 사람을 부르는 자리다. 코드는 크게, 설명은 작게 — 눈이 코드부터 잡는다. */
   .roomcode{border:1px solid var(--case-e);background:var(--case-h);color:var(--case-fg);
     padding:11px 13px;margin:0 0 14px;box-shadow:2px 2px 0 var(--case-e)}
   .roomcode .rc-line{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
@@ -3392,12 +3430,9 @@
    <!-- 로비도 창 한 겹을 쓴다 — 베이지 케이스 안에 어두운 화면이 들어앉는다.
         제목줄은 안 단다(모달에만 단다). -->
    <div class="win"><div class="winbody"><div class="winpad">
-    <div class="head"><span class="t serif">배역 선택</span><span class="pill" id="lobbyScen" style="cursor:pointer" title="사건 허브로 돌아가기" onclick="location.href='/'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.4h18M3 14.6h18M8 5v14M16 5v14"/></svg> <span id="lobbyScenName"></span> · 홈으로</span><span class="sp"></span><span class="startnowslot" id="lobbyStartNow"></span></div>
+    <div class="head"><span class="t serif">배역 선택</span><span class="pill" id="lobbyScen" style="cursor:pointer" title="사건 허브로 돌아가기" onclick="location.href='/'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.4h18M3 14.6h18M8 5v14M16 5v14"/></svg> <span id="lobbyScenName"></span> · 홈으로</span><!-- 방 코드는 관문이 걷힌 뒤에도 여기 남는다 — 중간에 나간 사람을 다시 부를 때 쓴다 --><span class="pill rmpill" id="lobbyRoomPill" hidden onclick="copyRoomCode()" title="눌러서 방 코드 복사"></span><span class="sp"></span><span class="startnowslot" id="lobbyStartNow"></span></div>
     <!-- 두 문장이라 두 줄로 끊는다. 폭에 맡기면 「내 비밀 정보는 이 / 기기에만」처럼
          한 덩이 한가운데가 갈라진다 — 읽는 눈이 거기서 한 번 걸린다. -->
-    <!-- 방 코드. 자리가 다 차면 스스로 사라진다 — 부를 사람이 없는데 코드가
-         남아 있으면 화면만 무거워진다. -->
-    <div class="roomcode" id="lobbyRoom" hidden></div>
     <div class="lead">각자 자기 기기에서 배역을 고르세요.<br>내 비밀 정보는 이 기기에만 보입니다.</div>
     <div id="lobbyList"></div>
     <!-- 진행석(GM) 문. 이 사건에서는 안 쓰기로 해서 gmSeatOffered() 가 통째로 감춘다.
@@ -3417,6 +3452,9 @@
      <button class="sb-x" onclick="resetRoom()" title="배역·조사 기록을 전부 지우고 처음부터 다시 엽니다">방 새로 열기</button></div>
    </div>
   </div>
+  <!-- 방 코드 관문. 자리가 다 차기 전에는 배역 선택창 «앞»에 선다 — .wrap 의
+       바깥에 두어야 회색 처리(filter)에 같이 먹히지 않는다. -->
+  <div class="roomgate" id="lobbyGate" hidden><div class="roomcode" id="lobbyRoom"></div></div>
 </div>
 
 <!-- 게임뷰 = 창 한 겹. 머리띠·하단 독은 베이지 케이스고, 글과 카드가 사는 .winbody 안쪽만
@@ -5244,21 +5282,42 @@ function allSeated(){
    이 자리는 #lobbyList 밖(머리줄)이라 목록의 갱신 경로에 얹혀 가지 않는다. */
 /* ── 방 코드 ────────────────────────────────────────────────────
    함께할 사람을 부르는 자리에 코드가 있어야 한다 — 여기가 셋이 모이는 화면이다.
-   ★ 자리가 다 차면 감춘다. 그때부터 코드는 부를 사람이 없는 값이고, 남겨 두면
-     화면 위쪽을 계속 먹는다. 판이 시작된 뒤에도 마찬가지다. */
+   ★ 자리가 다 차면 관문을 걷는다. 그때부터 코드는 부를 사람이 없는 값이고,
+     화면 앞을 계속 막고 있을 이유가 없다. 판이 시작된 뒤에도 마찬가지다.
+   ★ 다만 코드 자체는 머리줄의 알약으로 남긴다 — 중간에 누가 나가면 다시
+     불러야 하고, 그때 코드를 찾으러 나가야 하면 안 된다. */
+let gatePeek=false;   /* 「먼저 둘러보기」를 눌렀는가. 이 화면을 떠나면 사라지는 값이다 —
+                         굳이 저장하지 않는다. 봇으로 채워 혼자 도는 판(QA·리허설)에서
+                         관문에 갇히지 않게 두는 뒷문일 뿐이다. */
+function peekLobby(){ gatePeek=true; paintLobbyRoom(); }
 function paintLobbyRoom(){
-  const b=$("lobbyRoom"); if(!b) return;
-  const done = allSeated() || !!(STATE&&STATE.started);
-  if(!roomCode || done){ b.hidden=true; b.innerHTML=""; return; }
+  const on = !!roomCode && roomCode!=="----";
+  const pill=$("lobbyRoomPill");
+  if(pill){
+    pill.hidden=!on;
+    const want = on ? `${esc(roomCode)} · 코드 복사` : "";
+    if(pill.innerHTML!==want) pill.innerHTML=want;
+  }
+  const g=$("lobbyGate"), b=$("lobbyRoom");
+  const w=document.querySelector("#s-lobby .wrap");
+  if(!g||!b) return;
+  const done = !on || gatePeek || allSeated() || !!(STATE&&STATE.started);
+  if(done){ g.hidden=true; b.innerHTML=""; if(w) w.classList.remove("gated"); return; }
   const left=(SCEN&&SCEN.characters||[]).filter(c=>((STATE.roles||{})[c.id]||{}).mode==="open").length;
-  b.hidden=false;
-  b.innerHTML=`<div class="rc-line"><b class="rc-code">${esc(roomCode)}</b>
-      <span class="rc-say">이 코드를 알려주세요. 참가자로 입장해 코드를 넣으면 같은 방에 들어옵니다.${
-        left?` <b>남은 자리 ${left}</b>`:""}</span></div>
+  const seats=(SCEN&&SCEN.characters||[]).length;
+  g.hidden=false; if(w) w.classList.add("gated");
+  b.innerHTML=`<div class="rg-h">함께할 사람을 부르세요</div>
+    <div class="rg-k">Waiting for players</div>
+    <div class="rc-line"><b class="rc-code">${esc(roomCode)}</b></div>
+    <div class="rc-say">이 코드를 알려주세요. <b>기존 코드로 입장</b>에서 코드를 넣으면
+      같은 방에 들어옵니다. 초대 링크를 보내면 코드를 칠 것도 없이 바로 들어옵니다.</div>
     <div class="rc-acts">
       <button class="rc-b" onclick="copyRoomCode()">코드 복사</button>
       <button class="rc-b" onclick="copyInvite()">초대 링크 복사</button>
-    </div>`;
+    </div>
+    <div class="rg-left">${seats-left} / ${seats} 명이 들어왔습니다 — <b>남은 자리 ${left}</b><br>
+      다 모이면 이 안내가 스스로 걷히고 배역 선택창이 열립니다.</div>
+    <button class="rg-peek" onclick="peekLobby()">먼저 둘러보기</button>`;
 }
 async function copyRoomCode(){
   try{ await navigator.clipboard.writeText(roomCode); banner("방 코드 "+roomCode+" 를 복사했습니다."); }
@@ -7313,7 +7372,9 @@ function whoMemoHTML(){
       <ul class="memo-g">${goals}</ul>
     </div>
     <div class="mlead sm">아래는 <b>이 기기에만</b> 남는 메모입니다 — 아무에게도 안 보입니다.</div>
-    <textarea id="memoPad" class="memopad" rows="10" placeholder="누가 무엇을 쥐고 있는지, 말이 어긋난 자리, 다음에 물어볼 것…"></textarea>
+    <!-- 자리표시 글은 짧게. 예시를 셋씩 늘어놓으면 「이렇게 적어야 하나」로 읽혀
+         메모가 숙제가 된다. 무엇을 적을지는 각자 정한다. -->
+    <textarea id="memoPad" class="memopad" rows="10" placeholder="자유롭게 메모하면서 사건의 진상을 파악하세요."></textarea>
     <div class="memo-s" id="memoSaved"></div>`;
 }
 function wireMemo(){

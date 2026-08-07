@@ -208,17 +208,29 @@
 
   .entrybox{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
   .cta-host{width:100%;text-align:left;display:flex;align-items:center;gap:14px;padding:14px 15px}
-  /* ── 세 문의 «무게» ──────────────────────────────────────────────
-     셋이 똑같은 얼굴로 서 있으면 처음 온 사람이 어디를 눌러야 하는지 모른다.
-     판을 여는 문에 인광 초록을 아주 얕게 깔아 앞으로 세우고, 「다시 들어가기」는
-     이미 판이 도는 사람만 쓰는 문이라 한 걸음 뒤로 물린다. */
-  .cta-host.hostmain{border-color:color-mix(in srgb,var(--phos) 55%,var(--ink));
-    background:color-mix(in srgb,var(--phos) 7%,var(--case))}
-  .cta-host.hostmain:hover{background:color-mix(in srgb,var(--phos) 13%,var(--case-hi))}
-  .cta-host.hostmain .eic{border-color:color-mix(in srgb,var(--phos) 55%,var(--ink));
-    background:color-mix(in srgb,var(--phos) 14%,transparent)}
-  .cta-host.hostmain .k{color:color-mix(in srgb,var(--phos) 62%,var(--case-sh))}
-  .cta-host.back-room{opacity:.62}
+  /* ── 두 문의 «무게» ──────────────────────────────────────────────
+     ★ 원래 문이 셋이었다(호스트 · 참가자 · 다시 들어가기). 참가자 문은 걷어냈다 —
+       사람을 실제로 부르는 길은 초대 링크라, 코드를 손으로 쳐서 들어오는 문이
+       따로 서 있을 이유가 없었다. 그 자리는 「기존 코드로 입장」이 그대로 받는다.
+       말 그대로 «기존 코드로 들어가는» 문이니 하는 일이 같다.
+     문이 둘이 되었으니 무게는 확실히 가른다. 판을 여는 문은 크게 · 인광 초록을
+     깔아 앞으로 세우고, 코드로 들어가는 문은 이미 코드를 손에 쥔 사람만 쓰는
+     문이라 한 걸음 뒤로 물린다. */
+  /* 글이 두 줄로 넘어가면 아이콘이 가운데 걸려 눈썹줄이 아이콘 «위»에 뜬 것처럼
+     읽힌다. 이 문만 위로 정렬한다. */
+  .cta-host.hostmain{border-color:color-mix(in srgb,var(--phos) 62%,var(--ink));
+    padding:18px 16px;gap:16px;align-items:flex-start;
+    background:color-mix(in srgb,var(--phos) 10%,var(--case));
+    box-shadow:inset 1px 1px 0 var(--case-hi),inset -1px -1px 0 var(--case-lo),
+               4px 4px 0 color-mix(in srgb,var(--phos) 40%,var(--ink))}
+  .cta-host.hostmain:hover{background:color-mix(in srgb,var(--phos) 16%,var(--case-hi))}
+  .cta-host.hostmain .eic{width:48px;height:48px;margin-top:2px;
+    border-color:color-mix(in srgb,var(--phos) 62%,var(--ink));
+    background:color-mix(in srgb,var(--phos) 18%,transparent)}
+  .cta-host.hostmain .eic .ic{width:27px;height:27px}
+  .cta-host.hostmain .k{color:color-mix(in srgb,var(--phos) 66%,var(--case-sh))}
+  .cta-host.hostmain .nm{font-size:20px;text-wrap:balance}
+  .cta-host.back-room{opacity:.55}
   .cta-host.back-room:hover{opacity:1}
   .cta-host .eic{flex:0 0 auto;width:40px;height:40px;display:grid;place-items:center;
     border:1px solid var(--ink);background:var(--screen);color:var(--phos)}
@@ -815,27 +827,19 @@
         <button class="cta-host hostmain" onclick="enterHost()">
           <div class="eic"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 17.2 5.1 8.5l3.7 3.4L12 6.2l3.2 5.7 3.7-3.4 1.5 8.7H3.6z"/><rect x="4.1" y="18.4" width="15.8" height="2.1" rx="1"/></svg></div>
           <div class="txt">
-            <div class="k">Room Authority · 호스트</div>
-            <div class="nm">호스트로 시작</div>
-            <div class="ds">사건을 고르고 진행을 통제합니다. 시나리오 진행 시 꼭 필요한 자리예요.</div>
-          </div>
-          <div class="arrow">→</div>
-        </button>
-        <button class="cta-host alt" onclick="enterParticipant()">
-          <div class="eic"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 19.5c0-3.4 2.9-5.8 6.5-5.8s6.5 2.4 6.5 5.8"/></svg></div>
-          <div class="txt">
-            <div class="k">Player · 참가자</div>
-            <div class="nm">참가자로 입장</div>
-            <div class="ds">사건 포스터를 골라 참가하고, 호스트가 열면 함께 시작해요.</div>
+            <div class="k">New Game · 방을 엽니다</div>
+            <div class="nm">새 게임 — 호스트로 시작하기</div>
+            <div class="ds">사건을 고르고 진행을 통제합니다. 시나리오 진행 시 꼭 필요한 자리예요.<br>
+              다른 플레이어를 초대할 수 있습니다.</div>
           </div>
           <div class="arrow">→</div>
         </button>
         <button class="cta-host alt back-room" onclick="enterBack()">
           <div class="eic"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.4 4.6v4.2h4.2"/></svg></div>
           <div class="txt">
-            <div class="k">Rejoin · 다시 들어가기</div>
+            <div class="k">Rejoin · 코드로 들어가기</div>
             <div class="nm">기존 코드로 입장</div>
-            <div class="ds">돌던 판에 다시 들어갑니다. 앉아 있던 자리가 그대로 있어요.</div>
+            <div class="ds">코드를 받았다면 여기로. 앉아 있던 자리가 있으면 그대로 돌아갑니다.</div>
           </div>
           <div class="arrow">→</div>
         </button>
@@ -1057,25 +1061,24 @@ async function enterHost(){
   me.mode="host"; hostPresent=true; go("scenarios"); render();
   note(`방 코드 ${r.code} — 함께할 사람에게 알려주세요.`);
 }
-function enterParticipant(){ clearQA(); askRoomCode("participant"); }
 /* ── 코드를 물어보는 자리 ────────────────────────────────────────
-   참가자와 «다시 들어가기» 가 같은 문을 쓴다 — 하는 일이 같다.
+   ★ 처음 들어오는 사람과 다시 들어오는 사람이 같은 문을 쓴다 — 손에 코드가
+     있다는 점에서 하는 일이 같고, 서버도 둘을 구분하지 않는다(앉았던 자리가
+     남아 있으면 돌려주고, 없으면 새로 앉힌다). 그래서 문도 하나만 둔다.
    ★ 한 번 prompt() 로 물었다가 물렀다. 브라우저가 그리는 그 회색 상자는 이 판의
      화면과 아무 관계가 없고, 폰에서는 주소창 밑에 붙어 나와 「이게 이 게임 거 맞나」
      싶게 만든다. 관리자 비밀번호 칸과 같은 창을 쓴다 — 이 화면에서 «무언가를 넣는
      자리»는 하나뿐인 편이 낫다. */
-function askRoomCode(mode){
+function askRoomCode(){
   const last=(()=>{ try{ return localStorage.getItem("pmb.room")||""; }catch(e){ return ""; } })();
-  const back=(mode==="back");
   $("adcard").className="adcard crt-flick";
-  $("adcard").innerHTML=`<h3>${back?"다시 들어가기":"참가자 · 방 코드"}</h3>
-    <div class="adsub">${back?"REJOIN A ROOM":"ENTER ROOM CODE"}</div>
-    <div class="adsub" style="margin-top:14px">${back
-      ? "쓰던 방 코드를 넣어주세요. 앉아 있던 자리가 그대로 있습니다."
-      : "호스트에게 받은 네 글자를 넣어주세요."}</div>
+  $("adcard").innerHTML=`<h3>기존 코드로 입장</h3>
+    <div class="adsub">ENTER ROOM CODE</div>
+    <div class="adsub" style="margin-top:14px">호스트에게 받은 네 글자를 넣어주세요.<br>
+      앉아 있던 자리가 있으면 그대로 돌아갑니다.</div>
     <div class="adform"><input id="rcin" type="text" placeholder="방 코드" autocomplete="off"
       inputmode="latin" autocapitalize="characters" spellcheck="false" maxlength="8">
-      <button onclick="submitRoomCode('${back?"back":"participant"}')">입장</button></div>
+      <button onclick="submitRoomCode()">입장</button></div>
     <div class="aderr" id="rcerr"></div>
     <button class="adclose" onclick="closeAdmin()">닫기</button>`;
   $("admask").classList.add("on");
@@ -1086,11 +1089,11 @@ function askRoomCode(mode){
     e.oninput=()=>{ const p0=e.selectionStart;
       e.value=e.value.toUpperCase().replace(/[^A-Z0-9-]/g,"").replace(/O/g,"0").replace(/[IL]/g,"1");
       try{ e.setSelectionRange(p0,p0); }catch(err){} };
-    e.onkeydown=ev=>{ if(ev.key==="Enter") submitRoomCode(back?"back":"participant"); };
+    e.onkeydown=ev=>{ if(ev.key==="Enter") submitRoomCode(); };
     e.focus(); e.select();
   },60);
 }
-async function submitRoomCode(mode){
+async function submitRoomCode(){
   const e=$("rcin"), err=$("rcerr");
   const code=((e&&e.value)||"").trim().toUpperCase();
   const say=t=>{ if(err) err.textContent=t; if(e) e.focus(); };
@@ -1107,12 +1110,14 @@ async function submitRoomCode(mode){
   if(d.mine) note(`${code} 방으로 돌아왔습니다 — 앉아 있던 자리가 그대로 있습니다.`);
   else if(d.started) note(`${code} 방은 이미 판이 돌고 있습니다.`);
   else note(`${code} 방에 들어왔습니다.`);
-  me.mode=(mode==="back"&&d.isHost)?"host":"participant";
+  /* 이 기기가 이 방을 연 기기면 호스트 자리를 돌려준다 — 코드로 다시 들어와도
+     방을 연 사람은 그대로 방을 연 사람이다. */
+  me.mode=d.isHost?"host":"participant";
   if(d.isHost) hostPresent=true;
   if(d.scenarioId) me.pick=d.scenarioId;
   go("scenarios"); render();
 }
-function enterBack(){ clearQA(); askRoomCode("back"); }
+function enterBack(){ clearQA(); askRoomCode(); }
 /* 이 기기에 남아 있는 QA 표시를 지운다. 게임 화면은 pmb.qa 하나로 QA 를 켜므로
    이 값만 지우면 다음 판은 평범하게 열린다. 열쇠(pmb.gmkey)는 안 건드린다 —
    그건 관리자 화면이 쓰는 값이고, 지우면 에셋 훑어보기까지 잠긴다. */
