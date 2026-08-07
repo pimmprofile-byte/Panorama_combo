@@ -823,6 +823,13 @@ def scenario():
         for _k in ("map", "rooms"):
             if isinstance(d.get(_k), list):
                 d[_k] = [z for z in d[_k] if z.get("loc") not in _hid]
+        # ★ 판때기의 자리도 같이 걷는다. 아직 «있는 줄도 모르는» 구역을 노이즈로
+        #   덮어 두면, 그 노이즈가 「저기 뭔가 더 있다」를 공지한다. 노이즈는
+        #   «잠긴» 구역의 것이지 «숨긴» 구역의 것이 아니다.
+        if isinstance(d.get("board"), dict) and isinstance(d["board"].get("nodes"), dict):
+            d["board"] = dict(d["board"])
+            d["board"]["nodes"] = {k: v for k, v in d["board"]["nodes"].items()
+                                   if k not in _hid}
         if isinstance(d.get("sealedWhy"), dict):
             d["sealedWhy"] = {k: v for k, v in d["sealedWhy"].items() if k not in _hid}
     # 「나이를 스스로 적는 배역」 명단은 모두가 받는 이 대본에 실으면 안 된다 —
@@ -1028,7 +1035,8 @@ def _asset_prompts() -> dict:
     # 한 사건의 프롬프트는 네 갈래다. 파일 이름이 곧 갈래다 —
     # 문서를 하나 더 두면 화면에 칸이 하나 더 생긴다.
     KINDS = [("vn", "비주얼노벨", "비주얼노벨.md", "card"),
-             ("map", "맵", "구역.md", "zone"),
+             ("board", "맵판", "맵판.md", "zone"),
+             ("map", "구역", "구역.md", "zone"),
              ("card", "조사카드", "카드.md", "card"),
              ("cast", "캐릭터", "캐릭터.md", "card")]
     for sid, name, folder, hue, seed in _asset_sets():
@@ -1062,7 +1070,7 @@ def _asset_prompts() -> dict:
             return _asset_fences(src.read_text(encoding="utf-8")) if src.exists() else []
 
         tone, head = "", ""
-        order = ["비주얼노벨.md", "구역.md", "카드.md", "캐릭터.md"]
+        order = ["비주얼노벨.md", "맵판.md", "구역.md", "카드.md", "캐릭터.md"]
         if d.is_dir():
             order += [x.name for x in sorted(d.glob("*.md")) if x.name not in order]
         for fn in order:
@@ -1076,7 +1084,7 @@ def _asset_prompts() -> dict:
                 break
         # 갈래마다 «자기 문서의» 덧붙임 한 덩이. 앞머리·톤이 아닌 것 중 첫 번째다.
         for k in kinds:
-            fn = {"vn": "비주얼노벨.md", "map": "구역.md",
+            fn = {"vn": "비주얼노벨.md", "board": "맵판.md", "map": "구역.md",
                   "card": "카드.md", "cast": "캐릭터.md"}.get(k["key"], k["key"] + ".md")
             k["add"] = next((t for t in (f.strip() for f in _fences_of(fn))
                              if t and "The place" not in t and t != head), "")
