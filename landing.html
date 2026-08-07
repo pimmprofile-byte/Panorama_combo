@@ -1262,19 +1262,6 @@ function preloadArm(){
   try{ const bg=$("bg"); if(bg) bg.classList.add("bgup"); }catch(e){}
   try{ preloadLobby(); }catch(e){}
 }
-/* 고른 사건의 오프닝 컷. 컷 이름은 대본이 쥐고 있으므로 서버에 한 번 물어본다.
-   앞에서부터 여섯 장만 받는다 — 첫 장이 뜨는 순간부터 나머지는 사람이 넘기는
-   속도보다 빨리 따라온다. */
-/* ★ /api/scenario 는 «지금 이 방이 연» 대본을 준다. 그래서 사건을 서버에
-   앉힌 뒤(openScenario)에야 부를 수 있다 — 포스터를 누른 순간에 부르면 아직
-   앞 사건의 대본이 와서 엉뚱한 그림을 받는다. */
-async function preloadOpening(id){
-  if(!id) return;
-  try{
-    const sc=await (await fetch("/api/scenario")).json();
-    (sc.openingCuts||[]).slice(0,6).forEach(c=>{ if(c&&c.img) preload(`/assets/${id}_opening_${c.img}`); });
-  }catch(e){}
-}
 let bootTimers=[];
 function bootSkip(){
   bootTimers.forEach(clearTimeout); bootTimers=[];
@@ -1529,10 +1516,10 @@ async function launch(){
      넣어 둔 기기에서는 부팅 검사도 통과해 버린다 — 그래서 관리자 모드를
      켠 적도 없는데 자홍색 QA 띠를 단 채 실전이 열렸다. */
   clearQA();
-  /* 사건이 서버에 앉았으니 그 오프닝 컷을 받기 시작한다. 배역 선택창을 지나
-     셋이 다 앉을 때까지가 오프닝까지의 거리라, 그 사이면 넉넉하다.
-     기다리지 않는다 — 받는 것은 다음 페이지의 캐시에 그대로 남는다. */
-  preloadOpening(me.pick);
+  /* ★ 여기서 오프닝 컷을 받기 시작했었다. 그런데 바로 다음 줄에서 페이지를
+     떠나므로 «받는 중»이던 요청이 그 자리에서 끊긴다 — 받아 두려던 것이
+     사실상 하나도 안 남았다. 오프닝 컷은 배역 선택창(index.html preloadVN)이
+     받는다. 거기는 셋이 다 앉을 때까지 머무는 화면이라 끊길 일이 없다. */
   location.href="/play?qa=0";
 }
 function note(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("on"); clearTimeout(note._t); note._t=setTimeout(()=>t.classList.remove("on"),2600); }

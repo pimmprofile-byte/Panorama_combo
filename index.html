@@ -829,6 +829,16 @@
     box-shadow:2px 2px 0 var(--case-e),inset 0 1px 0 rgba(255,255,255,.5)}
   /* 조사화면의 안내. 어둠막을 안 깐다 — 눌러야 하는 것이 그 아래 지도라서,
      덮어 놓고 「누르라」고 하면 말과 화면이 어긋난다. 화면 위쪽에 한 줄로 뜬다. */
+  /* 새 구역 안내 — 조사화면 맨 위. 위험을 알리는 띠(.handwarn)와 같은 자리에 서므로
+     색으로 갈라 둔다: 저쪽은 붉고 이쪽은 금빛이다(«잃는다»와 «생겼다»는 다른 소식이다). */
+  .newzone{display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 10px;
+    margin:0 0 9px;padding:9px 12px;border:1px solid color-mix(in srgb,var(--gold) 46%,var(--line));
+    border-radius:2px;background:linear-gradient(180deg,rgba(0,230,147,.13),var(--scr-d));
+    box-shadow:inset 1px 1px 0 rgba(255,255,255,.05),2px 2px 0 rgba(0,0,0,.4)}
+  .newzone .nz-k{font-size:13px;font-weight:800;color:var(--gold-b);
+    display:inline-flex;align-items:center;gap:6px}
+  .newzone .nz-n{font-size:13px;font-weight:700;color:var(--ink)}
+  .newzone .nz-d{flex:1 0 100%;font-size:11.5px;color:var(--sub)}
   .maphint{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:14;
     background:var(--case-h);color:var(--case-fg);border:1px solid var(--case-e);
     box-shadow:2px 2px 0 var(--case-e);border-radius:2px;
@@ -1382,15 +1392,19 @@
        밀려 앉는다 — 「방 한가운데」가 벽에 붙어 있던 진짜 이유가 이것이다.
        지금은 «점»을 좌표에 맞추고 이름표가 그 옆으로 뻗는다. --dot 은 상자 끝에서
        점 한가운데까지의 거리(테두리 1 + 안쪽여백 4 + 점 반지름 4.5)다. */
-  .pin{--dot:9.5px;position:absolute;transform:translate(calc(-1*var(--dot)),-50%);
-    display:flex;align-items:center;gap:5px;
-    background:rgba(10,9,8,.86);border:1px solid var(--cold);border-radius:2px;padding:2px 8px 2px 4px;
-    color:var(--ink);font-size:10.5px;line-height:1.5;cursor:pointer;backdrop-filter:blur(3px);
+  /* ★ 글자가 테에 붙어 있었다. 이름표는 «읽으라»고 붙이는 것이라 숨 쉴 자리가
+       있어야 한다 — 좌우로 벌리고 줄높이는 조금 좁혀, 넓어지되 두꺼워지지는
+       않게 잡았다(자리 계산이 높이에 걸려 있다). --dot 도 같이 옮긴다:
+       테 1 + 안쪽여백 6 + 점 반지름 4.5 = 11.5. */
+  .pin{--dot:11.5px;position:absolute;transform:translate(calc(-1*var(--dot)),-50%);
+    display:flex;align-items:center;gap:7px;
+    background:rgba(10,9,8,.88);border:1px solid var(--cold);border-radius:2px;padding:3px 11px 3px 6px;
+    color:var(--ink);font-size:10.5px;line-height:1.4;cursor:pointer;backdrop-filter:blur(3px);
     white-space:nowrap;transition:border-color .15s,background .15s,z-index 0s}
   /* 겹친 라벨은 누른 것이 위로 온다 — 좁은 방에서는 아무리 벌려도 붙는 자리가 생긴다. */
   .pin:hover,.pin:focus{z-index:3}
   /* 라벨이 늘 오른쪽으로 뻗으면 오른편 핀을 덮는다. 오른쪽 절반은 왼쪽으로 뻗게 뒤집는다. */
-  .pin.rt{flex-direction:row-reverse;padding:2px 4px 2px 8px;
+  .pin.rt{flex-direction:row-reverse;padding:3px 6px 3px 11px;
     transform:translate(calc(-100% + var(--dot)),-50%)}
   .pin i{flex:0 0 9px;height:9px;border-radius:0;background:var(--cold);
     box-shadow:0 0 0 3px rgba(195,186,176,.22)}
@@ -1402,6 +1416,15 @@
      아직 아무도 안 본 것은 물러난 회색, 테이블에 펼쳐진 것은 이 게임의 네온그린,
      누가 쥐고 있는 것은 그 사람의 키컬러다. 색 하나로 「저건 이미 남의 손에
      있다」가 읽히면 조사턴을 거기에 안 쓴다. */
+  /* 방 위의 범례 — 색이 무슨 뜻인지 한 줄로. 이 방에 실제로 있는 상태만 뜬다
+     (없는 상태를 적어 두면 「어딘가에 저것도 있다」가 된다). */
+  .rlgd{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;
+    margin:0 0 8px;padding:6px 9px;border:1px solid var(--scr-line);border-radius:2px;
+    background:var(--scr-d);font-size:11px;color:var(--sub)}
+  .rlgd b{font-weight:700;color:var(--muted);letter-spacing:.04em;margin-right:2px}
+  .rlgd span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .rlgd i{width:9px;height:9px;flex:0 0 9px;background:var(--c);
+    box-shadow:0 0 0 2px rgba(255,255,255,.07)}
   .pin.seen{border-color:var(--line);color:var(--muted)}
   .pin.seen i{background:var(--muted);box-shadow:none}
   .pin.lock{opacity:.55}
@@ -1421,8 +1444,8 @@
   .roomfs .rfs-rot{position:absolute;left:50%;top:50%;transform-origin:center center}
   .roomfs .room{width:100%;height:100%;border:0;border-radius:0}
   .roomfs .room>img{width:100%;height:100%;aspect-ratio:auto;object-fit:contain}
-  .roomfs .pin{--dot:13.5px;font-size:13px;padding:5px 12px 5px 7px}
-  .roomfs .pin.rt{padding:5px 7px 5px 12px}
+  .roomfs .pin{--dot:15.5px;font-size:13px;padding:5px 15px 5px 9px;gap:8px}
+  .roomfs .pin.rt{padding:5px 9px 5px 15px}
   .roomfs .pin i{flex-basis:11px;height:11px}
   .rfs-bar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:9px;
     padding:9px 14px;background:linear-gradient(0deg,rgba(6,5,5,.92),transparent);color:var(--ink)}
@@ -5330,6 +5353,27 @@ function openRoom(key){
     paintRoom(room, url);
   });
 }
+/* 이 방 위의 색이 무슨 뜻인가 — 그림 바로 위에 한 줄. 핀은 색으로만 상태를
+   말하는데, 색과 뜻을 잇는 자리가 없으면 그건 암호다.
+   ★ 이 방에 «실제로 있는» 상태만 적는다. 없는 것까지 적어 두면 그 자체가
+     「어딘가에 저런 게 또 있다」는 안내가 된다. */
+function roomLegend(cards){
+  const has={};
+  (cards||[]).forEach(c=>{ const st=cardState(c);
+    if(st.k==="pub") has.pub=1;
+    else if(st.k==="hand") has.hand=1;
+    else if(st.k==="taken") (has.taken=has.taken||[]).push(st.who||{});
+    else has.open=1; });
+  const bit=[];
+  if(has.open)  bit.push(`<span><i style="--c:var(--cold)"></i>조사 가능</span>`);
+  if(has.pub)   bit.push(`<span><i style="--c:var(--signal)"></i>전체공개</span>`);
+  if(has.hand)  bit.push(`<span><i style="--c:var(--me,var(--gold))"></i>내 손패</span>`);
+  (has.taken||[]).forEach(w=>{
+    const col=vnNameSafeColor(w.color)||"var(--line)";
+    bit.push(`<span><i style="--c:${col}"></i>${esc(w.name||"누군가")} 쥠</span>`); });
+  if(bit.length<2) return "";               // 한 가지뿐이면 견줄 것이 없다
+  return `<div class="rlgd"><b>표시</b>${bit.join("")}</div>`;
+}
 function paintRoom(room, url){
   const cards=roomCards(room);
   const done=cards.filter(c=>{ const k=cardState(c).k; return k!=="open"&&k!=="lock"; }).length;
@@ -5352,7 +5396,7 @@ function paintRoom(room, url){
         <h2>${esc(room.name)}</h2>
         <span class="mh-sub">볼 곳 ${cards.length} · 확인 ${done}${room.note?" · "+esc(room.note):""}</span></div>
       <button class="mh-x" onclick="closeModal('mapModal')" aria-label="닫기">${ICO.close}</button></div>
-    <div class="mbody rb"><div class="room"><img src="${url}" alt="" decoding="async">${pins}${doors}</div>
+    <div class="mbody rb">${roomLegend(cards)}<div class="room"><img src="${url}" alt="" decoding="async">${pins}${doors}</div>
       <div class="panel-note" style="margin-top:9px">그림 위의 표시를 누르면 그 자리를 살펴봅니다.</div></div>
     ${/* 발치의 오른쪽 끝은 «여기서 나가는 문» 자리다 — 손이 제일 자주 가는 곳이라
           거기에 「목록으로」가 앉아 있으면 닫으려다 목록으로 넘어간다. 끝자리를
@@ -5732,7 +5776,26 @@ function paintLobbyFold(host){
   const sw=host.querySelector(".role-swipe"); if(!sw) return;
   sw.classList.toggle("slim", allSeated());
 }
+/* ── 오프닝 컷을 배역 선택창에서 미리 받는다 ──────────────────────
+   ★ 예전에는 랜딩(landing.html)의 launch() 가 받기 시작하고 곧바로
+     location.href 로 넘어갔다. 그런데 페이지를 떠나면 «받는 중»이던 그림 요청은
+     그 자리에서 끊긴다 — 받아 두려던 것이 사실상 하나도 안 남았다.
+   ★ 배역 선택창이 제자리다. 여기는 셋이 다 앉을 때까지 머무는 화면이고,
+     그동안 페이지가 안 바뀐다. 대본도 이미 손에 있어서 컷 이름을 물어볼
+     일도 없다.
+   ★ 앞에서 여섯 장만. 첫 장이 뜨는 순간부터 나머지는 사람이 넘기는 속도보다
+     빨리 따라온다. 실패는 조용히 지나간다 — 있으면 좋은 일이고, 없다고
+     게임이 멈추면 안 된다. */
+let vnPreAt="";
+function preloadVN(){
+  const sid=(STATE&&STATE.scenarioId)||""; if(!sid||vnPreAt===sid) return;
+  vnPreAt=sid;
+  ((SCEN&&SCEN.openingCuts)||[]).slice(0,6).forEach(c=>{
+    if(c&&c.img) findAsset(`/assets/${sid}_opening_${c.img}`, ()=>{});
+  });
+}
 function renderLobby(force){
+  preloadVN();
   const shape=((STATE&&STATE.scenarioId)||"")+"|"+SCEN.characters.map(c=>c.id).join(",");
   const host=$("lobbyList");
   if(force||shape!==lobbyBuilt||!host.querySelector(".role-grid")){
@@ -6257,6 +6320,9 @@ function renderPanel(ph){
        안 일어난 것으로 보인다. 그러면 한 번 더 누르고, 그건 «취소»다(토글이라서).
        그래서 셋이 아무리 눌러도 막이 안 넘어가는 자리가 됐다. */
     STATE.ready&&[STATE.ready.n,STATE.ready.of,(STATE.ready.mine||[]).join("")],
+    /* 새로 열린 구역은 «내가 눌러 보면» 사라진다. 사람마다 다른 값이라 서버 상태로는
+       안 잡힌다 — 여기 안 넣으면 눌러도 위의 안내 줄이 그대로 남는다. */
+    zoneNew.join(","),
     /* 오프닝의 마당과 «눌렀는가». 이게 바뀌면 화면 아래 안내가 통째로 바뀐다 —
        안 넣으면 「내 정보 열기」를 눌러도 같은 카드가 그대로 서 있다. */
     openStage(), stageBlink("brief")+"|"+stageBlink("talk")]);
@@ -6284,7 +6350,7 @@ function renderPanel(ph){
       // 당주에게 묻는 막처럼 조사할 «자리»가 없는 조사 페이즈에서는 지도를 안 깐다 —
       // 고를 것이 질문지뿐인데 배치도가 화면 절반을 먹으면 그게 방해다.
       const noMap=!!(STATE.phase||{}).noMap;
-      p.innerHTML=`${crisisHTML()}${handWarn()}${turnBar()}${noMap?"":`<div id="cmap"></div>`}`;
+      p.innerHTML=`${crisisHTML()}${handWarn()}${newZoneHTML()}${turnBar()}${noMap?"":`<div id="cmap"></div>`}`;
       /* 판때기를 가진 사건은 CCTV 벽으로 연다. 없으면 예전 지도가 그대로 선다. */
       if(!noMap){ if(boardOf()) renderBoard($("cmap")); else renderMap($("cmap")); }
       paintCrisisBoard();
@@ -6775,13 +6841,33 @@ let zoneNewSig=null, zoneNew=[];
 function zoneAckKey(loc){ return `pmb.zack.${clientId}.${(STATE&&STATE.roomId)||""}.${loc}`; }
 function zoneAcked(loc){ try{ return localStorage.getItem(zoneAckKey(loc))==="1"; }catch(e){ return false; } }
 function zoneIsNew(loc){ return zoneNew.indexOf(loc)>=0; }
+/* ── 새로 열린 구역 · 조사화면 맨 위 한 줄 ─────────────────────────
+   구역은 조용히 열린다. 대화창에도 「구역이 열렸습니다」가 한 줄 뜨지만, 말이
+   오가는 중이면 그 줄은 순식간에 위로 밀린다 — 2차 조사에 들어서고도 새 자리가
+   생긴 줄 모르고 어제 뒤지던 방만 다시 뒤지는 일이 생긴다.
+   여기 한 줄은 «그 구역을 실제로 눌러 볼 때까지» 남는다.
+   ★ 사람마다 따로 센다. 옆 사람이 먼저 들어가 봤다고 내 화면에서 사라지면
+     그건 내가 본 것이 아니다(zoneAckKey 에 clientId 가 들어 있다). */
+function newZoneHTML(){
+  if(!myRoleValid()) return "";
+  if(!zoneNew.length) return "";
+  const names=zoneNew.map(l=>((( SCEN&&SCEN.map)||[]).find(z=>z.loc===l)||{}).name||l);
+  return `<div class="newzone">
+    <span class="nz-k">${ICO.unlock} 새로운 구역이 열렸습니다</span>
+    <span class="nz-n">${esc(names.join(" · "))}</span>
+    <span class="nz-d">눌러서 들어가 보면 이 안내가 사라집니다</span></div>`;
+}
 /* 그 구역을 처음 누르면 멎는다. 누른 사람의 기기에만 남는다. */
 function ackZone(loc){
   if(!zoneIsNew(loc)) return;
   try{ localStorage.setItem(zoneAckKey(loc),"1"); }catch(e){}
   zoneNew=zoneNew.filter(x=>x!==loc);
-  const d=$("dash"); if(d) d.innerHTML=dashHTML();
+  /* ★ #dash 만 갈던 자리다. 그 칸은 예전 지도 화면에만 있어서, CCTV 판때기에서는
+     눌러도 NEW 딱지와 위의 안내가 그대로 남았다. 화면을 통째로 다시 그린다. */
+  dashRepaint();
   document.querySelectorAll(".z-new").forEach(g=>g.classList.remove("z-new"));
+  const cam=document.querySelector(`.cc-cam[data-loc="${loc}"] .cc-new`);
+  if(cam) cam.remove();
 }
 function scanNewZones(){
   const tb=(STATE&&STATE.table)||[];
@@ -8341,7 +8427,7 @@ async function toggleReady(){
      showChatFull 을 부르고, 그게 다시 물어본다. 셋이 다 몰입을 끝내는 순간 이
      고리가 돌기 시작해 화면이 굳었다.
    ★ brief 만은 데려가지 않는다 — 데려갈 자리가 지금 서 있는 화면이라서다. */
-const OPEN_WANT={brief:"home", sheet:"sheet", talk:"chat"};
+const OPEN_WANT={brief:"home", sheet:"sheet", talk:"chat", invest:"home"};
 function openBlocked(want){
   const stg=openStage();
   if(!stg) return false;
@@ -8352,6 +8438,10 @@ function openBlocked(want){
   }else if(stg==="sheet"){
     banner("먼저 「내 정보」를 끝까지 읽어 주세요 — 다 읽으면 열립니다.");
     if(want!=="sheet") setTimeout(()=>showMySheet(),220);
+  }else if(stg==="invest"){
+    /* 여기서는 데려다 놓지 않는다 — 가야 할 곳(조사화면)이 이미 뒤에 깔려 있다.
+       창을 하나 더 띄우면 도로 덮는 셈이다. */
+    banner("먼저 한 곳을 조사해 보세요 — 조사화면에서 구역을 누르면 됩니다.");
   }else{
     banner("지금은 대화창만 열립니다 — 셋이 자기소개를 마치면 조사가 열립니다.");
     if(want!=="chat") setTimeout(()=>{ try{ showChatFull(); }catch(e){} },220);
@@ -8421,16 +8511,41 @@ function autoOpenAdvance(){
   openAdvAt=seq;
   post("/api/ready",{roleId:myRoleId,clientId}).then(()=>{ try{ poll(); }catch(e){} });
 }
+/* ── 네 번째 마당 · 첫 조사 ────────────────────────────────────
+   자기소개가 끝나고 조사가 열리는 자리가 이 게임에서 화면이 제일 크게 바뀌는
+   대목이다. 그때 하단바가 다 열려 있으면 사람들이 소지품과 인물정보부터 눌러
+   본다 — 아직 아무것도 안 든 칸들이고, 거기서 헤매다 자기 차례를 흘려보낸다.
+   그래서 «첫 조사를 한 번 마칠 때까지» 조사화면만 연다.
+
+   ★ 코치의 자물쇠(coachlock)로는 이걸 못 한다. 그건 짚어 준 칸을 «누르는
+     순간» 풀린다 — 누르라고 해놓고 누르면 푸는 자물쇠라, 「들어가서 한 곳을
+     조사해 보라」까지는 못 데려간다. 오프닝의 세 마당과 같은 결로 잠근다.
+   ★ 내 차례가 아니면 안 잠근다. 내가 할 수 있는 일이 없는 동안까지 묶어 두면
+     그건 안내가 아니라 갇힘이다 — 셋이 도는 게임에서 세 번째 사람은 두 턴을
+     아무것도 못 보고 앉아 있게 된다.
+   ★ 첫 라운드에서만. 2차 조사에 들어선 사람에게는 이미 지난 안내다.
+   ★ 튜토리얼을 끈 기기(QA)에서는 아예 안 선다. */
+function investStage(){
+  if(coachOff()) return false;
+  if(((STATE&&STATE.phase)||{}).key!=="invest") return false;
+  if(((STATE&&STATE.round)||0)>1) return false;
+  if(myCheckedIds().length) return false;
+  const turn=STATE&&STATE.turn;
+  return !turn || turn===myRoleId;
+}
 function openStage(){
-  if(!inOpening()||!myRoleValid()) return "";
-  if(!immDone()) return briefDone() ? "sheet" : "brief";
-  /* ★ 셋이 다 말했다고 여기서 풀지 않는다. 그 순간 막이 넘어가는 중이라
-     (autoOpenAdvance), 한 박자 동안 오프닝인데 아무것도 안 잠긴 화면이 뜬다.
-     막이 실제로 바뀔 때 inOpening() 이 저절로 거짓이 된다 — 그때 풀리면 된다. */
-  return "talk";
+  if(!myRoleValid()) return "";
+  if(inOpening()){
+    if(!immDone()) return briefDone() ? "sheet" : "brief";
+    /* ★ 셋이 다 말했다고 여기서 풀지 않는다. 그 순간 막이 넘어가는 중이라
+       (autoOpenAdvance), 한 박자 동안 오프닝인데 아무것도 안 잠긴 화면이 뜬다.
+       막이 실제로 바뀔 때 inOpening() 이 저절로 거짓이 된다 — 그때 풀리면 된다. */
+    return "talk";
+  }
+  return investStage() ? "invest" : "";
 }
 /* 그 마당에서 살아 있는 하단바 칸. brief 는 하나도 없다(-1). */
-const OPEN_LIVE={brief:-1, sheet:2, talk:3};
+const OPEN_LIVE={brief:-1, sheet:2, talk:3, invest:0};
 /* ── 점멸은 «그 자리에 가면» 멎는다 ───────────────────────────────
    ★ 점멸은 «여기를 눌러라»라는 말이다. 눌러서 그 화면에 들어와 있는데도 아래에서
      탭이 계속 번쩍이면 그건 말이 아니라 소음이다 — 내 정보를 읽는 내내 방해된다.
@@ -9505,6 +9620,10 @@ function paintVaultArt(){
 }
 async function showMySheet(){
   if(!myRoleValid())return;
+  /* ★ 여기만 마당 검사가 빠져 있었다. 하단바의 «잠김»은 흐리게 만들 뿐 손을
+     막지는 않는데(눌러 보고 왜 안 되는지를 듣는 쪽이 낫다), 그 말을 해 줄
+     자리가 이 칸에는 없어서 잠긴 마당에서도 내 정보가 그냥 열렸다. */
+  if(openBlocked("sheet")) return;
   stageTap("sheet");
   coachDone("sheet");
   markSheetSeen();
@@ -10059,8 +10178,13 @@ const COACH_STEPS=[
   /* ★ «오프닝이 끝났는가» 가 아니라 «이 사람이 다 읽었는가» 로 본다. 몰입완료는
      막을 넘기지 않는다 — 막으로 재면 셋이 다 읽고 대화가 시작된 뒤에도
      이 안내가 안 뜬다. */
+  /* ★ 오프닝을 벗어나면 이 안내는 지난 것이다. 안 그러면 조사가 열린 뒤에도
+     이 칸이 첫 순서로 남아, 조사 마당이 잠가 둔 대화창을 가리키며 점멸한다 —
+     누르라고 짚어 놓고 누르면 「지금은 조사화면만 열립니다」가 뜬다.
+     짚은 자리가 안 열리는 것보다 나쁜 안내는 없다. */
   {k:"chat",  dk:3, lock:true, tip:"여기서 이야기가 오갑니다", open:()=>showChatFull(),
-   when:()=> !openLocked() && ((STATE.table||[]).length>0)},
+   when:()=> !openLocked() && ((STATE.table||[]).length>0),
+   skip:()=> !inOpening()},
   /* 조사화면은 «지금 서 있는 화면» 이지만, 여기까지 오는 동안 사람은 줄곧
      대화창 안에 있었다. 나올 자리를 한 번은 짚어 줘야 한다. */
   /* ★ 여기도 잠근다. 자기소개가 끝나고 조사가 열리는 순간이 이 게임에서 화면이
@@ -10134,6 +10258,7 @@ function paintCoach(){
   const dock=$("dock");
   if(dock){ [...dock.children].forEach(b=>b.classList.remove("callout"));
             dock.classList.remove("coachlock"); }
+  if(paintCoach._off){ paintCoach._off(); paintCoach._off=null; }
   if(!st) return;
   /* 이 칸에서는 짚어 준 자리 말고는 안 눌린다. 「내 정보만 보라」고 해놓고
      다른 데를 열 수 있으면 그건 안내가 아니라 제안이다. */
@@ -10143,7 +10268,21 @@ function paintCoach(){
   d.onclick=()=>{ coachDone(st.k); st.open(); };
   document.body.appendChild(d);
   const b=dock&&dock.children[st.dk];
-  if(b) b.classList.add("callout");
+  if(b){
+    b.classList.add("callout");
+    /* ★ 예전에는 «어둠막»을 눌러야 안내가 꺼졌다. 그런데 화면이 하라는 것은
+       「저 칸을 누르라」이고, 반짝이는 것도 그 칸이다 — 정작 그 칸을 누르면
+       칸은 열리는데 어둠막과 점멸은 그대로 남았다. 말과 손이 어긋난다.
+       짚어 준 칸을 누르면 그것으로 안내는 끝난 것이다.
+     ★ 캡처 단계에서 받는다. 칸이 제 일(창 열기)을 하기 «전에» 표시를 지워야
+       그 창 위에 어둠막이 얹히지 않는다.
+     ★ 다시 그릴 때마다 붙으므로 앞의 것을 반드시 떼어 낸다 — 안 그러면
+       한 칸을 지날 때마다 리스너가 한 겹씩 쌓인다. */
+    if(paintCoach._off){ paintCoach._off(); paintCoach._off=null; }
+    const onTap=()=>{ coachDone(st.k); };
+    b.addEventListener("click", onTap, true);
+    paintCoach._off=()=>{ b.removeEventListener("click", onTap, true); };
+  }
   const tip=document.createElement("div"); tip.className="coach-tip"; tip.id="coachTip";
   tip.textContent=st.tip;
   tip.onclick=()=>{ coachDone(st.k); st.open(); };
