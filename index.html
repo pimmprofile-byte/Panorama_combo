@@ -2612,10 +2612,44 @@
     transition:border-color .14s,transform .14s}
   .cctv .cc-cam{height:var(--h)}
   .cctv .cc-cam:not([style*="--h"]){aspect-ratio:4/3}
-  /* 아직 «있는 줄도 모르는» 곳 — 판때기 그림에 그려진 방을 통째로 덮는다.
-     이름도 번호도 없다. 그냥 안 켜진 화면 하나다. */
+  /* ── 아직 «있는 줄도 모르는» 곳 ─────────────────────────────────
+     판때기 그림에 그려진 방을 통째로 덮는다. 이름도 번호도 없다 —
+     «선이 안 꽂힌 카메라» 한 대다. 검은 판으로만 두면 「가려 놓은 자리」로
+     읽히는데, 지지직거리면 「원래 안 나오는 채널」이 된다. 같은 것을 덮어도
+     그쪽이 덜 궁금하다.
+     ★ 밝기는 낮게 잡는다. 노이즈가 또렷하면 그 자체가 「저기를 보라」가 된다. */
   .cctv .cc-cam.hidden{cursor:default;border-color:#1e2424;background:#05080a}
-  .cctv .cc-cam.hidden .cc-dead{background-color:#070a0b}
+  /* ★ 반복 그러데이션으로 «지지직»을 흉내 내 봤더니 격자무늬가 됐다 — 규칙이
+     보이면 그건 노이즈가 아니라 방충망이다. 진짜 잡음은 규칙이 없어야 하므로
+     SVG 의 feTurbulence 한 장을 깔고, 그걸 빠르게 밀어 흐르게 한다. */
+  .cctv .cc-cam.hidden .cc-dead{
+    background-color:#080b0c;
+    background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27160%27%20height%3D%27160%27%3E%3Cfilter%20id%3D%27n%27%20x%3D%270%27%20y%3D%270%27%20width%3D%27100%25%27%20height%3D%27100%25%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.9%27%20numOctaves%3D%271%27%20stitchTiles%3D%27stitch%27%2F%3E%3CfeColorMatrix%20type%3D%27saturate%27%20values%3D%270%27%2F%3E%3CfeComponentTransfer%3E%3CfeFuncR%20type%3D%27linear%27%20slope%3D%274%27%20intercept%3D%27-1.5%27%2F%3E%3CfeFuncG%20type%3D%27linear%27%20slope%3D%274%27%20intercept%3D%27-1.5%27%2F%3E%3CfeFuncB%20type%3D%27linear%27%20slope%3D%274%27%20intercept%3D%27-1.5%27%2F%3E%3C%2FfeComponentTransfer%3E%3C%2Ffilter%3E%3Crect%20width%3D%27160%27%20height%3D%27160%27%20filter%3D%27url%28%23n%29%27%2F%3E%3C%2Fsvg%3E");
+    background-size:46px 46px;
+    opacity:.72;
+    animation:ccSnow .09s steps(4) infinite}
+  @keyframes ccSnow{
+    0%  {background-position:0 0}
+    25% {background-position:37px 61px}
+    50% {background-position:-53px 23px}
+    75% {background-position:71px -41px}
+    100%{background-position:-19px -67px}}
+  /* ★ 꺼진 화면에서는 주사선을 옅게 깐다. 살아 있는 화면과 같은 굵기로 깔면
+     주사선이 잡음을 눌러 「지지직」이 아니라 「천 조각」으로 보인다. */
+  .cctv .cc-cam.hidden .cc-fx{
+    background:
+      repeating-linear-gradient(180deg,rgba(0,0,0,.16) 0 1px,transparent 1px 4px),
+      radial-gradient(120% 110% at 50% 45%,transparent 55%,rgba(0,0,0,.5))}
+  /* 지지직거리는 판 위로 굵은 띠가 한 번씩 지나간다 — 신호를 못 잡는 화면의 결이다 */
+  .cctv .cc-cam.hidden::after{content:"";position:absolute;left:0;right:0;height:34%;
+    pointer-events:none;
+    background:linear-gradient(180deg,transparent,rgba(190,220,210,.10),transparent);
+    animation:ccDeadRoll 2.6s linear infinite}
+  @keyframes ccDeadRoll{0%{top:-40%}100%{top:120%}}
+  @media(prefers-reduced-motion:reduce){
+    .cctv .cc-cam.hidden .cc-dead{animation:none}
+    .cctv .cc-cam.hidden::after{display:none}
+  }
   .cctv .cc-cam:active{transform:translate(-50%,-50%) scale(.97)}
   .cctv .cc-cam:not(.dead):hover{border-color:var(--gold)}
   .cctv .cc-pic{position:absolute;inset:0;background:center/cover no-repeat;

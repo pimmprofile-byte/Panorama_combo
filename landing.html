@@ -227,8 +227,27 @@
   /* 전원이 들어오는 순간의 그 줄. 위에서 아래로 한 번 훑고 사라진다. */
   .boot .sweep{position:absolute;left:-10%;right:-10%;height:26%;pointer-events:none;
     background:linear-gradient(180deg,transparent,rgba(0,255,153,.16) 45%,rgba(180,255,220,.30) 50%,rgba(0,255,153,.16) 55%,transparent);
-    animation:bootSweep 2.2s cubic-bezier(.4,0,.5,1) infinite}
-  @keyframes bootSweep{0%{top:-30%}100%{top:110%}}
+    animation:bootSweepDown 2.2s cubic-bezier(.4,0,.5,1) infinite}
+  /* ★ 장마다 방향이 다르다 — ① 핌아트웍스에서는 «내려가고», ② 파노라마에서는
+     «올라간다». 같은 줄이 두 번 같은 쪽으로 흐르면 두 장이 한 장처럼 읽히는데,
+     방향이 뒤집히면 「화면이 한 번 갈아 끼워졌다」가 몸으로 전해진다. */
+  .boot.up .sweep{animation-name:bootSweepUp}
+  @keyframes bootSweepDown{0%{top:-30%}100%{top:110%}}
+  @keyframes bootSweepUp  {0%{top:110%}100%{top:-30%}}
+  /* ── 줄이 지나갈 때 로고가 켜진다 ────────────────────────────────
+     ★ 빛 한 줄이 화면을 훑는데 로고는 그대로면 그 줄은 로고 «앞»을 지나가는
+       유리처럼 보인다. 줄이 닿는 순간 로고가 밝아져야 로고가 그 빛을 «받는» 것이
+       되고, 그제야 둘이 같은 화면 안에 있게 된다.
+     ★ 주기는 줄과 같은 2.2초, 봉우리는 한가운데(줄이 화면 복판을 지나는 때)다.
+       장이 바뀔 때 줄을 처음부터 다시 흘려 둘의 박자를 맞춘다(bootRun). */
+  @keyframes bootGlow{
+    0%,28%  {filter:brightness(.62) drop-shadow(0 0 0 rgba(0,255,153,0))}
+    50%     {filter:brightness(1.35) drop-shadow(0 0 26px rgba(0,255,153,.55))}
+    72%,100%{filter:brightness(.62) drop-shadow(0 0 0 rgba(0,255,153,0))}}
+  @keyframes bootGlowW{
+    0%,28%  {filter:brightness(.66) drop-shadow(0 0 0 rgba(255,255,255,0))}
+    50%     {filter:brightness(1.3) drop-shadow(0 0 26px rgba(230,255,245,.55))}
+    72%,100%{filter:brightness(.66) drop-shadow(0 0 0 rgba(255,255,255,0))}}
   /* 아주 얕은 깜빡임. 눈에 «띄면» 진 것이다 — 있는 줄 모르고 느끼기만 해야 한다. */
   .boot .flick{position:absolute;inset:0;pointer-events:none;background:rgba(180,255,220,.05);
     animation:bootFlick 3.1s steps(1) infinite}
@@ -244,7 +263,8 @@
     background:var(--signal);
     -webkit-mask:url("/assets/pimm_logo.svg") center/contain no-repeat;
             mask:url("/assets/pimm_logo.svg") center/contain no-repeat;
-    animation:bootDrop .62s cubic-bezier(.22,1.4,.4,1) both}
+    animation:bootDrop .62s cubic-bezier(.22,1.4,.4,1) both,
+              bootGlow 2.2s ease-in-out infinite}
   @keyframes bootDrop{
     0%{transform:translateY(-160px);opacity:0}
     62%{transform:translateY(0);opacity:1}
@@ -267,8 +287,8 @@
     background:repeating-linear-gradient(180deg, #aebbb5 0 1px, #f4f8f6 1px 3px);
     -webkit-mask:url("/assets/panorama_logo.svg") center/contain no-repeat;
             mask:url("/assets/panorama_logo.svg") center/contain no-repeat;
-    filter:drop-shadow(0 0 18px rgba(255,255,255,.22));
-    animation:bootIn .34s steps(2) both}
+    animation:bootIn .34s steps(2) both,
+              bootGlowW 2.2s ease-in-out infinite}
   /* 로고 아래 한 줄. 픽셀 글꼴이 아니라 프리텐다드다 — 이 줄은 «이 판의 목소리»가
      아니라 «회사의 목소리»라서, 글꼴이 다른 편이 맞다. 자간을 넓게 벌린다. */
   .boot .panosub{margin-top:14px;font-family:var(--ui);font-size:10.5px;font-weight:700;
@@ -284,8 +304,9 @@
     text-align:center;font-family:var(--ui);font-size:10.5px;letter-spacing:.22em;
     text-transform:uppercase;color:var(--phos-deep);opacity:.7;z-index:3}
   @media (prefers-reduced-motion:reduce){
-    .boot .grid,.boot .sweep,.boot .flick,
+    .boot .grid,.boot .sweep,.boot.up .sweep,.boot .flick,
     .boot .pimm,.boot .lead1,.boot .pano,.boot .panosub,.boot .rule,.boot .gd{animation:none}
+    .boot .pimm,.boot .pano{filter:none}
   }
 
   /* ── 엔트리 ───────────────────────────────────────────────── */
@@ -1247,7 +1268,12 @@ function bootRun(){
      오는 대로 한 번 더 부른다(loadTextLoads 가 끝날 때). */
   try{ preloadLobby(); }catch(e){}
   const show=id=>{ b.querySelectorAll(".bstage").forEach(x=>x.classList.remove("on"));
-                   const e=$(id); if(e) e.classList.add("on"); };
+                   const e=$(id); if(e) e.classList.add("on");
+                   b.classList.toggle("up", id==="bootB");     // 파노라마에서는 줄이 올라간다
+                   /* 줄을 처음부터 다시 흘린다 — 로고가 밝아지는 박자가 이 줄에
+                      맞춰져 있어서, 안 맞추면 장이 바뀐 뒤 엇박으로 켜진다. */
+                   const sw=b.querySelector(".sweep");
+                   if(sw){ sw.style.animation="none"; void sw.offsetWidth; sw.style.animation=""; } };
   show("bootA");
   try{ blip(320,0.10,"triangle",0.05,520); }catch(e){}
   bootTimers.push(setTimeout(()=>{ show("bootB");
