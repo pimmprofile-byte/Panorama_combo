@@ -6080,7 +6080,7 @@ function openPanelTail(){
         <b>내 정보</b>를 처음부터 끝까지 넘겨 읽으세요.<br>
         마지막 장의 <b>「몰입 완료!」</b>를 셋이 다 누르면 대화창이 열립니다.</div>
       <div class="rf-lock">${ICO.lock} 그때까지 아래 탭은 모두 잠깁니다</div>
-      <button class="btn gold rf-go blink" onclick="briefGo()">${ICO.folder} 내 정보 열기 ›</button></div>`;
+      <button class="btn gold rf-go${stageBlink("brief")?" blink":""}" onclick="briefGo()">${ICO.folder} 내 정보 열기 ›</button></div>`;
   if(stg==="sheet") return `<div class="card readfirst"><h2>「내 정보」를 끝까지 읽으세요</h2>
       <div class="rf-d">마지막 장의 <b>「몰입 완료!」</b>를 누르면 됩니다.
         셋이 다 누르면 대화창이 열립니다 — 그때부터 서로를 소개합니다.</div>
@@ -6091,7 +6091,7 @@ function openPanelTail(){
         각자 배역으로 자기소개를 한 마디씩 하세요.<br>
         셋이 다 말하면 <b>1차 조사</b>가 저절로 열립니다.</div>
       <div class="rf-lock">${ICO.lock} 지금은 <b>대화창</b>만 열립니다</div>
-      <button class="btn gold rf-go blink" onclick="showChatFull()">${ICO.chat||ICO.folder} 대화창 열기 ›</button></div>`;
+      <button class="btn gold rf-go${stageBlink("talk")?" blink":""}" onclick="showChatFull()">${ICO.chat||ICO.folder} 대화창 열기 ›</button></div>`;
   return `<div class="panel-note" style="text-align:center">사건 당시 <b>알리바이 대화록</b>은 대화창 맨 위에 남아 있습니다 — 언제든 올려서 다시 읽으세요.</div>
      ${nextPhaseBlock()}`;
 }
@@ -6109,9 +6109,9 @@ function renderPanel(ph){
        안 일어난 것으로 보인다. 그러면 한 번 더 누르고, 그건 «취소»다(토글이라서).
        그래서 셋이 아무리 눌러도 막이 안 넘어가는 자리가 됐다. */
     STATE.ready&&[STATE.ready.n,STATE.ready.of,(STATE.ready.mine||[]).join("")],
-    /* 오프닝의 마당. 이게 바뀌면 화면 아래 안내가 통째로 바뀐다 — 안 넣으면
-       「내 정보 열기」를 눌러도 같은 카드가 그대로 서 있다. */
-    openStage()]);
+    /* 오프닝의 마당과 «눌렀는가». 이게 바뀌면 화면 아래 안내가 통째로 바뀐다 —
+       안 넣으면 「내 정보 열기」를 눌러도 같은 카드가 그대로 서 있다. */
+    openStage(), stageBlink("brief")+"|"+stageBlink("talk")]);
   if(sig===renderPanel._sig) return;
   renderPanel._sig=sig;
   // 조사 한 번에 화면이 맨 위로 튀던 것 — 판을 통째로 다시 그리는 동안 높이가 0 이 되고,
@@ -7441,7 +7441,8 @@ async function shareConfirm(){
 
 /* 대화창 — 독에서 열면 화면을 다 쓴다. 토론이 길어지면 인라인 창으로는 흐름이 안 보인다. */
 function showChatFull(){
-  if(openBlocked()) return;
+  if(openBlocked("chat")) return;
+  stageTap("talk");
   coachDone("chat");
   markChatSeen();
   $("chatFullBox").innerHTML=`<div class="mhead sheeth">
@@ -7675,7 +7676,7 @@ function whoHandNote(id){
   banner(`${nm}${subjP(nm)} 소지하고 있는 도구로 보인다.`);
 }
 function showWho(keepTab){
-  if(openBlocked()) return;
+  if(openBlocked("who")) return;
   coachDone("who");
   const lim=handLimit();
   const rows=(SCEN.characters||[]).map(c=>{
@@ -8137,19 +8138,25 @@ async function toggleReady(){
 /* 잠긴 문을 두드렸을 때. 막되 «왜» 를 말하고 갈 곳을 같이 준다 —
    아무 말 없이 안 열리면 그건 고장이다. */
 /* 잠긴 칸을 눌렀을 때. 마당마다 «지금 해야 하는 것»을 말하고 그 자리로 데려간다.
-   brief 만은 데려가지 않는다 — 데려갈 자리가 지금 서 있는 화면이라서다. */
-function openBlocked(){
+   ★ 무엇을 열려는지를 받아야 한다. 안 받으면 그 마당이 «열라고 데려가는 바로 그
+     화면»까지 막아 버린다 — showChatFull 이 openBlocked 를 물어보고, openBlocked 가
+     showChatFull 을 부르고, 그게 다시 물어본다. 셋이 다 몰입을 끝내는 순간 이
+     고리가 돌기 시작해 화면이 굳었다.
+   ★ brief 만은 데려가지 않는다 — 데려갈 자리가 지금 서 있는 화면이라서다. */
+const OPEN_WANT={brief:"home", sheet:"sheet", talk:"chat"};
+function openBlocked(want){
   const stg=openStage();
   if(!stg) return false;
+  if(want && OPEN_WANT[stg]===want) return false;    // 이 마당이 열라는 바로 그 화면
   try{ sfx("bad"); }catch(e){}
   if(stg==="brief"){
     banner("먼저 사건을 읽어 주세요 — 아래 「내 정보 열기」를 누르면 이어집니다.");
   }else if(stg==="sheet"){
     banner("먼저 「내 정보」를 끝까지 읽어 주세요 — 다 읽으면 열립니다.");
-    setTimeout(showMySheet,220);
+    if(want!=="sheet") setTimeout(()=>showMySheet(),220);
   }else{
     banner("지금은 대화창만 열립니다 — 셋이 자기소개를 마치면 조사가 열립니다.");
-    setTimeout(()=>{ try{ showChatFull(); }catch(e){} },220);
+    if(want!=="chat") setTimeout(()=>{ try{ showChatFull(); }catch(e){} },220);
   }
   return true;
 }
@@ -8226,6 +8233,21 @@ function openStage(){
 }
 /* 그 마당에서 살아 있는 하단바 칸. brief 는 하나도 없다(-1). */
 const OPEN_LIVE={brief:-1, sheet:2, talk:3};
+/* ── 점멸은 «그 자리에 가면» 멎는다 ───────────────────────────────
+   ★ 점멸은 «여기를 눌러라»라는 말이다. 눌러서 그 화면에 들어와 있는데도 아래에서
+     탭이 계속 번쩍이면 그건 말이 아니라 소음이다 — 내 정보를 읽는 내내 방해된다.
+   ★ «한 번 눌렀는가»가 아니라 «지금 그 화면에 있는가»로 잰다. 읽다 말고 나오면
+     다시 깜빡여야 한다 — 아직 할 일이 남았기 때문이다. 한 번 눌렀다고 끄면
+     그때부터는 아무것도 안 가리킨다. */
+const OPEN_MODAL={sheet:"sheetModal", talk:"chatModal"};
+function stageTap(stg){ try{ paintSeat(); renderPanel._sig=null; }catch(e){} }
+function stageBlink(stg){
+  if(openStage()!==stg) return false;
+  const id=OPEN_MODAL[stg];
+  if(!id) return true;                       // brief 는 창이 없다 — 화면의 단추 하나뿐
+  const m=$(id);
+  return !(m && m.classList.contains("on"));
+}
 function immMine(){ const s=immState(); return !!(s&&(s.mine||[]).indexOf(myRoleId)>=0); }
 async function toggleImmersed(){
   const r=await post("/api/immersed",{roleId:myRoleId,clientId});
@@ -8880,8 +8902,9 @@ function paintSeat(){
   const live=stg?OPEN_LIVE[stg]:null;
   [0,1,2,3,4].forEach(i=>{ if(dk[i]) dk[i].classList.toggle("locked", !!stg && i!==live); });
   // 지금 눌러야 할 칸을 짚어 준다 — 대화창 알림과 같은 결로 점멸한다.
-  if(dk[2]) dk[2].classList.toggle("callnow", stg==="sheet");
-  if(dk[3]) dk[3].classList.toggle("callnow", stg==="talk");
+  // 한 번 누르면 멎는다. 창을 열어 둔 동안에도 멎어 있다(그 자리에 이미 있다).
+  if(dk[2]) dk[2].classList.toggle("callnow", stageBlink("sheet"));
+  if(dk[3]) dk[3].classList.toggle("callnow", stageBlink("talk"));
 }
 /* 「오세린이」·「문재이가」 — 받침에 따라 조사가 갈린다. */
 function subjP(name){ const ch=(name||"").slice(-1).charCodeAt(0);
@@ -9280,6 +9303,7 @@ function paintVaultArt(){
 }
 async function showMySheet(){
   if(!myRoleValid())return;
+  stageTap("sheet");
   coachDone("sheet");
   markSheetSeen();
   let s; try{ s=await (await fetch("/api/sheet/"+myRoleId+"?clientId="+encodeURIComponent(clientId))).json(); }catch(e){ banner("큐카드 로드 실패"); return; }
@@ -9685,7 +9709,7 @@ function toolPick(id){ toolSel=id; showMyHand("tool"); }
    소지품(belongLocs)을 쓰는 사건에서는 그 칸이 하나 더 붙는다. */
 function showMyHand(tab){
   if(!myRoleValid()){ banner("배역을 맡아야 단서가 있어요"); return; }
-  if(openBlocked()) return;
+  if(openBlocked("hand")) return;
   coachDone("hand");
   const bsplit=belongLocs().length>0, tsplit=hasToolDeck();
   if(tab) handTab=tab;
