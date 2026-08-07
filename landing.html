@@ -1095,25 +1095,56 @@ function roomLink(){
   return u.toString();
 }
 function copyRoomLink(){ copyText(roomLink(), "초대 링크를 복사했습니다 — 열면 코드가 저절로 들어갑니다."); }
-/* 코드를 물어보는 자리. 참가자와 «다시 들어가기» 가 같은 문을 쓴다 — 하는 일이 같다. */
-async function askRoomCode(mode){
+/* ── 코드를 물어보는 자리 ────────────────────────────────────────
+   참가자와 «다시 들어가기» 가 같은 문을 쓴다 — 하는 일이 같다.
+   ★ 한 번 prompt() 로 물었다가 물렀다. 브라우저가 그리는 그 회색 상자는 이 판의
+     화면과 아무 관계가 없고, 폰에서는 주소창 밑에 붙어 나와 「이게 이 게임 거 맞나」
+     싶게 만든다. 관리자 비밀번호 칸과 같은 창을 쓴다 — 이 화면에서 «무언가를 넣는
+     자리»는 하나뿐인 편이 낫다. */
+function askRoomCode(mode){
   const last=(()=>{ try{ return localStorage.getItem("pmb.room")||""; }catch(e){ return ""; } })();
-  const c=prompt(mode==="back"
-    ? "쓰던 방 코드를 넣어주세요."
-    : "호스트에게 받은 방 코드를 넣어주세요.", last);
-  if(c==null) return;
-  const code=String(c).trim().toUpperCase();
-  if(!code){ note("코드를 넣어주세요."); return; }
+  const back=(mode==="back");
+  $("adcard").className="adcard crt-flick";
+  $("adcard").innerHTML=`<h3>${back?"다시 들어가기":"참가자 · 방 코드"}</h3>
+    <div class="adsub">${back?"REJOIN A ROOM":"ENTER ROOM CODE"}</div>
+    <div class="adsub" style="margin-top:14px">${back
+      ? "쓰던 방 코드를 넣어주세요. 앉아 있던 자리가 그대로 있습니다."
+      : "호스트에게 받은 네 글자를 넣어주세요."}</div>
+    <div class="adform"><input id="rcin" type="text" placeholder="방 코드" autocomplete="off"
+      inputmode="latin" autocapitalize="characters" spellcheck="false" maxlength="8">
+      <button onclick="submitRoomCode('${back?"back":"participant"}')">입장</button></div>
+    <div class="aderr" id="rcerr"></div>
+    <button class="adclose" onclick="closeAdmin()">닫기</button>`;
+  $("admask").classList.add("on");
+  setTimeout(()=>{ const e=$("rcin"); if(!e) return;
+    e.value=last;
+    /* 소문자로 쳐도 코드가 되게 그 자리에서 올린다. 헷갈리는 글자(O·I·L)는 쓰지 않는
+       코드라, 사람이 0 이나 1 로 잘못 옮겨 적었을 때 그걸 알아듣게 바꿔 준다. */
+    e.oninput=()=>{ const p0=e.selectionStart;
+      e.value=e.value.toUpperCase().replace(/[^A-Z0-9-]/g,"").replace(/O/g,"0").replace(/[IL]/g,"1");
+      try{ e.setSelectionRange(p0,p0); }catch(err){} };
+    e.onkeydown=ev=>{ if(ev.key==="Enter") submitRoomCode(back?"back":"participant"); };
+    e.focus(); e.select();
+  },60);
+}
+async function submitRoomCode(mode){
+  const e=$("rcin"), err=$("rcerr");
+  const code=((e&&e.value)||"").trim().toUpperCase();
+  const say=t=>{ if(err) err.textContent=t; if(e) e.focus(); };
+  if(!code){ say("코드를 넣어주세요."); return; }
+  say("확인하는 중…");
   let d=null;
   try{ d=await (await fetch(`/api/room?code=${encodeURIComponent(code)}&clientId=${encodeURIComponent(clientId)}`)).json(); }
-  catch(e){ note("서버에 못 닿았습니다."); return; }
-  if(!d||d.error){ note(`${code} — 그런 방이 없습니다. 코드를 다시 확인해주세요.`); return; }
+  catch(ex){ say("서버에 못 닿았습니다. 잠시 뒤 다시 눌러주세요."); return; }
+  if(!d||d.error){ say(`${code} — 그런 방이 없습니다. 코드를 다시 확인해주세요.`); return; }
+  closeAdmin();
   setRoomCode(code);
   /* 앉았던 자리가 남아 있으면 그걸 먼저 알린다. 「이어서 하시겠습니까」의 답이
      이미 「예」인 상황이라, 묻는 대신 그대로 데려간다. */
-  if(d.mine){ note(`${code} 방으로 돌아왔습니다 — 앉아 있던 자리가 그대로 있습니다.`); }
-  else if(d.started){ note(`${code} 방은 이미 판이 돌고 있습니다.`); }
-  me.mode=(mode==="back"&&d.isHost)?"host":(mode==="back"?"participant":"participant");
+  if(d.mine) note(`${code} 방으로 돌아왔습니다 — 앉아 있던 자리가 그대로 있습니다.`);
+  else if(d.started) note(`${code} 방은 이미 판이 돌고 있습니다.`);
+  else note(`${code} 방에 들어왔습니다.`);
+  me.mode=(mode==="back"&&d.isHost)?"host":"participant";
   if(d.isHost) hostPresent=true;
   if(d.scenarioId) me.pick=d.scenarioId;
   go("scenarios"); render();
