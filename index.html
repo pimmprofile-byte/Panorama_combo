@@ -3400,6 +3400,25 @@
      늘 그 모양이다. */
   .immbox.glow{border-color:var(--gold);
     box-shadow:0 0 0 1px var(--gold),0 0 22px -6px var(--gold)}
+  /* 단추 자체가 점멸한다 — 하단바의 「내 정보」를 부를 때 쓴 그 패턴(dkDim)과
+     같은 결이다. steps(1) 이라 서서히가 아니라 «딱딱» 갈아치운다. 이 판에서
+     「여기를 누르라」는 늘 이 깜빡임이다. */
+  .immbox.glow .imm-go{animation:immBlink 1.15s steps(1) infinite}
+  @keyframes immBlink{
+    0%,49%  {background:#7fe9bd;color:var(--case-fg);border-color:var(--case-e)}
+    50%,100%{background:var(--case-b);color:var(--case-fg);border-color:var(--case-e)}
+  }
+  /* 단추가 있는 탭으로 데려가는 길 */
+  .immjump{display:block;width:100%;margin-top:14px;padding:11px 12px;
+    border:1px solid var(--case-e);border-radius:2px;
+    font-family:inherit;font-size:12.5px;font-weight:800;letter-spacing:.01em;
+    color:var(--case-fg);cursor:pointer;word-break:keep-all;
+    box-shadow:2px 2px 0 var(--case-e);
+    animation:immBlink 1.15s steps(1) infinite}
+  .immjump:active{transform:translate(2px,2px);box-shadow:none}
+  @media(prefers-reduced-motion:reduce){
+    .immbox.glow .imm-go,.immjump{animation:none;background:#7fe9bd;color:var(--case-fg)}
+  }
   /* max-width 를 안 걸었더니 상자보다 길어진 말풍선이 가운데 맞춤에 밀려 왼쪽으로
      삐져나갔다 — 첫 글자가 화면 밖에서 잘렸다. */
   .immbox .imm-cue{margin:0 0 9px;display:inline-block;max-width:100%;
@@ -3411,11 +3430,7 @@
      transform 에 translateX(-50%) 가 들어 있다. 여기는 부모가 가운데를 맞춰 주므로
      위아래로만 흔드는 것이 따로 필요하다. */
   @keyframes bobY{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-  .immbox.glow .imm-go{animation:immPulse 1.5s ease-in-out infinite}
-  @keyframes immPulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
-  @media(prefers-reduced-motion:reduce){
-    .immbox .imm-cue,.immbox.glow .imm-go{animation:none}
-  }
+  @media(prefers-reduced-motion:reduce){ .immbox .imm-cue{animation:none} }
   /* ── 「몰입 완료」가 붙는 장 ──────────────────────────────────────
      단추가 화면 밖으로 밀려나면 끝까지 읽고도 못 누른다 — 「다음이 없는데
      왜 안 넘어가지」로 판이 멈춘다. 이 장에서만 글을 한 단 줄여 단추를
@@ -4041,10 +4056,13 @@ function qaToggleTutor(){
    ★ 내 자리는 손도 안 댄다. 그게 이 단추의 전부다 — 「전원 자동행동」은 이미
      따로 있고, 그건 내 몫까지 눌러 버려서 정작 볼 것을 못 본다.
    ★ 폴링마다 도는데, 서버 왕복이 겹치면 같은 것을 두 번 누른다. 자물쇠 하나로 막는다. */
-function qaOthersOn(){ try{ return localStorage.getItem("pmb.qaothers")==="1"; }catch(e){ return false; } }
+/* ★ 기본이 «켬»이다. QA 는 검수하는 자리고, 검수하면서 세 좌석을 손으로 다
+   누르고 있으면 정작 볼 것을 못 본다 — 껐다 켜야 쓸 수 있는 기능이면 그건
+   기본값이 틀린 것이다. 끈 사람만 «0» 을 남긴다. */
+function qaOthersOn(){ try{ return localStorage.getItem("pmb.qaothers")!=="0"; }catch(e){ return true; } }
 function qaToggleOthers(){
-  try{ if(qaOthersOn()) localStorage.removeItem("pmb.qaothers");
-       else localStorage.setItem("pmb.qaothers","1"); }catch(e){}
+  try{ if(qaOthersOn()) localStorage.setItem("pmb.qaothers","0");
+       else localStorage.removeItem("pmb.qaothers"); }catch(e){}
   paintQA();
   banner(qaOthersOn()?"나머지 배역이 알아서 진행합니다.":"나머지 자동을 껐습니다.");
   if(qaOthersOn()) qaOthersTick();
@@ -4090,10 +4108,16 @@ async function qaOthersTick(){
     }
     // ③ 조사 — 내 턴이 아닌 차례는 알아서 돈다. 여기만 나를 안 기다린다.
     //    기다려 봐야 내가 할 수 있는 것이 없는 차례다.
+    //    ★ 조사만 시키고 끝내면 차례가 그 자리에 멈춰 선다 — 자동조사는 조사턴을
+    //      쓸 뿐 «차례를 넘기지» 않는다. 사람이 손으로 「다음 차례」를 누르는 그
+    //      한 걸음이 자동에는 없어서, 판이 그 자리에서 굳었다. 넘기는 것까지가
+    //      이 자리의 몫이다.
     if(k==="invest"){
       const turn=STATE&&STATE.turn;
       if(turn&&ids.indexOf(turn)>=0){
-        await post("/api/qa/auto",{roleId:turn,key:hostKey(),puzzles:true}); moved=true;
+        await post("/api/qa/auto",{roleId:turn,key:hostKey(),puzzles:true});
+        await post("/api/turn/next",{clientId,roleId:turn,key:hostKey()});
+        moved=true;
       }
     }
     // ④ 준비 — 내가 「다음 페이즈」를 누른 뒤에 나머지 몫이 따라 눌린다.
@@ -9267,6 +9291,13 @@ function immBlockHTML(){
       ${mine?"기다리는 중 — 취소":"몰입 완료!"}</button>
     <div class="imm-n"><b>${s.n}</b>/${s.of} 명</div></div>`;
 }
+/* 다 읽었는데 단추가 있는 탭이 아닌 곳에 서 있는 사람에게. 단추를 옮겨 오지
+   않고 «그리로 가는 길»만 깐다 — 눌리면 그 탭의 마지막 장으로 곧장 간다. */
+function immJumpHTML(home){
+  const label=(SHEET_TABS.find(([k])=>k===home)||["","마지막"])[1];
+  return `<button class="immjump" onclick="sheetGo('${home}','end')">
+    다 읽었습니다 — 「${esc(label)}」의 <b>몰입 완료</b>로 가기 ›</button>`;
+}
 function renderSheetTabs(){
   const s=sheetRole; if(!s) return;
   const meta=[s.age,s.sex,s.job].filter(Boolean).join(" · ");
@@ -9279,16 +9310,20 @@ function renderSheetTabs(){
   const cur=sheetSlides.filter(x=>x.tab===sheetTab).map(x=>x.html);
   /* 「몰입 완료!」 — 마지막 탭의 «마지막 장» 에만 붙는다. 끝까지 넘겨 본 사람만
      그 단추를 만난다는 것이 이 장치의 전부다. 중간에 붙이면 안 읽고 누른다.
-     ★ 다만 «이미 다 읽은» 사람에게는 어느 탭에서든 붙인다. 그 장치가 지키려던
-       것은 이미 지켜졌고, 그때부터는 단추를 찾아 탭을 되짚게 만드는 것이
-       그냥 방해다.
+     ★ 한 번 «다 읽은 사람에게는 어느 탭에서든» 붙였다가 물렀다. 그러면 단추가
+       사람마다 다른 탭에 서 있는 것으로 보인다 — 어떤 배역은 「추가 정보」에,
+       어떤 배역은 「한눈에」에. 단추의 집은 하나여야 한다.
+       대신 다 읽고 다른 탭에 서 있는 사람에게는 «그 집으로 가는 길»을 깐다
+       (아래 immJumpHTML). 찾아 헤매게 두지 않으면서 자리는 안 옮긴다.
      ★ 카드와 단추를 한 겹으로 묶는다(.withimm) — 그 겹에서만 글을 줄여
        단추를 화면 안으로 끌어온다. */
   if(inOpening()&&myRoleValid()&&cur.length){
     const tl=sheetTabList();
-    const atLast = tl.length && sheetTab===tl[tl.length-1];
-    if(atLast||allTabsRead())
+    const home = tl.length ? tl[tl.length-1] : "";
+    if(home&&sheetTab===home)
       cur[cur.length-1]=`<div class="withimm">${cur[cur.length-1]}${immBlockHTML()}</div>`;
+    else if(home&&allTabsRead()&&!immMine())
+      cur[cur.length-1]+=immJumpHTML(home);
   }
   $("sheetBox").innerHTML=`<div class="mhead sheeth">
       <div class="sh-id">${avaHTML(s,"sm")}
