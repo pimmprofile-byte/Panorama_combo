@@ -1346,6 +1346,10 @@ function bootRun(){
   bootTimers.push(setTimeout(bootSkip, BOOT_A+BOOT_B));
 }
 bootRun();
+/* 초대 링크로 들어왔으면 첫 화면을 묻지 않고 그대로 방으로 넣는다.
+   부팅 연출은 그대로 돌고, 그 뒤에서 화면만 사건 목록으로 옮겨 놓는다 —
+   막이 걷혔을 때 이미 그 방 안이다. */
+setTimeout(()=>{ try{ enterInvite(); }catch(e){} },0);
 
 /* ── 걷는 DAY ──────────────────────────────────────────────────────
    문패 자리(P 로고)에 이 세상의 주민을 세운다. 컷은 둘뿐이고, 둘 다 있어야
@@ -1447,6 +1451,11 @@ async function submitRoomCode(){
   catch(ex){ say("서버에 못 닿았습니다. 잠시 뒤 다시 눌러주세요."); return; }
   if(!d||d.error){ say(`${code} — 그런 방이 없습니다. 코드를 다시 확인해주세요.`); return; }
   closeAdmin();
+  enterRoomWith(code, d);
+}
+/* 코드가 통한 뒤의 «들어가는 동작» 한 벌. 손으로 코드를 친 사람과 초대 링크를
+   누른 사람이 똑같이 이 자리를 지난다 — 문이 둘인데 안쪽이 다르면 안 된다. */
+function enterRoomWith(code, d){
   setRoomCode(code);
   /* 앉았던 자리가 남아 있으면 그걸 먼저 알린다. 「이어서 하시겠습니까」의 답이
      이미 「예」인 상황이라, 묻는 대신 그대로 데려간다. */
@@ -1459,6 +1468,31 @@ async function submitRoomCode(){
   if(d.isHost) hostPresent=true;
   if(d.scenarioId) me.pick=d.scenarioId;
   go("scenarios"); render();
+}
+/* ── 초대 링크 ────────────────────────────────────────────────────
+   주소에 코드가 실려 있으면 그것으로 끝이다. 여태는 코드를 localStorage 에
+   적어만 두고 첫 화면(New Game / Rejoin)에 세워 놨다 — 받은 사람은 「코드를 칠
+   것도 없이 바로 들어옵니다」라고 적힌 안내를 읽고도 결국 Rejoin 을 눌러
+   입장까지 두 번 더 눌러야 했다. 링크 하나로 들어가는 것이 링크의 뜻이다.
+   ★ 읽었으면 주소에서 뗀다. 안 떼면 새로고침할 때마다 이 방으로 다시 끌려가고,
+     나중에 자기 방을 열어도 뒤로 가기 한 번에 남의 방으로 돌아간다. */
+async function enterInvite(){
+  let code=""; try{ code=(new URLSearchParams(location.search).get("room")||"").trim().toUpperCase(); }catch(e){}
+  if(!code) return false;
+  try{
+    const u=new URL(location.href); u.searchParams.delete("room");
+    const q=u.searchParams.toString();
+    history.replaceState(null,"",u.pathname+(q?"?"+q:"")+u.hash);
+  }catch(e){}
+  /* 남의 방에 들어가는 문이다 — 이 기기에 남아 있던 QA 표시는 여기서 끈다.
+     켜진 채로 들어가면 한 기기가 세 자리를 다 쥐려 들어 방이 엉킨다. */
+  clearQA();
+  let d=null;
+  try{ d=await (await fetch(`/api/room?code=${encodeURIComponent(code)}&clientId=${encodeURIComponent(clientId)}`)).json(); }
+  catch(ex){ note("서버에 못 닿았습니다 — 코드로 다시 들어와 주세요."); return false; }
+  if(!d||d.error){ note(`${code} — 그런 방이 없습니다. 호스트에게 코드를 다시 받아주세요.`); return false; }
+  enterRoomWith(code, d);
+  return true;
 }
 function enterBack(){ clearQA(); askRoomCode(); }
 /* 이 기기에 남아 있는 QA 표시를 지운다. 게임 화면은 pmb.qa 하나로 QA 를 켜므로

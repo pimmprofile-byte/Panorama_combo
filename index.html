@@ -716,24 +716,30 @@
      보는 편이 한 자리씩 차는 걸 지켜보는 것보다 낫다.
      코드는 걷힌 뒤에도 머리줄의 작은 알약(.rmpill)에 남는다 — 중간에 누가 나가면
      다시 불러야 하니까. */
-  /* ★ 한때 이것이 화면을 통째로 덮는 관문이었다(position:fixed·inset:0·어둠막).
-       뒤의 배역 선택창은 회색으로 죽이고 손도 못 대게 했다(.wrap.gated).
-       그런데 이 관문이 걷히는 조건은 «자리가 다 찼는가»(allSeated)이고, 자리를
-       채우는 유일한 길은 그 아래 깔린 배역 카드다 — 관문이 자기를 걷을 손을 자기가
-       막고 있었다. 아무도 앉을 수 없고, 그래서 관문은 영영 안 걷히고, 게임은
-       시작되지 않는다. 「호스트로 들어간 다음부터 시작이 안 된다」가 이것이다.
-     ★ 로비의 일은 «자리에 앉는 것»이다. 그 일을 막는 관문은 관문이 아니라 벽이다.
-       덮지 않고 «맨 위에 서는 판»으로 둔다 — 코드는 여전히 제일 먼저 눈에 들어오고,
-       배역 카드는 그 아래에서 그대로 눌린다. */
-  .roomgate{margin:0 0 14px;animation:gateIn .22s ease-out}
+  /* ── 방 코드 관문 ────────────────────────────────────────────────
+     셋이 다 오기 전에는 배역이 아예 안 보여야 한다. 그래서 이 판은 «배역 카드
+     앞»에 선다 — 카드 위에 얹히는 것이 아니라 카드를 가린다.
+     ★ 한때 이 관문이 걷히는 조건이 «자리가 다 찼는가»(allSeated) 였다. 그런데
+       자리를 잡는 유일한 길이 이 판에 가려 있어서, 관문이 자기를 걷어 줄 손을
+       자기가 막고 있었다 — 아무도 앉을 수 없고, 그래서 관문은 영영 안 걷히고,
+       게임은 시작되지 않는다. 「호스트로 들어간 다음부터 시작이 안 된다」가 이것.
+     ★ 지금은 «셋이 다 와 있는가»(STATE.here)로 걷는다. 화면을 열어 두기만 해도
+       참이 되는 값이라 그런 고리가 안 생긴다. 걷히면 그때 배역을 고른다. */
+  /* 판이 덮을 자리. 배역 목록과 같은 칸에 살아야 «그 앞»에 설 수 있다. */
+  .lobbystage{position:relative}
+  /* 판이 서 있는 동안에는 목록이 화면을 늘릴 이유가 없다 — 가려진 것을 위해
+     스크롤이 생기면 빈 어둠만 밀린다. 판 하나가 들어갈 만큼만 남긴다. */
+  .lobbystage.gated{min-height:320px;max-height:min(70dvh,560px);overflow:hidden}
+  .roomgate{position:absolute;inset:0;z-index:40;display:grid;place-items:center;
+    padding:8px;background:var(--bg);animation:gateIn .22s ease-out}
   .roomgate[hidden]{display:none}
   @keyframes gateIn{from{opacity:0}to{opacity:1}}
   /* ★ 덮는 판이었을 때는 화면 한가운데를 다 써도 됐다. 이제는 배역 카드 위에
        얹히므로, 커지는 만큼 정작 눌러야 할 카드가 접힌 아래로 내려간다.
        코드는 그대로 크게 두되 나머지는 한 단씩 줄인다 — 코드·복사·몇 명 앉았나,
        셋만 남기면 된다. */
-  .roomgate .roomcode{width:100%;margin:0;padding:13px 14px 12px;
-    box-shadow:3px 3px 0 rgba(0,0,0,.45)}
+  .roomgate .roomcode{width:min(420px,100%);max-height:100%;overflow:auto;margin:0;
+    padding:15px 15px 13px;box-shadow:4px 4px 0 rgba(0,0,0,.5)}
   .roomgate .rg-h{font-size:13.5px;font-weight:800;color:var(--case-fg);margin:0 0 2px}
   .roomgate .rg-k{font-family:var(--mono);font-size:.55rem;letter-spacing:.2em;
     text-transform:uppercase;color:var(--case-fg2);margin:0 0 8px}
@@ -3831,10 +3837,13 @@
     <!-- 두 문장이라 두 줄로 끊는다. 폭에 맡기면 「내 비밀 정보는 이 / 기기에만」처럼
          한 덩이 한가운데가 갈라진다 — 읽는 눈이 거기서 한 번 걸린다. -->
     <div class="lead">각자 자기 기기에서 배역을 고르세요.<br>내 비밀 정보는 이 기기에만 보입니다.</div>
-    <!-- 방 코드 판. 자리가 다 차기 전에는 배역 카드 «위»에 선다 — 앞이 아니라 위다.
-         앞을 막으면 앉을 수가 없고, 앉을 수가 없으면 판이 안 걷힌다. -->
-    <div class="roomgate" id="lobbyGate" hidden><div class="roomcode" id="lobbyRoom"></div></div>
-    <div id="lobbyList"></div>
+    <!-- 배역 카드와 그 앞을 가리는 판. 셋이 다 «올» 때까지 배역은 안 보인다.
+         걷히는 조건은 «자리가 찼는가»가 아니라 «다 왔는가»다 — 자리는 이 판이
+         걷힌 다음에 잡는 것이라, 자리로 재면 아무도 못 앉는 고리가 된다. -->
+    <div class="lobbystage">
+      <div id="lobbyList"></div>
+      <div class="roomgate" id="lobbyGate" hidden><div class="roomcode" id="lobbyRoom"></div></div>
+    </div>
     <!-- 진행석(GM) 문. 이 사건에서는 안 쓰기로 해서 gmSeatOffered() 가 통째로 감춘다.
          기능은 그대로 살아 있다 — 감추는 것과 죽이는 것은 다르다. -->
     <div class="setbar" id="gmSetbar">
@@ -5963,22 +5972,30 @@ function paintLobbyRoom(){
     if(pill.innerHTML!==want) pill.innerHTML=want;
   }
   const g=$("lobbyGate"), b=$("lobbyRoom");
+  const stage=document.querySelector("#s-lobby .lobbystage");
   if(!g||!b) return;
-  const done = !on || allSeated() || !!(STATE&&STATE.started);
-  if(done){ g.hidden=true; b.innerHTML=""; return; }
-  const left=(SCEN&&SCEN.characters||[]).filter(c=>((STATE.roles||{})[c.id]||{}).mode==="open").length;
-  const seats=(SCEN&&SCEN.characters||[]).length;
-  g.hidden=false;
+  /* ★ «자리가 찼는가»(allSeated)로 재던 자리다. 자리를 잡으려면 이 판이 가리고
+       있는 배역 카드를 눌러야 하니, 판이 자기를 걷어 줄 손을 자기가 막았다.
+       이제는 «다 왔는가»로 잰다 — 화면을 열어 두면 참이 되는 값이라 고리가 없다.
+     ★ allSeated 는 그래도 남긴다. QA 검수는 한 기기가 세 자리를 한꺼번에 쥐어서
+       «온 사람»은 하나뿐인데 자리는 다 찬다 — 그때도 판은 걷혀야 한다. */
+  const here=(STATE&&STATE.here)||null;
+  const done = !on || (here&&here.done) || allSeated() || !!(STATE&&STATE.started);
+  if(done){ g.hidden=true; b.innerHTML=""; if(stage) stage.classList.remove("gated"); return; }
+  const of=(here&&here.of)||(SCEN&&SCEN.characters||[]).length||3;
+  const n=(here&&here.n)||0;
+  g.hidden=false; if(stage) stage.classList.add("gated");
   b.innerHTML=`<div class="rg-h">함께할 사람을 부르세요</div>
     <div class="rg-k">Waiting for players</div>
     <div class="rc-line"><b class="rc-code">${esc(roomCode)}</b></div>
-    <div class="rc-say">이 코드를 알려주세요 — <b>기존 코드로 입장</b>에 넣으면 같은 방에 들어옵니다.</div>
+    <div class="rc-say">이 코드를 알려주세요 — <b>기존 코드로 입장</b>에 넣으면 같은 방에 들어옵니다.
+      초대 링크를 보내면 코드를 칠 것도 없이 바로 들어옵니다.</div>
     <div class="rc-acts">
       <button class="rc-b" onclick="copyRoomCode()">코드 복사</button>
       <button class="rc-b" onclick="copyInvite()">초대 링크 복사</button>
     </div>
-    <div class="rg-left">${seats-left} / ${seats} 명이 앉았습니다 — <b>남은 자리 ${left}</b><br>
-      <b>아래에서 내 배역을 고르세요.</b> 다 차면 이 판이 걷힙니다.</div>`;
+    <div class="rg-left"><b>${n} / ${of}</b> 명이 들어왔습니다 — 남은 사람 <b>${Math.max(0,of-n)}</b><br>
+      다 모이면 이 판이 걷히고 배역을 고릅니다.</div>`;
 }
 async function copyRoomCode(){
   try{ await navigator.clipboard.writeText(roomCode); banner("방 코드 "+roomCode+" 를 복사했습니다."); }
