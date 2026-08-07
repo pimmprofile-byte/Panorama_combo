@@ -2600,11 +2600,22 @@
   .cctv .cc-wires line{stroke:rgba(150,225,195,.34);stroke-width:2;stroke-linecap:round;
     stroke-dasharray:5 5}
   /* 카메라 한 대 = 구역 한 곳. 자리는 BOARD.nodes 가 준 퍼센트다(가운데 기준). */
+  /* 판때기 그림 — 카메라들이 그 위에 앉는다 */
+  .cctv.onart{background:#0a0d0e}
+  .cctv .cc-board{position:absolute;inset:0;background:center/100% 100% no-repeat}
+  /* 그림이 있는 판에서는 «그려진 액자» 크기를 그대로 받는다(--w/--h).
+     없으면 4:3 로 선다. */
   .cctv .cc-cam{position:absolute;left:var(--x);top:var(--y);transform:translate(-50%,-50%);
-    width:30%;aspect-ratio:4/3;padding:0;overflow:hidden;cursor:pointer;
+    width:var(--w,30%);padding:0;overflow:hidden;cursor:pointer;
     border:1px solid #2c3a3a;border-radius:2px;background:#080b0c;
     box-shadow:0 0 0 1px rgba(0,0,0,.6),0 6px 14px -8px #000;
     transition:border-color .14s,transform .14s}
+  .cctv .cc-cam{height:var(--h)}
+  .cctv .cc-cam:not([style*="--h"]){aspect-ratio:4/3}
+  /* 아직 «있는 줄도 모르는» 곳 — 판때기 그림에 그려진 방을 통째로 덮는다.
+     이름도 번호도 없다. 그냥 안 켜진 화면 하나다. */
+  .cctv .cc-cam.hidden{cursor:default;border-color:#1e2424;background:#05080a}
+  .cctv .cc-cam.hidden .cc-dead{background-color:#070a0b}
   .cctv .cc-cam:active{transform:translate(-50%,-50%) scale(.97)}
   .cctv .cc-cam:not(.dead):hover{border-color:var(--gold)}
   .cctv .cc-pic{position:absolute;inset:0;background:center/cover no-repeat;
@@ -6390,20 +6401,18 @@ function boardOf(){ const b=SCEN&&SCEN.board; return (b&&b.nodes&&Object.keys(b.
 function boardZones(){
   const b=boardOf(); if(!b) return [];
   const byLoc={}; ((SCEN.map)||[]).forEach(z=>byLoc[z.loc]=z);
+  /* ★ 꺼둘 자리(dark)는 SCEN.map 에 없다 — 서버가 대본에서 통째로 걷어냈기
+     때문이다. 그래도 «덮어야» 하므로 여기서 남긴다. 안 남기면 판때기 그림에
+     그려진 그 방이 그대로 드러난다. */
+  const dark=new Set(b.dark||[]);
   return Object.keys(b.nodes).map(loc=>({loc, z:byLoc[loc], at:b.nodes[loc]}))
-                             .filter(x=>x.z);
+                             .filter(x=>x.z || dark.has(x.loc));
 }
-/* 보이는 칸만으로 판을 다시 채운다.
-   ★ 여덟 자리를 그대로 쓰면 1차 조사에서 판의 위쪽 3분의 1이 통째로 빈다 —
-     아직 «있는 줄도 모르는» 구역 셋이 거기 있기 때문이다. 그 빈자리는 「저기
-     뭔가 더 있다」를 공지한다. 그래서 지금 보이는 칸들의 테두리를 재서 판에
-     꽉 차게 다시 앉힌다. 구역이 열리면 판이 넓어지며 자리가 옮겨가는데,
-     그 «판이 넓어지는 것» 자체가 해금의 연출이 된다. */
-/* 판의 크기와 여백은 «카메라 한 대»에서 나온다. 카메라가 판 너비의 CW 이고
-   4:3 이므로 높이는 CW*0.75 다. 줄 사이를 그 1.25 배로 두면 위아래가 안 겹친다.
-   이 셋을 손으로 따로 적어 두면 하나만 고쳐도 카메라가 서로 파고든다 — 한 곳에서
-   같이 센다. */
-const CC_W=0.30;                     // 카메라 너비 (판 너비 대비)
+/* 보이는 칸만으로 판을 다시 채운다 — «그림 없는 판»에서만 한다.
+   ★ 판때기 그림이 있으면 자리를 손대면 안 된다. 그림에 그려진 액자 위에 정확히
+     앉아야 하기 때문이다. 그림이 없을 때만(코드가 자리만 잡는 판) 보이는 칸을
+     재서 꽉 채운다 — 그때는 빈자리가 곧 「저기 뭔가 더 있다」가 되기 때문이다. */
+const CC_W=0.30;                     // 그림 없는 판에서의 카메라 너비 (판 너비 대비)
 const CC_H=CC_W*0.75;                // 4:3
 const CC_GAP=CC_H*1.25;              // 줄 사이 중심 간격
 function boardBox(rows){
@@ -6425,30 +6434,50 @@ function renderBoard(el){
   const b=boardOf(); if(!b){ renderMap(el); return; }
   const zs=boardZones();
   if(!zs.length){ renderMap(el); return; }
-  /* 판의 높이는 «보이는 줄 수»가 정한다. 여덟 자리를 다 세운 높이(2:3)를 그대로
-     두면 다섯 자리만 보이는 1차 조사에서 판이 화면 두 배 길이가 된다 —
-     스크롤을 내려야 아래쪽 구역이 나오는데, 그건 판이 아니라 목록이다.
-     카메라 한 대가 판 너비의 0.24, 줄 사이가 0.30 이다(다섯 줄이면 1.54 ≒ 3/2). */
-  const rows=new Set(zs.map(x=>x.at[1])).size;
-  const box=boardBox(rows), H=box.H.toFixed(3);
-  const at=boardFit(zs, box);
-  zs.forEach(x=>x.at=at[x.loc]);
-  const wires=(b.links||[]).filter(([a,c])=>at[a]&&at[c]).map(([a,c])=>
+  const art=!!b.art;
+  const dark=new Set(b.dark||[]);
+  let H, style="";
+  if(art){
+    /* 그림이 있는 판. 비율도 자리도 그림이 정한다 — 화면은 그 위에 얹기만 한다. */
+    const r=b.ratio||[2,3];
+    style=`--ar:${r[0]}/${r[1]}`;
+  }else{
+    const rows=new Set(zs.map(x=>x.at[1])).size;
+    const box=boardBox(rows); H=box.H.toFixed(3);
+    const at=boardFit(zs, box);
+    zs.forEach(x=>x.at=at[x.loc]);
+    style=`--ar:1/${H}`;
+  }
+  const at={}; zs.forEach(x=>at[x.loc]=x.at);
+  /* 길은 판때기 그림이 이미 그려 놓았다 — 그림이 있으면 또 긋지 않는다. */
+  const wires=art?"":(b.links||[]).filter(([a,c])=>at[a]&&at[c]).map(([a,c])=>
     `<line x1="${at[a][0]}" y1="${at[a][1]}" x2="${at[c][0]}" y2="${at[c][1]}" vector-effect="non-scaling-stroke"/>`).join("");
-  const cams=zs.map(x=>boardCamHTML(x)).join("");
+  const cams=zs.map(x=>boardCamHTML(x, dark.has(x.loc), art)).join("");
   el.innerHTML=`${floodHTML()}<div class="mapbar"><span class="mh">${ICO.map} ${esc(MAP_LABEL())}</span>
       ${mapPills()}<span class="mspace"></span>
       <button class="mrule" onclick="showInvestRule()" aria-label="조사 규칙">?</button></div>
-    <div class="cctv" style="--ar:1/${H}">
-      <svg class="cc-wires" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${wires}</svg>
+    <div class="cctv${art?" onart":""}" style="${style}">
+      ${art?`<div class="cc-board" id="ccBoard" aria-hidden="true"></div>`:""}
+      ${wires?`<svg class="cc-wires" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${wires}</svg>`:""}
       ${cams}
       <div class="cc-glass" aria-hidden="true"></div>
     </div>`;
+  if(art) findAsset(`/assets/${STATE.scenarioId}_board`, url=>{
+    const e=$("ccBoard"); if(e&&url) e.style.backgroundImage=`url("${url}")`;
+  });
   paintBoardArt();
 }
-/* 한 칸 = 카메라 한 대 */
-function boardCamHTML(x){
-  const loc=x.loc, z=x.z, [px,py]=x.at;
+/* 한 칸 = 카메라 한 대. 그림이 있는 판에서는 «그려진 액자»의 크기까지 받아서
+   그 위에 딱 맞게 앉는다(3·4번째 값). */
+function boardCamHTML(x, isDark, art){
+  const loc=x.loc, z=x.z, a=x.at;
+  const size=(art&&a.length>3)?`--w:${a[2]}%;--h:${a[3]}%;`:"";
+  if(isDark){
+    /* 아직 «있는 줄도 모르는» 곳. 이름도 번호도 안 붙는다 — 꺼진 화면 하나다.
+       판때기 그림에 그려진 방을 통째로 덮는 것이 이 판의 몫이다. */
+    return `<span class="cc-cam dark hidden" style="--x:${a[0]}%;--y:${a[1]}%;${size}" aria-hidden="true">
+      <span class="cc-dead"></span><span class="cc-fx"></span></span>`;
+  }
   const cards=zoneCards(loc);
   const done=cards.filter(c=>{ const k=cardState(c).k; return k!=="open"&&k!=="lock"; }).length;
   const sealed=sealedLoc(loc);
@@ -6457,7 +6486,7 @@ function boardCamHTML(x){
   const left=cards.length-done;
   const ch=String(Object.keys((boardOf()||{}).nodes||{}).indexOf(loc)+1).padStart(2,"0");
   return `<button class="cc-cam${sealed?" dead":""}${fresh?" fresh":""}" data-loc="${loc}"
-      style="--x:${px}%;--y:${py}%" ${sealed?"":`onclick="openZone('${loc}')"`}
+      style="--x:${a[0]}%;--y:${a[1]}%;${size}" ${sealed?"":`onclick="openZone('${loc}')"`}
       aria-label="${esc(z.name||loc)}">
     <span class="cc-pic" data-art="${esc(z.art||"")}"></span>
     <span class="cc-fx" aria-hidden="true"></span>
@@ -6472,7 +6501,7 @@ function boardCamHTML(x){
 /* 그림은 뒤늦게 붙는다 — 확장자를 훑어야 해서다. 붙기 전에는 노이즈만 돈다. */
 function paintBoardArt(){
   const sid=STATE&&STATE.scenarioId; if(!sid) return;
-  document.querySelectorAll(".cctv .cc-cam").forEach(btn=>{
+  document.querySelectorAll(".cctv .cc-cam[data-loc]").forEach(btn=>{
     const pic=btn.querySelector(".cc-pic"); if(!pic||pic.dataset.on) return;
     const room=roomHome(btn.dataset.loc);
     const art=room?roomArt(room):(pic.dataset.art||"");

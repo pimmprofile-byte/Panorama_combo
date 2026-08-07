@@ -823,13 +823,19 @@ def scenario():
         for _k in ("map", "rooms"):
             if isinstance(d.get(_k), list):
                 d[_k] = [z for z in d[_k] if z.get("loc") not in _hid]
-        # ★ 판때기의 자리도 같이 걷는다. 아직 «있는 줄도 모르는» 구역을 노이즈로
-        #   덮어 두면, 그 노이즈가 「저기 뭔가 더 있다」를 공지한다. 노이즈는
-        #   «잠긴» 구역의 것이지 «숨긴» 구역의 것이 아니다.
+        # ★ 판때기의 자리는 «걷지 않고 꺼둔다». 판때기 그림에는 여덟 칸이 이미
+        #   그려져 있어서, 자리를 지우면 그 밑의 그림이 그대로 드러난다 —
+        #   숨기려던 방이 오히려 또렷하게 보인다. 자리는 그대로 두고 «꺼진 화면»
+        #   목록만 실어 보낸다. 화면이 그 자리를 통째로 덮는다.
+        #   그림이 없는 판때기(코드가 자리만 잡는 판)에서는 예전처럼 지운다 —
+        #   덮을 그림이 없으니 빈자리가 곧 «없는 곳»이다.
         if isinstance(d.get("board"), dict) and isinstance(d["board"].get("nodes"), dict):
             d["board"] = dict(d["board"])
-            d["board"]["nodes"] = {k: v for k, v in d["board"]["nodes"].items()
-                                   if k not in _hid}
+            if d["board"].get("art"):
+                d["board"]["dark"] = [k for k in d["board"]["nodes"] if k in _hid]
+            else:
+                d["board"]["nodes"] = {k: v for k, v in d["board"]["nodes"].items()
+                                       if k not in _hid}
         if isinstance(d.get("sealedWhy"), dict):
             d["sealedWhy"] = {k: v for k, v in d["sealedWhy"].items() if k not in _hid}
     # 「나이를 스스로 적는 배역」 명단은 모두가 받는 이 대본에 실으면 안 된다 —
