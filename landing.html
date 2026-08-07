@@ -193,64 +193,92 @@
 
   /* ── 부팅 ─────────────────────────────────────────────────────────
      ★ 게임보이가 켜질 때 로고 하나가 «떨어져» 자리를 잡고, 소리 한 번 나고,
-       그제야 게임이 시작된다. 그 20초가 없으면 카트리지를 꽂은 것이 아니라
+       그제야 게임이 시작된다. 그 몇 초가 없으면 카트리지를 꽂은 것이 아니라
        앱을 연 것이 된다. 여기도 같은 일을 한다 —
-         ① PIMM ARTWORKS  누가 만들었나
-         ② PANORAMA ESCAPE · GAME DAY  무엇을 켰나
+         ① PIMM ARTWORKS                누가 만들었나
+         ② PANORAMA ESCAPE · GAME DAY   무엇을 켰나
          ③ 랜딩
-     ★ 한 탭에서 한 번만 튼다(sessionStorage). 매번 새로고침할 때마다 4초를
+     ★ 바닥은 도스 창이다. 검은 판에 초록 격자 한 겹 — 로딩 화면이 원래 그렇게
+       생겼다. 그 위에 브라운관 가로줄과 아주 얕은 깜빡임을 얹고, 빛 한 줄이
+       화면을 훑고 지나간다(전원이 들어오는 순간의 그 줄이다).
+     ★ 한 탭에서 한 번만 튼다(sessionStorage). 매번 새로고침할 때마다 몇 초를
        기다리게 하면 그건 연출이 아니라 통행료다. 아무 데나 누르면 건너뛴다. */
-  /* place-items 만으로는 줄이 화면 «위»에 붙는다 — 칸 안에서만 가운데가 되고
-     칸 자체는 맨 위에 놓인다. place-content 까지 걸어야 판 한가운데로 온다. */
-  .boot{position:fixed;inset:0;z-index:200;background:var(--screen);
+  .boot{position:fixed;inset:0;z-index:200;background:#040806;
     display:grid;place-items:center;place-content:center;cursor:pointer;overflow:hidden}
+  /* display 를 건 순간 [hidden] 이 안 먹는다 — 클래스 규칙이 브라우저 기본 판을
+     이긴다. 걷혔는데 어두운 막만 남아 화면 전체가 죽는 사고가 여기서 난다. */
   .boot[hidden]{display:none}
   .boot.gone{animation:bootOut .5s ease forwards;pointer-events:none}
   @keyframes bootOut{to{opacity:0}}
-  /* 브라운관 결을 여기서도 깐다 — 부팅만 매끈하면 그 뒤가 더 거칠어 보인다 */
-  .boot::after{content:"";position:absolute;inset:0;pointer-events:none;
-    background:repeating-linear-gradient(180deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px)}
-  /* ★ 이름을 .stage 로 뒀다가 물렀다 — 이 파일에는 이미 .stage 가 있고(화면 한 장,
-     min-height:100vh) 그 높이가 그대로 따라와 부팅 줄이 화면 맨 위에 붙었다.
-     이 파일에서 새 이름을 지을 때는 먼저 훑는다. 이번 판에서만 세 번째다. */
-  .boot .bstage{display:none;text-align:center;padding:0 24px}
+
+  /* 도스 격자 — 아주 느리게 흐른다. 멈춰 있으면 벽지가 되고, 흐르면 «도는 중»이 된다. */
+  .boot .grid{position:absolute;inset:-40px;pointer-events:none;
+    background-image:
+      repeating-linear-gradient(0deg,rgba(0,255,153,.11) 0 1px,transparent 1px 38px),
+      repeating-linear-gradient(90deg,rgba(0,255,153,.11) 0 1px,transparent 1px 38px);
+    animation:bootGrid 5.6s linear infinite}
+  @keyframes bootGrid{to{transform:translate(38px,38px)}}
+  /* 격자 가장자리를 죽여 가운데로 눈을 모은다 */
+  .boot .vig2{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(120% 90% at 50% 45%,transparent 30%,rgba(4,8,6,.86) 100%)}
+  /* 브라운관 가로줄 */
+  .boot .scan{position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(180deg,rgba(0,0,0,.34) 0 1px,transparent 1px 3px)}
+  /* 전원이 들어오는 순간의 그 줄. 위에서 아래로 한 번 훑고 사라진다. */
+  .boot .sweep{position:absolute;left:-10%;right:-10%;height:26%;pointer-events:none;
+    background:linear-gradient(180deg,transparent,rgba(0,255,153,.16) 45%,rgba(180,255,220,.30) 50%,rgba(0,255,153,.16) 55%,transparent);
+    animation:bootSweep 2.2s cubic-bezier(.4,0,.5,1) infinite}
+  @keyframes bootSweep{0%{top:-30%}100%{top:110%}}
+  /* 아주 얕은 깜빡임. 눈에 «띄면» 진 것이다 — 있는 줄 모르고 느끼기만 해야 한다. */
+  .boot .flick{position:absolute;inset:0;pointer-events:none;background:rgba(180,255,220,.05);
+    animation:bootFlick 3.1s steps(1) infinite}
+  @keyframes bootFlick{
+    0%,7%{opacity:0} 8%{opacity:1} 9%,40%{opacity:0} 41%{opacity:.7}
+    42%,73%{opacity:0} 74%{opacity:1} 75%,100%{opacity:0}}
+
+  .boot .bstage{display:none;text-align:center;padding:0 24px;position:relative;z-index:2}
   .boot .bstage.on{display:block}
 
-  /* ① P 로고 — 위에서 떨어져 자리를 잡는다 */
-  .boot .plg{width:96px;height:96px;margin:0 auto;
-    background:var(--plogo) center/auto 62px no-repeat;
+  /* ① PIMM 로고 — 위에서 떨어져 자리를 잡는다 */
+  .boot .pimm{width:min(300px,66vw);aspect-ratio:1280/721;margin:0 auto;
+    background:var(--signal);
+    -webkit-mask:url("/assets/pimm_logo.svg") center/contain no-repeat;
+            mask:url("/assets/pimm_logo.svg") center/contain no-repeat;
     animation:bootDrop .62s cubic-bezier(.22,1.4,.4,1) both}
   @keyframes bootDrop{
     0%{transform:translateY(-160px);opacity:0}
     62%{transform:translateY(0);opacity:1}
     72%{transform:translateY(-9px)}
     100%{transform:translateY(0);opacity:1}}
-  /* 인광 옅은 색(--phos-dim)을 그대로 썼더니 어두운 화면 위에서 글자가 거의
-     안 보였다. 부팅 화면은 이 한 줄이 전부인 장이라, 여기서는 켠다. */
-  .boot .lead1{margin-top:24px;font-size:13.5px;letter-spacing:.3em;
-    text-transform:uppercase;color:var(--signal);opacity:.86;
-    text-shadow:0 0 14px rgba(0,255,153,.3);
+  .boot .lead1{margin-top:20px;font-family:var(--ui);font-size:11px;font-weight:700;
+    letter-spacing:.42em;text-indent:.42em;text-transform:uppercase;color:var(--phos-dim);
     animation:bootIn .4s ease .72s both}
   @keyframes bootIn{from{opacity:0}to{opacity:1}}
 
   /* ② PANORAMA ESCAPE · GAME DAY */
-  .boot .pano{font-size:clamp(20px,7.2vw,34px);letter-spacing:.2em;color:var(--signal);
-    text-shadow:0 0 18px rgba(0,255,153,.35);
+  .boot .pano{width:min(360px,78vw);aspect-ratio:1560/180;margin:0 auto;
+    background:var(--signal);
+    -webkit-mask:url("/assets/panorama_logo.svg") center/contain no-repeat;
+            mask:url("/assets/panorama_logo.svg") center/contain no-repeat;
+    filter:drop-shadow(0 0 16px rgba(0,255,153,.32));
     animation:bootIn .34s steps(2) both}
-  .boot .panosub{margin-top:7px;font-size:11px;letter-spacing:.32em;
-    text-transform:uppercase;color:var(--phos-dim);
+  /* 로고 아래 한 줄. 픽셀 글꼴이 아니라 프리텐다드다 — 이 줄은 «이 판의 목소리»가
+     아니라 «회사의 목소리»라서, 글꼴이 다른 편이 맞다. 자간을 넓게 벌린다. */
+  .boot .panosub{margin-top:14px;font-family:var(--ui);font-size:10.5px;font-weight:700;
+    letter-spacing:.52em;text-indent:.52em;text-transform:uppercase;color:var(--phos-dim);
     animation:bootIn .34s steps(2) .18s both}
-  .boot .rule{width:min(280px,62vw);height:2px;margin:18px auto;background:var(--phos-dim);
+  .boot .rule{width:min(300px,66vw);height:2px;margin:22px auto 18px;background:var(--phos-dim);
     animation:bootRule .44s ease .3s both;transform-origin:center}
   @keyframes bootRule{from{transform:scaleX(0)}to{transform:scaleX(1)}}
   .boot .gd{font-size:clamp(30px,12vw,54px);line-height:1;letter-spacing:.06em;
     color:var(--signal);animation:bootIn .3s steps(2) .5s both}
-  .boot .gd .inv{background:var(--signal);color:var(--screen);padding:0 .12em}
+  .boot .gd .inv{background:var(--signal);color:#040806;padding:0 .12em}
   .boot .skip{position:absolute;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom));
     text-align:center;font-family:var(--ui);font-size:10.5px;letter-spacing:.22em;
-    text-transform:uppercase;color:var(--phos-deep);opacity:.7}
+    text-transform:uppercase;color:var(--phos-deep);opacity:.7;z-index:3}
   @media (prefers-reduced-motion:reduce){
-    .boot .plg,.boot .lead1,.boot .pano,.boot .panosub,.boot .rule,.boot .gd{animation:none}
+    .boot .grid,.boot .sweep,.boot .flick,
+    .boot .pimm,.boot .lead1,.boot .pano,.boot .panosub,.boot .rule,.boot .gd{animation:none}
   }
 
   /* ── 엔트리 ───────────────────────────────────────────────── */
@@ -892,13 +920,18 @@
 <div class="stage">
   <!-- 부팅. 켜지자마자 이 판이 화면을 다 덮고, 두 장을 보여준 뒤 물러난다. -->
   <div class="boot" id="boot" hidden onclick="bootSkip()">
+    <div class="grid" aria-hidden="true"></div>
+    <div class="sweep" aria-hidden="true"></div>
+    <div class="scan" aria-hidden="true"></div>
+    <div class="flick" aria-hidden="true"></div>
+    <div class="vig2" aria-hidden="true"></div>
     <div class="bstage" id="bootA">
-      <div class="plg"></div>
-      <div class="lead1">PIMM Artworks · Presents</div>
+      <div class="pimm" role="img" aria-label="PIMM Artworks"></div>
+      <div class="lead1">Presents</div>
     </div>
     <div class="bstage" id="bootB">
-      <div class="pano">PANORAMA ESCAPE</div>
-      <div class="panosub">Prod. PIMM Artworks</div>
+      <div class="pano" role="img" aria-label="panorama escape"></div>
+      <div class="panosub">Premium Escape Room</div>
       <div class="rule"></div>
       <div class="gd">GAME <span class="inv">DAY</span></div>
     </div>
@@ -1061,6 +1094,8 @@ async function loadTextLoads(){
     });
     // 이 파일에는 scr 변수가 없다. 화면이 켜져 있는지는 DOM으로 본다(파일 내 다른 곳과 같은 방식).
     if($("scr-scenarios").classList.contains("on")) render();
+    // 목록이 왔으니 배역 선택창이 쓸 그림을 지금 받아 둔다(부팅 중이면 그 사이에 끝난다).
+    try{ preloadLobby(); }catch(e){}
   }catch(e){}
 }
 async function apiSelect(id,force){
@@ -1140,7 +1175,54 @@ loadTextLoads();          // 첫 화면에서 관리자를 열어도 목록이 �
      아니라 통행료다. 아무 데나 누르면 그 자리에서 걷힌다.
    ★ 소리는 각 장에 한 번씩만. 부팅음이 길게 이어지면 무음으로 켜 둔 폰에서
      아무 일도 안 일어난 것처럼 보이는데, 짧은 한 방은 그렇지 않다. */
-const BOOT_A=1500, BOOT_B=1900;      // 각 장이 화면에 머무는 시간
+const BOOT_A=1700, BOOT_B=2200;      // 각 장이 화면에 머무는 시간
+
+/* ── 부팅하는 동안 그림을 미리 받아 둔다 ───────────────────────────
+   ★ 이 몇 초는 어차피 «보여주는» 시간이지 «기다리는» 시간이 아니다. 그 사이에
+     다음 화면들이 쓸 그림을 미리 받아 두면, 배역 선택창과 오프닝이 열릴 때
+     회색 자리가 안 뜬다. 로딩 화면이 원래 하는 일이 이것이다.
+   ★ 나눠서 받는다 —
+       ① 부팅 중        : 배역 선택창이 쓰는 것(로비 배경 · 초상 넷). 사건마다 다
+                          받는다. 작고, 어느 사건을 고를지 아직 모른다.
+       ② 사건을 고른 뒤 : 그 사건의 오프닝 컷. 무겁고, 고른 하나만 쓴다.
+     둘을 다 부팅에 몰면 안 고른 사건의 오프닝까지 받게 되어 데이터만 먹는다.
+   ★ 실패는 조용히 지나간다. 미리 받는 것은 «있으면 좋은» 일이고, 없다고 판이
+     멈추면 안 된다. 브라우저 캐시에 들어가는 것이 목적이라 결과도 안 본다. */
+const PRE_EXT=["webp","png","jpg"];
+const preSeen=new Set();
+function preload(base,ok){
+  if(preSeen.has(base)) return; preSeen.add(base);
+  let i=0;
+  const next=()=>{ if(i>=PRE_EXT.length) return;
+    const im=new Image();
+    im.onerror=next; if(ok) im.onload=ok;
+    im.src=`${base}.${PRE_EXT[i++]}`; };
+  next();
+}
+/* 배역 선택창이 여는 순간 필요한 것들. 사건이 몇이든 몇 장 안 된다.
+   ★ 로비 배경이 «걸리는» 사건만 초상까지 받는다. 그림을 아직 안 그린 사건은
+     확장자 셋을 다섯 번 두드려 404 를 열다섯 번 받는데, 그건 미리 받는 게
+     아니라 그냥 두드리는 것이다. 한 장으로 있는지 없는지를 먼저 본다. */
+function preloadLobby(){
+  (SCEN||[]).map(x=>x.id).filter(Boolean).forEach(id=>{
+    preload(`/assets/${id}_lobby`, ()=>{
+      ["david","damon","daisy","victim"].forEach(r=>preload(`/assets/${id}_portrait_${r}`));
+    });
+  });
+}
+/* 고른 사건의 오프닝 컷. 컷 이름은 대본이 쥐고 있으므로 서버에 한 번 물어본다.
+   앞에서부터 여섯 장만 받는다 — 첫 장이 뜨는 순간부터 나머지는 사람이 넘기는
+   속도보다 빨리 따라온다. */
+/* ★ /api/scenario 는 «지금 이 방이 연» 대본을 준다. 그래서 사건을 서버에
+   앉힌 뒤(openScenario)에야 부를 수 있다 — 포스터를 누른 순간에 부르면 아직
+   앞 사건의 대본이 와서 엉뚱한 그림을 받는다. */
+async function preloadOpening(id){
+  if(!id) return;
+  try{
+    const sc=await (await fetch("/api/scenario")).json();
+    (sc.openingCuts||[]).slice(0,6).forEach(c=>{ if(c&&c.img) preload(`/assets/${id}_opening_${c.img}`); });
+  }catch(e){}
+}
 let bootTimers=[];
 function bootSkip(){
   bootTimers.forEach(clearTimeout); bootTimers=[];
@@ -1154,6 +1236,9 @@ function bootRun(){
   if(seen){ b.remove(); return; }
   try{ sessionStorage.setItem("pmb.booted","1"); }catch(e){}
   b.hidden=false;
+  /* 부팅이 도는 동안 다음 화면의 그림을 받아 둔다. 목록이 아직 안 왔으면
+     오는 대로 한 번 더 부른다(loadTextLoads 가 끝날 때). */
+  try{ preloadLobby(); }catch(e){}
   const show=id=>{ b.querySelectorAll(".bstage").forEach(x=>x.classList.remove("on"));
                    const e=$(id); if(e) e.classList.add("on"); };
   show("bootA");
@@ -1384,6 +1469,10 @@ async function launch(){
      넣어 둔 기기에서는 부팅 검사도 통과해 버린다 — 그래서 관리자 모드를
      켠 적도 없는데 자홍색 QA 띠를 단 채 실전이 열렸다. */
   clearQA();
+  /* 사건이 서버에 앉았으니 그 오프닝 컷을 받기 시작한다. 배역 선택창을 지나
+     셋이 다 앉을 때까지가 오프닝까지의 거리라, 그 사이면 넉넉하다.
+     기다리지 않는다 — 받는 것은 다음 페이지의 캐시에 그대로 남는다. */
+  preloadOpening(me.pick);
   location.href="/play?qa=0";
 }
 function note(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("on"); clearTimeout(note._t); note._t=setTimeout(()=>t.classList.remove("on"),2600); }
