@@ -13,6 +13,7 @@ panorama_combo — 사람 셋이서 하는 머더미스터리 게임 서버.
 from __future__ import annotations
 
 import contextlib
+import contextvars
 import json
 import os
 import random
@@ -38,8 +39,36 @@ except Exception:
 import handoff  # noqa: E402
 import scenarios  # noqa: E402
 
-# 활성 시나리오(앱 전역) — 모든 함수는 전역 SC를 읽으므로, SC를 재바인딩하면 앱 전체가 그 시나리오로 전환된다.
-SC = scenarios.get(os.getenv("SCENARIO") or scenarios.default_id())
+# 기본 사건. 방이 아직 아무것도 안 고른 순간에만 쓰인다.
+DEFAULT_SID = os.getenv("SCENARIO") or scenarios.default_id()
+
+
+class _ScenProxy:
+    """`SC.CARDS` 처럼 쓰면 «지금 요청이 보는 방» 이 고른 사건을 준다.
+
+    예전에는 SC 가 앱 전역 하나였다. 방이 하나뿐일 때는 그게 맞았지만, 여러 조가
+    동시에 도는 순간 A조가 사건을 고르면 B조의 사건까지 바뀐다. 이름은 그대로 두고
+    «어느 사건을 가리키는가» 만 방에서 읽어 오게 바꾼다 — 145군데를 안 건드린다.
+    """
+
+    def _m(self):
+        try:
+            sid = _room_now().get("scenarioId") or DEFAULT_SID
+        except Exception:
+            sid = DEFAULT_SID
+        try:
+            return scenarios.get(sid)
+        except Exception:
+            return scenarios.get(DEFAULT_SID)
+
+    def __getattr__(self, k):
+        return getattr(self._m(), k)
+
+    def __repr__(self):
+        return f"<SC {getattr(self._m(), 'ID', '?')}>"
+
+
+SC = _ScenProxy()
 
 HOST = os.getenv("REUNION_HOST", "0.0.0.0")
 # 호스팅(Render 등)은 PORT를 주입 → 그걸 우선 사용, 로컬은 REUNION_PORT/기본값
@@ -70,10 +99,10 @@ def current_round(seq: int) -> int:
 LOCK = threading.RLock()
 
 
-def fresh_room() -> dict:
+def fresh_room(sid: str = "") -> dict:
     return {
         "rev": 1, "seq": 1,
-        "scenarioId": SC.ID,
+        "scenarioId": sid or DEFAULT_SID,
         # 판마다 새로 생기는 값. 클라이언트가 "이 판에서 오프닝을 봤나"를 이걸로 가른다 —
         # 시나리오 이름으로 기억하면 한 번 본 브라우저에서 영영 안 나온다.
         "roomId": f"r{random.randrange(16**8):08x}",
@@ -138,19 +167,143 @@ def fresh_room() -> dict:
     }
 
 
-ROOM = fresh_room()
+# ══════════════════════════════════════════════════════════════════
+#  방 여럿 — 코드 하나에 판 하나
+# ══════════════════════════════════════════════════════════════════
+# 이 게임은 불특정 다수의 방장이 «동시에» 돌리는 게임이다. 그런데 여태 방이
+# 앱 전역 하나뿐이라, 두 번째 조가 들어오면 첫 조의 판에 그대로 앉았다 —
+# 남의 대화가 보이고, 자리는 이미 차 있었다.
+#
+# 요청마다 어느 방을 보는지는 «코드» 가 정한다. 코드는 ?room= 이나 X-Room 으로
+# 오고, 미들웨어가 그걸 읽어 이 요청의 방으로 못박는다(아래 _CUR). 그래서 방을
+# 함수마다 인자로 끌고 다니지 않는다 — ROOM 이라는 이름은 그대로 두고, 그 이름이
+# «지금 이 요청의 방» 을 가리키게만 바꾼다.
+#
+# 코드를 안 준 요청은 DEFAULT_CODE 방을 본다. 옛 링크와 QA 를 안 끊기 위해서다.
+DEFAULT_CODE = "----"
+# 헷갈리는 글자는 뺀다 — 0/O, 1/I/L 을 넣으면 코드를 불러 주다가 틀린다
+_CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+_CODE_RE = re.compile(r"^[A-Z0-9-]{2,8}$")
+ROOM_TTL = 12 * 3600        # 이 시간 넘게 아무도 안 들른 방은 버린다
+ROOM_MAX = 200              # 그래도 안 줄면 오래된 것부터 버린다
+
+ROOMS: dict[str, dict] = {}
+_CUR = contextvars.ContextVar("room_code", default="")
+
+
+def _new_code() -> str:
+    with LOCK:
+        for _ in range(300):
+            c = "".join(random.choice(_CODE_CHARS) for _ in range(4))
+            if c not in ROOMS:
+                return c
+        return "".join(random.choice(_CODE_CHARS) for _ in range(6))
+
+
+def _sweep_rooms() -> None:
+    """오래 비어 있던 방을 치운다. 안 치우면 메모리가 하루 종일 늘기만 한다."""
+    now = time.time()
+    dead = [c for c, r in ROOMS.items()
+            if c != DEFAULT_CODE and now - float(r.get("seen") or 0) > ROOM_TTL]
+    for c in dead:
+        ROOMS.pop(c, None)
+    if len(ROOMS) > ROOM_MAX:
+        old = sorted((c for c in ROOMS if c != DEFAULT_CODE),
+                     key=lambda c: float(ROOMS[c].get("seen") or 0))
+        for c in old[:len(ROOMS) - ROOM_MAX]:
+            ROOMS.pop(c, None)
+
+
+def room_of(code: str, make: bool = True) -> dict | None:
+    """코드로 방을 집는다. 없으면 만든다(make=False 면 None)."""
+    code = (code or DEFAULT_CODE).upper()
+    with LOCK:
+        r = ROOMS.get(code)
+        if r is None:
+            if not make:
+                return None
+            _sweep_rooms()
+            r = fresh_room()
+            r["code"] = code
+            ROOMS[code] = r
+        r["seen"] = time.time()
+        return r
+
+
+def _room_now() -> dict:
+    return room_of(_CUR.get() or DEFAULT_CODE)
+
+
+class _RoomProxy:
+    """`ROOM["seq"]` 처럼 쓰면 지금 요청의 방을 준다.
+
+    이 파일은 방을 449군데에서 만진다. 전부 인자로 바꾸는 대신, 이름이 가리키는
+    대상만 요청마다 갈아 끼운다. 쓰이는 연산은 [] · get · setdefault 셋뿐이라
+    프록시가 그 셋만 성실히 넘기면 나머지 코드는 바뀐 줄도 모른다.
+    """
+
+    def _r(self) -> dict:
+        return _room_now()
+
+    def __getitem__(self, k):
+        return self._r()[k]
+
+    def __setitem__(self, k, v):
+        self._r()[k] = v
+
+    def __delitem__(self, k):
+        del self._r()[k]
+
+    def __contains__(self, k):
+        return k in self._r()
+
+    def __iter__(self):
+        return iter(self._r())
+
+    def __len__(self):
+        return len(self._r())
+
+    def get(self, k, d=None):
+        return self._r().get(k, d)
+
+    def setdefault(self, k, d=None):
+        return self._r().setdefault(k, d)
+
+    def pop(self, k, *a):
+        return self._r().pop(k, *a)
+
+    def update(self, *a, **kw):
+        return self._r().update(*a, **kw)
+
+    def keys(self):
+        return self._r().keys()
+
+    def items(self):
+        return self._r().items()
+
+    def values(self):
+        return self._r().values()
+
+    def __repr__(self):
+        return f"<ROOM {self._r().get('code')}>"
+
+
+ROOM = _RoomProxy()
 
 
 def use_scenario(sid: str) -> bool:
-    """시나리오를 교체하고 방을 새 시나리오로 초기화한다(모두에게 반영)."""
-    global SC, ROOM
+    """시나리오를 교체하고 «이 방» 을 새 시나리오로 초기화한다."""
     if sid not in scenarios.ids():
         return False
     with LOCK:
-        prev_host = ROOM.get("host")
-        SC = scenarios.get(sid)
-        ROOM = fresh_room()
-        ROOM["host"] = prev_host   # 호스트는 시나리오 전환 후에도 유지
+        cur = _room_now()
+        code = cur.get("code") or DEFAULT_CODE
+        prev_host = cur.get("host")
+        r = fresh_room(sid)
+        r["code"] = code
+        r["host"] = prev_host      # 호스트는 시나리오 전환 후에도 유지
+        r["seen"] = time.time()
+        ROOMS[code] = r
     return True
 
 
@@ -482,6 +635,26 @@ def public_state() -> dict:
 
 
 app = FastAPI(title="GAME DAY")
+
+
+@app.middleware("http")
+async def _bind_room(request, call_next):
+    """이 요청이 «어느 방» 을 보는지 여기서 한 번만 정한다.
+
+    코드는 ?room= 이나 X-Room 헤더로 온다. 엔드포인트 마흔 개에 인자를 하나씩
+    더하는 대신 여기서 문맥에 못박고, 아래 코드는 늘 그랬듯 ROOM 만 읽는다.
+    코드가 없거나 꼴이 안 맞으면 기본 방이다 — 옛 링크를 안 끊는다.
+    """
+    code = (request.query_params.get("room")
+            or request.headers.get("x-room") or "").strip().upper()
+    if not code or not _CODE_RE.match(code):
+        code = DEFAULT_CODE
+    tok = _CUR.set(code)
+    try:
+        return await call_next(request)
+    finally:
+        _CUR.reset(tok)
+
 
 # GM 콘솔(다른 출처의 board.html)이 라이브 서버를 호출할 수 있게 CORS 개방
 try:
@@ -1309,6 +1482,96 @@ HOST_STALE_SEC = 300
 def _host_stale() -> bool:
     seen = ROOM.get("hostSeen")
     return seen is None or (time.time() - seen) > HOST_STALE_SEC
+
+
+# ── 방 코드 ──────────────────────────────────────────────────────
+# 방장이 「호스트로 입장」을 누르면 코드가 하나 생기고, 참가자는 그 코드를 받아
+# 들어온다. 다시 들어올 때도 같은 코드다 — 그래야 «튕긴 사람이 못 돌아오는»
+# 온라인 파티게임의 그 상황이 안 생긴다.
+class RoomReq(BaseModel):
+    code: str = ""
+    clientId: str = ""
+
+
+def _room_brief(code: str, r: dict) -> dict:
+    """방 하나를 «남에게 보여도 되는 만큼만» 요약한다. 판 내용은 안 담는다."""
+    roles = r.get("roles") or {}
+    seats = sum(1 for x in roles.values() if x.get("clientId"))
+    return {"code": code, "scenarioId": r.get("scenarioId"),
+            "seq": r.get("seq", 1), "started": bool(r.get("started")),
+            "seats": seats, "of": len(roles),
+            "hasHost": r.get("host") is not None,
+            "roomId": r.get("roomId", "")}
+
+
+@app.post("/api/rooms/reset-all")
+def rooms_reset_all(b: RoomReq, key: str = ""):
+    """돌고 있는 방을 «전부» 비운다. 운영자용이라 GM 열쇠로만 연다.
+
+    방 코드가 생긴 뒤로 남의 방까지 미는 일은 흔치 않다. 그래도 검수 중에 방을
+    여럿 열어 두고 뒤엉켰을 때 한 번에 치울 자리는 있어야 한다.
+    """
+    if not _agent_ok(key or b.code):
+        return JSONResponse({"error": "key"}, status_code=403)
+    with LOCK:
+        n = len(ROOMS)
+        ROOMS.clear()
+        r = fresh_room()
+        r["code"] = DEFAULT_CODE
+        r["seen"] = time.time()
+        ROOMS[DEFAULT_CODE] = r
+    return {"ok": True, "wiped": n}
+
+
+@app.get("/api/rooms")
+def rooms_list(key: str = ""):
+    """지금 살아 있는 방 목록. 판 내용은 안 담는다 — 코드와 사람 수까지다."""
+    if not _agent_ok(key):
+        return JSONResponse({"error": "key"}, status_code=403)
+    with LOCK:
+        _sweep_rooms()
+        out = [_room_brief(c, r) for c, r in ROOMS.items()]
+    out.sort(key=lambda x: x["code"])
+    return {"ok": True, "n": len(out), "rooms": out}
+
+
+@app.post("/api/room/new")
+def room_new(b: RoomReq):
+    """새 판을 연다 — 코드를 발급하고 그 방의 호스트로 앉힌다."""
+    with LOCK:
+        code = _new_code()
+        r = fresh_room()
+        r["code"] = code
+        r["seen"] = time.time()
+        if b.clientId:
+            r["host"] = b.clientId
+            r["hostSeen"] = time.time()
+        ROOMS[code] = r
+        return {"ok": True, **_room_brief(code, r)}
+
+
+@app.get("/api/room")
+def room_get(code: str = "", clientId: str = ""):
+    """이 코드가 살아 있는가, 그리고 «나는 거기 앉아 있던 사람인가».
+
+    두 번째 물음이 재접속의 전부다. 자리를 clientId 로 기억하고 있으니,
+    같은 기기로 돌아오면 그 자리를 그대로 돌려준다.
+    """
+    code = (code or "").strip().upper()
+    if not code or not _CODE_RE.match(code):
+        return JSONResponse({"error": "code"}, status_code=400)
+    with LOCK:
+        r = ROOMS.get(code)
+        if r is None:
+            return JSONResponse({"error": "없는 방"}, status_code=404)
+        r["seen"] = time.time()
+        mine = ""
+        for rid, seat in (r.get("roles") or {}).items():
+            if clientId and seat.get("clientId") == clientId:
+                mine = rid
+                break
+        return {"ok": True, **_room_brief(code, r),
+                "mine": mine, "isHost": bool(clientId and r.get("host") == clientId)}
 
 
 @app.post("/api/host/claim")
@@ -4821,14 +5084,18 @@ def final_answers(b: FinalAnswers):
 
 @app.post("/api/reset")
 def reset(b: HostReq):
-    global ROOM
     with LOCK:
-        if ROOM.get("host") is not None and not _host_ok(b.clientId, b.key):
+        cur = _room_now()
+        if cur.get("host") is not None and not _host_ok(b.clientId, b.key):
             return JSONResponse({"error": "host"}, status_code=403)
-        ROOM = fresh_room()
+        code = cur.get("code") or DEFAULT_CODE
+        r = fresh_room(cur.get("scenarioId") or DEFAULT_SID)
+        r["code"] = code
+        r["seen"] = time.time()
+        ROOMS[code] = r
         # 호스트도 함께 푼다. 붙들고 있으면 그 브라우저가 사라졌을 때 방이 영영 잠긴다 —
         # 초기화한 사람은 곧바로 다시 잡으면 된다(클라이언트가 이어서 요청한다).
-    return {"ok": True}
+    return {"ok": True, "code": code}
 
 
 # 화면은 매번 다시 물어보게 한다. ETag 만 보내고 Cache-Control 을 안 주면 브라우저가

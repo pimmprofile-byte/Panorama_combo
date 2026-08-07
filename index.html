@@ -693,6 +693,9 @@
      ★ 누르면 «실제로 들어간다» — 위 밝은 베벨과 아래 어두운 베벨을 뒤집고 한 칸 내려앉힌다.
        예전엔 눌러도 흰 반투명이 한 겹 얹힐 뿐이라 베이지 판 위에서는 아무 일도 안 난 것처럼
        보였다. 8비트 UI 에서 어포던스를 지는 건 색이 아니라 이 동작이다. */
+  /* 상단 방 코드 — 눌러서 초대 링크를 복사한다 */
+  .rmid.copyable{cursor:pointer;text-decoration:underline;text-underline-offset:2px;
+    text-decoration-style:dotted}
   .dock{display:flex;gap:3px;border-top:1px solid var(--case-e);background:var(--case-b);
     box-shadow:inset 0 1px 0 var(--case-h);
     padding:5px 4px calc(5px + env(safe-area-inset-bottom))}
@@ -3501,6 +3504,33 @@
 "use strict";
 let SCEN=null, STATE=null, myHand=[], scr="lobby", lastRev=-1, gradeBusy=false;
 let deckAfterNight=false;   // 밤이 지난 덱을 한 번 다시 받았는가
+/* ── 방 코드 ──────────────────────────────────────────────────────
+   이 게임은 불특정 다수의 방장이 «동시에» 돌린다. 그래서 요청마다 «어느 방인지»를
+   달고 가야 한다. 엔드포인트가 마흔 개라 하나씩 고치는 대신, 나가는 요청에 코드를
+   붙이는 자리를 한 군데로 모은다 — 아래 fetch 껍데기가 그 자리다.
+   코드가 없으면 아무것도 안 붙이고, 서버는 그때 기본 방을 준다(옛 링크가 안 끊긴다). */
+let roomCode=(()=>{
+  try{
+    const q=new URLSearchParams(location.search).get("room");
+    if(q) { localStorage.setItem("pmb.room", q.trim().toUpperCase()); }
+  }catch(e){}
+  try{ return localStorage.getItem("pmb.room")||""; }catch(e){ return ""; }
+})();
+function setRoomCode(c){
+  roomCode=(c||"").trim().toUpperCase();
+  try{ if(roomCode) localStorage.setItem("pmb.room",roomCode); else localStorage.removeItem("pmb.room"); }catch(e){}
+}
+(function(){
+  const raw=window.fetch.bind(window);
+  window.fetch=function(u,o){
+    try{
+      if(roomCode && typeof u==="string" && u.indexOf("/api/")===0 && u.indexOf("room=")<0)
+        u += (u.indexOf("?")<0?"?":"&") + "room=" + encodeURIComponent(roomCode);
+    }catch(e){}
+    return raw(u,o);
+  };
+})();
+
 let clientId=localStorage.getItem("pmb.cid");
 if(!clientId){clientId="c"+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);localStorage.setItem("pmb.cid",clientId);}
 let myRoleId=localStorage.getItem("pmb.role")||null;
@@ -4087,7 +4117,14 @@ function applyState(){
     const ph=STATE.phase||{};
     // .win 을 같이 적는다 — 여기서 className 을 통째로 갈면 창틀이 벗겨진다
     $("s-play").className="screen win on "+(ph.key||"");
-    $("pRoom").textContent=(STATE.roomId||"").slice(1,5).toUpperCase();
+    /* 상단에 방 코드를 건다. 여태 roomId 앞 네 자리를 잘라 보여줬는데 그건 사람이
+       부를 수 없는 값이었다 — 이제 «남에게 불러 주는 코드» 가 따로 있다.
+       눌러 두면 링크째 복사된다. 코드가 없는(옛 링크) 판은 예전 그대로다. */
+    const pr=$("pRoom");
+    if(roomCode){ pr.textContent=roomCode; pr.classList.add("copyable");
+                  pr.title="눌러서 초대 링크 복사"; pr.onclick=copyInvite; }
+    else { pr.textContent=(STATE.roomId||"").slice(1,5).toUpperCase();
+           pr.classList.remove("copyable"); pr.onclick=null; }
     paintSeat();
     // 페이즈 패널
     renderPanel(ph);
@@ -9118,6 +9155,20 @@ function showMyHand(tab){
   openModal("handModal"); wireSwipe($("handBox"));
 }
 
+/* 초대 링크 — 코드가 박힌 주소를 통째로 준다. 코드만 불러 주는 것보다 빠르고,
+   받는 사람이 코드를 «어디에» 넣어야 하는지 헤맬 일이 없다. */
+function inviteURL(){
+  const u=new URL(location.href);
+  u.search=""; u.hash="";
+  u.pathname="/";
+  if(roomCode) u.searchParams.set("room",roomCode);
+  return u.toString();
+}
+async function copyInvite(){
+  const t=inviteURL();
+  try{ await navigator.clipboard.writeText(t); banner("초대 링크를 복사했습니다 — 방 코드 "+roomCode); }
+  catch(e){ banner("방 코드 "+roomCode); }
+}
 async function post(url,body){ try{ return await (await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})).json(); }catch(e){ banner("서버 연결 오류"); return {error:"network"}; } }
 /* 하단바 높이를 재서 창들이 그 위에서 멈추게 한다. 기기마다 안전영역이 달라 상수로 못 박는다. */
 /* ── 하단바 안내 ──────────────────────────────────────────────────

@@ -803,6 +803,15 @@
           </div>
           <div class="arrow">→</div>
         </button>
+        <button class="cta-host alt back-room" onclick="enterBack()">
+          <div class="eic"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.4 4.6v4.2h4.2"/></svg></div>
+          <div class="txt">
+            <div class="k">Rejoin · 다시 들어가기</div>
+            <div class="nm">기존 코드로 입장</div>
+            <div class="ds">돌던 판에 다시 들어갑니다. 앉아 있던 자리가 그대로 있어요.</div>
+          </div>
+          <div class="arrow">→</div>
+        </button>
       </div>
     </section>
 
@@ -864,6 +873,33 @@ let hostPresent=false;
 let admin=false;
 
 /* 실서버 연동 — 이 파일을 서버가 / 로 서빙하면 게임(/play)으로 이어진다 */
+/* ── 방 코드 ──────────────────────────────────────────────────────
+   이 게임은 불특정 다수의 방장이 «동시에» 돌린다. 그래서 요청마다 «어느 방인지»를
+   달고 가야 한다. 엔드포인트가 마흔 개라 하나씩 고치는 대신, 나가는 요청에 코드를
+   붙이는 자리를 한 군데로 모은다 — 아래 fetch 껍데기가 그 자리다.
+   코드가 없으면 아무것도 안 붙이고, 서버는 그때 기본 방을 준다(옛 링크가 안 끊긴다). */
+let roomCode=(()=>{
+  try{
+    const q=new URLSearchParams(location.search).get("room");
+    if(q) { localStorage.setItem("pmb.room", q.trim().toUpperCase()); }
+  }catch(e){}
+  try{ return localStorage.getItem("pmb.room")||""; }catch(e){ return ""; }
+})();
+function setRoomCode(c){
+  roomCode=(c||"").trim().toUpperCase();
+  try{ if(roomCode) localStorage.setItem("pmb.room",roomCode); else localStorage.removeItem("pmb.room"); }catch(e){}
+}
+(function(){
+  const raw=window.fetch.bind(window);
+  window.fetch=function(u,o){
+    try{
+      if(roomCode && typeof u==="string" && u.indexOf("/api/")===0 && u.indexOf("room=")<0)
+        u += (u.indexOf("?")<0?"?":"&") + "room=" + encodeURIComponent(roomCode);
+    }catch(e){}
+    return raw(u,o);
+  };
+})();
+
 const clientId=(()=>{ let c=localStorage.getItem("pmb.cid"); if(!c){ c="c"+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4); localStorage.setItem("pmb.cid",c);} return c; })();
 /* 사건 목록의 「분량」은 서버가 원고를 세어 내려준다. 로컬 배열에 적어두면
    원고를 고칠 때마다 손으로 맞춰야 하고, 결국 안 맞게 된다. */
@@ -979,8 +1015,49 @@ function go(name){
 fetch("/api/build").then(r=>r.json()).then(b=>{
   const e=$("buildstamp"); if(e&&b) e.textContent=`빌드 ${b.sha}${b.at?" · "+b.at:""}`;
 }).catch(()=>{});
-function enterHost(){ me.mode="host"; hostPresent=true; go("scenarios"); render(); }
-function enterParticipant(){ me.mode="participant"; go("scenarios"); render(); }
+/* ── 방으로 들어가는 세 갈래 ────────────────────────────────────
+   ① 호스트로 시작 — 코드를 새로 받는다
+   ② 참가자로 입장 — 받은 코드를 넣는다
+   ③ 기존 코드로 — 쓰던 방에 다시 들어간다(튕겼거나 창을 닫았을 때)
+   ③ 이 이 판의 핵심이다. 여태 방이 하나뿐이라, 창을 닫고 다시 들어오면 «남»으로
+   취급돼 자리가 다 찬 방 앞에 서 있었다. 코드와 기기 신원이 있으면 앉았던 자리로
+   그대로 돌아간다. */
+async function enterHost(){
+  const r=await roomPost("/api/room/new",{clientId});
+  if(!r||!r.code){ note("방을 열지 못했습니다 — 잠시 뒤 다시 눌러주세요."); return; }
+  setRoomCode(r.code);
+  me.mode="host"; hostPresent=true; go("scenarios"); render();
+  note(`방 코드 ${r.code} — 함께할 사람에게 알려주세요.`);
+}
+function enterParticipant(){ askRoomCode("participant"); }
+/* 코드를 물어보는 자리. 참가자와 «다시 들어가기» 가 같은 문을 쓴다 — 하는 일이 같다. */
+async function askRoomCode(mode){
+  const last=(()=>{ try{ return localStorage.getItem("pmb.room")||""; }catch(e){ return ""; } })();
+  const c=prompt(mode==="back"
+    ? "쓰던 방 코드를 넣어주세요."
+    : "호스트에게 받은 방 코드를 넣어주세요.", last);
+  if(c==null) return;
+  const code=String(c).trim().toUpperCase();
+  if(!code){ note("코드를 넣어주세요."); return; }
+  let d=null;
+  try{ d=await (await fetch(`/api/room?code=${encodeURIComponent(code)}&clientId=${encodeURIComponent(clientId)}`)).json(); }
+  catch(e){ note("서버에 못 닿았습니다."); return; }
+  if(!d||d.error){ note(`${code} — 그런 방이 없습니다. 코드를 다시 확인해주세요.`); return; }
+  setRoomCode(code);
+  /* 앉았던 자리가 남아 있으면 그걸 먼저 알린다. 「이어서 하시겠습니까」의 답이
+     이미 「예」인 상황이라, 묻는 대신 그대로 데려간다. */
+  if(d.mine){ note(`${code} 방으로 돌아왔습니다 — 앉아 있던 자리가 그대로 있습니다.`); }
+  else if(d.started){ note(`${code} 방은 이미 판이 돌고 있습니다.`); }
+  me.mode=(mode==="back"&&d.isHost)?"host":(mode==="back"?"participant":"participant");
+  if(d.isHost) hostPresent=true;
+  if(d.scenarioId) me.pick=d.scenarioId;
+  go("scenarios"); render();
+}
+function enterBack(){ askRoomCode("back"); }
+async function roomPost(url,body){
+  try{ return await (await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(body||{})})).json(); }catch(e){ return null; }
+}
 function becomeHostNow(){ me.mode="host"; hostPresent=true; note("이제 당신이 호스트예요. 사건을 열 수 있어요."); render(); }
 function headcount(id){ return (liveSeats[id]||0) + (me.pick===id?1:0); }
 // 정원 가이드 사람표시: 호스트=초록, 참가자=노랑, 빈자리=회색
@@ -1695,7 +1772,7 @@ function showAdminPanel(){
       <button onclick="admCheckKey()">확인</button></div>
     <div class="adsub" id="admkst" style="margin-top:6px"></div>
     <button class="adtab adwipe" id="adwipe" style="margin-top:10px;width:100%;padding:11px"
-      onclick="admWipeRoom()">⟲ 전체 방 초기화 — 진행 중인 판을 버리고 새로 시작</button>
+      onclick="admWipeRoom()">⟲ 모든 방 초기화 — 돌고 있는 판을 전부 버린다</button>
     <div class="adsub" id="adwipest" style="margin-top:6px"></div>
     <div class="adtabs" style="margin-top:12px">${qaTabs()}</div>
     <div class="adsub" style="margin-top:8px">QA 모드 — 한 기기가 세 좌석을 다 쥐고, 배역을 갈아끼우며 판을 처음부터 끝까지 돌려봅니다.
@@ -1739,18 +1816,19 @@ function admCheckKey(){
    그때 여기를 누른다. 되돌릴 수 없으니 한 번 더 묻는다. */
 async function admWipeRoom(){
   const s=$("adwipest"), b=$("adwipe");
-  if(!confirm("진행 중인 판을 버리고 방을 비웁니다.\n앉아 있던 사람들은 전부 자리에서 내려옵니다.\n\n계속할까요?")) return;
+  if(!confirm("지금 돌고 있는 방을 «전부» 비웁니다.\n앉아 있던 사람들은 어느 방에서든 자리에서 내려옵니다.\n\n계속할까요?")) return;
   if(b){ b.disabled=true; }
   if(s){ s.textContent="비우는 중…"; s.style.color=""; }
-  let ok=false, why="";
+  let ok=false, why="", n=0;
   try{
-    const r=await fetch("/api/reset",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({clientId:"",key:admKey,force:true})});
-    ok=r.ok; if(!ok) why=(r.status===403?"열쇠가 안 통합니다":"서버가 "+r.status+" 로 답했습니다");
+    const r=await fetch("/api/rooms/reset-all?key="+encodeURIComponent(admKey),
+      {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({})});
+    ok=r.ok; if(ok){ const d=await r.json(); n=(d&&d.wiped)||0; }
+    else why=(r.status===403?"열쇠가 안 통합니다":"서버가 "+r.status+" 로 답했습니다");
   }catch(e){ why="서버에 못 닿았습니다"; }
   if(b){ b.disabled=false; }
   const t=$("adwipest"); if(!t) return;
-  if(ok){ t.textContent="방을 비웠습니다 — 이제 아무나 호스트로 들어갈 수 있습니다."; t.style.color="#1a6b47"; }
+  if(ok){ t.textContent=`방 ${n}개를 비웠습니다 — 이제 아무나 호스트로 들어갈 수 있습니다.`; t.style.color="#1a6b47"; }
   else { t.textContent="비우지 못했습니다 — "+why+"."; t.style.color="#a3372a"; }
 }
 /* QA 모드 입장 단추 — 사건 하나에 하나씩. 고른 사건으로 방을 열고 /play?qa=1 로 넘긴다. */
