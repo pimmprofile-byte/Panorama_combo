@@ -2226,10 +2226,12 @@
      한 번 구워 레이어로 올려두고 투명도만 건드린다. */
   #vn .vn-flash{position:absolute;inset:0;pointer-events:none;opacity:0;
     will-change:opacity;transform:translateZ(0)}
-  /* ★ 사이렌 붉은막은 «반쯤»만 든다. 첫 컷이 창백한 새벽 지붕이라 그 위에 순빨강을
+  /* ★ 굉음의 붉은막은 «반쯤»만 든다. 첫 컷이 창백한 새벽 지붕이라 그 위에 순빨강을
      끼얹으면 그림과 따로 논다 — 연출이 아니라 오류처럼 보인다. 가운데를 더 비우고
-     (70% → 60%) 봉우리도 낮춘다. 흔들림과 소리는 그대로라 «놀람»은 안 죽는다. */
-  #vn .vn-stage.fx-alarm .vn-flash{background:radial-gradient(120% 90% at 50% 40%,rgba(214,74,54,.34),transparent 60%);
+     (70% → 60%) 봉우리도 낮춘다. 흔들림은 그대로라 «놀람»은 안 죽는다.
+     ★ 이름이 fx-alarm 이었다. 소리에서 사이렌을 걷어냈으니 이름도 굉음의 것으로
+       옮긴다 — 이 막은 경보가 아니라 «무언가 터졌다»의 붉음이다. */
+  #vn .vn-stage.fx-boom .vn-flash{background:radial-gradient(120% 90% at 50% 40%,rgba(214,74,54,.34),transparent 60%);
     animation:vnAlarm 1.15s ease-out 3}
   #vn .vn-stage.fx-thud  .vn-flash{background:#000;animation:vnBlack .5s ease-out 1}
   #vn .vn-stage.fx-static .vn-flash{background:repeating-linear-gradient(0deg,rgba(255,255,255,.09) 0 1px,transparent 1px 3px);
@@ -2259,7 +2261,7 @@
   @keyframes vnRise{0%{opacity:0;transform:translateY(30%)}60%{opacity:1}100%{opacity:.35;transform:none}}
   /* 흔들림은 cqw 대신 px 로, translate3d 로 적는다 — 합성 레이어에 올라가서 매 프레임
      다시 굽지 않는다. cqw 로 두면 컨테이너 질의 값을 프레임마다 되풀이해 잰다. */
-  #vn .vn-stage.fx-alarm,#vn .vn-stage.fx-thud{animation:vnShake .5s cubic-bezier(.36,.07,.19,.97) 1}
+  #vn .vn-stage.fx-boom,#vn .vn-stage.fx-thud{animation:vnShake .5s cubic-bezier(.36,.07,.19,.97) 1}
   #vn .vn-stage.fx-rumble{animation:vnRumble 2.4s ease-in-out 1}
   @keyframes vnShake{10%,90%{transform:translate3d(-3px,0,0)}30%,70%{transform:translate3d(5px,0,0)}
     50%{transform:translate3d(-5px,0,0)}100%{transform:translate3d(0,0,0)}}
@@ -5112,9 +5114,13 @@ function vnNoise(dur,cutFrom,cutTo,gain){
 const VN_SFX={
   sonar (){ vnTone(1250,1.6,"sine",.10); setTimeout(()=>vnTone(1250,1.9,"sine",.055),340); },
   hush  (){ vnTone(320,.9,"sine",.05); },
-  alarm (){ let i=0; (function beat(){ if(i++>=3||vnMuted) return;
-              vnTone(880,.19,"square",.09); setTimeout(()=>vnTone(660,.24,"square",.09),200);
-              setTimeout(beat,580); })(); },
+  /* ★ 여기 사이렌(880↔660 사각파를 세 번 되풀이하는 «삐뽀삐뽀»)이 있었다. 걷어냈다.
+       이 세상에는 경찰도 구급차도 없다 — 사이렌은 «어디선가 누가 오고 있다»는
+       소리인데, 이 마을에는 올 사람이 없다. 그 한 소리 때문에 화면은 새벽 지붕인데
+       귀는 도시 한복판이 됐다. 첫 컷은 굉음이고, 굉음은 낮게 한 번 치고 멀어진다.
+     ★ 붉은 막과 흔들림(fx-boom)은 그대로 둔다 — 거슬리던 것은 소리지 놀람이 아니다. */
+  boom  (){ vnTone(88,1.1,"sine",.26,40); vnNoise(1.6,760,80,.20);
+            setTimeout(()=>vnTone(150,1.9,"sine",.09,52),110); },
   thud  (){ vnTone(140,.75,"sine",.30,38); vnNoise(.5,900,90,.22); },
   static(){ vnNoise(.75,5200,1400,.16); setTimeout(()=>vnNoise(.4,4000,900,.11),380); },
   water (){ vnNoise(2.0,260,1500,.24); },
