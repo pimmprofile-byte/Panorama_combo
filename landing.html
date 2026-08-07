@@ -213,23 +213,14 @@
        사람을 실제로 부르는 길은 초대 링크라, 코드를 손으로 쳐서 들어오는 문이
        따로 서 있을 이유가 없었다. 그 자리는 「기존 코드로 입장」이 그대로 받는다.
        말 그대로 «기존 코드로 들어가는» 문이니 하는 일이 같다.
-     문이 둘이 되었으니 무게는 확실히 가른다. 판을 여는 문은 크게 · 인광 초록을
-     깔아 앞으로 세우고, 코드로 들어가는 문은 이미 코드를 손에 쥔 사람만 쓰는
-     문이라 한 걸음 뒤로 물린다. */
-  /* 글이 두 줄로 넘어가면 아이콘이 가운데 걸려 눈썹줄이 아이콘 «위»에 뜬 것처럼
-     읽힌다. 이 문만 위로 정렬한다. */
-  .cta-host.hostmain{border-color:color-mix(in srgb,var(--phos) 62%,var(--ink));
-    padding:18px 16px;gap:16px;align-items:flex-start;
-    background:color-mix(in srgb,var(--phos) 10%,var(--case));
-    box-shadow:inset 1px 1px 0 var(--case-hi),inset -1px -1px 0 var(--case-lo),
-               4px 4px 0 color-mix(in srgb,var(--phos) 40%,var(--ink))}
-  .cta-host.hostmain:hover{background:color-mix(in srgb,var(--phos) 16%,var(--case-hi))}
-  .cta-host.hostmain .eic{width:48px;height:48px;margin-top:2px;
-    border-color:color-mix(in srgb,var(--phos) 62%,var(--ink));
-    background:color-mix(in srgb,var(--phos) 18%,transparent)}
-  .cta-host.hostmain .eic .ic{width:27px;height:27px}
-  .cta-host.hostmain .k{color:color-mix(in srgb,var(--phos) 66%,var(--case-sh))}
-  .cta-host.hostmain .nm{font-size:20px;text-wrap:balance}
+     ★ 판을 여는 문에 인광 초록 틴팅을 얹었다가 걷어냈다. 셋일 때는 그게 필요했지만
+       둘뿐이고 하나가 흐린 지금은 아무 표시 없이도 어디를 눌러야 하는지가 보인다.
+       색으로 두 번 말할 이유가 없다. 뒤로 물리는 쪽만 남긴다. */
+  .cta-host.hostmain .nm{text-wrap:balance}
+  /* 방 코드는 «읽히는 것»이 전부다. 픽셀 글꼴은 이 판의 얼굴이지만 네 글자를
+     받아 적어 남에게 불러 주는 자리에서는 8 과 B, 5 와 S 가 붙는다. 여기만
+     프리텐다드를 쓴다 — 규칙을 어기는 게 아니라, 이 자리의 일이 다르다. */
+  #rcin{font-family:var(--ui);letter-spacing:.22em;font-weight:700}
   .cta-host.back-room{opacity:.55}
   .cta-host.back-room:hover{opacity:1}
   .cta-host .eic{flex:0 0 auto;width:40px;height:40px;display:grid;place-items:center;
@@ -828,9 +819,8 @@
           <div class="eic"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 17.2 5.1 8.5l3.7 3.4L12 6.2l3.2 5.7 3.7-3.4 1.5 8.7H3.6z"/><rect x="4.1" y="18.4" width="15.8" height="2.1" rx="1"/></svg></div>
           <div class="txt">
             <div class="k">New Game · 방을 엽니다</div>
-            <div class="nm">새 게임 — 호스트로 시작하기</div>
-            <div class="ds">사건을 고르고 진행을 통제합니다. 시나리오 진행 시 꼭 필요한 자리예요.<br>
-              다른 플레이어를 초대할 수 있습니다.</div>
+            <div class="nm">새 게임 — 호스트로 시작</div>
+            <div class="ds">시나리오 진행 시 꼭 필요한 자리에요. 다른 플레이어를 초대할 수 있습니다.</div>
           </div>
           <div class="arrow">→</div>
         </button>

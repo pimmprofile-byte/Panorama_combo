@@ -724,23 +724,23 @@
   .roomgate .rg-left{margin-top:12px;padding-top:11px;border-top:1px dashed var(--case-e);
     font-size:12.5px;color:var(--case-fg2)}
   .roomgate .rg-left b{color:var(--case-fg)}
-  .roomgate .rg-peek{display:block;width:100%;margin-top:11px;background:none;border:0;
-    color:var(--case-fg2);font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;
-    text-decoration:underline;text-underline-offset:3px;padding:6px 0;cursor:pointer}
   /* 뒤에서 기다리는 배역 선택창. 색을 빼고 손도 못 대게 한다 — 「아직 볼 때가
      아니다」를 말로 하지 않고 화면으로 말한다. */
   #s-lobby .wrap.gated{filter:grayscale(1) brightness(.86);pointer-events:none;user-select:none}
   /* 머리줄에 남는 코드 알약. 색은 옆의 「홈으로」 알약과 같은 판을 쓴다 —
      여기는 어두운 화면 안이라 케이스 색(var(--case-fg))을 쓰면 검은 글씨가
      검은 판에 얹혀 안 보인다. */
-  .rmpill{cursor:pointer;font-family:var(--mono);letter-spacing:.14em;font-weight:800;
+  .rmpill{cursor:pointer;font-family:var(--ui);letter-spacing:.14em;font-weight:800;
     color:var(--ink)}
   /* ── 방 코드 판 ────────────────────────────────────────────────────
      함께할 사람을 부르는 자리다. 코드는 크게, 설명은 작게 — 눈이 코드부터 잡는다. */
   .roomcode{border:1px solid var(--case-e);background:var(--case-h);color:var(--case-fg);
     padding:11px 13px;margin:0 0 14px;box-shadow:2px 2px 0 var(--case-e)}
   .roomcode .rc-line{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-  .roomcode .rc-code{font-family:var(--pix,var(--mono));font-size:clamp(20px,6vw,28px);
+  /* 방 코드는 «읽히는 것»이 전부다. 픽셀 글꼴은 이 판의 얼굴이지만 네 글자를
+     받아 적어 남에게 불러 주는 자리에서는 8 과 B, 5 와 S 가 붙는다. 코드만
+     프리텐다드를 쓴다 — 규칙을 어기는 게 아니라, 이 자리의 일이 다르다. */
+  .roomcode .rc-code{font-family:var(--ui);font-size:clamp(20px,6vw,28px);
     letter-spacing:.22em;line-height:1.1;color:var(--case-fg);font-weight:800}
   .roomcode .rc-say{flex:1 1 210px;min-width:0;font-size:12.5px;line-height:1.6;
     color:var(--case-fg2);word-break:keep-all}
@@ -817,6 +817,9 @@
   /* 밝은 케이스 판 위에 흰 글자·흰 아이콘을 얹어 두었더니 둘 다 판에 묻혔다.
      판을 말풍선과 같은 --case-h 로 맞추고, 글자와 아이콘을 차콜(--case-fg)로 뒤집는다 —
      이 파일에서 «베이지 위의 글자»는 늘 그 색이다. 아래 .coach-tip 과 같은 조합이 된다. */
+  /* 짚어 준 칸 말고는 안 눌린다. 안내가 도는 동안 여기저기로 튀지 않게 하는 자물쇠다. */
+  .dock.coachlock .dk{pointer-events:none}
+  .dock.coachlock .dk.callout{pointer-events:auto}
   .dock .dk.callout{z-index:56;color:var(--case-fg)}
   .dock .dk.callout .i{stroke:var(--case-fg)}
   .dock .dk.callout::before{content:"";position:absolute;inset:-3px -1px;border-radius:2px;
@@ -859,6 +862,9 @@
   /* 남이 쥔 카드 — 눌리긴 하지만 나오는 건 «갖고 있는 것으로 보인다» 한 줄뿐이다.
      button 이라 글꼴이 브라우저 것으로 돌아간다. 다시 이 판의 글꼴로 되돌린다. */
   .whorow button.wc{font-family:inherit;letter-spacing:inherit}
+  /* 남의 도구 — 자리도 이름도 없는 칸이다. 셈만 있다는 것을 모양으로 말한다. */
+  .whorow .wc.tool{border-style:dashed;border-color:rgba(195,186,176,.28);
+    color:var(--muted);cursor:default}
   .whorow .wc.held{cursor:pointer;border-style:dashed}
   .whorow .wc.held:hover{border-color:var(--case-line);color:var(--ink)}
   .whorow .wnone{font-size:11.5px;color:var(--muted);margin-top:7px}
@@ -3389,6 +3395,44 @@
   .immbox .imm-n{margin-top:7px;font-family:var(--ui);font-size:11.5px;color:var(--muted);
     font-variant-numeric:tabular-nums}
   .immbox .imm-n b{color:var(--ink)}
+  /* 다 읽은 사람에게만 켜지는 불. 하단바 안내(.dk.callout)와 같은 결로 —
+     베이지 판을 깔고 글자를 차콜로 뒤집는다. 이 판에서 «여기를 누르라»는
+     늘 그 모양이다. */
+  .immbox.glow{border-color:var(--gold);
+    box-shadow:0 0 0 1px var(--gold),0 0 22px -6px var(--gold)}
+  /* max-width 를 안 걸었더니 상자보다 길어진 말풍선이 가운데 맞춤에 밀려 왼쪽으로
+     삐져나갔다 — 첫 글자가 화면 밖에서 잘렸다. */
+  .immbox .imm-cue{margin:0 0 9px;display:inline-block;max-width:100%;
+    background:var(--case-h);color:var(--case-fg);border:1px solid var(--case-e);
+    box-shadow:2px 2px 0 var(--case-e);border-radius:2px;word-break:keep-all;
+    font-size:12px;font-weight:800;padding:6px 12px;animation:bobY 1.9s ease-in-out infinite}
+  /* ★ @keyframes bob 을 그대로 갖다 썼더니 말풍선이 왼쪽으로 반쯤 밀려 첫 글자가
+     잘렸다 — 그 애니메이션은 «가운데 맞춤을 스스로 하는» 자리(.coach-tip)의 것이라
+     transform 에 translateX(-50%) 가 들어 있다. 여기는 부모가 가운데를 맞춰 주므로
+     위아래로만 흔드는 것이 따로 필요하다. */
+  @keyframes bobY{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+  .immbox.glow .imm-go{animation:immPulse 1.5s ease-in-out infinite}
+  @keyframes immPulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+  @media(prefers-reduced-motion:reduce){
+    .immbox .imm-cue,.immbox.glow .imm-go{animation:none}
+  }
+  /* ── 「몰입 완료」가 붙는 장 ──────────────────────────────────────
+     단추가 화면 밖으로 밀려나면 끝까지 읽고도 못 누른다 — 「다음이 없는데
+     왜 안 넘어가지」로 판이 멈춘다. 이 장에서만 글을 한 단 줄여 단추를
+     화면 안으로 끌어온다. 줄이는 쪽은 읽고 나면 다시 안 볼 «진행 팁»이다. */
+  .withimm .bigcard{padding-top:12px;padding-bottom:10px}
+  .withimm .bc-eyebrow{display:none}          /* 「한눈에」 — 탭에 이미 적혀 있다 */
+  .withimm .bc-title{font-size:15.5px!important;margin-bottom:2px}
+  .withimm .tiplist{margin-top:6px;gap:0}
+  .withimm .tipitem{padding:5px 0 5px 15px;font-size:11.8px;line-height:1.5}
+  .withimm .tipitem::before{top:5px;left:0}
+  .withimm .immbox{margin-top:9px;padding:10px 12px 9px}
+  .withimm .immbox .imm-t{font-size:13px}
+  .withimm .immbox .imm-d{margin-top:3px;font-size:11px;line-height:1.5}
+  .withimm .immbox .advpips{margin:7px 0 1px}
+  .withimm .immbox .imm-go{margin-top:6px}
+  .withimm .immbox .imm-n{margin-top:4px}
+  .withimm .immbox .imm-cue{margin-bottom:6px;padding:5px 10px;font-size:11px}
 
   /* ── 메모 (인물정보 셋째 칸) ─────────────────────────────────── */
   .memobox{margin:0 0 14px;padding:12px 13px;border:1px solid var(--case-e);
@@ -3479,7 +3523,7 @@
       <span class="t">조사화면</span></button>
     <button class="dk" onclick="showMyHand()">
       <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="7.2" y="3.4" width="12" height="16" rx="2"/><path d="M4.9 6.6 3.2 16.2a2 2 0 0 0 1.6 2.3l2.4.5"/><path d="M10.6 8.4h5.2M10.6 12h5.2"/></svg>
-      <span class="t">내 단서 <b id="dkHandN">0/3</b></span><span class="bdg" id="dkHand"></span></button>
+      <span class="t">소지품 <b id="dkHandN">0/3</b></span><span class="bdg" id="dkHand"></span></button>
     <button class="dk" onclick="showMySheet()">
       <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.6h6l1.6 2.2H19a1.6 1.6 0 0 1 1.6 1.6v9.4A1.6 1.6 0 0 1 19 19.4H5a1.6 1.6 0 0 1-1.6-1.6V6.2A1.6 1.6 0 0 1 5 4.6Z"/><path d="M8.4 12.4h7.2M8.4 15.4h4.6"/></svg>
       <span class="t">내 정보</span><span class="dot" id="dkSheet"></span></button>
@@ -3525,7 +3569,7 @@
 </div>
 <div class="modal overdock" id="sheetModal"><div class="win"><div class="titlebar"><button class="tbox" aria-label="조사화면으로" onclick="dockHome()"></button><span class="wt" data-def="내 정보">내 정보</span><span class="tbox zoom" aria-hidden="true"></span></div><div class="box" id="sheetBox"></div></div></div>
 <div class="modal " id="cardModal"><div class="win"><div class="titlebar"><button class="tbox" aria-label="닫기" onclick="closeModal('cardModal')"></button><span class="wt" data-def="단서">단서</span><span class="tbox zoom" aria-hidden="true"></span></div><div class="box" id="cardBox"></div></div></div>
-<div class="modal overdock" id="handModal"><div class="win"><div class="titlebar"><button class="tbox" aria-label="조사화면으로" onclick="dockHome()"></button><span class="wt" data-def="내 단서">내 단서</span><span class="tbox zoom" aria-hidden="true"></span></div><div class="box" id="handBox"></div></div></div>
+<div class="modal overdock" id="handModal"><div class="win"><div class="titlebar"><button class="tbox" aria-label="조사화면으로" onclick="dockHome()"></button><span class="wt" data-def="소지품">소지품</span><span class="tbox zoom" aria-hidden="true"></span></div><div class="box" id="handBox"></div></div></div>
 <div class="modal " id="trimModal"><div class="win"><div class="titlebar"><button class="tbox" aria-label="닫기" onclick="closeModal('trimModal')"></button><span class="wt" data-def="손패 정리">손패 정리</span><span class="tbox zoom" aria-hidden="true"></span></div><div class="box" id="trimBox"></div></div></div>
 <div class="modal " id="swapModal"><div class="win"><div class="titlebar"><button class="tbox" aria-label="닫기" onclick="closeModal('swapModal')"></button><span class="wt" data-def="바꾸기">바꾸기</span><span class="tbox zoom" aria-hidden="true"></span></div><div class="box" id="swapBox"></div></div></div>
 <!-- 조사 화면 열람창. 구역 팝업(#mapModal)이 이 위로 떠야 하므로 반드시 그보다 앞에 둔다. -->
@@ -3975,8 +4019,92 @@ function paintQA(){
       title="세 배역 몫의 「다음 페이즈」만 누릅니다">전원 준비 ›</button>
     <button class="qa-x" onclick="qaAllCards()">카드 전부</button>
     ${holds<seats.length?`<button class="qa-x" onclick="qaClaimAll()">자리 마저 쥐기</button>`:""}
+    <button class="qa-x${qaOthersOn()?" hot":""}" onclick="qaToggleOthers()"
+      title="내 시점을 뺀 나머지 배역이 알아서 진행합니다 — 읽기·첫마디·조사·준비">
+      나머지 자동 ${qaOthersOn()?"켬":"끔"}</button>
+    <button class="qa-x${coachOff()?" hot":""}" onclick="qaToggleTutor()"
+      title="하단바 안내·지도 안내를 통째로 끕니다">튜토리얼 ${coachOff()?"끔":"켬"}</button>
     <button class="qa-x" onclick="qaAskKey()">키</button>
     <button class="qa-x" onclick="qaOff()">QA 끄기</button>`;
+}
+/* 검수 중에는 안내가 방해가 된다 — 화면을 덮고 하단바를 잠그는 것이 안내의 일이라
+   더 그렇다. 이 기기에만 남는 값이고, 일반 판에는 켤 문이 없다. */
+function qaToggleTutor(){
+  try{ if(coachOff()) localStorage.removeItem("pmb.notutor");
+       else localStorage.setItem("pmb.notutor","1"); }catch(e){}
+  paintQA(); paintCoach(); paintMapHint();
+  banner(coachOff()?"튜토리얼을 껐습니다.":"튜토리얼을 켰습니다.");
+}
+/* ── 나머지 자동 ──────────────────────────────────────────────────
+   혼자 검수하면서 «내 시점»만 사람처럼 굴리고 싶을 때. 나머지 두 배역은
+   지금 막이 요구하는 것을 알아서 한다 — 읽기(몰입) · 첫마디 · 조사 · 준비.
+   ★ 내 자리는 손도 안 댄다. 그게 이 단추의 전부다 — 「전원 자동행동」은 이미
+     따로 있고, 그건 내 몫까지 눌러 버려서 정작 볼 것을 못 본다.
+   ★ 폴링마다 도는데, 서버 왕복이 겹치면 같은 것을 두 번 누른다. 자물쇠 하나로 막는다. */
+function qaOthersOn(){ try{ return localStorage.getItem("pmb.qaothers")==="1"; }catch(e){ return false; } }
+function qaToggleOthers(){
+  try{ if(qaOthersOn()) localStorage.removeItem("pmb.qaothers");
+       else localStorage.setItem("pmb.qaothers","1"); }catch(e){}
+  paintQA();
+  banner(qaOthersOn()?"나머지 배역이 알아서 진행합니다.":"나머지 자동을 껐습니다.");
+  if(qaOthersOn()) qaOthersTick();
+}
+/* 내 시점을 뺀 자리들. 시점을 안 정했으면 아무도 안 움직인다 — 그 상태에서 돌리면
+   결국 전원 자동이 되어 이 단추의 뜻이 없어진다. */
+function qaOtherSeats(){
+  if(!qaRole) return [];
+  return qaSeats().filter(id=>id!==qaRole
+    && (((STATE&&STATE.roles)||{})[id]||{}).mode==="human");
+}
+let qaOthersBusy=false;
+async function qaOthersTick(){
+  if(!qaOn||!qaOthersOn()||qaOthersBusy||qaBusy||qaAutoBusy) return;
+  const ids=qaOtherSeats(); if(!ids.length) return;
+  qaOthersBusy=true;
+  try{
+    const ph=(STATE&&STATE.phase)||{};
+    const k=ph.key||"";
+    const tb=(STATE&&STATE.table)||[];
+    let moved=false;
+    /* ★ 나머지는 «나를 따라» 움직인다 — 나보다 먼저 가지 않는다. 앞질러 누르면
+       내가 화면을 읽고 있는 동안 막이 넘어가서, 정작 보려던 자리를 놓친다.
+       그래서 몰입도 준비도 «내가 누른 뒤»에만 따라 누른다. */
+    // ① 오프닝 — 내가 몰입을 끝냈으면 나머지도 끝낸 것으로
+    if(k==="open" && immMine()){
+      const done=((STATE&&STATE.immersed)||{}).mine||[];
+      for(const id of ids){ if(done.indexOf(id)>=0) continue;
+        await post("/api/immersed",{roleId:id,clientId}); moved=true; }
+    }
+    // ② 자기소개 — 내가 첫마디를 뗐으면 나머지도 견본대로 한마디씩 친다.
+    //    셋이 한 바퀴 돌아야 다음 안내(조사화면)가 뜨는데, 그 한 바퀴를 사람 혼자
+    //    세 번 갈아끼우며 치고 있으면 검수가 아니라 노동이 된다.
+    const said=id=>tb.some(m=>m&&m.kind==="human"&&m.roleId===id);
+    if(!openLocked() && said(qaRole)){
+      const hints=(STATE&&STATE.introHints)||{};
+      for(const id of ids){
+        if(said(id)) continue;
+        const c=roleById(id)||{};
+        const t=hints[id]||`${c.name||id}입니다.`;
+        await post("/api/human-say",{roleId:id,clientId,text:t}); moved=true;
+      }
+    }
+    // ③ 조사 — 내 턴이 아닌 차례는 알아서 돈다. 여기만 나를 안 기다린다.
+    //    기다려 봐야 내가 할 수 있는 것이 없는 차례다.
+    if(k==="invest"){
+      const turn=STATE&&STATE.turn;
+      if(turn&&ids.indexOf(turn)>=0){
+        await post("/api/qa/auto",{roleId:turn,key:hostKey(),puzzles:true}); moved=true;
+      }
+    }
+    // ④ 준비 — 내가 「다음 페이즈」를 누른 뒤에 나머지 몫이 따라 눌린다.
+    const rd=new Set(((STATE&&STATE.ready)||{}).mine||[]);
+    if(rd.has(qaRole)){
+      for(const id of ids){ if(rd.has(id)) continue;
+        await post("/api/ready",{roleId:id,clientId}); moved=true; }
+    }
+    if(moved) await poll();
+  } catch(e){ /* 검수용이다 — 실패해도 판을 멈추지 않는다 */ }
+  finally { qaOthersBusy=false; }
 }
 /* ── QA 자동조사 ───────────────────────────────────────────────────
    3인 판을 혼자 검수하면 조사 페이즈 한 번에 스물한 번을 손으로 눌러야 다음 막이 온다.
@@ -4216,13 +4344,26 @@ function applyState(){
     paintPodLaunch();
     paintCoach();
     paintMapHint();
-    paintChatBadge();
-    chatChime();
+    /* ★ 오프닝 잠금(아직 몰입 전) 동안에는 대화창 알림을 안 켠다. 지금 화면이
+       사람에게 시키는 일은 「내 정보를 읽어라」 하나인데, 옆 칸이 맥박치고
+       소리까지 나면 시선이 그리로 끌려간다 — 안내 둘이 서로를 방해한다.
+       잠금이 풀리는 순간 밀린 것이 한꺼번에 세어져 그때 제대로 뜬다. */
+    if(openLocked()){
+      const cb=$("dkChat");
+      if(cb){ cb.textContent=""; cb.classList.remove("on");
+              const p=cb.closest?cb.closest(".dk"):null; if(p) p.classList.remove("unread"); }
+    }else{
+      paintChatBadge();
+      chatChime();
+    }
     // 다음 페이즈·조사 화면·진행석은 ☰ 서랍이 페이즈를 보고 스스로 넣고 뺀다.
     if(ph.key==="invest"&&$("lookModal").classList.contains("on")) closeLook();
     
     maybePhaseFx(ph);
   }
+  /* QA 「나머지 자동」 — 폴링 끝자락에 한 번 돈다. 안에서 스스로 꺼져 있는지,
+     이미 도는 중인지 보므로 여기서는 조건 없이 부른다. */
+  qaOthersTick();
 }
 
 /* ☰ 서랍 — 머리띠에 늘 떠 있을 필요가 없는 것들.
@@ -5286,10 +5427,8 @@ function allSeated(){
      화면 앞을 계속 막고 있을 이유가 없다. 판이 시작된 뒤에도 마찬가지다.
    ★ 다만 코드 자체는 머리줄의 알약으로 남긴다 — 중간에 누가 나가면 다시
      불러야 하고, 그때 코드를 찾으러 나가야 하면 안 된다. */
-let gatePeek=false;   /* 「먼저 둘러보기」를 눌렀는가. 이 화면을 떠나면 사라지는 값이다 —
-                         굳이 저장하지 않는다. 봇으로 채워 혼자 도는 판(QA·리허설)에서
-                         관문에 갇히지 않게 두는 뒷문일 뿐이다. */
-function peekLobby(){ gatePeek=true; paintLobbyRoom(); }
+/* QA 검수는 한 기기가 세 자리를 한꺼번에 쥐므로 관문이 곧바로 걷힌다 —
+   따로 뒷문(「먼저 둘러보기」)을 두지 않는다. 문이 하나면 헷갈릴 일도 없다. */
 function paintLobbyRoom(){
   const on = !!roomCode && roomCode!=="----";
   const pill=$("lobbyRoomPill");
@@ -5301,7 +5440,7 @@ function paintLobbyRoom(){
   const g=$("lobbyGate"), b=$("lobbyRoom");
   const w=document.querySelector("#s-lobby .wrap");
   if(!g||!b) return;
-  const done = !on || gatePeek || allSeated() || !!(STATE&&STATE.started);
+  const done = !on || allSeated() || !!(STATE&&STATE.started);
   if(done){ g.hidden=true; b.innerHTML=""; if(w) w.classList.remove("gated"); return; }
   const left=(SCEN&&SCEN.characters||[]).filter(c=>((STATE.roles||{})[c.id]||{}).mode==="open").length;
   const seats=(SCEN&&SCEN.characters||[]).length;
@@ -5316,8 +5455,7 @@ function paintLobbyRoom(){
       <button class="rc-b" onclick="copyInvite()">초대 링크 복사</button>
     </div>
     <div class="rg-left">${seats-left} / ${seats} 명이 들어왔습니다 — <b>남은 자리 ${left}</b><br>
-      다 모이면 이 안내가 스스로 걷히고 배역 선택창이 열립니다.</div>
-    <button class="rg-peek" onclick="peekLobby()">먼저 둘러보기</button>`;
+      다 모이면 이 안내가 스스로 걷히고 배역 선택창이 열립니다.</div>`;
 }
 async function copyRoomCode(){
   try{ await navigator.clipboard.writeText(roomCode); banner("방 코드 "+roomCode+" 를 복사했습니다."); }
@@ -5847,7 +5985,7 @@ function renderPanel(ph){
           <div class="rf-d">이 판은 배역으로 말하는 판입니다. <b>내 정보</b>를 처음부터 끝까지 넘겨 읽고,
             마지막 장의 <b>「몰입 완료!」</b>를 눌러 주세요.<br>
             셋이 다 누르면 대화창이 열립니다 — 그때부터 서로를 소개합니다.</div>
-          <div class="rf-lock">${ICO.lock} 그때까지 대화창·내 단서·인물정보는 잠깁니다</div>
+          <div class="rf-lock">${ICO.lock} 그때까지 대화창·소지품·인물정보는 잠깁니다</div>
           <button class="btn gold rf-go" onclick="showMySheet()">${ICO.folder} 내 정보 열기 ›</button></div>`
       : `<div class="panel-note" style="text-align:center">사건 당시 <b>알리바이 대화록</b>은 대화창 맨 위에 남아 있습니다 — 언제든 올려서 다시 읽으세요.<br>대화창에서 배역으로 자기소개를 나누세요.</div>
          ${nextPhaseBlock()}`}`;
@@ -7301,7 +7439,17 @@ function showWho(keepTab){
     const mode=((STATE.roles||{})[c.id]||{}).mode;
     const seat=c.id===myRoleId?'<span class="pill" style="color:var(--gold-b)">나</span>'
       :(mode==="ai"?'<span class="pill">AI</span>':(mode==="human"?'<span class="pill" style="color:var(--good)">사람</span>':""));
-    const cards=ids.map(id=>{
+    /* ── 도구는 «몇 개»만 샌다 ─────────────────────────────────────
+       ★ 남의 도구는 자리도 안 알린다. 도구는 조사턴으로 꺼낸 것도 있고 판이
+         열리기 전부터 쥐고 있던 것도 있어서(데이지의 확성기), 자리를 적으면
+         「어제 가져온 것」이 「오늘 그 자리를 뒤진 것」으로 읽힌다 — 아무도 한
+         적 없는 조사가 조사표에 올라간다.
+       그래서 남의 도구는 한 칸으로 뭉친다. 무엇인지도, 어디서 났는지도 안 나오고
+       «도구를 쥐고 있다»만 남는다. 내 것은 내가 아는 것이니 그대로 편다. */
+    const mineRow=(c.id===myRoleId);
+    const toolN=mineRow?0:ids.filter(id=>(cardCat(id)||{}).item).length;
+    const show=mineRow?ids:ids.filter(id=>!(cardCat(id)||{}).item);
+    const cards=show.map(id=>{
       const k=cardCat(id);
       const where=k?`${esc(k.locName||k.loc)}${k.spot?" · "+esc(k.spot):""}`:"어딘가";
       if(c.id===myRoleId||canSeeCard(id)){
@@ -7311,7 +7459,8 @@ function showWho(keepTab){
       // 남이 쥔 카드 — 자리만 안다. 눌러도 «무엇인가»는 끝내 안 나온다.
       // 눌리는 줄 모르고 지나치는 사람이 많아서, 여기서 한 줄만 말해준다.
       return `<button class="wc held" onclick="whoHandNote('${c.id}')">${ICO.lock} ${where}</button>`;
-    }).join("");
+    }).join("")
+      +(toolN?`<span class="wc tool" title="무엇인지도, 어디서 났는지도 알 수 없습니다">${ICO.lock} 도구 ${toolN}</span>`:"");
     return `<div class="whorow">${avaHTML(c,"sm")}
       <div class="wi">
         <div class="wn" style="color:${c.color}">${esc(c.name)}<span class="sub">${esc([ageOf(c.id),c.job].filter(Boolean).join(" · "))}</span>${seat}</div>
@@ -7319,7 +7468,7 @@ function showWho(keepTab){
         ${c.id===myRoleId?"":`<div class="wt">${esc(c.tagline||"")}</div>`}
         ${(c.id!==myRoleId&&c.known)?`<div class="wknown"><span class="k">여기 사람들이 아는 것</span>${esc(c.known)}</div>`:""}
         ${impressionHTML(c.id)}
-        ${ids.length?`<div class="wcards">${cards}</div>`:`<div class="wnone">지금 쥐고 있는 카드가 없습니다.</div>`}
+        ${cards?`<div class="wcards">${cards}</div>`:`<div class="wnone">지금 쥐고 있는 카드가 없습니다.</div>`}
       </div></div>`;
   }).join("");
   /* 배역으로 앉을 수 없는 인물이 있는 사건이 있다 — 《자명종》의 의사와 운전기사다.
@@ -9106,7 +9255,11 @@ function immBlockHTML(){
     const c=roleById(id)||{};
     return `<span class="ap-p${(s.mine||[]).indexOf(id)>=0?" on":""}" style="--rc:${c.color||"var(--gold)"}"></span>`;
   }).join("");
-  return `<div class="immbox">
+  /* 탭을 하나도 안 남기고 다 열어 본 사람에게만 불을 켠다. 아직 안 본 탭이
+     있는 사람에게 이 단추가 빛나면, 다 읽었다는 착각을 화면이 만들어 준다. */
+  const glow = !mine && allTabsRead();
+  return `<div class="immbox${glow?" glow":""}">
+    ${glow?`<div class="imm-cue">다 읽었습니다 — 여기를 눌러 주세요</div>`:""}
     <div class="imm-t">여기까지가 당신입니다</div>
     <div class="imm-d">끝까지 읽었으면 눌러 주세요. 셋이 다 누르면 대화창이 열립니다.</div>
     <div class="advpips">${pips}</div>
@@ -9125,10 +9278,17 @@ function renderSheetTabs(){
     return `<button class="shtab${k===sheetTab?" on":""}${seen.has(k)?"":" unseen"}" onclick="sheetGo('${k}')">${l}<span class="n">${n}</span></button>`;}).join("");
   const cur=sheetSlides.filter(x=>x.tab===sheetTab).map(x=>x.html);
   /* 「몰입 완료!」 — 마지막 탭의 «마지막 장» 에만 붙는다. 끝까지 넘겨 본 사람만
-     그 단추를 만난다는 것이 이 장치의 전부다. 중간에 붙이면 안 읽고 누른다. */
+     그 단추를 만난다는 것이 이 장치의 전부다. 중간에 붙이면 안 읽고 누른다.
+     ★ 다만 «이미 다 읽은» 사람에게는 어느 탭에서든 붙인다. 그 장치가 지키려던
+       것은 이미 지켜졌고, 그때부터는 단추를 찾아 탭을 되짚게 만드는 것이
+       그냥 방해다.
+     ★ 카드와 단추를 한 겹으로 묶는다(.withimm) — 그 겹에서만 글을 줄여
+       단추를 화면 안으로 끌어온다. */
   if(inOpening()&&myRoleValid()&&cur.length){
     const tl=sheetTabList();
-    if(tl.length&&sheetTab===tl[tl.length-1]) cur[cur.length-1]+=immBlockHTML();
+    const atLast = tl.length && sheetTab===tl[tl.length-1];
+    if(atLast||allTabsRead())
+      cur[cur.length-1]=`<div class="withimm">${cur[cur.length-1]}${immBlockHTML()}</div>`;
   }
   $("sheetBox").innerHTML=`<div class="mhead sheeth">
       <div class="sh-id">${avaHTML(s,"sm")}
@@ -9295,27 +9455,62 @@ async function post(url,body){ try{ return await (await fetch(url,{method:"POST"
    그건 안내가 아니라 소음이다. 순서는 게임이 사람에게 그것을 «필요로 하는»
    차례를 그대로 따른다 —
 
-     내 정보  오프닝. 자기 이야기를 읽고 시작하는 게임이다
-     대화창   막이 오르고 말이 오가기 시작할 때
-     내 단서  내가 카드를 처음 쥐었을 때
-     인물정보 남이 카드를 쥐었을 때. 그때부터 볼 것이 생긴다
+     내 정보   오프닝. 자기 이야기를 읽고 시작하는 게임이다
+     몰입 완료 다 읽은 사람에게. 이 단추가 시트 «안»에 있어서 한 칸을 더 둔다
+     대화창    셋이 다 몰입을 끝내고 막이 오를 때
+     조사화면  알리바이가 끝나고 셋이 다 자기소개를 마쳤을 때
+     소지품    내가 카드를 처음 쥐었을 때
+     인물정보  그 카드를 닫고 나왔을 때. 그때부터 남을 볼 일이 생긴다
 
-   조사화면은 여기 없다. 그건 «지금 서 있는 화면» 이라, 하단바를 가리켜 봐야
-   이미 있는 곳을 손짓하는 꼴이 된다. 그 자리의 안내는 지도 위에 뜬다
-   (아래 paintMapHint). 한 칸을 열어 보면 그 칸은 다시 안 뜬다. */
+   ★ 예전에는 «조건이 찬 칸» 중 첫 칸을 골랐다. 그러면 판이 빨리 도는 자리에서
+     두세 칸의 조건이 한꺼번에 익어 안내가 여기저기로 튄다 — 사람은 한 칸을
+     끝내지도 못했는데 화면은 벌써 세 칸 뒤를 가리킨다.
+     지금은 «앞 칸을 끝내기 전에는 다음 칸이 안 뜬다». 앞 칸이 아직 안 익었으면
+     거기서 멈춘다. 때를 영영 놓친 칸(skip)만 조용히 지나간다.
+   ★ lock 이 붙은 칸에서는 하단바의 나머지 칸이 안 눌린다. 「내 정보만 보라」고
+     해놓고 다른 데를 열 수 있으면 그건 안내가 아니라 제안이다. */
 const COACH_STEPS=[
-  {k:"sheet", dk:2, tip:"먼저 「내 정보」를 읽어 주세요", open:()=>showMySheet(),
-   when:()=> inOpening() && sheetSeenSeq!=null && sheetSeenSeq<(STATE.seq||0)},
+  {k:"sheet", dk:2, lock:true, tip:"먼저 「내 정보」를 읽어 주세요", open:()=>showMySheet(),
+   when:()=> inOpening() && sheetSeenSeq!=null && sheetSeenSeq<(STATE.seq||0),
+   skip:()=> !inOpening()},
+  /* 다 읽고 창을 닫고 나온 사람. 「몰입 완료」는 시트 «안»에 있어서, 밖에서는
+     누를 자리가 없다 — 그래서 다시 들여보내는 칸이 따로 필요하다. */
+  {k:"imm",   dk:2, lock:true, tip:"다 읽었으면 「몰입 완료」를 눌러 주세요",
+   open:()=>showMySheet(),
+   when:()=> openLocked() && allTabsRead() && !immMine(),
+   skip:()=> !openLocked() || immMine()},
   /* ★ «오프닝이 끝났는가» 가 아니라 «이 사람이 다 읽었는가» 로 본다. 몰입완료는
      막을 넘기지 않는다 — 막으로 재면 셋이 다 읽고 대화가 시작된 뒤에도
      이 안내가 안 뜬다. */
   {k:"chat",  dk:3, tip:"여기서 이야기가 오갑니다", open:()=>showChatFull(),
    when:()=> !openLocked() && ((STATE.table||[]).length>0)},
-  {k:"hand",  dk:1, tip:"찾아낸 단서가 여기 쌓입니다", open:()=>showMyHand(),
+  /* 조사화면은 «지금 서 있는 화면» 이지만, 여기까지 오는 동안 사람은 줄곧
+     대화창 안에 있었다. 나올 자리를 한 번은 짚어 줘야 한다. */
+  {k:"invest",dk:0, tip:"여기에서 사건을 조사합니다", open:()=>dockHome(),
+   when:()=> introsAllSaid() && ((STATE.phase||{}).key==="invest"),
+   skip:()=> myCheckedIds().length>0},
+  {k:"hand",  dk:1, tip:"찾아낸 카드는 「소지품」에 쌓입니다", open:()=>showMyHand(),
    when:()=> myCheckedIds().length>0},
-  {k:"who",   dk:4, tip:"다른 사람이 무엇을 쥐었는지 볼 수 있습니다", open:()=>showWho(),
-   when:()=> othersChecked()>0},
+  {k:"who",   dk:4, tip:"다른 인물이 쥔 손패는 여기서 봅니다 — 내용은 안 보입니다",
+   open:()=>showWho(),
+   when:()=> myCheckedIds().length>0},
 ];
+/* 셋이 다 자기 입으로 한마디씩 했는가 — 자기소개가 한 바퀴 돌았다는 뜻이다.
+   AI·GM 줄은 안 센다. 사람이 친 줄만 센다. */
+function introsAllSaid(){
+  const tb=(STATE&&STATE.table)||[];
+  const ids=((SCEN&&SCEN.characters)||[]).map(c=>c.id);
+  if(!ids.length) return false;
+  return ids.every(id=>tb.some(m=>m&&m.kind==="human"&&m.roleId===id));
+}
+/* 시트의 탭을 하나도 안 남기고 다 열어 봤는가. 시트를 한 번도 안 연 사람은
+   sheetSlides 가 비어 있어 false 다 — 그게 맞다. */
+function allTabsRead(){
+  const have=SHEET_TABS.filter(([k])=>sheetSlides.some(x=>x.tab===k)).map(([k])=>k);
+  if(!have.length) return false;
+  const q=tabsSeen();
+  return have.every(k=>q.has(k));
+}
 function myCheckedIds(){ return ((STATE&&STATE.checked)||{})[myRoleId]||[]; }
 function othersChecked(){
   const ck=(STATE&&STATE.checked)||{};
@@ -9324,21 +9519,28 @@ function othersChecked(){
 function coachKey(){ const r=(STATE&&STATE.roomId)||""; return (r&&myRoleId)?`pmb.dcoach.${r}.${myRoleId}`:""; }
 function coachSeen(){ const k=coachKey(); if(!k) return {};
   try{ return JSON.parse(localStorage.getItem(k)||"{}")||{}; }catch(e){ return {}; } }
-function coachDone(step){
+/* 기억만 한다 — 다시 그리지 않는다. coachNext 안에서 부르므로, 여기서 paintCoach 를
+   부르면 그리는 도중에 다시 그리게 된다. */
+function markCoach(step){
   const k=coachKey(); if(!k) return;
   const v=coachSeen(); if(v[step]) return;
   v[step]=1; try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){}
-  paintCoach();
 }
-/* 지금 짚어 줄 칸. 아직 안 본 것 중 «조건이 찬 첫 칸» 하나다. */
+function coachDone(step){ markCoach(step); paintCoach(); }
+/* 튜토리얼을 통째로 끈 사람(QA 검수) */
+function coachOff(){ try{ return localStorage.getItem("pmb.notutor")==="1"; }catch(e){ return false; } }
+/* 지금 짚어 줄 칸. «아직 안 본 첫 칸» 하나다 — 조건이 안 찼으면 거기서 멈춘다.
+   앞 칸을 건너뛰고 뒤 칸으로 넘어가지 않는다는 것이 이 함수의 전부다. */
 function coachNext(){
-  if(!myRoleValid()) return null;
+  if(!myRoleValid()||coachOff()) return null;
   if(document.querySelector(".modal.on")) return null;   // 창이 떠 있으면 가릴 것이 없다
   const v=coachSeen();
   for(const st of COACH_STEPS){
     if(v[st.k]) continue;
+    let gone=false; try{ gone=!!(st.skip&&st.skip()); }catch(e){ gone=false; }
+    if(gone){ markCoach(st.k); continue; }                // 때를 놓친 칸은 조용히 지나간다
     let ok=false; try{ ok=!!st.when(); }catch(e){ ok=false; }
-    if(ok) return st;
+    return ok?st:null;                                    // ★ 아직 안 익었으면 여기서 멈춘다
   }
   return null;
 }
@@ -9349,8 +9551,12 @@ function paintCoach(){
   const c=$("coach"); if(c) c.remove();
   const t=$("coachTip"); if(t) t.remove();
   const dock=$("dock");
-  if(dock) [...dock.children].forEach(b=>b.classList.remove("callout"));
+  if(dock){ [...dock.children].forEach(b=>b.classList.remove("callout"));
+            dock.classList.remove("coachlock"); }
   if(!st) return;
+  /* 이 칸에서는 짚어 준 자리 말고는 안 눌린다. 「내 정보만 보라」고 해놓고
+     다른 데를 열 수 있으면 그건 안내가 아니라 제안이다. */
+  if(dock&&st.lock) dock.classList.add("coachlock");
   const d=document.createElement("div"); d.className="coach"; d.id="coach";
   d.dataset.k=st.k;
   d.onclick=()=>{ coachDone(st.k); st.open(); };
@@ -9372,9 +9578,13 @@ function paintMapHint(){
   const old=$("mapHint");
   const ph=(STATE&&STATE.phase)||{};
   const turn=STATE&&STATE.turn;
-  const want = myRoleValid() && ph.key==="invest" && !openLocked()
+  /* 하단바 안내(coach)가 도는 중이면 안 뜬다 — 어둠막 위로 한 줄이 더 뜨면
+     짚어 준 자리가 둘이 된다. 조사화면 칸을 짚어 준 다음이 이 줄의 차례다. */
+  const seen=coachSeen();
+  const want = myRoleValid() && ph.key==="invest" && !openLocked() && !coachOff()
             && (!turn || turn===myRoleId)
-            && !coachSeen().map && !document.querySelector(".modal.on");
+            && !seen.map && !!seen.invest && !coachNext()
+            && !document.querySelector(".modal.on");
   if(!want){ if(old) old.remove(); return; }
   if(old) return;
   const el=document.createElement("div");

@@ -1385,6 +1385,13 @@ def state(clientId: str = "", gm: int = 0, roleId: str = "", key: str = ""):
             _si = (getattr(SC, "SELF_INTRO", {}) or {}).get(st["myRole"], "")
             if _si:
                 st["introHint"] = _si
+        # QA 검수는 한 기기가 세 좌석을 다 쥐고 도는 판이라, 나머지 둘의 첫마디도
+        # 그 기기가 대신 쳐 줘야 판이 앞으로 간다. 열쇠가 맞을 때만 실린다.
+        # 견본 자체는 공개 정보만 담긴 문장이다(진상은 한 조각도 안 들어간다).
+        if qa_role:
+            _all_si = getattr(SC, "SELF_INTRO", {}) or {}
+            if _all_si:
+                st["introHints"] = dict(_all_si)
         # 호스트 자리를 지키는 신호는 «진짜» 호스트만 남긴다. 열쇠로 서 있는 사람이
         # 이걸 갱신하면, 정작 사라진 호스트의 자리가 영영 안 비어서 아무도 못 이어받는다.
         _real_host = bool(clientId) and ROOM.get("host") == clientId
