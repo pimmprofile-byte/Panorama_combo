@@ -5252,6 +5252,10 @@ function renderLobby(force){
     const bs=el.querySelector(".badgeslot"); if(bs&&bs.innerHTML!==st.badge) bs.innerHTML=st.badge;
     const bt=el.querySelector(".btnslot");   if(bt&&bt.innerHTML!==st.btn)   bt.innerHTML=st.btn;
   });
+  /* ★ 눕히기를 여기서도 한다. 예전에는 «처음 그릴 때» 만 불러서, 세 사람이 한 명씩
+     자리를 채우는 평범한 판에서는 다 차도 모양이 안 바뀌었다 — 그 경로는 카드를
+     다시 안 그리고 상태만 덧입히기 때문이다. 다 찬 순간이 바로 이 경로다. */
+  paintLobbyFold(host);
   paintStartNow();
   const sb=host.querySelector(".startslot"), nb=startBoxHTML();
   if(sb&&sb.innerHTML!==nb) sb.innerHTML=nb;

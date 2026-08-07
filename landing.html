@@ -1023,13 +1023,14 @@ fetch("/api/build").then(r=>r.json()).then(b=>{
    취급돼 자리가 다 찬 방 앞에 서 있었다. 코드와 기기 신원이 있으면 앉았던 자리로
    그대로 돌아간다. */
 async function enterHost(){
+  clearQA();
   const r=await roomPost("/api/room/new",{clientId});
   if(!r||!r.code){ note("방을 열지 못했습니다 — 잠시 뒤 다시 눌러주세요."); return; }
   setRoomCode(r.code);
   me.mode="host"; hostPresent=true; go("scenarios"); render();
   note(`방 코드 ${r.code} — 함께할 사람에게 알려주세요.`);
 }
-function enterParticipant(){ askRoomCode("participant"); }
+function enterParticipant(){ clearQA(); askRoomCode("participant"); }
 /* 코드를 물어보는 자리. 참가자와 «다시 들어가기» 가 같은 문을 쓴다 — 하는 일이 같다. */
 async function askRoomCode(mode){
   const last=(()=>{ try{ return localStorage.getItem("pmb.room")||""; }catch(e){ return ""; } })();
@@ -1053,7 +1054,13 @@ async function askRoomCode(mode){
   if(d.scenarioId) me.pick=d.scenarioId;
   go("scenarios"); render();
 }
-function enterBack(){ askRoomCode("back"); }
+function enterBack(){ clearQA(); askRoomCode("back"); }
+/* 이 기기에 남아 있는 QA 표시를 지운다. 게임 화면은 pmb.qa 하나로 QA 를 켜므로
+   이 값만 지우면 다음 판은 평범하게 열린다. 열쇠(pmb.gmkey)는 안 건드린다 —
+   그건 관리자 화면이 쓰는 값이고, 지우면 에셋 훑어보기까지 잠긴다. */
+function clearQA(){
+  try{ localStorage.removeItem("pmb.qa"); localStorage.removeItem("pmb.qarole"); }catch(e){}
+}
 async function roomPost(url,body){
   try{ return await (await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify(body||{})})).json(); }catch(e){ return null; }
@@ -1119,7 +1126,12 @@ async function launch(){
   note(`《${s.title}》 여는 중…`);
   await claimHost();               // 비어 있으면 잡는다. 이미 남이 쥐고 있으면 그대로 둔다
   if(!await openScenario(me.pick)) return;
-  location.href="/play";
+  /* ★ 이 문은 «평범한 판» 이다. 그러니 남아 있던 QA 표시를 여기서 끈다.
+     pmb.qa 는 한 번 켜지면 저 혼자 안 꺼지는 값이고, 열쇠(pmb.gmkey)까지
+     넣어 둔 기기에서는 부팅 검사도 통과해 버린다 — 그래서 관리자 모드를
+     켠 적도 없는데 자홍색 QA 띠를 단 채 실전이 열렸다. */
+  clearQA();
+  location.href="/play?qa=0";
 }
 function note(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("on"); clearTimeout(note._t); note._t=setTimeout(()=>t.classList.remove("on"),2600); }
 
