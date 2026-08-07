@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
 <title>졸업사진 卒業寫眞 — PIMMmurderboard</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' fill='%23050c09' stroke='%2300ff99' stroke-width='2'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='monospace' font-size='17' font-weight='700' fill='%2300ff99'%3EP%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="/assets/favicon-180.png">
 
 <style>
   /* 한글 웹폰트를 직접 얹는다. 예전에는 "Noto Sans KR" 같은 이름만 적어뒀는데
@@ -4870,7 +4872,7 @@ function paintGmBar(){
   el.hidden=false;
   void el.offsetWidth;
   el.classList.add("on");
-  try{ sfx("chat"); }catch(e){}
+  try{ sfx("ping"); }catch(e){}     // 말이 온 것(chat)과 다른 소리 — 이건 안내다
 }
 function paintChatBadge(){
   const b=$("dkChat"); if(!b) return;
@@ -4887,7 +4889,8 @@ function paintChatBadge(){
 let chatHeard=null;
 function chatChime(){
   // 한 줄씩 흘려보내는 줄(drip)은 여기서 안 센다 — 그 줄의 소리는 풀리는 순간에 하나씩 울린다
-  const rows=(STATE&&STATE.table||[]).filter(m=>!m.drip&&(m.kind==="ai"||m.kind==="human"||m.kind==="gm"));
+  // GM 지문은 여기서 안 센다 — 위에서 내려오는 띠(paintGmBar)가 제 소리를 낸다.
+  const rows=(STATE&&STATE.table||[]).filter(m=>!m.drip&&(m.kind==="ai"||m.kind==="human"));
   const n=rows.length;
   if(chatHeard===null||n<chatHeard){ chatHeard=n; return; }
   if(n<=chatHeard) return;
@@ -5006,9 +5009,21 @@ function findAudio(base, cb){
     fetch(url,{method:"HEAD"}).then(r=>r.ok?cb(url):next()).catch(next);
   })();
 }
+/* ★ 같은 소리가 겹쳐 울리는 것을 막는다.
+   소리 파일이 없는 자리는 전부 합성음이고(assets/sfx 는 비어 있다), 합성음은
+   부를 때마다 «새 발진기»를 세운다 — 파일 하나를 되감아 쓰는 것과 달리 겹친다.
+   말이 여러 줄 한꺼번에 닿는 자리(자기소개 세 사람 · 막이 바뀔 때)에서 셋이
+   포개져 「띠디디딕」이 됐다.
+   ★ 140ms 로 잡았다. 흘려보내기가 한 줄씩 놓는 간격이 최소 252ms 라 «줄마다 한 번»은
+     그대로 살고, 같은 순간에 몰린 것만 하나로 합쳐진다. */
+const SFX_GAP=140;
+const _sfxAt={};
 function sfx(key){
   if(vnMuted) return;
   key=SFX_ALIAS[key]||key;
+  const now=Date.now();
+  if(now-(_sfxAt[key]||0) < SFX_GAP) return;
+  _sfxAt[key]=now;
   if(_sfxFile[key]===undefined){
     _sfxFile[key]=null;                        // 찾는 동안에는 합성음으로 때운다
     findAudio(`/assets/sfx/${key}`, url=>{ if(url){ const a=new Audio(url); a.volume=.55; _sfxFile[key]=a; } });

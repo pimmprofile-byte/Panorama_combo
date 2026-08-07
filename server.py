@@ -5149,6 +5149,15 @@ def api_build():
     return _BUILD
 
 
+@app.get("/favicon.ico")
+def favicon():
+    """브라우저는 <link> 와 상관없이 이 주소를 한 번 두드린다. 없으면 404 가 한 줄
+    남고, 북마크·홈화면처럼 <link> 를 안 읽는 자리에서는 아이콘이 아예 안 뜬다."""
+    return FileResponse(_ASSETS / "favicon.ico",
+                        media_type="image/x-icon",
+                        headers={"Cache-Control": "public, max-age=86400"})
+
+
 @app.get("/")
 def landing():
     # 노아르 허브(로고·포스터·호스트/참가자) — 여기서 사건을 골라 /play 로 진입
