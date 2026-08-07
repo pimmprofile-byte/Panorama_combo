@@ -716,27 +716,37 @@
      보는 편이 한 자리씩 차는 걸 지켜보는 것보다 낫다.
      코드는 걷힌 뒤에도 머리줄의 작은 알약(.rmpill)에 남는다 — 중간에 누가 나가면
      다시 불러야 하니까. */
-  .roomgate{position:fixed;inset:0;z-index:70;display:grid;place-items:center;
-    padding:calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right))
-            calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
-    background:rgba(9,10,12,.78);animation:gateIn .22s ease-out}
-  /* display 를 건 순간 [hidden] 이 안 먹는다 — 클래스 규칙이 브라우저 기본 판을
-     이긴다. 걷혔는데 어두운 막만 남아 화면 전체가 죽는 사고가 여기서 난다. */
+  /* ★ 한때 이것이 화면을 통째로 덮는 관문이었다(position:fixed·inset:0·어둠막).
+       뒤의 배역 선택창은 회색으로 죽이고 손도 못 대게 했다(.wrap.gated).
+       그런데 이 관문이 걷히는 조건은 «자리가 다 찼는가»(allSeated)이고, 자리를
+       채우는 유일한 길은 그 아래 깔린 배역 카드다 — 관문이 자기를 걷을 손을 자기가
+       막고 있었다. 아무도 앉을 수 없고, 그래서 관문은 영영 안 걷히고, 게임은
+       시작되지 않는다. 「호스트로 들어간 다음부터 시작이 안 된다」가 이것이다.
+     ★ 로비의 일은 «자리에 앉는 것»이다. 그 일을 막는 관문은 관문이 아니라 벽이다.
+       덮지 않고 «맨 위에 서는 판»으로 둔다 — 코드는 여전히 제일 먼저 눈에 들어오고,
+       배역 카드는 그 아래에서 그대로 눌린다. */
+  .roomgate{margin:0 0 14px;animation:gateIn .22s ease-out}
   .roomgate[hidden]{display:none}
   @keyframes gateIn{from{opacity:0}to{opacity:1}}
-  .roomgate .roomcode{width:min(430px,100%);max-height:100%;overflow:auto;margin:0;
-    padding:20px 18px;box-shadow:5px 5px 0 rgba(0,0,0,.5)}
-  .roomgate .rg-h{font-size:15px;font-weight:800;color:var(--case-fg);margin:0 0 3px}
-  .roomgate .rg-k{font-family:var(--mono);font-size:.6rem;letter-spacing:.2em;
-    text-transform:uppercase;color:var(--case-fg2);margin:0 0 14px}
-  .roomgate .rc-code{font-size:clamp(30px,11vw,42px)}
-  .roomgate .rc-line{margin:0 0 12px}
-  .roomgate .rg-left{margin-top:12px;padding-top:11px;border-top:1px dashed var(--case-e);
-    font-size:12.5px;color:var(--case-fg2)}
+  /* ★ 덮는 판이었을 때는 화면 한가운데를 다 써도 됐다. 이제는 배역 카드 위에
+       얹히므로, 커지는 만큼 정작 눌러야 할 카드가 접힌 아래로 내려간다.
+       코드는 그대로 크게 두되 나머지는 한 단씩 줄인다 — 코드·복사·몇 명 앉았나,
+       셋만 남기면 된다. */
+  .roomgate .roomcode{width:100%;margin:0;padding:13px 14px 12px;
+    box-shadow:3px 3px 0 rgba(0,0,0,.45)}
+  .roomgate .rg-h{font-size:13.5px;font-weight:800;color:var(--case-fg);margin:0 0 2px}
+  .roomgate .rg-k{font-family:var(--mono);font-size:.55rem;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--case-fg2);margin:0 0 8px}
+  .roomgate .rc-code{font-size:clamp(26px,9vw,34px)}
+  .roomgate .rc-line{margin:0 0 8px}
+  .roomgate .rc-say{font-size:11.5px;line-height:1.6}
+  .roomgate .rc-acts{margin-top:9px}
+  .roomgate .rg-left{margin-top:9px;padding-top:8px;border-top:1px dashed var(--case-e);
+    font-size:12px;line-height:1.6;color:var(--case-fg2)}
   .roomgate .rg-left b{color:var(--case-fg)}
-  /* 뒤에서 기다리는 배역 선택창. 색을 빼고 손도 못 대게 한다 — 「아직 볼 때가
-     아니다」를 말로 하지 않고 화면으로 말한다. */
-  #s-lobby .wrap.gated{filter:grayscale(1) brightness(.86);pointer-events:none;user-select:none}
+  /* ★ 여기에 «#s-lobby .wrap.gated { filter:grayscale(1); pointer-events:none }» 가 있었다.
+     「아직 볼 때가 아니다」를 화면으로 말하려던 것인데, 정작 이 화면에서 해야 하는
+     일이 «자리에 앉는 것»이라 아무도 앉을 수 없게 됐다. 규칙째 걷어냈다. */
   /* 머리줄에 남는 코드 알약. 색은 옆의 「홈으로」 알약과 같은 판을 쓴다 —
      여기는 어두운 화면 안이라 케이스 색(var(--case-fg))을 쓰면 검은 글씨가
      검은 판에 얹혀 안 보인다. */
@@ -3821,6 +3831,9 @@
     <!-- 두 문장이라 두 줄로 끊는다. 폭에 맡기면 「내 비밀 정보는 이 / 기기에만」처럼
          한 덩이 한가운데가 갈라진다 — 읽는 눈이 거기서 한 번 걸린다. -->
     <div class="lead">각자 자기 기기에서 배역을 고르세요.<br>내 비밀 정보는 이 기기에만 보입니다.</div>
+    <!-- 방 코드 판. 자리가 다 차기 전에는 배역 카드 «위»에 선다 — 앞이 아니라 위다.
+         앞을 막으면 앉을 수가 없고, 앉을 수가 없으면 판이 안 걷힌다. -->
+    <div class="roomgate" id="lobbyGate" hidden><div class="roomcode" id="lobbyRoom"></div></div>
     <div id="lobbyList"></div>
     <!-- 진행석(GM) 문. 이 사건에서는 안 쓰기로 해서 gmSeatOffered() 가 통째로 감춘다.
          기능은 그대로 살아 있다 — 감추는 것과 죽이는 것은 다르다. -->
@@ -3839,9 +3852,7 @@
      <button class="sb-x" onclick="resetRoom()" title="배역·조사 기록을 전부 지우고 처음부터 다시 엽니다">방 새로 열기</button></div>
    </div>
   </div>
-  <!-- 방 코드 관문. 자리가 다 차기 전에는 배역 선택창 «앞»에 선다 — .wrap 의
-       바깥에 두어야 회색 처리(filter)에 같이 먹히지 않는다. -->
-  <div class="roomgate" id="lobbyGate" hidden><div class="roomcode" id="lobbyRoom"></div></div>
+  <!-- 방 코드 판은 이제 .wrap «안», 배역 카드 바로 위에 산다(위 lobbyGate). -->
 </div>
 
 <!-- 게임뷰 = 창 한 겹. 머리띠·하단 독은 베이지 케이스고, 글과 카드가 사는 .winbody 안쪽만
@@ -5952,24 +5963,22 @@ function paintLobbyRoom(){
     if(pill.innerHTML!==want) pill.innerHTML=want;
   }
   const g=$("lobbyGate"), b=$("lobbyRoom");
-  const w=document.querySelector("#s-lobby .wrap");
   if(!g||!b) return;
   const done = !on || allSeated() || !!(STATE&&STATE.started);
-  if(done){ g.hidden=true; b.innerHTML=""; if(w) w.classList.remove("gated"); return; }
+  if(done){ g.hidden=true; b.innerHTML=""; return; }
   const left=(SCEN&&SCEN.characters||[]).filter(c=>((STATE.roles||{})[c.id]||{}).mode==="open").length;
   const seats=(SCEN&&SCEN.characters||[]).length;
-  g.hidden=false; if(w) w.classList.add("gated");
+  g.hidden=false;
   b.innerHTML=`<div class="rg-h">함께할 사람을 부르세요</div>
     <div class="rg-k">Waiting for players</div>
     <div class="rc-line"><b class="rc-code">${esc(roomCode)}</b></div>
-    <div class="rc-say">이 코드를 알려주세요. <b>기존 코드로 입장</b>에서 코드를 넣으면
-      같은 방에 들어옵니다. 초대 링크를 보내면 코드를 칠 것도 없이 바로 들어옵니다.</div>
+    <div class="rc-say">이 코드를 알려주세요 — <b>기존 코드로 입장</b>에 넣으면 같은 방에 들어옵니다.</div>
     <div class="rc-acts">
       <button class="rc-b" onclick="copyRoomCode()">코드 복사</button>
       <button class="rc-b" onclick="copyInvite()">초대 링크 복사</button>
     </div>
-    <div class="rg-left">${seats-left} / ${seats} 명이 들어왔습니다 — <b>남은 자리 ${left}</b><br>
-      다 모이면 이 안내가 스스로 걷히고 배역 선택창이 열립니다.</div>`;
+    <div class="rg-left">${seats-left} / ${seats} 명이 앉았습니다 — <b>남은 자리 ${left}</b><br>
+      <b>아래에서 내 배역을 고르세요.</b> 다 차면 이 판이 걷힙니다.</div>`;
 }
 async function copyRoomCode(){
   try{ await navigator.clipboard.writeText(roomCode); banner("방 코드 "+roomCode+" 를 복사했습니다."); }
