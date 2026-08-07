@@ -973,6 +973,9 @@
       <div class="gd">GAME <span class="inv">DAY</span></div>
     </div>
     <div class="skip">TAP TO SKIP</div>
+    <!-- 부팅 효과음. preload="auto" 로 미리 받아 둔다 — 켜는 순간에 받기 시작하면
+         첫 0.5초가 잘려 나간다. 4초짜리 49KB 라 첫 장에 부담이 안 된다. -->
+    <audio id="bootSfx" src="/assets/boot_glitch.mp3" preload="auto" playsinline></audio>
   </div>
   <div class="bg" id="bg"></div><div class="vig"></div>
   <div class="wrap">
@@ -1262,10 +1265,46 @@ function preloadArm(){
   try{ const bg=$("bg"); if(bg) bg.classList.add("bgup"); }catch(e){}
   try{ preloadLobby(); }catch(e){}
 }
+/* ── 부팅 효과음 ────────────────────────────────────────────────
+   글리치 한 덩어리(4.05초)가 부팅 두 장을 통째로 덮는다. 예전에는 장이 바뀔 때마다
+   합성음 삐 소리를 하나씩 냈는데, 소리 바닥이 깔리면 그 삐 소리는 잡음이 된다 —
+   둘 다 울리면 어느 쪽도 «신호»로 안 들린다. 그래서 삐 소리는 뺐다.
+
+   ★ 브라우저는 손을 안 댄 페이지에서 소리를 막는다. 막히면 조용히 지나가되,
+     부팅이 «아직 도는 동안» 화면에 손이 닿으면 그때 시작한다. 부팅이 끝난 뒤에
+     뒤늦게 울리는 일은 없어야 한다 — 그건 효과음이 아니라 사고다.
+   ★ 끝날 때는 뚝 끊지 않고 0.35초에 걸쳐 줄인다. 건너뛰기로 화면이 사라지는데
+     소리만 그 자리에서 잘리면 그게 더 크게 들린다. */
+let bootSfxOff=null;
+function bootSfxPlay(){
+  const a=$("bootSfx"); if(!a) return;
+  a.volume=0.6; a.currentTime=0;
+  const armed=()=>{
+    if(bootSfxOff){ bootSfxOff(); bootSfxOff=null; }
+    const b=$("boot");
+    if(!b||b.hidden||b.classList.contains("gone")) return;   // 이미 지나갔으면 안 울린다
+    a.play().catch(()=>{});
+  };
+  a.play().catch(()=>{
+    ["pointerdown","keydown","touchstart"].forEach(e=>addEventListener(e,armed,{once:true,passive:true}));
+    bootSfxOff=()=>["pointerdown","keydown","touchstart"].forEach(e=>removeEventListener(e,armed));
+  });
+}
+function bootSfxStop(){
+  if(bootSfxOff){ bootSfxOff(); bootSfxOff=null; }
+  const a=$("bootSfx"); if(!a||a.paused) return;
+  const v0=a.volume, t0=Date.now();
+  const fade=setInterval(()=>{
+    const k=(Date.now()-t0)/350;
+    if(k>=1){ clearInterval(fade); a.pause(); a.currentTime=0; a.volume=v0; return; }
+    a.volume=v0*(1-k);
+  },40);
+}
 let bootTimers=[];
 function bootSkip(){
   bootTimers.forEach(clearTimeout); bootTimers=[];
   preloadArm();                       // 건너뛰어도 다음 화면 그림은 받아 둔다
+  bootSfxStop();
   const b=$("boot"); if(!b||b.hidden) return;
   b.classList.add("gone");
   setTimeout(()=>{ b.hidden=true; b.classList.remove("gone"); },500);
@@ -1286,9 +1325,8 @@ function bootRun(){
                    const sw=b.querySelector(".sweep");
                    if(sw){ sw.style.animation="none"; void sw.offsetWidth; sw.style.animation=""; } };
   show("bootA");
-  try{ blip(320,0.10,"triangle",0.05,520); }catch(e){}
+  bootSfxPlay();                      // 두 장을 통째로 덮는 글리치 한 덩어리
   bootTimers.push(setTimeout(()=>{ show("bootB");
-    try{ blip(220,0.16,"sine",0.05,660); }catch(e){}
     /* 파노라마 장 — 여기서부터 다음 화면의 그림을 받는다. 목록이 아직 안 왔으면
        오는 대로 받는다(loadTextLoads 꼬리). */
     preloadArm(); }, BOOT_A));
