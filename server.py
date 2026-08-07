@@ -103,7 +103,7 @@ def fresh_room(sid: str = "") -> dict:
     return {
         "rev": 1, "seq": 1,
         "scenarioId": sid or DEFAULT_SID,
-        # 판마다 새로 생기는 값. 클라이언트가 "이 판에서 오프닝을 봤나"를 이걸로 가른다 —
+        # 게임마다 새로 생기는 값. 클라이언트가 "이 게임에서 오프닝을 봤나"를 이걸로 가른다 —
         # 시나리오 이름으로 기억하면 한 번 본 브라우저에서 영영 안 나온다.
         "roomId": f"r{random.randrange(16**8):08x}",
         "host": None,             # 방 권한자(호스트) clientId — 시나리오 선택·페이즈 진행 통제
@@ -117,12 +117,12 @@ def fresh_room(sid: str = "") -> dict:
         "gmSeats": {},            # clientId -> 마지막으로 진행석을 켜둔 시각. 방에 진행자가 있는지 판단용
         "podVotes": {},           # roleId -> 태울 사람. 최종 토론에서 사람이 던진 표만 담는다
         "accuse": {},             # roleId -> 지목한 사람. 종막의 범인 지목, 사람 표만
-        # 중간 지목 — 판이 끝나기 전에 한 번 이름을 부르는 사건이 있다. 그 표는 사라지지
+        # 중간 지목 — 게임이 끝나기 전에 한 번 이름을 부르는 사건이 있다. 그 표는 사라지지
         # 않고 종막까지 따라간다. seq 를 같이 적어두는 건 그 막에서만 고칠 수 있게 하려고다.
         "vaultRead": [], "accuse1": {"seq": None, "picks": {}},
         # 아이템 수수께끼를 배역별로 몇 번 틀렸는가. 세 번 틀리면 그 사람에게만 힌트가 열린다.
         "puzzleTries": {},        # roleId -> {cardId: 틀린 횟수}
-        # 1차 지목에서 압수된 소지품의 주인들. 한 번 압수되면 판이 끝날 때까지 펴져 있다.
+        # 1차 지목에서 압수된 소지품의 주인들. 한 번 압수되면 게임이 끝날 때까지 펴져 있다.
         "seized": [],
         # 밤 — 각자 몰래 한 가지를 고르고, 그 조합이 그날 밤에 실제로 일어난 일을 정한다.
         "night": {"open": False, "picks": {}, "result": None},
@@ -147,7 +147,7 @@ def fresh_room(sid: str = "") -> dict:
         # 나이 — 배역이 스스로 적는 자리. 시나리오의 AGE_INPUT 에 오른 배역만 적을 수 있고,
         # 적힌 값은 인물정보에서 모두가 본다. 「누가 적을 수 있는가」는 이 방 상태에 안 담긴다.
         "ages": {},               # roleId -> 그 사람이 적어 넣은 나이
-        "ready": [],              # 「결과 확인」을 누른 배역. 전원이 누르면 판이 다음으로 넘어간다
+        "ready": [],              # 「결과 확인」을 누른 배역. 전원이 누르면 게임이 다음으로 넘어간다
         # 「몰입 완료」를 누른 배역. ready 와 «다른 물건»이다 — 이건 막을 넘기지 않는다.
         # 오프닝에서 각자 제 시트를 끝까지 읽었는지만 센다. 전원이 누르면 그때서야
         # 대화창이 열린다(그 전에는 읽는 자리다).
@@ -162,7 +162,7 @@ def fresh_room(sid: str = "") -> dict:
         "sealed": [],            # 잠긴 구역 — 침수 대응에 실패하면 기관실이 여기 들어간다
         "flood": 0,
         "turn": None,             # 조사 페이즈 현재 차례 roleId (하이브리드 턴)
-        "press": {},              # "배역:카드" -> 얼버무린 횟수. 판이 끝날 때까지 누적된다
+        "press": {},              # "배역:카드" -> 얼버무린 횟수. 게임이 끝날 때까지 누적된다
         "started": False,         # 호스트가 '이대로 진행'을 확정하면 True — 이후 배역 변경 불가
     }
 
@@ -334,7 +334,7 @@ def bump():
     # 모였는지는 안 따진다. 상태가 움직일 때마다 한 번씩 확인한다(열려 있으면 즉시 반환).
     try:
         _escape_try_open()
-    except Exception:                                   # noqa: BLE001 — 문 하나 때문에 판이 멈추면 안 된다
+    except Exception:                                   # noqa: BLE001 — 문 하나 때문에 게임이 멈추면 안 된다
         pass
     _sync_scenario_state()
 
@@ -458,7 +458,7 @@ def table_tail(n: int = TABLE_TAIL):
 def _drip():
     """이 블록 안에서 대화창에 붙는 줄은 «한 줄씩» 흘러간다.
 
-    판이 스스로 하는 말은 언제나 여러 줄이 한꺼번에 붙는다 — 알리바이 한 바퀴,
+    게임이 스스로 하는 말은 언제나 여러 줄이 한꺼번에 붙는다 — 알리바이 한 바퀴,
     막이 열릴 때의 GM과 NPC의 말, 밤이 지나고 나오는 것, 압수된 소지품을 놓고
     오가는 말. 그대로 올리면 열다섯 줄이 동시에 솟아서 대화창이 아니라 게시판이
     된다. 누가 누구 말을 받았는지가 거기서 사라진다.
@@ -498,7 +498,7 @@ def _my_notes(role_id: str, card_ids) -> dict:
         return {}
 
     def _shape(n):
-        # 원고가 그냥 한 줄로 적은 것 — 이 판의 기본이다.
+        # 원고가 그냥 한 줄로 적은 것 — 이 게임의 기본이다.
         if isinstance(n, str):
             return {"kind": "eye", "text": n}
         if isinstance(n, dict):
@@ -512,7 +512,7 @@ def _my_notes(role_id: str, card_ids) -> dict:
     for cid in card_ids:
         try:
             ns = fn(role_id, cid)
-        except Exception:              # noqa: BLE001 — 시나리오가 안 갖췄어도 판은 돌아야 한다
+        except Exception:              # noqa: BLE001 — 시나리오가 안 갖췄어도 게임은 돌아야 한다
             ns = None
         if ns:
             rows = [_shape(n) for n in ns]
@@ -529,7 +529,7 @@ def _age_display(cid: str) -> str:
     """그 배역의 나이 칸에 «그대로 뜰 글자». 판단을 서버가 끝내서 문자열로 내려보낸다.
 
     화면이 「이 배역은 나이를 적을 수 있는 자리인가」를 스스로 가르려면 결국 그 명단을
-    받아야 하는데, 그 명단이 곧 이 판의 답이다(셋 중 하나만 자기 나이를 댈 수 있다).
+    받아야 하는데, 그 명단이 곧 이 게임의 답이다(셋 중 하나만 자기 나이를 댈 수 있다).
     그래서 명단은 내보내지 않고, 나온 글자만 내보낸다.
 
     적어 넣은 값 → 시나리오가 적어 둔 값 → 둘 다 없으면
@@ -552,7 +552,7 @@ def public_state() -> dict:
     with LOCK:
         seq = ROOM["seq"]
         ph = SC.phase_by_seq(seq)
-        # 엔딩은 종막 지목표가 정한다 — 채점자가 없는 판이다.
+        # 엔딩은 종막 지목표가 정한다 — 채점자가 없는 게임이다.
         # 사건이 아직 준비가 안 됐다고 보면 None을 돌려준다.
         ending = SC.compute_ending(dict(ROOM["accuse"]))
         # 진상(정답·범인)은 '진상 공개' 페이즈 전까지 클라이언트로 내보내지 않는다(스포일러 방지).
@@ -612,7 +612,7 @@ def public_state() -> dict:
             # 아이템은 상한 밖이다 — _over_limit 과 같은 셈을 쓴다(예전엔 여기서만
             # 손패 전체를 세어서, 도구를 하나 주우면 화면에 「넘쳤다」가 떴다).
             "overLimit": {rid: _over_limit(rid) for rid in ROOM["hands"] if _over_limit(rid) > 0},
-            # 누가 도구를 몇 개 모았는가 — 이건 공개 정보다. 이 판의 시계다.
+            # 누가 도구를 몇 개 모았는가 — 이건 공개 정보다. 이 게임의 시계다.
             # 무엇이 나왔는지는 푼 사람만 안다(개수만 나간다).
             # 열쇠 반쪽은 도구가 아니라 입장권이라 이 셈에서 뺀다(§6) — 그건 문 앞에서만 센다.
             "items": {rid: n for rid, n in
@@ -689,7 +689,7 @@ class Claim(BaseModel):
     roleId: str
     clientId: str
     # QA 검수 모드 — 한 기기가 좌석을 여러 개 쥐겠다는 신고다. 열쇠(key)가 맞아야 통한다.
-    # 평소 판은 이 두 값을 안 보내므로 예전과 한 톨도 다르지 않게 돈다.
+    # 평소 게임은 이 두 값을 안 보내므로 예전과 한 톨도 다르지 않게 돈다.
     qa: bool = False
     key: str = ""
 
@@ -790,7 +790,7 @@ class HostReq(BaseModel):
     clientId: str = ""
     force: bool = False
     # GM 진행석은 호스트와 별개다 — 호스트가 아닌 기기가 진행을 맡을 수 있으므로
-    # 그 기기는 키로 자기를 밝힌다. AGENT_KEY를 안 걸어둔 로컬 판에서는 빈 값도 통과한다.
+    # 그 기기는 키로 자기를 밝힌다. AGENT_KEY를 안 걸어둔 로컬 게임에서는 빈 값도 통과한다.
     key: str = ""
 
 
@@ -856,7 +856,7 @@ def scenario():
     d["cardCatalog"] = [{"id": c["id"], "loc": c["loc"], "locName": c["locName"], "round": c["round"],
                          "spot": c.get("spot", ""),
                          "needs": _card_needs(c),
-                         # auto  판이 스스로 여는 자리 · hot  판을 뒤집는 자리
+                         # auto  게임이 스스로 여는 자리 · hot  게임을 뒤집는 자리
                          # gone  이 라운드부터는 그 자리가 «없다»(어제와 같은 방이 아니다)
                          "auto": bool(c.get("auto")), "hot": bool(c.get("hot")),
                          "gone": c.get("gone", 0),
@@ -876,7 +876,7 @@ def admin_cards(key: str = "", scenarioId: str = ""):
 
     이건 사건의 답을 통째로 내보내는 창구다. 그래서 AGENT_KEY로 잠근다 —
     관리자 비밀번호는 landing.html 안에 그대로 적혀 있어서 잠금이 되지 않는다.
-    AGENT_KEY를 안 걸어둔 로컬 판에서는 그냥 열린다.
+    AGENT_KEY를 안 걸어둔 로컬 게임에서는 그냥 열린다.
     """
     if not _agent_ok(key):
         return JSONResponse({"error": "key"}, status_code=403)
@@ -1208,7 +1208,7 @@ def select_scenario(b: SelectScenario):
             ROOM["host"] = b.clientId
             held = b.clientId
     # 호스트를 쥔 기기이거나, 열쇠를 «실제로 들고 온» 요청(진행석·QA 검수)이다.
-    # 여기서만은 빈 키를 안 받는다 — AGENT_KEY를 안 건 로컬 판에서 그걸 통과시키면
+    # 여기서만은 빈 키를 안 받는다 — AGENT_KEY를 안 건 로컬 게임에서 그걸 통과시키면
     # 가드가 아예 없는 것과 같아서 아무 기기나 남의 방을 갈아엎게 된다(_gm_key_ok 주석).
     mine = (held in (None, b.clientId)) or _gm_key_ok(b.key) or _key_host(b.key)
     # 같은 사건을 다시 고른 것뿐이면 방을 건드리지 않는다. 예전엔 이것도 초기화라
@@ -1219,7 +1219,7 @@ def select_scenario(b: SelectScenario):
         # 진행 중인 방은 사건을 못 바꾼다. 바꾸면 배역·손패·공개카드가 전부 사라진다 —
         # 다른 기기에서 링크를 다시 연 사람에게 그 권한이 있어선 안 된다.
         if not b.force:
-            return JSONResponse({"error": f"《{SC.TITLE}》 판이 진행 중입니다",
+            return JSONResponse({"error": f"《{SC.TITLE}》 게임이 진행 중입니다",
                                  "active": SC.ID, "activeTitle": SC.TITLE, "started": True},
                                 status_code=409)
         if not mine:
@@ -1273,7 +1273,7 @@ def state(clientId: str = "", gm: int = 0, roleId: str = "", key: str = ""):
         if qa_role:
             st["qaRole"] = qa_role       # 서버가 이 시점을 받아들였다는 확인 — 화면이 이걸로 표시한다
         # 나이를 스스로 적는 자리인가 — «그 배역 본인에게만» 알린다.
-        # 남의 화면에 이 표시가 실리면 「셋 중 하나만 나이를 댈 수 있다」가 판 밖에서 풀린다.
+        # 남의 화면에 이 표시가 실리면 「셋 중 하나만 나이를 댈 수 있다」가 게임 밖에서 풀린다.
         # 그래서 명단이 아니라 「나는 적을 수 있다」 한 줄만, 그 사람에게만 내려간다.
         if me and me in _age_inputs():
             st["ageAsk"] = {"mine": str((ROOM.get("ages") or {}).get(me) or "")}
@@ -1338,7 +1338,7 @@ def state(clientId: str = "", gm: int = 0, roleId: str = "", key: str = ""):
                 st["cuts"] = [{"id": f"night:mine:{mine}", "cuts": mc}] + list(st.get("cuts") or [])
         # 종막에는 답안을 모두가 볼 수 있어야 한다. 진행석이 없으면 누구든 한 덩어리로 묶어
         # 클로드에 물어보러 가야 하는데, 여태 그 답안은 AGENT_KEY로 잠긴 /api/gm에만 있었다.
-        # 각자 자기 것만 들고 있으면 판이 흩어진 방에서는 아무도 전체를 못 만든다.
+        # 각자 자기 것만 들고 있으면 게임이 흩어진 방에서는 아무도 전체를 못 만든다.
         if (st.get("phase") or {}).get("key") == "final":
             st["finalAnswers"] = dict(ROOM["finalAnswers"])
         # 진상 공개에서는 그날 밤의 시각표와 진상 전문을 푼다. 알리바이가 이 장르의 뼈대라
@@ -1391,8 +1391,8 @@ def state(clientId: str = "", gm: int = 0, roleId: str = "", key: str = ""):
             _si = (getattr(SC, "SELF_INTRO", {}) or {}).get(st["myRole"], "")
             if _si:
                 st["introHint"] = _si
-        # QA 검수는 한 기기가 세 좌석을 다 쥐고 도는 판이라, 나머지 둘의 첫마디도
-        # 그 기기가 대신 쳐 줘야 판이 앞으로 간다. 열쇠가 맞을 때만 실린다.
+        # QA 검수는 한 기기가 세 좌석을 다 쥐고 도는 게임이라, 나머지 둘의 첫마디도
+        # 그 기기가 대신 쳐 줘야 게임이 앞으로 간다. 열쇠가 맞을 때만 실린다.
         # 견본 자체는 공개 정보만 담긴 문장이다(진상은 한 조각도 안 들어간다).
         if qa_role:
             _all_si = getattr(SC, "SELF_INTRO", {}) or {}
@@ -1408,7 +1408,7 @@ def state(clientId: str = "", gm: int = 0, roleId: str = "", key: str = ""):
         # ROOM["host"] 는 안 건드린다 — 빌리는 것이지 빼앗는 것이 아니다(_host_ok 참고).
         st["isHost"] = _real_host or _key_host(key)
         # 호스트를 쥔 기기가 사라지면(창을 닫았거나, 저장소를 지웠거나, 다른 폰으로 옮겼거나)
-        # 아무도 판을 못 굴린다. 그 자리는 잠깐 비면 남이 이어받을 수 있어야 한다.
+        # 아무도 게임을 못 굴린다. 그 자리는 잠깐 비면 남이 이어받을 수 있어야 한다.
         st["hostStale"] = bool(ROOM.get("host")) and not st["isHost"] and _host_stale()
         # 호스트를 아무도 안 잡은 방도 있다. 그때는 '호스트 전용' 연출을 아무도 못 보게 되므로
         # 클라이언트가 그 사정을 알 수 있게 해준다(다른 엔드포인트도 같은 규칙으로 통과시킨다).
@@ -1434,7 +1434,7 @@ def _seed_alibi() -> None:
     with _drip():
         ROOM["table"].append({"kind": "system", "broadcast": True, "text": PRE + head})
         for a in log:
-            # 말이 아니라 «판이 적는 줄». 대화록 중간에 한 번 끊고 무슨 일이 벌어졌는지 적는다.
+            # 말이 아니라 «게임이 적는 줄». 대화록 중간에 한 번 끊고 무슨 일이 벌어졌는지 적는다.
             if a.get("note"):
                 row = {"kind": "system", "broadcast": True, "text": PRE + a["note"]}
                 # 「여기서 한 번 끊는다」 — 대화창이 여기서 멈춰 서고 「계속」을 기다린다
@@ -1558,7 +1558,7 @@ def rooms_list(key: str = ""):
 
 @app.post("/api/room/new")
 def room_new(b: RoomReq):
-    """새 판을 연다 — 코드를 발급하고 그 방의 호스트로 앉힌다."""
+    """새 게임을 연다 — 코드를 발급하고 그 방의 호스트로 앉힌다."""
     with LOCK:
         code = _new_code()
         r = fresh_room()
@@ -1602,7 +1602,7 @@ def host_claim(b: HostReq):
             return JSONResponse({"error": "clientId"}, status_code=400)
         # 비어 있거나 내 것이면 그냥 잡는다. 남이 쥐고 있어도 그쪽이 한참 조용하거나
         # 이쪽이 작정하고 가져가겠다고 하면 넘겨준다 — 친구들끼리 도는 방이고,
-        # 여기서 막아봐야 판이 멈추는 것 말고는 지켜지는 게 없다.
+        # 여기서 막아봐야 게임이 멈추는 것 말고는 지켜지는 게 없다.
         if ROOM.get("host") in (None, b.clientId):
             ROOM["host"] = b.clientId
             ROOM["hostSeen"] = time.time()
@@ -1640,7 +1640,7 @@ def claim(b: Claim):
             return JSONResponse({"error": "이미 다른 사람이 맡은 배역입니다"}, status_code=409)
         # 평소에는 한 기기가 한 자리다 — 다른 배역을 고르면 앞자리를 놓는다.
         # QA 검수 모드에서만 이 놓기를 건너뛴다. 원고를 쓰는 사람은 혼자 들어와
-        # 세 배역을 다 겪어봐야 하는데, 좌석이 전부 사람이라 셋이 안 차면 판이 시작되지 않는다.
+        # 세 배역을 다 겪어봐야 하는데, 좌석이 전부 사람이라 셋이 안 차면 게임이 시작되지 않는다.
         # 열쇠는 진행석·관리자 창구와 같은 것(AGENT_KEY)을 쓴다 — 새 인증을 만들지 않는다.
         if not (b.qa and _agent_ok(b.key)):
             for rr in ROOM["roles"].values():
@@ -1742,10 +1742,10 @@ def set_age(b: AgeReq):
 
     ★ 되돌아오는 말은 두 갈래 다 똑같은 403이다. 「그 자리가 아니다」와 「적을 수 있는
       배역이 아니다」를 갈라 말하면, 남의 배역 id를 넣어보는 것만으로 누가 적을 수 있는
-      자리인지가 드러난다 — 그게 이 판의 답이다.
+      자리인지가 드러난다 — 그게 이 게임의 답이다.
     ★ **한 번 적으면 끝이다.** 예전에는 고칠 수 있게 두었는데(오타 걱정), 고칠 수
       있으면 그 숫자가 판 위의 사실이 안 된다 — 남이 「몇 살이냐」고 물어 몰린 뒤에
-      슬쩍 바꿔 대는 길이 열린다. 이 판에서 나이는 심문의 대상이라 흔들리면 안 된다.
+      슬쩍 바꿔 대는 길이 열린다. 이 게임에서 나이는 심문의 대상이라 흔들리면 안 된다.
       그래서 화면에서도 「고치기」를 없앴고, 여기서도 두 번째 요청은 안 받는다.
       화면만 막으면 저장소를 지우거나 다른 기기로 들어와 다시 적을 수 있다.
     ★ 여기서 돌아가는 409 는 「내가 이미 적었다」는 말뿐이라, 적을 수 있는 자리인지를
@@ -1804,7 +1804,7 @@ def _is_host(client_id: str) -> bool:
 def _key_host(key: str) -> bool:
     """열쇠를 «실제로 들고 온» 요청인가 — QA 검수 모드가 이 길로 들어온다.
 
-    QA 검수는 한 사람이 세 좌석을 다 쥐고 혼자 판을 굴려보는 모드다. 그 사람이
+    QA 검수는 한 사람이 세 좌석을 다 쥐고 혼자 게임을 굴려보는 모드다. 그 사람이
     호스트까지 쥐고 있으리란 보장이 없어서, 여태 페이즈를 넘길 수가 없었다.
     열쇠(AGENT_KEY)는 진행석·관리자 창구와 같은 것을 쓴다 — 새 인증을 만들지 않는다.
 
@@ -1890,7 +1890,7 @@ def _gated_zones() -> dict:
 def _hidden_zones() -> set:
     """지금 **화면에 아예 없어야 할** 구역들.
 
-    잠긴 구역을 회색으로 걸어두는 것과 아예 안 보이는 것은 전혀 다른 판이다.
+    잠긴 구역을 회색으로 걸어두는 것과 아예 안 보이는 것은 전혀 다른 게임이다.
     회색 칸은 「저기 뭔가 더 있다」를 그 자리에서 공지한다 — 하늘 끝과 바다 끝은
     «있는 줄도 몰랐던 곳이 열리는» 자리라서, 열리기 전에는 지도에 없어야 한다.
 
@@ -1994,7 +1994,7 @@ def _split_hand(role_id: str):
     """손패를 «일반 단서»와 «소지품» 두 칸으로 가른다. 상한이 서로 다르다.
 
     아이템(item)은 어느 쪽에도 안 든다 — 탈출에 쓰는 «인벤토리» 라서 상한이 없다.
-    여기 넣으면 손패 상한 1장짜리 판에서 도구를 하나 줍는 순간 판이 멈춘다.
+    여기 넣으면 손패 상한 1장짜리 판에서 도구를 하나 줍는 순간 게임이 멈춘다.
     """
     bl = set(_belong_locs())
     clue, belong = [], []
@@ -2010,13 +2010,13 @@ def _is_gear(card: dict) -> bool:
     """상한 밖의 물건인가 — 도구(`item`)와 열쇠 반쪽(`keyHalf`).
 
     열쇠 반쪽은 도구가 아니라 «입장권»이라 조합에는 안 쓴다. 그래도 손패 상한에
-    걸리면 안 된다 — 상한이 1장인 판에서 반쪽 하나를 주우면 그 자리에서 판이 멈춘다.
+    걸리면 안 된다 — 상한이 1장인 판에서 반쪽 하나를 주우면 그 자리에서 게임이 멈춘다.
     """
     return bool((card or {}).get("item") or (card or {}).get("keyHalf"))
 
 
 def _inventory(role_id: str) -> list:
-    """그 사람이 풀어서 얻은 도구·열쇠들. 상한이 없고, 판이 끝날 때까지 손에 남는다."""
+    """그 사람이 풀어서 얻은 도구·열쇠들. 상한이 없고, 게임이 끝날 때까지 손에 남는다."""
     return [cid for cid in ROOM["hands"].get(role_id, [])
             if _is_gear(SC.get_card(cid) or {})]
 
@@ -2029,7 +2029,7 @@ def _over_limit(role_id: str) -> int:
 
 def _over_belong(role_id: str) -> int:
     """소지품 칸이 넘친 장수. 이쪽은 공개가 아니라 «버리는» 것으로 정리한다 —
-    넷의 물건을 다 본 다음 무엇을 손에 남길지가 이 판의 선택이다."""
+    넷의 물건을 다 본 다음 무엇을 손에 남길지가 이 게임의 선택이다."""
     if not _belong_locs():
         return 0
     _, belong = _split_hand(role_id)
@@ -2159,7 +2159,7 @@ def _openable_cards(role_id: str) -> list:
     for c in SC.CARDS:
         if c["id"] in mine or c["id"] in ROOM["revealed"] or c["round"] > cur:
             continue
-        if c.get("auto"):            # 판이 스스로 여는 자리 — 뒤져서 열 수 없다
+        if c.get("auto"):            # 게임이 스스로 여는 자리 — 뒤져서 열 수 없다
             continue
         if c.get("gone") and cur >= c["gone"]:      # 이 라운드에는 이미 치워진 자리
             continue
@@ -2185,7 +2185,7 @@ def _openable_cards(role_id: str) -> list:
 
 
 def _fire_cut(key: str) -> None:
-    """조사 중 컷을 하나 띄운다. 같은 키는 판당 한 번만.
+    """조사 중 컷을 하나 띄운다. 같은 키는 게임당 한 번만.
 
     상태에 실어 보내면 각 화면이 «아직 안 본 것»을 골라 재생한다. 서버가 재생을
     강제하지 않는 건, 카드를 읽는 중에 화면을 뺏기면 그게 더 방해라서다.
@@ -2229,7 +2229,7 @@ def _try_investigate(role_id: str, card_id: str, enforce_ap: bool = True, enforc
     if lock:
         return lock
     if c.get("auto") and card_id not in ROOM["revealed"]:
-        return "여기는 뒤져서 여는 자리가 아닙니다 — 때가 되면 판이 스스로 엽니다"
+        return "여기는 뒤져서 여는 자리가 아닙니다 — 때가 되면 게임이 스스로 엽니다"
     # 아이템은 조사턴으로 못 엽니다. 수수께끼를 푸는 것이 곧 여는 방법입니다 —
     # 그래서 이 여섯 장은 조사 예산 밖에 있습니다.
     if (c.get("puzzle") and card_id not in ROOM["revealed"] and not _puzzle_bypass
@@ -2320,7 +2320,7 @@ def _announce_zone(card: dict) -> None:
     """이 카드가 열어 주는 구역이 있으면 대화창에 한 줄 남긴다.
 
     자물쇠 카드가 «보이는» 순간 그 구역이 지도에 생긴다(_hidden_zones 참고).
-    그 사실을 말로 남기지 않으면 화면만 조용히 바뀐다 — 판이 커지는 순간은
+    그 사실을 말로 남기지 않으면 화면만 조용히 바뀐다 — 게임이 커지는 순간은
     누구나 알아야 하는 순간이다.
     """
     zone = (card or {}).get("unlockZone") or ""
@@ -2412,11 +2412,11 @@ def _auto_combine() -> None:
 
 
 def _reveal_autos() -> None:
-    """`auto` 카드를 때가 되면 판이 스스로 연다.
+    """`auto` 카드를 때가 되면 게임이 스스로 연다.
 
     여태 이걸 여는 자리가 아무 데도 없었다 — `auto: True` 는 「뒤져서 못 연다」만 하고
     「그럼 언제 열리나」를 아무도 안 했다. 그래서 A1(조각난 몸)처럼 사건의 첫 장이
-    판이 끝날 때까지 안 나왔고, 그걸 선행조건으로 건 A9 는 영영 잠겨 있었다.
+    게임이 끝날 때까지 안 나왔고, 그걸 선행조건으로 건 A9 는 영영 잠겨 있었다.
 
     규칙은 하나다 — 그 라운드가 왔고 구역이 열려 있으면 전체공개한다.
     수수께끼가 걸린 아이템은 예외다. 그건 「때가 되면」이 아니라 「풀면」 열린다.
@@ -2484,12 +2484,12 @@ class PuzzleTry(BaseModel):
 PUZZLE_HINT_AFTER = 2        # 이만큼 틀리면 그 사람에게만 힌트 한 줄이 열린다
 # ── 세 번이면 끝 ──────────────────────────────────────────────────
 # 틀려도 아무 일이 안 일어나면 답을 «찍는» 것이 제일 싼 수가 된다. 세 번으로 끊으면
-# 한 번 넣기 전에 카드를 다시 읽게 된다 — 그게 이 판이 바라는 행동이다.
+# 한 번 넣기 전에 카드를 다시 읽게 된다 — 그게 이 게임이 바라는 행동이다.
 #
 # ★ **잠기는 것은 그 사람에게만이다.** 판 전체에서 잠그면 F1(피아노 아래)·D4(계기반)
 #   처럼 구역을 여는 수수께끼가 영영 안 열려서 하늘 끝·바다 끝에 아무도 못 들어가고,
 #   열쇠 반쪽이 안 모여 방탈출 막이 통째로 사라진다. 사람마다 세 번이니 한 수수께끼에
-#   판 전체로는 아홉 번이 있고, 못 푼 사람은 옆사람에게 넘겨야 한다 — 3인 판에서
+#   게임 전체로는 아홉 번이 있고, 못 푼 사람은 옆사람에게 넘겨야 한다 — 3인 게임에서
 #   「이거 좀 대신 풀어봐」가 오가는 것 자체가 이 게임의 자리다.
 # ※ 그래도 셋이 다 태워버리면 그 수수께끼는 죽는다. 구역 해금 두 장은 지켜봐야 한다.
 PUZZLE_MAX_TRIES = 3
@@ -2499,7 +2499,7 @@ def _puzzle_open_now() -> tuple[bool, str]:
     """지금 수수께끼를 풀 수 있는 때인가.
 
     조사 페이즈에만 열어두면 「이번 턴에 못 풀면 다음 라운드까지 기다려라」가 되는데,
-    그건 퍼즐이 아니라 대기다. 그래서 **판이 끝날 때까지 언제든** 풀 수 있게 두고,
+    그건 퍼즐이 아니라 대기다. 그래서 **게임이 끝날 때까지 언제든** 풀 수 있게 두고,
     토론에서만 닫는다 — 토론은 서로 말로 맞춰 보는 자리이고, 그 시간에 각자 폰을
     들여다보며 답을 찍고 있으면 토론이 아니게 된다.
     """
@@ -2645,7 +2645,7 @@ def puzzle_answer(b: PuzzleTry):
         # 다만 «무엇이 나왔는지» 는 푼 사람만 안다. 여기서는 물건 이름을 안 적는다.
         who = (SC.get_character(b.roleId) or {}).get("name", b.roleId)
         gc = SC.get_card(give) or {}
-        # 도구는 이름을 부른다 — 누가 무엇을 몇 개 모았는지가 이 판의 시계다.
+        # 도구는 이름을 부른다 — 누가 무엇을 몇 개 모았는지가 이 게임의 시계다.
         # 도구가 아닌 것(녹취처럼 테이블에 펴지는 카드)은 이름을 안 부른다.
         got = gc.get("itemName") or ("무언가" if not pz.get("publish") else "")
         with _drip():
@@ -2716,7 +2716,7 @@ def belongings_keep(b: SwapCard):
 
 @app.post("/api/ready")
 def ready_toggle(b: RoleReq):
-    """「결과 확인」 토글. 사람 배역이 전원 켜면 판이 다음 막으로 넘어간다.
+    """「결과 확인」 토글. 사람 배역이 전원 켜면 게임이 다음 막으로 넘어간다.
 
     호스트 한 사람이 넘기는 것과 다르다 — 종막은 아직 할 말이 남은 사람이 있기 마련이고,
     그 사람이 준비되기 전에 진상이 열리면 판이 거기서 끝나버린다.
@@ -2790,7 +2790,7 @@ def swap_card(b: SwapCard):
     """전체공개된 카드 한 장을 되가져오고, 대신 내 손패 한 장을 내려놓는다.
 
     손패가 두 장뿐이라 «지금 감춰야 할 것»이 페이즈마다 바뀐다. 그때 이미 테이블에 나간 카드를
-    다시 품을 길이 없으면 한 번의 실수가 판 끝까지 간다. 다만 공짜는 아니다 —
+    다시 품을 길이 없으면 한 번의 실수가 게임 끝까지 간다. 다만 공짜는 아니다 —
     되가져오는 만큼 내 것 하나가 반드시 모두의 것이 된다. 그 교환 자체가 공개 정보다.
     """
     with LOCK:
@@ -3218,7 +3218,7 @@ def _arrest_state():
 
 
 # ── 밤 — 각자 하나를 고르고, 그 조합이 그날 밤을 정한다 ──────────────
-# 이 기믹이 있는 사건은 «누가 범인인가»가 판 시작 시점에 안 정해져 있다.
+# 이 기믹이 있는 사건은 «누가 범인인가»가 게임 시작 시점에 안 정해져 있다.
 # 사건 모듈이 NIGHT_ACTS(선택지)와 night_resolve(조합→결과)를 갖고 있으면 열린다.
 # ── 금고 서류 — 다 함께 읽고 넘어가는 자리 ──────────────────────
 def _vault_conf():
@@ -3503,7 +3503,7 @@ def ask_pick(b: AskPick):
         return {"ok": True, "ask": _ask_public(b.roleId)}
 
 
-# ── 중간 지목 — 판이 끝나기 전에 한 번 이름을 부른다 ─────────────────
+# ── 중간 지목 — 게임이 끝나기 전에 한 번 이름을 부른다 ─────────────────
 def _person(rid: str) -> dict:
     """이름표 하나. 배역이든 NPC든 상관없이 찾아준다.
 
@@ -3515,7 +3515,7 @@ def _person(rid: str) -> dict:
             continue
         try:
             c = f(rid)
-        except Exception:                      # noqa: BLE001 — 이름 하나 때문에 판이 멈추면 안 된다
+        except Exception:                      # noqa: BLE001 — 이름 하나 때문에 게임이 멈추면 안 된다
             c = None
         if c:
             return c
@@ -3665,7 +3665,7 @@ def accuse_interim(b: VoteReq):
         if SC.phase_by_seq(ROOM["seq"]).get("key") != "accuse":
             return JSONResponse({"error": "지목 페이즈에서만 할 수 있습니다"}, status_code=409)
         # 이 집 사람이면 누구든 적을 수 있다 — 배역도, 앉을 수 없는 자리도, 당주 본인도.
-        # 자기 이름도 막지 않는다. 그렇게 적을 이유가 있는 판이다.
+        # 자기 이름도 막지 않는다. 그렇게 적을 이유가 있는 게임이다.
         ok = set(ROOM["roles"]) | {n["id"] for n in (getattr(SC, "NPCS", []) or [])} | {"victim"}
         if b.targetRoleId not in ok:
             return JSONResponse({"error": "이 집 사람이 아닙니다"}, status_code=404)
@@ -3699,7 +3699,7 @@ def accuse_interim(b: VoteReq):
 # 없고, 몸은 계속 마을에 있고 다른 것이 들어왔을 뿐이다.
 #
 # 아무도 못 밀어낸 판(동표)이나, 지울 자아가 없는 자리(플레이어)가 최다 득표인
-# 판에서는 **들어올 빈 몸이 없다 — 개발자는 안 들어온다.** 그것도 정상적인 판이다.
+# 판에서는 **들어올 빈 몸이 없다 — 개발자는 안 들어온다.** 그것도 정상적인 게임이다.
 #
 # 이 칸은 그 사람 본인 말고는 아무에게도 안 나간다. 「누가 개발자인가」는 물론
 # **「개발자가 들어왔는가」조차** 남의 화면에 실리면 안 된다 — 그게 새면 질문지
@@ -3730,10 +3730,10 @@ def _accuse1_tally() -> dict:
 
 
 def _decide_dev_from_accuse() -> None:
-    """1차 범인지목의 결과로 개발자를 정한다. 한 판에 한 번만.
+    """1차 범인지목의 결과로 개발자를 정한다. 한 게임에 한 번만.
 
     최다 득표자가 `pool` 안이면 그 사람이 개발자가 된다.
-    표가 갈리면(동표) 판이 아무도 못 밀어낸 것이므로 아무도 안 들어온다.
+    표가 갈리면(동표) 게임이 아무도 못 밀어낸 것이므로 아무도 안 들어온다.
     최다 득표자가 `pool` 밖이면 — 지울 자아가 없는 자리다 — 역시 안 들어온다.
     """
     if not _dev_on():
@@ -3749,7 +3749,7 @@ def _decide_dev_from_accuse() -> None:
     pool = _dev_pool()
     d["decided"] = True
     d["seq"] = ROOM.get("seq")
-    if len(lead) != 1:             # 1:1:1 — 판이 못 정하면 빈 몸도 안 생긴다
+    if len(lead) != 1:             # 1:1:1 — 게임이 못 정하면 빈 몸도 안 생긴다
         d["id"], d["why"] = "", "tie"
     elif lead[0] not in pool:      # 지울 자아가 없는 자리
         d["id"], d["why"] = "", "empty"
@@ -3805,7 +3805,7 @@ def _dev_my_cuts(role_id: str) -> list:
 def _dev_fire_common_cut() -> None:
     """개발자 개입 막의 **공통** 컷. 개발자가 들어왔든 안 들어왔든 «똑같이» 튼다.
 
-    들어온 판에서만 틀면 그 사실만으로 전원에게 공지가 된다(§7-h). 그래서 이 컷은
+    들어온 게임에서만 틀면 그 사실만으로 전원에게 공지가 된다(§7-h). 그래서 이 컷은
     지목이 끝난 자리에서 결과와 상관없이 한 번 돈다. 원고가 `DEV_PICK["cutAll"]` 을
     안 적었으면 아무 일도 안 일어난다.
     """
@@ -4101,8 +4101,8 @@ def _escape_finish(ok: bool) -> None:
 #
 #   {"id","q","options":[{"k","t"}],"correct":[선지키…],"bonus":{선지키: 점수},
 #    "points": 배점, "draft": True,
-#    "correctIsDev": True,   그 판의 «실제» 개발자 배역이 정답이 된다
-#    "noDevKey": "none",     개발자가 안 들어온 판에서는 이 선지가 정답
+#    "correctIsDev": True,   그 게임의 «실제» 개발자 배역이 정답이 된다
+#    "noDevKey": "none",     개발자가 안 들어온 게임에서는 이 선지가 정답
 #    "hitsDev": True}        개발자 감점을 세는 문항이 어느 것인가
 #
 # 개발자의 점수는 자기 답으로 안 만들어진다 — **다른 둘의 합**이 자기 점수이고,
@@ -4162,7 +4162,7 @@ def _quiz_sheet() -> list:
     if fn:
         try:
             return [dict(q) for q in (fn() or [])]
-        except Exception:                       # noqa: BLE001 — 질문지 하나 때문에 판이 멈추면 안 된다
+        except Exception:                       # noqa: BLE001 — 질문지 하나 때문에 게임이 멈추면 안 된다
             pass
     out = []
     for i, q in enumerate(_quiz_questions()):
@@ -4187,7 +4187,7 @@ def _quiz_correct(q: dict) -> set:
     """그 문항의 정답 선지들. **이 값은 서버 밖으로 안 나간다.**
 
     `correctIsDev` 가 붙은 문항은 정답이 판마다 다르다 — 개발자가 «들어온» 판에서는
-    그 배역이, 안 들어온 판에서는 `noDevKey` 선지가 정답이다.
+    그 배역이, 안 들어온 게임에서는 `noDevKey` 선지가 정답이다.
     """
     ok = {k for k in (q.get("correct") or [])}
     if q.get("correctIsDev"):
@@ -4248,7 +4248,7 @@ def _quiz_notice() -> None:
     ROOM["table"].append({"kind": "system", "broadcast": True,
                           "text": f'— {conf.get("title") or "질문지"} — {txt}'})
     rule = conf.get("rule") or (
-        "★ 이 판에는 «남의 답에 내 점수가 깎이는» 문항이 있습니다."
+        "★ 이 게임에는 «남의 답에 내 점수가 깎이는» 문항이 있습니다."
         if ((getattr(SC, "SCORE_RULES", {}) or {}).get("dev")) else "")
     if rule:
         ROOM["table"].append({"kind": "system", "broadcast": True, "text": rule})
@@ -4432,7 +4432,7 @@ class QuizPick(BaseModel):
 
 @app.post("/api/quiz")
 def quiz_pick(b: QuizPick):
-    """질문지의 답을 낸다. 종막에서만 받는다 — 그 전에는 «읽기만» 하는 것이 이 판의 규칙이다."""
+    """질문지의 답을 낸다. 종막에서만 받는다 — 그 전에는 «읽기만» 하는 것이 이 게임의 규칙이다."""
     with LOCK:
         if not _quiz_on():
             return JSONResponse({"error": "이 사건에는 선지형 질문지가 없습니다"}, status_code=404)
@@ -4586,7 +4586,7 @@ def escape_answer(b: EscapeAct):
 def _auto_sweep_one(role_id: str, do_puzzles: bool) -> list:
     """그 배역이 «지금 할 수 있는 조사»를 알아서 다 한다. 무슨 일이 있었는지 되돌려준다.
 
-    QA 전용이다. 3인 판을 혼자 검수할 때 한 사람이 스물한 번을 손으로 눌러야 조사
+    QA 전용이다. 3인 게임을 혼자 검수할 때 한 사람이 스물한 번을 손으로 눌러야 조사
     페이즈가 끝나는데, 그걸 다 누르고 나면 정작 보려던 다음 막까지 못 간다.
 
     ★ 순서가 있다. **수수께끼를 먼저 푼다** — 구역을 여는 수수께끼(F1·D4)가 풀려야
@@ -4663,7 +4663,7 @@ def _auto_sweep_one(role_id: str, do_puzzles: bool) -> list:
 
 @app.post("/api/qa/auto")
 def qa_auto(b: AutoSweep):
-    """QA 자동조사. **열쇠가 있어야 한다** — 평소 판에서는 존재하지도 않는 길이다."""
+    """QA 자동조사. **열쇠가 있어야 한다** — 평소 게임에서는 존재하지도 않는 길이다."""
     if not _agent_ok(b.key):
         return JSONResponse({"error": "key"}, status_code=403)
     with LOCK:
@@ -4796,7 +4796,7 @@ def brief(key: str = ""):
     with LOCK:
         cat = {c["id"]: c for c in SC.CARDS}
         # 손패는 '몇 장 들었나'까지만. 남이 조사한 카드의 내용은 진행 세션도 보지 않는다 —
-        # 진행자가 그걸 다 보고 있으면 판이 끝나기 전에 답을 짚어낼 수 있고,
+        # 진행자가 그걸 다 보고 있으면 게임이 끝나기 전에 답을 짚어낼 수 있고,
         # 그러면 '알아도 말하지 않는다'는 약속에 기대야 한다. 안 보는 게 낫다.
         hand_counts = {rid: len(ids) for rid, ids in ROOM["hands"].items() if ids}
         revealed = [{"id": i, "title": cat[i]["title"], "locName": cat[i]["locName"],
@@ -4881,7 +4881,7 @@ def _seed_phase_lines(seq: int) -> None:
     if not hasattr(SC, "memory_up_to"):
         return
     ph = SC.phase_by_seq(seq)
-    # 사람끼리 떠드는 자리에는 판이 끼어들지 않는다. 어느 막이 그런 자리인지는
+    # 사람끼리 떠드는 자리에는 게임이 끼어들지 않는다. 어느 막이 그런 자리인지는
     # 사건이 정한다(AUTO_LINES_OFF) — 엔진에 "talk" 를 박아두면 다음 사건에서 못 푼다.
     if ph.get("key") in tuple(getattr(SC, "AUTO_LINES_OFF", ()) or ()):
         return
@@ -4929,7 +4929,7 @@ def _advance():
     with LOCK:
         ROOM["ready"] = []          # 준비 표시는 막마다 새로 받는다
         ROOM["immersed"] = []       # 「몰입 완료」도 마찬가지 — 오프닝에서만 쓰지만 남겨두지 않는다
-        # 막이 넘어갈 때 붙는 줄은 전부 판이 스스로 하는 말이다 — 밤의 결과, 압수,
+        # 막이 넘어갈 때 붙는 줄은 전부 게임이 스스로 하는 말이다 — 밤의 결과, 압수,
         # 막 머리, GM, NPC가 꺼내는 말. 한 덩어리로 솟지 않게 표를 달아 내보낸다.
         _drip0 = len(ROOM["table"])
         # 밤을 안 닫고 넘어가면 «아침이 안 온다». 밤 결과가 없으면 그날 밤의 자국도
@@ -4938,7 +4938,7 @@ def _advance():
         if (ROOM.get("night") or {}).get("open"):
             _night_resolve()
         # 지목 막을 떠나면 압수는 그 자리에서 끝난다 — 한 사람이 안 적고 넘어가도
-        # 이미 모인 표로 셈한다. 안 그러면 소지품이 영영 안 열린 채로 판이 끝난다.
+        # 이미 모인 표로 셈한다. 안 그러면 소지품이 영영 안 열린 채로 게임이 끝난다.
         if SC.phase_by_seq(ROOM["seq"]).get("key") == "accuse":
             _seize_belongings()
             # 표가 다 모였으면 그 결과로 개발자가 정해진다. 아무에게도 안 알린다 —

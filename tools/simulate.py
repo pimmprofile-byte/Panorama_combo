@@ -4,7 +4,7 @@
 전부 server.py의 진짜 함수를 그대로 쓴다 — 따로 흉내 낸 규칙이 있으면
 시뮬레이션이 실제와 갈라져 아무 쓸모가 없어진다.
 
-AI 선택은 완전히 결정적이라 그냥 돌리면 매번 같은 판이 나온다. 실제 판의
+AI 선택은 완전히 결정적이라 그냥 돌리면 매번 같은 판이 나온다. 실제 게임의
 변동은 두 곳에서 온다 — (1) 어느 자리에 사람이 앉는가, (2) 대화가 어느 구역으로
 흘러 AI를 그리로 끌어당기는가. 그 둘을 흔들어 표본을 만든다.
 
@@ -89,7 +89,7 @@ def run_one(human_ids: list[str], seed: int) -> dict:
     hands = {rid: list(cs) for rid, cs in S.ROOM["hands"].items()}
     revealed = list(S.ROOM["revealed"])
 
-    # 보유 목표 — 판이 끝난 시점에 그 카드가 아직 자기 손에 있는가
+    # 보유 목표 — 게임이 끝난 시점에 그 카드가 아직 자기 손에 있는가
     keeps = {}
     for rid, kg in (getattr(S.SC, "KEEP_GOALS", {}) or {}).items():
         keeps[rid] = all(cid in hands.get(rid, []) for cid in kg["cards"])
