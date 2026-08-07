@@ -664,9 +664,11 @@
      보이는 칸은 셋(지난 막·지금 막·다음 막)이고, 화면이 넓으면 더 보인다. */
   /* 베이지 케이스에 파인 어두운 홈. 네온그린 「지금 막」과 회색 눈금은 이 안에서만 읽힌다 —
      베이지 위로 그대로 올리면 초록이 바탕에 번지고 지난 막의 회색이 아예 안 보인다. */
+  /* ★ 홈 바닥을 --bg(거의 검정)로 두었더니 이 띠만 «구멍»으로 읽혔다. 화면 본문과
+       같은 차콜(--scr)로 내린다 — 같은 물건의 파인 자리로 보여야 한다. */
   .tline{position:relative;flex:1 1 auto;min-width:0;height:26px;overflow:hidden;touch-action:none;
-    background:var(--bg);border:1px solid var(--case-e);
-    box-shadow:inset 1px 1px 0 rgba(0,0,0,.65);
+    background:var(--scr);border:1px solid var(--case-e);
+    box-shadow:inset 1px 1px 0 rgba(0,0,0,.55);
     -webkit-mask-image:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent);
     mask-image:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent)}
   .tline .tl-rail{position:absolute;top:0;left:0;height:26px;display:flex;align-items:center;gap:0;width:max-content;
@@ -1375,21 +1377,43 @@
   /* 방 안 — 그림 위에 핀이 선다. 핀은 「무엇을 뒤지는가」까지만 말하고 내용은 말하지 않는다. */
   .room{position:relative;border-radius:2px;overflow:hidden;border:1px solid var(--line);background:#080807}
   .room>img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
-  .pin{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:5px;
+  /* ★ 예전에는 상자 «가운데»를 좌표에 맞췄다(translate -50%,-50%). 그러면 좌표가
+       가리키는 것은 물건이 아니라 이름표의 한가운데라, 점은 이름 길이만큼 옆으로
+       밀려 앉는다 — 「방 한가운데」가 벽에 붙어 있던 진짜 이유가 이것이다.
+       지금은 «점»을 좌표에 맞추고 이름표가 그 옆으로 뻗는다. --dot 은 상자 끝에서
+       점 한가운데까지의 거리(테두리 1 + 안쪽여백 4 + 점 반지름 4.5)다. */
+  .pin{--dot:9.5px;position:absolute;transform:translate(calc(-1*var(--dot)),-50%);
+    display:flex;align-items:center;gap:5px;
     background:rgba(10,9,8,.86);border:1px solid var(--cold);border-radius:2px;padding:2px 8px 2px 4px;
     color:var(--ink);font-size:10.5px;line-height:1.5;cursor:pointer;backdrop-filter:blur(3px);
-    white-space:nowrap;max-width:34%;transition:border-color .15s,background .15s,z-index 0s}
+    white-space:nowrap;transition:border-color .15s,background .15s,z-index 0s}
   /* 겹친 라벨은 누른 것이 위로 온다 — 좁은 방에서는 아무리 벌려도 붙는 자리가 생긴다. */
   .pin:hover,.pin:focus{z-index:3}
   /* 라벨이 늘 오른쪽으로 뻗으면 오른편 핀을 덮는다. 오른쪽 절반은 왼쪽으로 뻗게 뒤집는다. */
-  .pin.rt{flex-direction:row-reverse;padding:2px 4px 2px 8px}
+  .pin.rt{flex-direction:row-reverse;padding:2px 4px 2px 8px;
+    transform:translate(calc(-100% + var(--dot)),-50%)}
   .pin i{flex:0 0 9px;height:9px;border-radius:0;background:var(--cold);
     box-shadow:0 0 0 3px rgba(195,186,176,.22)}
-  .pin span{overflow:hidden;text-overflow:ellipsis}
+  /* 이름은 끝까지 보인다. 잘라 놓으면 「경품 더…」 가 되는데, 그 세 점이 가리는
+     것이 무엇인지는 눌러 봐야만 알 수 있다 — 그러라고 붙인 이름표가 아니다. */
+  .pin span{overflow:visible}
   .pin:hover{background:rgba(18,17,14,.95);border-color:var(--case-ink)}
+  /* ── 핀의 색 = 그 카드가 «지금 어디에 있는가» ────────────────────
+     아직 아무도 안 본 것은 물러난 회색, 테이블에 펼쳐진 것은 이 게임의 네온그린,
+     누가 쥐고 있는 것은 그 사람의 키컬러다. 색 하나로 「저건 이미 남의 손에
+     있다」가 읽히면 조사턴을 거기에 안 쓴다. */
   .pin.seen{border-color:var(--line);color:var(--muted)}
   .pin.seen i{background:var(--muted);box-shadow:none}
   .pin.lock{opacity:.55}
+  /* 테이블에 전체공개된 카드 */
+  .pin.pub{border-color:var(--signal);color:var(--signal);background:rgba(4,20,14,.86)}
+  .pin.pub i{background:var(--signal);box-shadow:0 0 0 3px rgba(0,255,153,.20)}
+  /* 내 손패 — 내 키컬러 */
+  .pin.hand{border-color:var(--me,var(--gold));color:var(--me,var(--gold-b))}
+  .pin.hand i{background:var(--me,var(--gold));box-shadow:0 0 0 3px rgba(0,0,0,.28)}
+  /* 남이 쥔 것 — 그 사람의 키컬러. 무엇인지는 안 열린다. */
+  .pin.taken{border-color:var(--wc,var(--line));color:var(--wc,var(--muted))}
+  .pin.taken i{background:var(--wc,var(--muted));box-shadow:0 0 0 3px rgba(0,0,0,.28)}
   /* 가로로 보기 — 화면을 통째로 덮고 90도 돌린다. 폰을 눕히면 방이 꽉 찬다. */
   .roomfs{position:fixed;inset:0;z-index:80;background:#060505;overflow:hidden}
   /* 돌린 뒤에도 화면 한가운데 있어야 한다. grid 가운데정렬은 자식이 화면보다 넓으면
@@ -1397,7 +1421,8 @@
   .roomfs .rfs-rot{position:absolute;left:50%;top:50%;transform-origin:center center}
   .roomfs .room{width:100%;height:100%;border:0;border-radius:0}
   .roomfs .room>img{width:100%;height:100%;aspect-ratio:auto;object-fit:contain}
-  .roomfs .pin{font-size:13px;padding:5px 12px 5px 7px;max-width:38%}
+  .roomfs .pin{--dot:13.5px;font-size:13px;padding:5px 12px 5px 7px}
+  .roomfs .pin.rt{padding:5px 7px 5px 12px}
   .roomfs .pin i{flex-basis:11px;height:11px}
   .rfs-bar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:9px;
     padding:9px 14px;background:linear-gradient(0deg,rgba(6,5,5,.92),transparent);color:var(--ink)}
@@ -4289,7 +4314,36 @@ async function qaOthersTick(){
         moved=true;
       }
     }
-    // ④ 준비 — 내가 「다음 페이즈」를 누른 뒤에 나머지 몫이 따라 눌린다.
+    /* ④ 손패 정리 — 넘친 채로는 아무도 다음 막으로 못 간다. 나머지 자리는
+       스스로 못 치우니 여기서 치운다(내 손패는 내가 치운다 — 무엇을 내려놓을지는
+       검수에서도 내 결정이다). */
+    const ov=(STATE&&STATE.overLimit)||{};
+    if(ids.some(id=>+(ov[id]||0)>0)){ await qaTrimAll(ids); moved=true; }
+    /* ⑤ 1차 지목 — 내가 이름을 적으면 나머지도 적는다. 비밀투표라 «누가 적었나»는
+       안 나온다(voted 수만 나온다). 그래서 같은 표를 다시 던져도 덮어쓰기일 뿐이고,
+       다 차면 done 이 서서 저절로 멈춘다 — 따로 표시를 안 남겨도 된다. */
+    if(k==="accuse"){
+      const a1=(STATE&&STATE.accuse1)||{};
+      if(a1.open&&a1.mineDone&&!a1.done){
+        const pool=((SCEN&&SCEN.characters)||[]).map(c=>c.id);
+        for(const id of ids){
+          const t=pool.find(x=>x!==id)||id;
+          await post("/api/accuse1",{roleId:id,clientId,targetRoleId:t}); moved=true;
+        }
+      }
+    }
+    // ⑥ 종막 지목 — 같은 결이다. 내 표가 서면 나머지도 선다.
+    if(k==="final"){
+      const ar=(STATE&&STATE.arrest)||null;
+      if(ar&&!ar.done&&(STATE.myAccuse||"")){
+        const pool=((SCEN&&SCEN.characters)||[]).map(c=>c.id);
+        for(const id of ids){
+          const t=pool.find(x=>x!==id)||id;
+          await post("/api/accuse",{roleId:id,clientId,targetRoleId:t}); moved=true;
+        }
+      }
+    }
+    // ⑦ 준비 — 내가 「다음 페이즈」를 누른 뒤에 나머지 몫이 따라 눌린다.
     const rd=new Set(((STATE&&STATE.ready)||{}).mine||[]);
     if(rd.has(qaRole)){
       for(const id of ids){ if(rd.has(id)) continue;
@@ -4341,8 +4395,8 @@ async function qaAct(){
 }
 /* 손패가 넘치는 자리를 알아서 정리한다 — 넘친 채로는 막이 안 넘어간다.
    무엇을 내려놓을지는 검수에서 중요하지 않다. 앞에서부터 필요한 만큼 공개한다. */
-async function qaTrimAll(){
-  for(const id of qaSeats()){
+async function qaTrimAll(seats){
+  for(const id of (seats||qaSeats())){
     for(let g=0; g<6; g++){
       const n=+(((STATE&&STATE.overLimit)||{})[id]||0);
       if(n<=0) break;
@@ -5282,7 +5336,9 @@ function paintRoom(room, url){
   const pins=cards.map((c,i)=>{
     const st=cardState(c), p=pinAt(c.id,i,cards.length);
     const seen=(st.k!=="open"&&st.k!=="lock");
-    return `<button class="pin ${st.k} ${seen?"seen":""} ${p[0]>55?"rt":""}" style="left:${p[0]}%;top:${p[1]}%"
+    const wc=(st.who&&st.who.color)||"";
+    return `<button class="pin ${st.k} ${seen?"seen":""} ${p[0]>55?"rt":""}"
+      style="left:${p[0]}%;top:${p[1]}%${wc?`;--wc:${vnNameSafeColor(wc)||"var(--line)"}`:""}"
       onclick="event.stopPropagation();showSpot('${c.id}')" title="${esc(c.spot||"")}">
       <i></i><span>${esc(c.spot||room.name)}</span></button>`; }).join("");
   const doors=roomSubs(room.key).filter(r=>!r.needPod||podMarked()).map(r=>{
@@ -5298,8 +5354,12 @@ function paintRoom(room, url){
       <button class="mh-x" onclick="closeModal('mapModal')" aria-label="닫기">${ICO.close}</button></div>
     <div class="mbody rb"><div class="room"><img src="${url}" alt="" decoding="async">${pins}${doors}</div>
       <div class="panel-note" style="margin-top:9px">그림 위의 표시를 누르면 그 자리를 살펴봅니다.</div></div>
-    <div class="mfoot">${back}<button class="btn" onclick="roomWide('${room.key}')">${ICO.expand} 가로로</button>
-      <button class="btn" onclick="openZoneList('${room.loc}')">목록으로</button></div>`;
+    ${/* 발치의 오른쪽 끝은 «여기서 나가는 문» 자리다 — 손이 제일 자주 가는 곳이라
+          거기에 「목록으로」가 앉아 있으면 닫으려다 목록으로 넘어간다. 끝자리를
+          붉은 닫기에 내주고, 목록은 「가로로」 왼쪽으로 옮긴다. */""}
+    <div class="mfoot">${back}<button class="btn" onclick="openZoneList('${room.loc}')">목록으로 보기</button>
+      <button class="btn" onclick="roomWide('${room.key}')">${ICO.expand} 가로로</button>
+      <button class="btn ember" onclick="closeModal('mapModal')">닫기</button></div>`;
   $("mapBox").style.setProperty("--mt","var(--cold)");
   openModal("mapModal");
 }
@@ -5312,7 +5372,9 @@ function roomWide(key){
     const cards=roomCards(room);
     const pins=cards.map((c,i)=>{ const st=cardState(c), p=pinAt(c.id,i,cards.length);
       const seen=(st.k!=="open"&&st.k!=="lock");
-      return `<button class="pin ${st.k} ${seen?"seen":""} ${p[0]>55?"rt":""}" style="left:${p[0]}%;top:${p[1]}%"
+      const wc=(st.who&&st.who.color)||"";
+      return `<button class="pin ${st.k} ${seen?"seen":""} ${p[0]>55?"rt":""}"
+        style="left:${p[0]}%;top:${p[1]}%${wc?`;--wc:${vnNameSafeColor(wc)||"var(--line)"}`:""}"
         onclick="showSpot('${c.id}')"><i></i><span>${esc(c.spot||room.name)}</span></button>`; }).join("");
     const doors=roomSubs(room.key).filter(r=>!r.needPod||podMarked()).map(r=>{
       const at=(r.at&&r.at.length)?r.at:[88,84];
@@ -9919,9 +9981,18 @@ function showMyHand(tab){
   if(start<0) start=0;
   // 카드탭에서만 「대화에 올리기」·「바꾸기」가 선다. 도구는 내려놓는 물건이 아니다.
   const pubN=(STATE.revealed||[]).length, canAct=!bel&&!tool&&myRoleValid()&&clueCards().length;
+  /* 발치의 세 문 — 왼쪽부터 «올린다 · 바꾼다 · 내려놓는다».
+     손패 정리는 여태 넘쳤을 때 뜨는 띠에서만 닿을 수 있었다. 그 띠를 한 번
+     지나치면 다시 부를 길이 없어서, 넘친 채로 자기 차례가 오는 게임이 있었다.
+     ★ 넘치지 않았을 때는 눌리지 않게 둔다 — 상한 안에서 카드를 버리는 규칙은
+       없다. 내려놓고 싶으면 「대화에 올리기」가 그 문이다. */
+  const over=overLimit();
   h+=`</div>${canAct?`<div class="mfoot">
     <button class="btn" onclick="showShare()">${ICO.chat} 대화에 올리기</button>
-    ${pubN?`<button class="btn" onclick="showSwap()">${ICO.swap} 테이블 위 카드와 바꾸기</button>`:""}</div>`:""}`;
+    ${pubN?`<button class="btn" onclick="showSwap()">${ICO.swap} 테이블 위 카드와 바꾸기</button>`:""}
+    <button class="btn${over>0?" ember":""}"${over>0?` onclick="showHandTrim()"`:" disabled"}
+      title="${over>0?`${over}장을 내려놓아야 합니다`:"손패가 상한을 넘지 않았습니다"}"
+      >카드 내려놓기${over>0?` <b>${over}</b>`:""}</button></div>`:""}`;
   $("handBox").innerHTML=h;
   $("handBox").style.setProperty("--mt","var(--me,var(--gold))");
   openModal("handModal");
@@ -9983,7 +10054,11 @@ const COACH_STEPS=[
    when:()=> !openLocked() && ((STATE.table||[]).length>0)},
   /* 조사화면은 «지금 서 있는 화면» 이지만, 여기까지 오는 동안 사람은 줄곧
      대화창 안에 있었다. 나올 자리를 한 번은 짚어 줘야 한다. */
-  {k:"invest",dk:0, tip:"여기에서 사건을 조사합니다", open:()=>dockHome(),
+  /* ★ 여기도 잠근다. 자기소개가 끝나고 조사가 열리는 순간이 이 게임에서 화면이
+     제일 크게 바뀌는 자리인데, 그때 하단바가 다 열려 있으면 사람들이 소지품과
+     인물정보를 먼저 뒤진다 — 아직 아무것도 안 든 칸들이다. 조사화면 하나만
+     열어 두고, 그리로 들어오면 그다음 칸들이 차례로 풀린다. */
+  {k:"invest",dk:0, lock:true, tip:"여기에서 사건을 조사합니다", open:()=>dockHome(),
    when:()=> introsAllSaid() && ((STATE.phase||{}).key==="invest"),
    skip:()=> myCheckedIds().length>0},
   {k:"hand",  dk:1, tip:"찾아낸 카드는 「소지품」에 쌓입니다", open:()=>showMyHand(),
