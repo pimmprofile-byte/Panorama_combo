@@ -816,7 +816,9 @@
   .dock .dk.here::after{content:"";position:absolute;left:50%;top:2px;transform:translateX(-50%);
     width:16px;height:2px;border-radius:0;background:var(--case-e)}
   /* 오프닝 — 아직 자기 이야기를 안 펼친 사람에게. 하단바의 그 칸만 남기고 나머지를 덮는다. */
-  .coach{position:fixed;inset:0;z-index:55;background:rgba(4,3,3,.72);
+  /* ★ 탭 창(.modal.overdock, z 60) «위»에 서야 한다. 55 에 두었더니 대화창을 열어
+     둔 채로는 어둠막이 창 뒤에 깔려 아무 일도 안 일어난 것처럼 보였다. */
+  .coach{position:fixed;inset:0;z-index:74;background:rgba(4,3,3,.72);
     backdrop-filter:blur(1.5px);animation:fade .35s ease both}
   /* 밝은 케이스 판 위에 흰 글자·흰 아이콘을 얹어 두었더니 둘 다 판에 묻혔다.
      판을 말풍선과 같은 --case-h 로 맞추고, 글자와 아이콘을 차콜(--case-fg)로 뒤집는다 —
@@ -828,7 +830,7 @@
      베이지 판으로 떠 있어서, 오프닝에서 초록으로 깜빡이던 안내가 조사화면으로
      넘어오는 순간 다른 물건이 됐다 — 같은 뜻이면 같은 모양이어야 한다.
      안내 말풍선과 이 점멸은 한 함수(paintCoach)가 같이 세우고 같이 걷는다. */
-  .dock .dk.callout{z-index:56;color:var(--case-fg);
+  .dock .dk.callout{z-index:76;color:var(--case-fg);
     animation:dkDim 1.15s steps(1) infinite}
   @media(prefers-reduced-motion:reduce){
     .dock .dk.callout{animation:none;background:#7fe9bd}
@@ -856,7 +858,7 @@
     animation:bob2 2.1s ease-in-out infinite;cursor:pointer}
   @keyframes bob2{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-3px)}}
   @media(prefers-reduced-motion:reduce){ .maphint{animation:none} }
-  .coach-tip{position:fixed;z-index:57;transform:translateX(-50%);
+  .coach-tip{position:fixed;z-index:77;transform:translateX(-50%);
     box-shadow:2px 2px 0 var(--case-e);
     background:var(--case-h);color:var(--case-fg);font-size:12.5px;font-weight:800;letter-spacing:.01em;
     padding:8px 14px;border-radius:2px;white-space:nowrap;box-shadow:2px 2px 0 rgba(0,0,0,.55);
@@ -4830,11 +4832,13 @@ function advBar(label,cls){
 /* 대화는 제 탭이 있다 — 조사화면에 미리보기를 겹쳐 두지 않는다.
    대신 안 읽은 말이 몇 마디인지만 하단바에 얹는다. */
 let chatSeen=0;
-/* 대화창 알림이 세는 것 — «사람과 인물이 한 말»뿐이다.
-   ★ GM 지문(kind="gm")은 뺀다. 그건 대화가 아니라 진행 안내라, 딱지가 붙으면
-     화면 두 곳이 동시에 깜빡인다 — 조사화면을 짚어 주는 중에 대화창까지 부르면
-     어디를 보라는 말인지 알 수 없다. 안내는 대화창을 열면 거기 그대로 있다. */
-function chatLines(){ return (STATE&&STATE.table||[]).filter(m=>m.kind==="ai"||m.kind==="human").length; }
+/* 대화창 알림이 세는 것 — «남이 친 말»뿐이다.
+   ★ GM 지문은 진행 안내라 위에서 내려오는 띠가 맡는다. 내가 방금 친 말도 안 센다 —
+     내 말에 내가 알림을 받을 이유가 없다. 남는 것은 «다른 사람이 말을 걸었다»
+     하나이고, 딱지는 그 한 가지만 말해야 한다. */
+function chatLines(){
+  return (STATE&&STATE.table||[]).filter(m=>m.kind==="human"&&m.roleId!==myRoleId).length;
+}
 function markChatSeen(){ chatSeen=chatLines(); paintChatBadge(); }
 /* ── GM 진행 안내를 위에서 내려보낸다 ──────────────────────────────
    ★ «흘러간 줄»만 본다(chatRows). 아직 붙잡혀 있는 줄을 미리 띄우면 대화창보다
@@ -9126,12 +9130,33 @@ function dripHeld(){
   if(dripUntil===null) return null;
   return rows.find(m=>m.drip&&nOf(m)>dripUntil)||null;
 }
+/* ── GM 지문은 오프닝에서만 «줄»로 남는다 ─────────────────────────
+   오프닝은 셋이 대화창을 열어 놓고 같이 읽는 자리라, 진행 안내가 그 흐름 안에
+   있는 것이 맞다. 그 뒤로는 사람들이 조사화면에 있고 대화창은 «사람이 말하는 곳»
+   이다 — 거기에 안내까지 줄로 쌓으면 오간 말이 안내에 밀린다. 오프닝 뒤의
+   안내는 위에서 내려오는 띠(paintGmBar)가 통째로 맡는다.
+   ★ 오프닝은 첫 막이다. 대화록에서 첫 「— N차 XXX —」 표식 앞까지가 오프닝이라,
+     그 표식의 자리 하나로 가른다. 막 번호를 줄마다 달 필요가 없다. */
+const ACT_MARK=/^—[^—]+—$/;
+function firstActAt(rows){
+  for(let i=0;i<rows.length;i++){
+    const m=rows[i];
+    if(m.kind==="system"&&ACT_MARK.test(String(m.text||"").trim())) return i;
+  }
+  return -1;
+}
+function dropLateGm(rows){
+  const a=firstActAt(rows);
+  if(a<0) return rows;                       // 아직 첫 막 표식이 없다 — 전부 오프닝이다
+  return rows.filter((m,i)=> m.kind!=="gm" || i<a );
+}
 /* 붙잡힌 줄이 나오면 그 뒤는 통째로 자른다 — 걸러내면 뒷줄이 먼저 올라와 순서가 깨진다 */
 function chatRows(){
   const rows=(STATE&&STATE.table)||[];
-  const m=dripHeld(); if(!m) return rows;
+  const m=dripHeld();
+  if(!m) return dropLateGm(rows);
   const i=rows.indexOf(m);
-  return i<0?rows:rows.slice(0,i);
+  return dropLateGm(i<0?rows:rows.slice(0,i));
 }
 function chatWatching(){
   if(document.hidden) return false;
@@ -10421,7 +10446,13 @@ function coachOff(){ try{ return localStorage.getItem("pmb.notutor")==="1"; }cat
    앞 칸을 건너뛰고 뒤 칸으로 넘어가지 않는다는 것이 이 함수의 전부다. */
 function coachNext(){
   if(!myRoleValid()||coachOff()) return null;
-  if(document.querySelector(".modal.on")) return null;   // 창이 떠 있으면 가릴 것이 없다
+  /* ★ 예전에는 «창이 하나라도 떠 있으면» 안내를 접었다. 그래서 대화창을 열어 둔
+     채 자기소개가 끝나는 순간 — 다음에 갈 곳을 짚어 줘야 할 바로 그 자리에서 —
+     아무것도 안 떴다. 사람은 대화창 안에 있는데 조사가 열린 것이다.
+     ★ 접어야 하는 창은 «읽는 팝업»(단서·구역·손패정리·바꾸기)뿐이다. 그건 지금
+       읽는 중인 물건이라 그 위를 덮으면 안 된다. 하단바 탭 창(대화·내정보·소지품·
+       인물정보)은 «지금 서 있는 자리»라, 거기서 다음 자리를 가리키는 것이 안내다. */
+  if(document.querySelector(".modal.on:not(.overdock)")) return null;
   const v=coachSeen();
   for(const st of COACH_STEPS){
     if(v[st.k]) continue;
