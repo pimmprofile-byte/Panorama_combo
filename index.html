@@ -850,6 +850,12 @@
      둔 채로는 어둠막이 창 뒤에 깔려 아무 일도 안 일어난 것처럼 보였다. */
   .coach{position:fixed;inset:0;z-index:74;background:rgba(4,3,3,.72);
     backdrop-filter:blur(1.5px);animation:fade .35s ease both}
+  /* ★ 잠그지 «않는» 칸(소지품·인물정보)의 어둠막은 화면을 막지 않는다.
+     여태 잠금 여부와 상관없이 이 막이 화면 전체를 덮고 탭을 다 먹어서, 첫 조사가
+     끝난 뒤 소지품 안내가 뜨는 순간 조사가 통째로 막혔다 — 어디를 눌러도 소지품만
+     열렸다. 「가 보세요」는 권유지 자물쇠가 아니다. 옅게 깔고, 손은 통과시킨다.
+     짚어 준 칸과 말풍선은 제 몫의 클릭을 따로 받으므로 안내는 그대로 돈다. */
+  .coach.soft{pointer-events:none;background:rgba(4,3,3,.40);backdrop-filter:none}
   /* 밝은 케이스 판 위에 흰 글자·흰 아이콘을 얹어 두었더니 둘 다 판에 묻혔다.
      판을 말풍선과 같은 --case-h 로 맞추고, 글자와 아이콘을 차콜(--case-fg)로 뒤집는다 —
      이 파일에서 «베이지 위의 글자»는 늘 그 색이다. 아래 .coach-tip 과 같은 조합이 된다. */
@@ -980,8 +986,13 @@
   /* 짚은 것은 어둠막 위로 뜨되 «눌리지는» 않는다 — 설명을 읽는 중에 진짜로 눌리면
      설명 위로 또 창이 뜬다. 어디를 눌러도 다음 칸으로만 간다.
      .live 가 붙은 칸만 예외 — 「눌러 보라」고 말한 칸이다. */
-  .tourhit{position:relative;z-index:86;border-radius:2px;pointer-events:none;
-    animation:tourPulse .9s steps(1) infinite}
+  /* ★ !important 를 쓴다. 이건 «잠깐 얹는 표시»인데, 짚는 대상에 붙어 있는 제 규칙은
+     거의 언제나 이것보다 셉다 — 인물정보 탭이 그랬다. `.htab.on,.shtab.on{z-index:1}`
+     (클래스 둘)이 `.tourhit`(클래스 하나)을 이겨서, 고른 탭만 z-index 가 1 로
+     내려앉아 어둠막(84) 아래로 가라앉았다. 「화살표만 뜨고 하이라이트가 없다」가
+     그것이다. 짚어 주는 표시는 무엇 위에도 떠야 하므로 여기서만 못을 박는다. */
+  .tourhit{position:relative!important;z-index:86!important;border-radius:2px;
+    pointer-events:none;animation:tourPulse .9s steps(1) infinite!important}
   .tourhit.live{pointer-events:auto}
   @keyframes tourPulse{
     0%,49%  {box-shadow:0 0 0 3px var(--sig-t),0 0 18px -6px var(--sig-t)}
@@ -5130,9 +5141,7 @@ function gmBarSay(kicker, text){
   const el=$("gmBar"); if(!el) return;
   el.innerHTML=`<div class="gb-k">${esc(kicker||"안내")}<span class="x">눌러서 닫기</span></div>
     <div class="gb-t">${esc(String(text||""))}</div>`;
-  el.hidden=false;
-  void el.offsetWidth;
-  el.classList.add("on");
+  slideIn(el);
 }
 function paintGmBar(){
   const el=$("gmBar"); if(!el) return;
@@ -5145,9 +5154,7 @@ function paintGmBar(){
   gmBarAt=n;
   el.innerHTML=`<div class="gb-k">진행 안내<span class="x">눌러서 닫기</span></div>
     <div class="gb-t">${esc(String(m.text||m.line||""))}</div>`;
-  el.hidden=false;
-  void el.offsetWidth;
-  el.classList.add("on");
+  slideIn(el);
   /* ★ 소리를 안 낸다. 막마다 한 번씩 울리는데, 그건 «알려 주는 것»이 아니라
      막이 바뀔 때마다 나는 소음이다. 띠가 내려오는 움직임이면 충분하다. */
 }
@@ -6832,9 +6839,16 @@ function sealedLoc(loc){ return ((STATE&&STATE.sealed)||[]).indexOf(loc)>=0; }
 function zoneCards(loc){
   const cr=STATE.round||0;
   const pub=new Set((STATE.revealed||[]).map(c=>c.id)); const hand=new Set(myHand.map(c=>c.id));
+  /* ★ 아직 «들어내지 않은 것» 아래에 있는 자리는 지도에 아예 없다. 몸을 들어올리기도
+     전에 「시신 밑」이 핀으로 서 있으면, 눌러도 안 열리면서 「저기 뭔가 있다」만
+     알린다 — 들어올리기가 할 말을 그림이 먼저 해 버린다. 셋이 들어낸 순간 그 자리가
+     «생긴다». 그게 이 협동이 주는 것이다. */
+  const L=(STATE&&STATE.lift)||null;
+  const under=(L && !L.done && L.grants) ? L.grants : "";
   // gone 이 지난 카드는 그 자리에서 «치워진» 것이다 — 어제와 같은 방이 아니다.
   // 내가 쥐고 있는 것만 남는다(이미 본 것을 뺏지는 않는다).
   return SCEN.cardCatalog.filter(c=>c.loc===loc
+    && c.id!==under
     && !(c.gone && cr>=c.gone && !hand.has(c.id))
     && (c.round<=cr || pub.has(c.id) || hand.has(c.id)));
 }
@@ -10107,11 +10121,22 @@ function extraWatch(){
     dropNote("추가 정보가 늘었습니다", (SCEN&&SCEN.fragNotice)||"내 정보 · 추가 정보에서 확인하세요");
   } else if(now!==was){ try{ localStorage.setItem(k,now); }catch(e){} }
 }
+/* ★ 알림 띠를 «스르륵» 내리는 법. hidden 을 걷고 곧바로 .on 을 붙이면, 그 사이에
+   브라우저가 「닫힌 자리」를 한 번도 안 그렸을 수 있다 — 그러면 전이(transition)가
+   출발점을 못 잡고 띠가 그냥 «툭» 나타난다. 화면을 두 번 넘긴 뒤에 여는 것이
+   제일 확실하다(레이아웃 한 번 읽기 + rAF 두 번). */
+function slideIn(el){
+  if(!el) return;
+  el.hidden=false;
+  el.classList.remove("on");
+  void el.offsetHeight;                 // 닫힌 자리를 한 번 확정한다
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ try{ el.classList.add("on"); }catch(e){} }));
+}
 function banner(m){ const b=$("banner");
   clearTimeout(bannerT);
   if(!m){ b.classList.remove("on"); return; }
   if(b.textContent!==m) sfx("bad");
-  b.textContent=m; b.classList.add("on");
+  b.textContent=m; slideIn(b);
   bannerT=setTimeout(()=>b.classList.remove("on"),5200);
 }
 
@@ -10783,12 +10808,16 @@ function tourPaint(){
   const m=$(t.modal); if(!m||!m.classList.contains("on")){ tourEnd(false); return; }
   tourOff();
   m.querySelectorAll(".tourhit").forEach(x=>x.classList.remove("tourhit","live"));
+  /* ★ 어둠막과 말풍선은 창«틀» 안에 넣는다. 창 밖(모달)에 붙여 두면 짚은 것과
+     쌓임 맥락이 갈려서, 짚은 것의 z-index 가 아무리 높아도 어둠막 아래에 깔릴 수
+     있다. 셋을 한 맥락에 모아 두면 84 < 86 < 88 이 그대로 성립한다. */
+  const host=m.querySelector(".win")||m;
   let dim=m.querySelector(".tourdim");
   if(!dim){ dim=document.createElement("div"); dim.className="tourdim";
-            dim.onclick=e=>{ e.stopPropagation(); tourGo(); }; m.appendChild(dim); }
+            dim.onclick=e=>{ e.stopPropagation(); tourGo(); }; host.appendChild(dim); }
   let tip=m.querySelector(".tourtip");
   if(!tip){ tip=document.createElement("div"); tip.className="tourtip";
-            tip.onclick=e=>{ e.stopPropagation(); tourGo(); }; m.appendChild(tip); }
+            tip.onclick=e=>{ e.stopPropagation(); tourGo(); }; host.appendChild(tip); }
   const st=t.steps[t.i];
   const el=(typeof st.el==="function")?st.el():st.el;
   if(!el||!el.isConnected){ tourGo(); return; }
@@ -10815,8 +10844,9 @@ function tourPaint(){
   tip.innerHTML=`<div class="tt-b">${st.tip}</div>
     <div class="tt-f"><span class="tt-n">${t.i+1}/${t.steps.length}</span>
       <span class="tt-x">${t.i+1<t.steps.length?"눌러서 다음 ›":"눌러서 닫기"}</span></div>`;
-  // 자리 — 짚은 것 «위»에 두되, 위가 좁으면 아래로 내린다
-  const mb=m.getBoundingClientRect(), r=el.getBoundingClientRect();
+  // 자리 — 짚은 것 «위»에 두되, 위가 좁으면 아래로 내린다.
+  // 기준은 말풍선이 실제로 매달린 것(창틀)이다 — 모달로 재면 창틀 안쪽 여백만큼 어긋난다.
+  const mb=host.getBoundingClientRect(), r=el.getBoundingClientRect();
   tip.style.left="0px"; tip.style.top="0px";                 // 재기 전에 초기화
   const th=tip.offsetHeight||70, tw=tip.offsetWidth||240;
   const above=(r.top-mb.top)>th+16;
@@ -10831,6 +10861,11 @@ function tourStart(key, modal, steps, onDone){
      그때마다 여기로 들어오면 짚어 주기가 첫 칸으로 되돌아간다 — 눌러도 안
      넘어가는 것처럼 보인다. */
   if(tour&&tour.key===key) return;
+  /* ★ 하단바 안내는 곧바로 걷는다. coachNext 는 짚어 주기가 도는 동안 null 을 물리게
+     돼 있는데, 그걸 다시 그리라고 아무도 안 불러서 어둠막(.coach, z 74)이 창 위에
+     그대로 남아 있었다 — 그 막이 창틀보다 위라, 창 «안»에서 짚어 준 것을 통째로
+     덮는다. 소지품 안내에서 하이라이트가 안 보이던 것이 이것이다. */
+  setTimeout(()=>{ try{ paintCoach(); }catch(e){} },0);
   /* ★ 튜토리얼을 끈 사람에게는 «이것도» 안 뜬다. 하단바 안내(coachNext)만 막고
      여기를 안 막아 두어서, 「튜토리얼 끔」을 눌러도 창 안에는 어둠막이 깔렸다 —
      그 어둠막은 pointer-events 를 먹으므로 창 안의 것들이 통째로 안 눌린다.
@@ -11184,7 +11219,7 @@ function paintCoach(){
      다른 데를 열 수 있으면 그건 안내가 아니라 제안이다. */
   if(dock&&st.lock) dock.classList.add("coachlock");
   if(dock) dock.classList.add("coachon");
-  const d=document.createElement("div"); d.className="coach"; d.id="coach";
+  const d=document.createElement("div"); d.className="coach"+(st.lock?"":" soft"); d.id="coach";
   d.dataset.k=st.k;
   d.onclick=()=>{ if(st.tour) coachHold(700); coachDone(st.k); st.open(); };
   document.body.appendChild(d);
@@ -11286,7 +11321,11 @@ function paintMapHint(){
      ★ 차례(turn)는 첫 조사 안내에 안 건다. 조각난 몸은 전체공개라 조사턴을 안 쓰고,
        들어올리기는 애초에 셋이 다 붙어야 한다 — 차례가 아닌 사람도 와야 한다. */
   const seen=coachSeen();
-  const free = myRoleValid() && ph.key==="invest" && !openLocked() && !coachOff() && !coachNext();
+  /* ★ 창 «안»에서 짚어 주는 중이면 이 줄도 안 뜬다. coachNext 는 그때 null 을 물리므로
+     그것만 보고 있으면 조건이 통과해 버려서, 인물정보 안내를 읽는 중에 그 창 위로
+     「먼저 관리자실을 눌러 보세요」가 떴다 — 짚어 주는 곳이 또 둘이 된다. */
+  const free = myRoleValid() && ph.key==="invest" && !openLocked() && !coachOff()
+            && !tour && !coachNext();
   if(!free){ if(old) old.remove(); return; }
 
   let msg = st ? TUT_SAY[st] : "구역을 누르면 그 안을 조사할 수 있습니다";

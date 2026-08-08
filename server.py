@@ -1620,11 +1620,18 @@ def _seed_alibi() -> None:
     PRE = "사건 당시 · 알리바이 대화록 — "
     # 한 사람씩 증언하는 자리다. 열세 줄이 동시에 솟으면 «대화록»이 아니라 벽보가 된다.
     with _drip():
-        ROOM["table"].append({"kind": "system", "broadcast": True, "text": PRE + head})
+        ROOM["table"].append({"kind": "system", "broadcast": True, "drip": False,
+                              "text": PRE + head})
+        # 대화록의 «첫 지문»도 처음부터 적혀 있다 — 머리 한 줄만 덩그러니 뜨면
+        # 그게 무슨 기록인지가 안 읽힌다. 여기까지가 «표지»고, 증언부터 흐른다.
+        first_note = True
         for a in log:
             # 말이 아니라 «게임이 적는 줄». 대화록 중간에 한 번 끊고 무슨 일이 벌어졌는지 적는다.
             if a.get("note"):
                 row = {"kind": "system", "broadcast": True, "text": PRE + a["note"]}
+                if first_note:
+                    row["drip"] = False
+                    first_note = False
                 # 「여기서 한 번 끊는다」 — 대화창이 여기서 멈춰 서고 「계속」을 기다린다
                 if a.get("stop"):
                     row["stop"] = True
@@ -1641,9 +1648,9 @@ def _seed_alibi() -> None:
             ROOM["table"].append({"kind": "alibi", "roleId": who,
                                   "speaker": c.get("name", who),
                                   "at": a.get("t", ""), "text": a.get("line") or a.get("say", "")})
-        note = getattr(SC, "ALIBI_NOTE", "")
-        if note:
-            ROOM["table"].append({"kind": "system", "text": note})
+        # ★ 꼬리말(ALIBI_NOTE)은 안 붙인다. 머리에서 「참인지는 아무도 모른다」를
+        #   이미 말했고, 같은 말을 대화록 끝에 한 번 더 적으면 그건 안내가 아니라
+        #   되풀이다. 원고의 값은 남겨 둔다 — 다른 사건이 쓸 수도 있다.
 
 
 @app.post("/api/start")
@@ -1657,7 +1664,11 @@ def start_game(b: HostReq):
             return JSONResponse({"error": f"아직 정해지지 않은 배역이 {len(opens)}개 있습니다"}, status_code=409)
         ROOM["started"] = True
         with _drip():
-            ROOM["table"].append({"kind": "system", "broadcast": True,
+            # ★ drip=False — 이 줄과 대화록 머리 두 줄은 «흘러 들어오는 것»이 아니라
+            #   판이 열릴 때 이미 적혀 있는 것이다. 사람이 처음 대화창을 열었을 때
+            #   빈 화면이 한 줄씩 차오르는 것을 지켜보게 두면, 읽을 것이 없는 동안
+            #   기다리기만 한다.
+            ROOM["table"].append({"kind": "system", "broadcast": True, "drip": False,
                                   "text": "배역이 확정됐습니다. 오프닝을 시작합니다."})
             _ph0 = SC.phase_by_seq(ROOM["seq"])
             if _ph0.get("gm"):
@@ -2986,9 +2997,8 @@ def chat_in(b: RoleReq):
         ci = ROOM.setdefault("chatIn", [])
         if b.roleId not in ci:
             ci.append(b.roleId)
-            if len(ci) >= len(_human_roles()):
-                ROOM["table"].append({"kind": "system", "broadcast": True,
-                                      "text": "셋이 다 모였습니다 — 그 밤의 이야기가 시작됩니다."})
+            # ★ 줄을 안 남긴다. 셋이 모인 것은 화면이 이미 보이고 있고(입장 표시),
+            #   그 다음에 대화록이 흐르기 시작하는 것 자체가 그 말을 대신한다.
             bump()
     return {"ok": True, "chatIn": _chat_in_state()}
 
@@ -3128,12 +3138,10 @@ def immersed_toggle(b: RoleReq):
         if b.roleId in im:
             im.remove(b.roleId)
         else:
+            # ★ 셋이 다 눌렀을 때 대화창에 줄을 하나 남기고 있었다. 안 남긴다 —
+            #   몇 명이 눌렀는지는 몰입 단추가 이미 세고 있고, 대화창 문이 열리는
+            #   것 자체가 「이제 소개하라」는 말이다. 같은 말을 두 번 하지 않는다.
             im.append(b.roleId)
-            # 여기도 마찬가지 — 사람마다 한 줄씩이 아니라, 셋이 다 끝났을 때 한 줄.
-            st = _immersed_state()
-            if st and st["done"]:
-                ROOM["table"].append({"kind": "system", "broadcast": True,
-                                      "text": "셋 다 준비됐습니다 — 이제 대화창에서 서로를 소개하세요."})
         bump()
         return {"ok": True, "immersed": _immersed_state()}
 
