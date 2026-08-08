@@ -6445,7 +6445,7 @@ function paintLobbyRoom(){
       다 모이면 이 판이 걷히고 배역을 고릅니다.</div>`;
 }
 async function copyRoomCode(){
-  try{ await navigator.clipboard.writeText(roomCode); banner("방 코드 "+roomCode+" 를 복사했습니다."); }
+  try{ await navigator.clipboard.writeText(roomCode); banner("방 코드 "+roomCode+" 를 복사했습니다.","good"); }
   catch(e){ try{ prompt("아래를 복사해 주세요", roomCode); }catch(e2){ banner(roomCode); } }
 }
 function paintStartNow(){
@@ -8649,7 +8649,7 @@ async function dropFromCard(id){
   const r=await post("/api/publish",{cardId:id,roleId:myRoleId,clientId});
   if(r&&r.error){ banner(r.error); return; }
   await poll();
-  banner(overLimit()>0?`아직 ${overLimit()}장 더 내려놔야 합니다.`:"공개했습니다.");
+  banner(overLimit()>0?`아직 ${overLimit()}장 더 내려놔야 합니다.`:"공개했습니다.", overLimit()>0?"warn":"good");
 }
 /* 「카드 내려놓기」 — 고르는 창을 또 띄우지 않는다. 지금 «보고 있는» 그 장이다.
    손패는 넘겨 보는 물건이고, 넘겨서 이 장을 보고 있다는 것이 곧 고른 것이다.
@@ -8713,7 +8713,7 @@ function toggleBelong(id){
 async function belongConfirm(){
   const r=await post("/api/belongings/keep",{giveId:belongKeep.join(","),takeId:"",roleId:myRoleId,clientId});
   if(r&&r.error){ banner(r.error); return; }
-  closeModal("trimModal"); await poll(); banner("남길 것을 골랐습니다.");
+  closeModal("trimModal"); await poll(); banner("남길 것을 골랐습니다.","good");
 }
 
 /* ── 손패 상한 — 넘치면 남길 카드를 고르고, 고르지 않은 카드는 전체공개로 내려놓는다 ── */
@@ -8810,7 +8810,7 @@ async function trimConfirm(){
   trimBusy=false; trimPick=[]; await poll();
   if(err){ banner(`${done}장까지 공개했습니다 — ${err}`); }
   if(overLimit()>0){ showHandTrim(); if(!err) banner(`${done}장 공개했습니다 — 아직 ${overLimit()}장 남았습니다.`); }
-  else { closeModal("trimModal"); if(!err) banner(`${done}장 공개했습니다.`); }
+  else { closeModal("trimModal"); if(!err) banner(`${done}장 공개했습니다.`,"good"); }
 }
 
 /* 테이블 위 카드와 바꾸기 — 손패가 두 장뿐이라 «지금 감춰야 할 것»이 페이즈마다 바뀐다.
@@ -9169,7 +9169,7 @@ async function saveAge(el){
     banner(r.error); await poll(); redraw(); return;
   }
   await poll(); redraw();
-  banner("나이를 적었습니다.");
+  banner("나이를 적었습니다.","good");
 }
 
 /* 남의 손패를 눌렀을 때 — 무엇을 쥐었는지는 절대 말하지 않는다.
@@ -9332,7 +9332,7 @@ async function swapConfirm(){
   swapBusy=true; $("swapGo").disabled=true;
   const r=await post("/api/swap",{giveId:swapGive,takeId:swapTake,roleId:myRoleId,clientId});
   if(r&&r.error){ banner(r.error); swapBusy=false; $("swapGo").disabled=false; return; }
-  closeModal("swapModal"); await poll(); banner("바꿨습니다.");
+  closeModal("swapModal"); await poll(); banner("바꿨습니다.","good");
 }
 
 /* 종막 질문지 — 채점하지 않는다. 사람 셋이 하는 판이라 채점자가 없다.
@@ -9915,7 +9915,7 @@ async function submitFinal(){ if(gradeBusy)return;
   if(miss.length){ await say({title:"아직 안 고른 문항이 있습니다",body:`${miss.map(([q,i])=>`${i+1}번`).join(", ")} — 하나씩 골라주세요.`,ok:"알겠습니다"}); return; }
   if(answers.every(a=>!a)){ await say({title:"답이 비어 있습니다",body:"한 문항 이상 적어주세요.",ok:"알겠습니다"}); return; } gradeBusy=true; banner("제출 중…"); const r=await post("/api/final-answers",{roleId:myRoleId,clientId,answers}); gradeBusy=false; if(r&&r.error){banner("제출 오류: "+r.error); return;} localStorage.setItem("pmb.final."+myRoleId,JSON.stringify(answers));
   // 낼 곳이 없는데 '제출 완료'라고 하지 않는다 — 어디로 갔는지를 그대로 말한다
-  banner("적었습니다.");
+  banner("적었습니다.","good");
   // 제출 여부는 로컬에만 남아 패널 서명에 안 잡힌다 — 손으로 한 번 무효화해야 화면이 바뀐다
   renderPanel._sig=null;
   await poll(); }
@@ -11719,7 +11719,7 @@ function inviteURL(){
 }
 async function copyInvite(){
   const t=inviteURL();
-  try{ await navigator.clipboard.writeText(t); banner("초대 링크를 복사했습니다 — 방 코드 "+roomCode); }
+  try{ await navigator.clipboard.writeText(t); banner("초대 링크를 복사했습니다 — 방 코드 "+roomCode,"good"); }
   catch(e){ banner("방 코드 "+roomCode); }
 }
 async function post(url,body){ try{ return await (await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})).json(); }catch(e){ banner("서버 연결 오류"); return {error:"network"}; } }
