@@ -2478,6 +2478,15 @@ def _try_investigate(role_id: str, card_id: str, enforce_ap: bool = True, enforc
         if miss:
             names = ", ".join((SC.get_card(m) or {}).get("spot") or m for m in miss)
             return f"먼저 밝혀져야 할 것이 있습니다 — {names}"
+    # ★ 위와 똑같은 구멍이 «구역» 쪽에도 있었다. 아직 열리지 않은 구역은 화면에서
+    #   통째로 빠지는데(_hidden_zones), 서버는 그 안의 카드도 요청만 오면 그냥 열어
+    #   줬다 — 지도에 없는 방을 뒤질 수 있었던 셈이다. 카드 목록(cardCatalog)은
+    #   공개라 카드 id 를 아는 것은 어렵지 않다.
+    #   ※ 수수께끼가 주는 상품은 이 문을 안 지난다(_puzzle_bypass) — 그건 «뒤진 것»이
+    #     아니라 «풀어서 받은 것»이고, 받는 자리가 어느 구역이든 상관없다.
+    if (not _puzzle_bypass and c.get("loc") in _hidden_zones()
+            and card_id not in ROOM["hands"].get(role_id, [])):
+        return "그런 곳이 있는 줄도 아직 모릅니다"
     if c.get("loc") in (ROOM.get("sealed") or []) and card_id not in ROOM["hands"].get(role_id, []):
         return f"{c.get('locName', '그 구역')}은 잠겼습니다 — 물이 차서 들어갈 수 없어요"
     ap = _ap_for(ROOM["seq"])
