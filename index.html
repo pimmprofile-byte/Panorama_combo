@@ -1039,6 +1039,25 @@
   }
   /* 안내 줄도 같은 초록을 두른다 — 짚은 자리와 말하는 자리가 한 짝으로 읽힌다 */
   .maphint.tut{border-color:var(--sig-t);box-shadow:2px 2px 0 var(--case-e),0 0 0 1px var(--sig-t)}
+  /* ── 첫 조사 안내의 어둠막 ────────────────────────────────────
+     짚은 것 «둘레»만 네 조각으로 덮는다. 위에 얹지 않으므로 쌓임 맥락 싸움이 없고,
+     가운데가 진짜 구멍이라 짚은 것은 그대로 눌린다. 조각들은 손을 먹어서
+     «거기 말고는 못 누른다»가 성립한다 — 그게 이 막의 몫이다. */
+  .tutwrap{position:fixed;inset:0;z-index:78;pointer-events:none}
+  .tutwrap .tp{position:fixed;background:rgba(4,3,3,.72);pointer-events:auto;
+    animation:fade .22s ease both}
+  .tuttip{position:fixed;z-index:79;width:min(300px,84vw);pointer-events:none;
+    background:var(--case-h);color:var(--case-fg);border:1px solid var(--case-e);
+    border-radius:2px;box-shadow:3px 3px 0 var(--case-e);padding:10px 13px;
+    font-size:13px;line-height:1.6;word-break:keep-all;text-wrap:pretty;
+    animation:fade .22s ease both}
+  .tuttip b{font-weight:800;color:#0b6a4a}
+  /* 꼬리 — 짚은 것 쪽을 가리킨다 */
+  .tuttip::after{content:"";position:absolute;left:50%;translate:-50% 0;
+    border:7px solid transparent;border-bottom-color:var(--case-h);bottom:100%}
+  .tuttip.up::after{bottom:auto;top:100%;
+    border-bottom-color:transparent;border-top-color:var(--case-h)}
+  @media(prefers-reduced-motion:reduce){ .tutwrap .tp,.tuttip{animation:none} }
   /* 창 위에 뜨는 자리 — 창(60)보다 위, 하단바 안내(74)보다 아래에 둔다.
      ★ 위가 아니라 «아래»다. 화면 꼭대기는 진행 안내 띠(.gmbar, z 82)의 자리라
        거기에 두면 띠가 내려와 있는 동안 통째로 가려진다. 눌러서 닫기 전까지
@@ -2263,8 +2282,16 @@
   }
   .modal.folding{display:flex!important;pointer-events:none;background:transparent;
     backdrop-filter:none}
-  .modal.folding .win{animation:winFold .21s cubic-bezier(.4,0,.85,.2) both;
+  /* 그때그때 만들어 띄우는 창(자리 팝업·큰 그림·확인창)은 창틀이 없다 —
+     펴지는 것도 .box 가 진다. 열고 닫는 몸짓은 어느 창이든 같아야 한다. */
+  .modal.dyn > .box{animation:winOpen .3s cubic-bezier(.16,.8,.24,1) both;
+    transform-origin:50% 30%}
+  /* ★ 접히기는 펴지기 «뒤»에 온다. 둘 다 클래스 셋짜리라 명시도가 같아서, 순서가
+     곧 승부다 — 뒤에 두지 않으면 닫을 때도 펴지는 몸짓이 그대로 걸린 채라
+     창이 안 접혔다. */
+  .modal.folding .win,.modal.folding > .box{animation:winFold .21s cubic-bezier(.4,0,.85,.2) both;
     transform-origin:50% 42%}
+  @media(prefers-reduced-motion:reduce){ .modal.dyn > .box{animation:none} }
   @media(prefers-reduced-motion:reduce){
     .modal .win.winopen{animation:none}
     .modal.folding{display:none!important}
@@ -4790,15 +4817,15 @@ function qaAutoLog(log,roleId){
       <ol class="qa-log">${(log[id]||[]).map(t=>`<li>${esc(t)}</li>`).join("")}</ol></div>`).join("")
     :`<div class="qz"><h4>열린 것이 없습니다</h4></div>`;
   const m=document.createElement("div");
-  m.className="modal on"; m.onclick=e=>{ if(e.target===m) m.remove(); };
+  m.className="modal on"; m.onclick=e=>{ if(e.target===m) dynClose(m); };
   m.innerHTML=`<div class="box" onclick="event.stopPropagation()">
     <div class="mhead"><div class="mh-t"><span class="mh-eb">QA · 자동조사</span>
       <h2>${roleId?esc(nameOf(roleId)):"전원"} 자동조사</h2><span class="mh-sub">${n}줄 · 조사턴은 실제 게임과 똑같이 씁니다</span></div>
-      <button class="mh-x" onclick="this.closest('.modal').remove()">${ICO.close}</button></div>
+      <button class="mh-x" onclick="dynClose(this)">${ICO.close}</button></div>
     <div class="mbody qa-list">${body}</div>
     <div class="mfoot"><span class="mf-note">수수께끼를 먼저 풀고, 남은 조사턴을 씁니다.</span>
-      <button class="btn" onclick="this.closest('.modal').remove()">닫기</button></div></div>`;
-  document.body.appendChild(m);
+      <button class="btn" onclick="dynClose(this)">닫기</button></div></div>`;
+  dynOpen(m);
 }
 /* 열쇠 다시 넣기 — QA는 이 열쇠 하나로 서는 모드라, 안 맞으면 아무것도 안 된다. */
 async function qaAskKey(){ if(await askGMKey()){ qaCards=null; await poll(); } }
@@ -4840,15 +4867,15 @@ async function qaAllCards(){
   }).join("");
   const loose=d.cards.filter(c=>!d.map.some(z=>z.loc===c.loc));
   const m=document.createElement("div");
-  m.className="modal on"; m.onclick=e=>{ if(e.target===m) m.remove(); };
+  m.className="modal on"; m.onclick=e=>{ if(e.target===m) dynClose(m); };
   m.innerHTML=`<div class="box" onclick="event.stopPropagation()">
     <div class="mhead"><div class="mh-t"><span class="mh-eb">QA · 조사턴을 쓰지 않습니다</span>
       <h2>조사카드 전부</h2><span class="mh-sub">${d.cards.length}장 · 본문·힌트까지</span></div>
-      <button class="mh-x" onclick="this.closest('.modal').remove()">${ICO.close}</button></div>
+      <button class="mh-x" onclick="dynClose(this)">${ICO.close}</button></div>
     <div class="mbody qa-list">${zones}${loose.length?`<div class="qz"><h4>구역 밖</h4>${loose.map(qaCardHTML).join("")}</div>`:""}</div>
     <div class="mfoot"><span class="mf-note">이 창은 손패에도, 조사 기록에도 아무것도 남기지 않습니다.</span>
-      <button class="btn" onclick="this.closest('.modal').remove()">닫기</button></div></div>`;
-  document.body.appendChild(m);
+      <button class="btn" onclick="dynClose(this)">닫기</button></div></div>`;
+  dynOpen(m);
 }
 function qaCardHTML(c){
   return `<div class="qc"><b>${esc(c.title||"")}</b><span class="qi">${esc(c.id)} · R${c.round}${c.spot?" · "+esc(c.spot):""}${c.auto?" · 자동공개":""}${c.bait?" · 미끼":""}</span>
@@ -4859,17 +4886,17 @@ async function qaPeek(id){
   const d=await qaLoadCards(); if(!d) return;
   const c=d.by[id]; if(!c){ banner("그런 카드가 없습니다"); return; }
   const m=document.createElement("div");
-  m.className="modal on"; m.onclick=e=>{ if(e.target===m) m.remove(); };
+  m.className="modal on"; m.onclick=e=>{ if(e.target===m) dynClose(m); };
   m.innerHTML=`<div class="box" onclick="event.stopPropagation()">
     <div class="mhead"><div class="mh-t"><span class="mh-eb">QA 엿보기 · ${esc(c.locName||"")}</span>
       <h2>${esc(c.title||"")}</h2><span class="mh-sub">${esc(c.id)} · R${c.round}${c.spot?" · "+esc(c.spot):""}</span></div>
-      <button class="mh-x" onclick="this.closest('.modal').remove()">${ICO.close}</button></div>
+      <button class="mh-x" onclick="dynClose(this)">${ICO.close}</button></div>
     <div class="mbody"><div class="qa-peek"><div class="qk">본문</div>${esc(c.text||"")}
       ${c.hint?`<div class="qh">힌트 — ${esc(c.hint)}</div>`:""}
       ${(c.knownBy||[]).length?`<div class="qh">미리 아는 사람 — ${c.knownBy.map(esc).join(", ")}</div>`:""}</div></div>
     <div class="mfoot"><span class="mf-note">조사턴을 쓰지 않았고, 손패에도 안 들어갔습니다.</span>
-      <button class="btn" onclick="this.closest('.modal').remove()">닫기</button></div></div>`;
-  document.body.appendChild(m);
+      <button class="btn" onclick="dynClose(this)">닫기</button></div></div>`;
+  dynOpen(m);
 }
 
 function applyState(){
@@ -5920,20 +5947,20 @@ function showSpot(id){
     body=`<div class="zc-q">아직 아무도 들여다보지 않았습니다.</div>`;
   }
   const m=document.createElement("div");
-  m.className="modal on"; m.onclick=e=>{ if(e.target===m) m.remove(); };
+  m.className="modal on"; m.onclick=e=>{ if(e.target===m) dynClose(m); };
   m.innerHTML=`<div class="box" onclick="event.stopPropagation()">
     <div class="mhead"><div class="mh-t"><span class="mh-eb">${esc(c.locName||"")}</span>
       <h2>${esc(c.spot||"이 자리")}</h2>
       <span class="mh-sub">조사 R${c.round}${st.who?" · "+esc(st.who.name)+" 소지":""}</span>
       ${c.locked?`<div style="margin-top:6px">${keyTag("수수께끼로 여는 자리")}</div>`:""}</div>
-      <button class="mh-x" onclick="this.closest('.modal').remove()">${ICO.close}</button></div>
+      <button class="mh-x" onclick="dynClose(this)">${ICO.close}</button></div>
     <div class="mbody">${body}</div>
-    <div class="mfoot">${(qaOn&&!full)?`<button class="btn quiet" onclick="this.closest('.modal').remove();qaPeek('${c.id}')">QA 엿보기</button>`:""}
+    <div class="mfoot">${(qaOn&&!full)?`<button class="btn quiet" onclick="dynClose(this);qaPeek('${c.id}')">QA 엿보기</button>`:""}
       ${st.act
-      ? `<button class="btn ${st.k==="open"?"primary":"quiet"}" onclick="this.closest('.modal').remove();${st.act}">${esc(st.label)}</button>`
+      ? `<button class="btn ${st.k==="open"?"primary":"quiet"}" onclick="dynClose(this);${st.act}">${esc(st.label)}</button>`
       : `<span class="mf-note">${esc(st.label)}</span>`}
-      <button class="btn" onclick="this.closest('.modal').remove()">닫기</button></div></div>`;
-  document.body.appendChild(m);
+      <button class="btn" onclick="dynClose(this)">닫기</button></div></div>`;
+  dynOpen(m);
 }
 function openZone(loc){
   ackZone(loc);            // 처음 누른 순간 깜빡임이 멎는다 — 사람마다 따로 기억한다
@@ -9358,13 +9385,13 @@ function paintScene(sel){
 /* 그림 한 장을 화면 가득 띄운다. 조사 카드의 큰 보기와 같은 자리를 쓴다. */
 function showPic(url, title, note){
   const m=document.createElement("div");
-  m.className="modal on"; m.onclick=()=>m.remove();
+  m.className="modal on"; m.onclick=()=>dynClose(m);
   m.innerHTML=`<div class="box" data-wt="그림" onclick="event.stopPropagation()">
     <div class="mhead"><div class="mh-t"><h2>${esc(title||"")}</h2></div>
-      <button class="mh-x" onclick="this.closest('.modal').remove()">${ICO.close}</button></div>
+      <button class="mh-x" onclick="dynClose(this)">${ICO.close}</button></div>
     <div class="mbody"><img src="${url}" style="display:block;width:100%;border-radius:2px">
       ${note?`<div class="piccap">${esc(note)}</div>`:""}</div></div>`;
-  document.body.appendChild(m);
+  dynOpen(m);
 }
 
 /* 이 기기에 답이 적힌 배역들. 한 기기에서 여럿이 돌려 쓰면 전부 모인다 —
@@ -10161,7 +10188,7 @@ function dialog(o){
     m.querySelector("[data-o]").onclick=()=>done(o.kind==="text"?(($("dlgIn")||{}).value||""):true);
     const x=m.querySelector("[data-x]"); if(x) x.onclick=()=>done(o.kind==="text"?null:false);
     document.addEventListener("keydown",key);
-    document.body.appendChild(m);
+    dynOpen(m);
     const f=m.querySelector(o.kind==="text"?"#dlgIn":"[data-o]"); if(f) f.focus();
     sfx(o.tone==="danger"?"buzzer":"book");
   });
@@ -10187,7 +10214,7 @@ function pickOne(o){
     m.querySelectorAll(".po").forEach(b=>b.onclick=()=>done(b.dataset.v));
     m.querySelector("[data-x]").onclick=()=>done(null);
     document.addEventListener("keydown",key);
-    document.body.appendChild(m);
+    dynOpen(m);
     sfx("open");
   });
 }
@@ -11390,15 +11417,17 @@ function tutStage(){
   if(!L) return "";                          // 이 사건에 그런 자리가 없다
   const cm=$("cardModal"), cbox=$("cardBox");
   const openCardId=(cm&&cm.classList.contains("on")&&cbox)?(cbox.dataset.card||""):"";
-  /* 풀고 나면 그 자리의 카드가 그대로 서 있다 — 다 읽고 닫는 것까지가 이 사슬이다.
-     닫아야 배너가 내려오고 조사 화면으로 돌아간다. */
-  if(L.opened) return (openCardId===L.grants) ? "close2" : "done";
   if(L.done){
     /* 들어낸 뒤 — 사슬은 세 걸음이다.
        ① 아직 조각난 몸 카드를 보고 있다   → 닫으라고 한다
        ② 창을 닫았다                       → 지도에 «생긴» 자리를 짚는다
-       ③ 그 자리를 열었다                  → 다 봤으면 닫으라고 한다 */
-    if(openCardId===L.grants) return "close2";
+       ③ 그 자리를 열었다                  → 창을 닫고 조사를 이어가라고 한다
+       ★ 사슬이 끝나는 조건은 «풀었는가»가 아니라 «봤는가»다. 저 자리는 수수께끼라
+         풀지 않고 닫을 수 있는데, 푼 것으로 재고 있었더니 다 보고 닫아도 다시
+         「몸 아래에서 나온 것을 살펴보세요」로 돌아갔다 — 끝나지 않는 안내가 된다.
+         한 번 열어 봤으면 이 기기에서는 그것으로 끝이다. */
+    if(openCardId===L.grants){ tutSawGrant(true); return "close2"; }
+    if(tutSawGrant()) return "done";
     if(openCardId===L.cardId) return "close1";
     return "found";
   }
@@ -11407,6 +11436,13 @@ function tutStage(){
   if(document.querySelector(".lift")) return "lift";
   if($("mapModal")&&$("mapModal").classList.contains("on")) return "pin";
   return "zone";
+}
+/* 「몸 아래에서 나온 것」을 이 기기에서 한 번이라도 열어 봤는가.
+   판이 바뀌면 다시 센다 — 새 사람에게는 새 판이다. */
+function tutSawGrant(set){
+  const k="pmb.tutsaw."+((STATE&&STATE.roomId)||"1");
+  try{ if(set){ localStorage.setItem(k,"1"); return true; }
+       return localStorage.getItem(k)==="1"; }catch(e){ return !!set; }
 }
 /* 첫 조사 사슬이 «도는 중»인가. 하단바 안내는 이게 도는 동안 입을 다문다 —
    짚어 주는 자리가 둘이 되면 사람은 어느 쪽도 안 따라간다. */
@@ -11421,9 +11457,9 @@ const TUT_SAY={
   zone:  "먼저 <b>관리자실</b>을 눌러 보세요",
   pin:   "<b>방 한가운데</b>를 눌러 보세요",
   lift:  "셋이 <b>각자 자기 자리</b>를 위로 끌어올리세요",
-  close1:"몸 아래에서 무언가가 나왔습니다 — <b>닫기</b>를 누르세요",
+  close1:"몸 아래에서 무언가가 나왔습니다 — 창을 <b>닫아</b> 보세요",
   found: "몸 아래에서 나온 것을 <b>살펴보세요</b>",
-  close2:"다 봤으면 <b>닫기</b>를 누르세요",
+  close2:"창을 <b>닫고</b> 조사를 이어가주세요",
 };
 /* 닫으라고 하는 칸에서 짚을 것 — 지금 서 있는 창의 발치 「닫기」. 없으면 머리의 ×. */
 function tutCloseBtn(){
@@ -11442,80 +11478,120 @@ function tutBannerOnce(){
   try{ const mm=$("mapModal"); if(mm&&mm.classList.contains("on")) closeModal("mapModal"); }catch(e){}
   try{ gmBarSay("안내","이제 직접 원하는 곳을 조사해보세요!"); }catch(e){}
 }
+/* ── 첫 조사 안내 = 어둠막 + 하이라이트 + 말풍선 ──────────────────
+   여태 이 안내만 «떠 있는 줄» 한 줄이었다. 하단바 안내도, 창 안의 짚어 주기도
+   전부 어둠막을 깔고 한 곳만 밝히는데 여기만 달랐다 — 같은 뜻이면 같은 모양이어야
+   하고, 무엇보다 어둠막이 없으면 누를 곳이 강제되지 않아 사람이 딴 데를 누른다.
+
+   ★ 어둠막을 짚은 것 «위»에 얹지 않는다. 둘레를 네 조각으로 덮는다.
+     얹는 방식은 쌓임 맥락 싸움이 된다 — 짚은 것이 창 안에 있으면 z-index 를 아무리
+     올려도 창 밖의 막 아래로 가라앉는다(실제로 그래서 하이라이트가 안 보였다).
+     둘레만 덮으면 짚은 것 위에는 아무것도 없으므로 그 싸움 자체가 없어진다.
+     덤으로 «구멍»이 진짜 구멍이라, 짚은 것은 그대로 눌린다. */
+function tutClear(){
+  document.querySelectorAll(".tuton").forEach(e=>e.classList.remove("tuton"));
+  const w=$("tutWrap"); if(w) w.remove();
+}
+/* 네 조각 + 말풍선. 자리는 매번 다시 잰다 — 창이 굴러가면 구멍도 같이 가야 한다. */
+function tutSpot(el, msg){
+  let w=$("tutWrap");
+  if(!w){
+    w=document.createElement("div"); w.id="tutWrap"; w.className="tutwrap";
+    w.innerHTML=`<div class="tp t"></div><div class="tp b"></div>
+                 <div class="tp l"></div><div class="tp r"></div>
+                 <div class="tuttip"><span class="tt-b"></span></div>`;
+    document.body.appendChild(w);
+  }
+  const r=el.getBoundingClientRect(), P=7;
+  const top=Math.max(0,r.top-P), bot=Math.min(innerHeight,r.bottom+P);
+  const lef=Math.max(0,r.left-P), rig=Math.min(innerWidth,r.right+P);
+  const set=(sel,st)=>{ const e=w.querySelector(sel); if(e) Object.assign(e.style,st); };
+  set(".tp.t",{left:"0px",top:"0px",width:"100%",height:top+"px"});
+  set(".tp.b",{left:"0px",top:bot+"px",width:"100%",height:Math.max(0,innerHeight-bot)+"px"});
+  set(".tp.l",{left:"0px",top:top+"px",width:lef+"px",height:(bot-top)+"px"});
+  set(".tp.r",{left:rig+"px",top:top+"px",width:Math.max(0,innerWidth-rig)+"px",height:(bot-top)+"px"});
+  const tip=w.querySelector(".tuttip");
+  const body=tip.querySelector(".tt-b");
+  if(body.innerHTML!==msg) body.innerHTML=msg;
+  // 짚은 것 «아래»에 두되, 아래가 좁으면 위로 올린다
+  tip.style.left="0px"; tip.style.top="0px"; tip.classList.remove("up");
+  const th=tip.offsetHeight||56, tw=tip.offsetWidth||240;
+  const below=(innerHeight-bot)>th+18;
+  tip.style.top=(below? bot+10 : Math.max(8, top-th-10))+"px";
+  tip.classList.toggle("up", !below);
+  let x=r.left+r.width/2-tw/2;
+  tip.style.left=Math.max(10,Math.min(innerWidth-tw-10,x))+"px";
+}
+/* 짚을 것을 고른다 — 화면에 «실제로 있는» 것에서만 고른다.
+   반환: {el, msg} 또는 null */
+function tutTarget(st){
+  if(st==="close1"||st==="close2"){
+    const b=tutCloseBtn(); return b?{el:b,msg:TUT_SAY[st]}:null;
+  }
+  const L=(STATE&&STATE.lift)||{};
+  const id=(st==="found"?L.grants:L.cardId)||"";
+  const inBox=id?document.querySelector(`.modal.on [data-c="${CSS.escape(id)}"]`):null;
+  if(inBox) return {el:inBox,msg:TUT_SAY[st]};
+  /* 짚을 자리가 화면에 없다 — 지도를 닫아 둔 것이다. 한 칸 물러서서 구역부터 말한다. */
+  const loc=tutLoc();
+  const cam=loc?(document.querySelector(`.cctv .cc-cam[data-loc="${CSS.escape(loc)}"]`)
+               ||document.querySelector(`#mapArt [data-loc="${CSS.escape(loc)}"]`)):null;
+  if(!cam) return null;
+  return {el:cam, msg: st==="zone"?TUT_SAY.zone
+                    : st==="found"?"<b>관리자실</b>을 다시 열어 보세요"
+                    : TUT_SAY.zone};
+}
 function paintMapHint(){
   const old=$("mapHint");
   const ph=(STATE&&STATE.phase)||{};
   const turn=STATE&&STATE.turn;
   const st=tutStage();
-
-  /* 짚어 준 자리 표시는 매번 걷고 다시 붙인다 — 남아 있으면 지난 자리가 계속 뛴다 */
-  document.querySelectorAll(".tuton").forEach(e=>e.classList.remove("tuton"));
+  tutClear();
 
   if(st==="done"){
     tutBannerOnce();
     try{ coachDone("map"); }catch(e){}
     if(old) old.remove(); return;
   }
-  /* 하단바 안내(coach)가 도는 중이면 여기서는 «아무것도» 안 한다 — 줄도, 짚은 자리도.
+  /* 하단바 안내(coach)나 창 «안»의 짚어 주기가 도는 중이면 여기서는 아무것도 안 한다 —
      짚어 주는 곳이 둘이면 사람은 어느 쪽도 안 따라간다.
      ★ 차례(turn)는 첫 조사 안내에 안 건다. 조각난 몸은 전체공개라 조사턴을 안 쓰고,
        들어올리기는 애초에 셋이 다 붙어야 한다 — 차례가 아닌 사람도 와야 한다. */
   const seen=coachSeen();
-  /* ★ 창 «안»에서 짚어 주는 중이면 이 줄도 안 뜬다. coachNext 는 그때 null 을 물리므로
-     그것만 보고 있으면 조건이 통과해 버려서, 인물정보 안내를 읽는 중에 그 창 위로
-     「먼저 관리자실을 눌러 보세요」가 떴다 — 짚어 주는 곳이 또 둘이 된다. */
   const free = myRoleValid() && ph.key==="invest" && !openLocked() && !coachOff()
             && !tour && !coachNext();
   if(!free){ if(old) old.remove(); return; }
 
-  let msg = st ? TUT_SAY[st] : "구역을 누르면 그 안을 조사할 수 있습니다";
-  /* 짚을 자리를 «화면에 실제로 있는 것»에서 고른다. 창이 열려 있으면 창 안의 핀을,
-     아니면 조사 화면의 구역 칸을 짚는다. 창 안에 그 핀이 없으면 — 다른 방을 열어 둔
-     것이다 — 구역부터 다시 말한다. 없는 자리를 가리키느니 한 칸 물러선다. */
-  if(st==="close1"||st==="close2"){
-    const b=tutCloseBtn(); if(b) b.classList.add("tuton");
+  /* 들기 칸에서는 안내를 안 세운다 — 위젯이 제 입으로 말하고, 손이 셋 다 붙어야 한다.
+     여기에 어둠막을 깔면 잡는 자리 셋 중 둘이 막힌다. */
+  if(st&&st!=="lift"){
+    if(old) old.remove();
+    const t=tutTarget(st);
+    if(!t) return;
+    t.el.classList.add("tuton");
+    tutSpot(t.el, t.msg);
+    return;
   }
-  else if(st==="zone"||st==="pin"||st==="found"){
-    const L=(STATE&&STATE.lift)||{};
-    const id=(st==="found"?L.grants:L.cardId)||"";
-    const inBox=id?document.querySelector(`.modal.on [data-c="${CSS.escape(id)}"]`):null;
-    if(inBox) inBox.classList.add("tuton");
-    else{
-      const loc=tutLoc();
-      const cam=loc?(document.querySelector(`.cctv .cc-cam[data-loc="${CSS.escape(loc)}"]`)
-                   ||document.querySelector(`#mapArt [data-loc="${CSS.escape(loc)}"]`)):null;
-      if(cam) cam.classList.add("tuton");
-      /* 짚을 자리가 화면에 없다 — 지도를 닫아 둔 것이다. 한 칸 물러서서 구역부터 말한다.
-         「몸 아래에서 나온 것」은 그 방을 다시 열어야 보인다. */
-      if(st==="pin") msg=TUT_SAY.zone;
-      if(st==="found") msg="<b>관리자실</b>을 다시 열어 보세요";
-    }
-  }
-  /* 들기 칸에서는 줄을 안 띄운다 — 위젯이 제 입으로 말한다. */
-  const want = st ? (st!=="lift")
-                  : ((!turn||turn===myRoleId) && !seen.map && !!seen.invest
-                     && !document.querySelector(".modal.on"));
+  if(st) return;                       // lift — 아무것도 안 세운다
+
+  /* 튜토리얼이 아닌 평소 한 줄. 이건 어둠막을 안 깐다 — 강제하는 안내가 아니다. */
+  const want=(!turn||turn===myRoleId) && !seen.map && !!seen.invest
+          && !document.querySelector(".modal.on");
   if(!want){ if(old) old.remove(); return; }
-  /* 창이 열려 있으면 줄도 창 위로 올라가야 한다 — 조사 화면 안에 붙은 줄은
-     창 뒤에 깔려서 아무도 못 본다. */
-  const over=!!document.querySelector(".modal.on");
-  const host=over?document.body:$("playBody"); if(!host) return;
-  /* 짚은 것이 화면 아래쪽에 있으면 줄을 위로 비킨다 */
-  let up=false;
-  try{ const t=document.querySelector(".tuton");
-       if(t){ const r=t.getBoundingClientRect(); up=(r.top>innerHeight*0.62); } }catch(e){}
-  /* 열쇠에 문구까지 넣는다 — 같은 칸에서도 짚을 자리가 화면에서 사라지면 문구가 바뀐다 */
-  const key=(st||"map")+"|"+msg+(over?"|o":"")+(up?"|u":"");
-  if(old&&old.dataset.k===key) return;
+  const msg="구역을 누르면 그 안을 조사할 수 있습니다";
+  const host=$("playBody"); if(!host) return;
+  if(old&&old.dataset.k==="map") return;
   if(old) old.remove();
   const el=document.createElement("div");
-  el.className="maphint"+(st?" tut":"")+(over?" over":"")+(up?" up":""); el.id="mapHint"; el.dataset.k=key;
-  if(over){ const dk=$("dock");
-            el.style.setProperty("--dh",(dk?Math.round(dk.getBoundingClientRect().height):64)+"px"); }
+  el.className="maphint"; el.id="mapHint"; el.dataset.k="map";
   el.innerHTML=msg;
-  if(!st) el.onclick=()=>coachDone("map");
+  el.onclick=()=>coachDone("map");
   host.appendChild(el);
 }
+/* 창이 굴러가거나 크기가 바뀌면 구멍도 따라간다 */
+addEventListener("resize",()=>{ try{ paintMapHint(); }catch(e){} });
+addEventListener("scroll",()=>{ try{ const t=document.querySelector(".tuton");
+  if(t&&$("tutWrap")) tutSpot(t, $("tutWrap").querySelector(".tt-b").innerHTML); }catch(e){} }, true);
 /* 막 진행표. 지금 막은 금색으로 채우고, 지나온 막은 흐리게 둔다.
    길어지면 가로로 흐르되 현재 막이 늘 보이게 끌어온다. */
 /* 이 막에서 내가 꺼내기로 한 말이 대화창에 올라갔다면 한 번만 띄워준다.
@@ -11667,6 +11743,16 @@ function winTitle(m){
 new MutationObserver(rs=>{ rs.forEach(r=>r.addedNodes.forEach(dressWin)); })
   .observe(document.body,{childList:true});
 
+/* ── 그때그때 만들어 띄우는 창 ────────────────────────────────────
+   자리 팝업·큰 그림·확인창처럼 그 자리에서 만들어 붙였다 지우는 창들이다.
+   여닫는 몸짓은 붙박이 창(openModal/closeModal)과 같아야 한다 — 어떤 창은
+   접히고 어떤 창은 툭 사라지면, 그건 결이 아니라 실수로 읽힌다. */
+function dynOpen(m){ m.classList.add("dyn"); document.body.appendChild(m); return m; }
+function dynClose(el){
+  const m=(el&&el.closest)?el.closest(".modal"):el; if(!m||m.dataset.go) return;
+  m.dataset.go="1"; m.classList.add("folding"); m.classList.remove("on");
+  setTimeout(()=>{ try{ m.remove(); }catch(e){} },210);
+}
 function openModal(id){
   setTimeout(()=>{ try{ paintCoach(); paintMapHint(); }catch(e){} },0);
   const el=$(id); if(!el) return;
