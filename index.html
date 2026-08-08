@@ -904,6 +904,70 @@
   .newzone .nz-n{font-size:13px;font-weight:700;color:var(--ink)}
   .newzone .nz-d{flex:1 0 100%;font-size:11.5px;color:var(--sub)}
 
+  /* ── 셋이 함께 들어올린다 ───────────────────────────────────────
+     바닥 한 장 위에 조각 한 장이 얹혀 있고, 좌·중·우에 잡는 자리가 셋이다.
+     각자 자기 자리를 위로 끌면 그 쪽이 올라간다 — 그래서 한쪽만 당기면 조각이
+     그쪽으로 «기운다». 기울어진 그림이 곧 「아직 아니다」다.
+     ★ 기울기는 그림이 아니라 셈이다. 셋이 얼마나 올렸는지를 화면이 알고 있으니
+       조각 한 장을 그만큼 올리고 그만큼 돌린다 — 필요한 그림이 둘로 준다. */
+  .lift{position:relative;margin:0 0 14px;border:1px solid var(--line);border-radius:2px;
+    background:#0d0f0e;overflow:hidden;touch-action:none;user-select:none;
+    aspect-ratio:4/3;max-height:46dvh}
+  .lift .lf-floor{position:absolute;inset:0;background:center/cover no-repeat #14100e}
+  /* 조각. 아래쪽 가운데를 축으로 돈다 — 널빤지를 지렛대처럼 든다. */
+  .lift .lf-slab{position:absolute;left:8%;right:8%;top:34%;
+    transform-origin:50% 100%;will-change:transform;
+    transition:transform .12s linear}
+  .lift .lf-slab img{width:100%;display:block;image-rendering:pixelated}
+  /* 그림이 아직 없을 때 — 도형으로라도 돌아야 한다. 그림이 들어오면 이 판은 숨는다. */
+  .lift .lf-slab .lf-stub{height:64px;border-radius:3px;
+    background:linear-gradient(180deg,#6b6257,#3a352e);
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.16),inset 0 -3px 0 rgba(0,0,0,.5)}
+  /* 조각이 뜬 만큼 아래에 그림자가 퍼진다 — 높이는 그림자로 읽힌다 */
+  .lift .lf-sh{position:absolute;left:14%;right:14%;bottom:16%;height:12px;border-radius:50%;
+    background:radial-gradient(closest-side,rgba(0,0,0,.75),transparent);
+    transition:transform .12s linear,opacity .12s linear}
+  /* 잡는 자리 셋 */
+  .lift .lf-grips{position:absolute;inset:0;display:flex;align-items:flex-end;
+    justify-content:space-between;padding:0 4% 6%}
+  .lift .lf-grip{position:relative;flex:0 0 28%;height:74%;border-radius:2px;
+    display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;
+    padding-bottom:4px;cursor:grab;
+    border:1px dashed color-mix(in srgb,var(--rc,var(--cold)) 48%,transparent);
+    background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--rc,var(--cold)) 12%,transparent))}
+  .lift .lf-grip.mine{border-style:solid;
+    border-color:color-mix(in srgb,var(--rc,var(--gold)) 82%,transparent)}
+  .lift .lf-grip.pull{cursor:grabbing;background:linear-gradient(180deg,transparent,
+    color-mix(in srgb,var(--rc,var(--gold)) 30%,transparent))}
+  /* 남의 자리는 못 잡는다 — 자기 몫을 자기가 든다 */
+  .lift .lf-grip:not(.mine){pointer-events:none}
+  .lift .lf-nm{font-family:var(--ui);font-size:10.5px;font-weight:800;letter-spacing:.02em;
+    color:var(--rc,var(--cold));white-space:nowrap}
+  /* 그 사람이 지금 얼마나 올렸는가 — 자리마다 눈금 하나 */
+  .lift .lf-bar{width:70%;height:5px;border-radius:0;background:rgba(255,255,255,.10);
+    overflow:hidden}
+  .lift .lf-bar i{display:block;height:100%;width:0;background:var(--rc,var(--cold));
+    transition:width .12s linear}
+  .lift .lf-arrow{font-size:15px;line-height:1;color:var(--rc,var(--cold));opacity:.55;
+    animation:lfUp 1.5s ease-in-out infinite}
+  @keyframes lfUp{0%,100%{transform:translateY(2px);opacity:.35}50%{transform:translateY(-3px);opacity:.8}}
+  .lift .lf-grip.pull .lf-arrow{animation:none;opacity:1}
+  /* 머리말 — 몇이 붙었는지 */
+  /* 머리말은 한 줄이다 — 세 도막으로 접히면 그림 위에 글자 벽이 선다.
+     좁으면 오른쪽 안내부터 접어 넣는다(그건 없어도 화살표가 말한다). */
+  .lift .lf-head{position:absolute;left:0;right:0;top:0;z-index:3;
+    display:flex;align-items:baseline;gap:8px;padding:6px 9px;white-space:nowrap;
+    background:linear-gradient(180deg,rgba(6,7,7,.88),transparent);
+    font-size:11px;color:var(--sub);pointer-events:none}
+  .lift .lf-head b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .lift .lf-tip{margin-left:auto;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  @media(max-width:380px){ .lift .lf-tip{display:none} }
+  .lift.done .lf-grips,.lift.done .lf-head{display:none}
+  @media(prefers-reduced-motion:reduce){
+    .lift .lf-arrow{animation:none}
+    .lift .lf-slab,.lift .lf-sh,.lift .lf-bar i{transition:none}
+  }
+
   /* ── 창 안의 짚어 주기 ─────────────────────────────────────────
      어둠막 한 장을 창 «안»에 깔고, 짚은 것 하나만 그 위로 띄워 점멸시킨다.
      하단바 안내와 같은 문법이다 — 어두워진 자리에서 초록으로 깜빡이는 것 하나. */
@@ -4769,6 +4833,9 @@ function applyState(){
     renderPanel(ph);
     // 채팅
     if($("chatModal").classList.contains("on")) renderChat("chatFull");
+    /* 들어올리는 중이면 남들이 얼마나 올렸는지가 폴링으로 온다 — 다시 그린다.
+       창을 통째로 다시 만들지 않는다. 그러면 내가 잡고 있던 손가락이 풀린다. */
+    try{ if(document.querySelector(".lift")) liftPaint(); }catch(e){}
     /* 소지품 탭은 남이 공개한 카드로도 늘어난다 — 열어둔 채로도 따라 움직여야 한다.
        ★ 다만 «달라졌을 때만» 다시 그린다. 예전에는 폴링마다 통째로 다시 그렸는데,
          다시 그리는 순간 스와이프가 처음으로 돌아가서 마지막 장을 읽고 있으면
@@ -7635,6 +7702,132 @@ function oneLine(t){
 }
 /* 카드 그림 — 있으면 본문 앞에 끼운다. 긴 카드는 글 벽이 되어서, 그림 한 장이
    읽는 호흡을 끊어준다. 규약은 /assets/{시나리오}_card_{카드ID}. 없으면 글만 뜬다. */
+/* ── 셋이 함께 들어올린다 ─────────────────────────────────────────
+   조각 하나를 좌·중·우 셋이 각자 위로 끈다. 각자 «자기 쪽»만 올릴 수 있고,
+   조각은 셋이 올린 만큼 뜨고 셋의 차이만큼 기운다 — 한쪽만 당기면 기울기만
+   커지고 안 들린다. 그 그림이 곧 「아직 아니다」다.
+
+   ★ 그림은 둘이면 된다(바닥·조각). 기울기와 높이는 셈으로 만든다.
+   ★ 내 값은 «내 손가락»이 정하고, 남의 값은 폴링이 가져온다. 그래서 내가 끄는
+     동안에는 내 쪽이 매끄럽고, 남의 쪽은 1.5초마다 따라온다 — 그 정도면 「같이
+     들고 있다」가 읽힌다.
+   ★ 보내는 것은 0.4초에 한 번으로 묶는다. 손가락은 픽셀마다 움직이지만 서버가
+     알아야 하는 것은 «지금 이만큼»뿐이다. */
+const LIFT_SEND=400;                 // 이보다 자주는 안 보낸다
+let liftMine=0;                      // 내 손가락이 정한 값 0~1
+let liftSentAt=0, liftSending=false, liftHold=null;
+function liftState(){ return (STATE&&STATE.lift)||null; }
+/* 이 카드 위에서 들어올리기가 도는가 */
+function liftOn(cardId){
+  const L=liftState();
+  return !!(L && L.cardId===cardId && !L.done && myRoleValid());
+}
+function liftSend(v, force){
+  const now=Date.now();
+  if(!force && (liftSending || now-liftSentAt<LIFT_SEND)) return;
+  liftSentAt=now; liftSending=true;
+  post("/api/lift",{roleId:myRoleId,clientId,v}).then(r=>{
+    liftSending=false;
+    if(r&&r.lift){ if(STATE) STATE.lift=r.lift; liftPaint();
+      if(r.lift.done) { poll(); } }
+  }).catch(()=>{ liftSending=false; });
+}
+/* 지금 화면에 그릴 값 — 내 쪽은 내 손가락, 남의 쪽은 서버 */
+function liftVal(rid){
+  const L=liftState()||{};
+  if(rid===myRoleId) return liftMine;
+  return +(((L.at)||{})[rid]||0);
+}
+function liftPaint(){
+  const box=document.querySelector(".lift"); if(!box) return;
+  const L=liftState()||{};
+  const slots=L.slots||[];
+  const vs=slots.map(liftVal);
+  const lifted=vs.length&&vs.every(v=>v>=1);
+  // 높이는 셋의 평균, 기울기는 오른쪽과 왼쪽의 차 — 가운데는 높이에만 든다.
+  const avg=vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:0;
+  const tilt=(vs.length>=3?(vs[2]-vs[0]):0)*12;      // 도(deg)
+  const slab=box.querySelector(".lf-slab");
+  if(slab) slab.style.transform=`translateY(${-avg*26}%) rotate(${tilt.toFixed(2)}deg)`;
+  const sh=box.querySelector(".lf-sh");
+  if(sh){ sh.style.transform=`scale(${(1+avg*0.5).toFixed(3)})`;
+          sh.style.opacity=(1-avg*0.45).toFixed(3); }
+  slots.forEach((rid,i)=>{
+    const g=box.querySelector(`.lf-grip[data-r="${rid}"]`); if(!g) return;
+    const b=g.querySelector(".lf-bar i"); if(b) b.style.width=Math.round(liftVal(rid)*100)+"%";
+    g.classList.toggle("pull", liftVal(rid)>0.02);
+  });
+  const n=box.querySelector(".lf-n");
+  if(n) n.textContent=`${slots.filter(r=>liftVal(r)>0.02).length} / ${L.of||3}`;
+  box.classList.toggle("done", !!L.done);
+  box.classList.toggle("ready", !!lifted);
+}
+/* 잡는 자리 하나를 손가락에 물린다 */
+function liftGrip(el){
+  let id=null, y0=0, v0=0;
+  const down=e=>{
+    if(id!==null) return;
+    id=e.pointerId; y0=e.clientY; v0=liftMine;
+    try{ el.setPointerCapture(id); }catch(x){}
+    el.classList.add("pull");
+    liftSend(liftMine, true);
+    // 잡고 있는 동안에는 계속 알린다 — 안 그러면 3초 창에서 저절로 빠진다
+    clearInterval(liftHold);
+    liftHold=setInterval(()=>liftSend(liftMine, true), 1200);
+    e.preventDefault();
+  };
+  const move=e=>{
+    if(id!==e.pointerId) return;
+    const box=el.closest(".lift"); const H=(box?box.clientHeight:240)*0.55;
+    liftMine=Math.max(0,Math.min(1, v0 + (y0-e.clientY)/H));
+    liftPaint(); liftSend(liftMine);
+    e.preventDefault();
+  };
+  const up=e=>{
+    if(id!==e.pointerId) return;
+    try{ el.releasePointerCapture(id); }catch(x){}
+    id=null; el.classList.remove("pull");
+    clearInterval(liftHold); liftHold=null;
+    /* ★ 손을 떼면 «놓은 것»이다 — 0 을 곧바로 알린다. 안 보내고 3초를 기다리면
+       그동안 남들 화면에는 내가 아직 들고 있는 것으로 보인다. */
+    liftMine=0; liftPaint(); liftSend(0, true);
+  };
+  el.addEventListener("pointerdown",down);
+  el.addEventListener("pointermove",move);
+  el.addEventListener("pointerup",up);
+  el.addEventListener("pointercancel",up);
+}
+function liftHTML(){
+  const L=liftState(); if(!L) return "";
+  const sid=(STATE&&STATE.scenarioId)||"";
+  const slots=L.slots||[];
+  const side=["왼쪽","가운데","오른쪽"];
+  const grips=slots.map((rid,i)=>{
+    const c=roleById(rid)||{};
+    const me=rid===myRoleId;
+    return `<div class="lf-grip${me?" mine":""}" data-r="${rid}" style="--rc:${c.color||"var(--cold)"}">
+      <span class="lf-arrow">▲</span>
+      <span class="lf-nm">${esc(side[i]||"")} · ${esc(c.name||rid)}${me?" (나)":""}</span>
+      <span class="lf-bar"><i></i></span></div>`;}).join("");
+  return `<div class="lift${L.done?" done":""}">
+    <div class="lf-floor" id="lfFloor"></div>
+    <div class="lf-sh"></div>
+    <div class="lf-slab" id="lfSlab"><div class="lf-stub"></div></div>
+    <div class="lf-head">셋이 함께 든다 · <b class="lf-n">0 / ${L.of||3}</b>
+      <span class="lf-tip">내 자리를 <b>위로</b> 끄세요</span></div>
+    <div class="lf-grips">${grips}</div></div>`;
+}
+/* 창이 다 선 뒤에 그림을 붙이고 손가락을 물린다 */
+function liftWire(){
+  const box=document.querySelector(".lift"); if(!box) return;
+  const sid=(STATE&&STATE.scenarioId)||"";
+  findAsset(`/assets/${sid}_lift_floor`, u=>{ const f=$("lfFloor");
+    if(u&&f) f.style.backgroundImage=`url("${u}")`; });
+  findAsset(`/assets/${sid}_lift_slab`, u=>{ const s=$("lfSlab");
+    if(u&&s) s.innerHTML=`<img src="${u}" alt="" decoding="async">`; });
+  box.querySelectorAll(".lf-grip.mine").forEach(liftGrip);
+  liftPaint();
+}
 function paintCardArt(id){
   const sid=STATE.scenarioId||""; if(!sid) return;
   findAsset(`/assets/${sid}_card_${id}`, url=>{
@@ -7784,6 +7977,7 @@ function openCard(id){ const pub=(STATE.revealed||[]).find(c=>c.id===id); const 
     <div class="mbody">${pairsOf(c.id).length?`<div class="pchips">${pairsOf(c.id).map(k=>
         `<button class="pill pair${pairReady(k,c.id)?" rdy":""}" onclick="showPairHint('${c.id}',${k.i})">${pairChip(k,c.id,pairReady(k,c.id))}${pairReady(k,c.id)?"맞물림":"조각"}</button>`).join("")}
         <span class="pc-note">${pairsOf(c.id).some(k=>pairReady(k,c.id))?"<b style='color:var(--good)'>짝이 지금 나와 있습니다.</b> 맞춰보세요.":"같은 조각을 단 카드와 맞물립니다"}</span></div>`:""}
+      ${liftOn(c.id)?liftHTML():""}
       <div class="sec"><div class="b" style="font-size:15px" id="cardText">${esc(c.text)}</div></div>${mynote(c.id)}${cnote(c)}</div>
     <div class="mfoot"><span class="mf-note">${inHand?"알리려면 대화로 말하세요 — 저절로 새어 나가지 않습니다.":"이미 모두가 보고 있는 단서입니다."}</span>
       ${(inHand&&overLimit()>0)?`<button class="btn ember" onclick="dropFromCard('${c.id}')">손패에서 내려놓기</button>`:""}
@@ -7799,6 +7993,8 @@ function openCard(id){ const pub=(STATE.revealed||[]).find(c=>c.id===id); const 
   $("cardModal").classList.toggle("overmap", over);
   if(mm) mm.classList.toggle("behind", over);
   openModal("cardModal");
+  liftMine=0;
+  if(liftOn(c.id)) setTimeout(()=>{ try{ liftWire(); }catch(e){} },0);
 }
 /* 손패가 넘칠 때는 카드를 읽는 그 자리에서 바로 내려놓을 수 있어야 한다.
    「정리하기」로 목록을 다시 열어 같은 카드를 또 찾는 걸음이 하나 더 있었다. */

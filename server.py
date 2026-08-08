@@ -2856,10 +2856,19 @@ def _lift_state() -> dict | None:
     live = {rid: d for rid, d in raw.items()
             if rid in humans and now - float(d.get("t") or 0) <= LIFT_WIN}
     vals = [float(d.get("v") or 0) for d in live.values()]
-    # 셋이 다 붙어 있을 때만 오른다. 하나라도 놓으면 그대로 내려앉는다.
+    # 셋이 다 붙어 있을 때만 «들린 것»으로 친다. 하나라도 놓으면 그대로 내려앉는다.
     h = min(vals) if (len(live) >= of and vals) else 0.0
+    # ★ 사람마다 «얼마나 올렸는가»를 따로 내려보낸다. 화면은 이 셋으로 조각을 기울인다 —
+    #   왼쪽만 올라가 있으면 조각이 왼쪽으로 들리고, 그 그림이 곧 「아직 아니다」다.
+    #   기울기를 그림 석 장으로 그리는 대신 화면이 계산하므로, 필요한 그림은
+    #   바닥 한 장과 조각 한 장뿐이다.
+    #   숨길 값이 아니다 — 오히려 서로 보여야 누가 안 잡고 있는지 부를 수 있다.
+    at = {rid: round(float(d.get("v") or 0), 3) for rid, d in live.items()}
     return {"cardId": c["id"], "n": len(live), "of": of,
-            "who": sorted(live.keys()), "h": round(h, 3),
+            "who": sorted(live.keys()), "at": at, "h": round(h, 3),
+            # 잡는 자리(왼쪽·가운데·오른쪽)는 배역 차례로 고정한다 —
+            # 기기마다 같은 사람이 같은 쪽을 잡아야 「네가 오른쪽」이 통한다.
+            "slots": [rid for rid in ROOM["roles"] if rid in humans],
             "done": bool(ROOM.get("liftDone"))}
 
 
