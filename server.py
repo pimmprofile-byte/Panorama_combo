@@ -160,6 +160,9 @@ def fresh_room(sid: str = "") -> dict:
         # 대화창이 열린다(그 전에는 읽는 자리다).
         "immersed": [],
         "chatIn": [],               # 오프닝에서 대화창에 들어온 사람들
+        # roleId -> {t, v}. 지금 «들어올리고 있는» 사람과 그 높이(0~1).
+        # 셋이 3초 창 안에 다 붙어 있어야 오르고, 하나가 놓으면 그대로 내려앉는다.
+        "lift": {}, "liftDone": False,
         "typing": None,
         "events": [],            # 진행 세션이 따라 읽는 사건 기록
         "podOpen": False,        # 특정 카드가 전체공개되면 지도에 탈출 포드가 드러난다
@@ -608,6 +611,7 @@ def public_state() -> dict:
             "ready": _ready_state(),
             "immersed": _immersed_state(),
             "chatIn": _chat_in_state(),
+            "lift": _lift_state(),
             "belongLimit": _belong_limit(),
             # 구역 몫을 쓰는 조사 페이즈에서, 배역별로 어느 구역을 몇 장 열었는지.
             "quotaUsed": {rid: _quota_used(rid, cur) for rid in ROOM["roles"]},
@@ -2451,6 +2455,16 @@ def _reveal_autos() -> None:
             continue
         if c.get("gone") and cur >= c["gone"]:
             continue
+        # ★ 선행 카드를 안 봤다. 여기가 비어 있어서 A10(그 날 밤의 녹취)이 1차 조사가
+        #   열리는 순간 A1 과 «나란히» 공개됐다 — 이 사건에서 제일 결정적인 한 줄
+        #   (「수고했어. 이제부터 내가 관리하면 돼.」)이, 아무도 아무것도 뒤지기 전에
+        #   이미 테이블 위에 놓여 있었다는 뜻이다. 사슬로 세워 둔 A1 → A9 → A10 이
+        #   맨 끝부터 먼저 열려 있었던 것이다.
+        #   requires 는 「이게 나온 다음에야 이게 있다」는 말이고, 저절로 열리는
+        #   카드에도 그대로 걸려야 한다.
+        req = c.get("requires") or ""
+        if req and req not in ROOM["revealed"]:
+            continue
         _publish(c["id"])
 
 
@@ -2557,6 +2571,8 @@ def puzzle_list(role_id: str, clientId: str = ""):
         # 자리가 되면, 못 푸는 것을 계속 붙들고 있게 된다.
         if [r for r in _card_needs(c) if r not in held]:
             continue
+        if _lift_locked(c["id"]):        # 아직 몸을 안 들어냈다 — 그 아래는 없는 것이다
+            continue
         n = int(tries.get(c["id"], 0))
         row = {"id": c["id"], "spot": c.get("spot", ""), "locName": c.get("locName", ""),
                "prompt": p.get("prompt", ""), "tries": n,
@@ -2596,6 +2612,9 @@ def puzzle_answer(b: PuzzleTry):
             return JSONResponse({"error": lock}, status_code=409)
         if _holder_of(b.cardId) or b.cardId in ROOM["revealed"]:
             return JSONResponse({"error": "이미 누군가 풀었습니다"}, status_code=409)
+        if _lift_locked(b.cardId):
+            return JSONResponse({"error": "아직 들어내지 않았습니다 — 셋이 함께 들어올려야 합니다"},
+                                status_code=409)
 
         tries = ROOM.setdefault("puzzleTries", {}).setdefault(b.roleId, {})
         # 세 번 틀린 사람은 이 카드 앞에 다시 못 선다. 답을 받기 «전에» 막아야
@@ -2803,6 +2822,101 @@ def chat_in(b: RoleReq):
                                       "text": "셋이 다 모였습니다 — 그 밤의 이야기가 시작됩니다."})
             bump()
     return {"ok": True, "chatIn": _chat_in_state()}
+
+
+# ── 셋이 함께 들어올린다 ───────────────────────────────────────────
+#  A1 「조각난 몸」 위에서만 도는 협동 동작이다. 혼자서는 절대 안 되는 일을 하나
+#  넣어 두면, 그 판이 «각자 카드를 모으는 게임»이 아니라 «셋이 같이 하는 게임»으로
+#  한 번 읽힌다. 첫 조사에서 그걸 몸으로 겪게 하는 것이 이 자리의 몫이다.
+#
+#  ★ 「동시에」는 폴링 위에서 그대로 못 잰다. 1.5초마다 소식을 묻는 판에서 «같은
+#    순간»을 요구하면 아무도 성공하지 못한다. 그래서 창을 둔다 — 3초 안에 셋이
+#    손을 대고 있으면 같이 든 것으로 친다.
+#  ★ 높이는 «제일 덜 올린 사람»의 것이다(min). 둘이 끝까지 올려도 하나가 놓고
+#    있으면 안 올라간다. 그게 이 동작이 협동인 이유고, 화면에서도 그렇게 보인다.
+LIFT_WIN = 3.0          # 이 안에 손을 댄 사람만 «지금 들고 있는» 것으로 센다
+
+
+def _lift_card() -> dict | None:
+    """이 사건에서 «들어올리는» 카드. 원고가 lift 를 단 카드가 그것이다."""
+    for c in SC.CARDS:
+        if c.get("lift"):
+            return c
+    return None
+
+
+def _lift_state() -> dict | None:
+    c = _lift_card()
+    if not c:
+        return None
+    humans = _human_roles()
+    of = len(humans) or 1
+    now = time.time()
+    raw = ROOM.get("lift") or {}
+    live = {rid: d for rid, d in raw.items()
+            if rid in humans and now - float(d.get("t") or 0) <= LIFT_WIN}
+    vals = [float(d.get("v") or 0) for d in live.values()]
+    # 셋이 다 붙어 있을 때만 오른다. 하나라도 놓으면 그대로 내려앉는다.
+    h = min(vals) if (len(live) >= of and vals) else 0.0
+    return {"cardId": c["id"], "n": len(live), "of": of,
+            "who": sorted(live.keys()), "h": round(h, 3),
+            "done": bool(ROOM.get("liftDone"))}
+
+
+def _lift_locked(card_id: str) -> bool:
+    """이 카드가 «아직 안 들어낸» 것 뒤에 있는가.
+
+    들어올리기가 여는 카드는 그 동작을 하기 전에는 아예 없는 것으로 둔다 —
+    수수께끼 목록에도 안 오르고 답도 안 받는다. 안 그러면 몸을 들어보지도 않고
+    그 아래에 있는 것의 물음부터 풀 수 있다.
+    """
+    c = _lift_card()
+    if not c:
+        return False
+    return (c["lift"].get("grants") or "") == card_id and not ROOM.get("liftDone")
+
+
+class LiftReq(BaseModel):
+    roleId: str
+    clientId: str
+    v: float = 0.0
+
+
+@app.post("/api/lift")
+def lift(b: LiftReq):
+    """「지금 이만큼 들고 있다」고 알린다. 끌어올리는 동안 여러 번 온다.
+
+    v 는 0~1 이다. 손을 떼면 0 이 오고, 안 오면 3초 뒤 저절로 빠진다 —
+    창을 닫거나 끊긴 사람 때문에 영영 들려 있는 일이 없다.
+    """
+    with LOCK:
+        c = _lift_card()
+        if not c:
+            return JSONResponse({"error": "이 사건에는 그런 자리가 없습니다"}, status_code=404)
+        r = ROOM["roles"].get(b.roleId)
+        if not r or r["clientId"] != b.clientId or r["mode"] != "human":
+            return JSONResponse({"error": "그 배역이 아닙니다"}, status_code=403)
+        if c["id"] not in ROOM["revealed"]:
+            return JSONResponse({"error": "아직 그 자리가 안 열렸습니다"}, status_code=409)
+        if ROOM.get("liftDone"):
+            return {"ok": True, "lift": _lift_state()}      # 이미 들어냈다
+        v = max(0.0, min(1.0, float(b.v or 0)))
+        ROOM.setdefault("lift", {})[b.roleId] = {"t": time.time(), "v": v}
+        st = _lift_state()
+        # 다 올라갔다 — 깔려 있던 것이 드러난다.
+        # ★ 그 카드를 «공개»하지는 않는다. 그건 수수께끼가 달린 카드이고, 이 판에서
+        #   수수께끼 카드는 «공개되면 이미 푼 것»으로 친다(puzzle_list 의 held).
+        #   여기서 공개해 버리면 들어올리자마자 답까지 같이 나와서, 정작 풀 것이
+        #   없어진다. 들어올리기가 하는 일은 그 수수께끼를 «열어 주는» 것까지다 —
+        #   물음이 목록에 오르고, 본문은 푼 사람이 가져간다.
+        if st and st["h"] >= 1.0:
+            ROOM["liftDone"] = True
+            ROOM["lift"] = {}
+            ROOM["table"].append({"kind": "system", "broadcast": True,
+                                  "text": "셋이 함께 들어올렸습니다 — 몸 아래에서 무언가가 나왔습니다."})
+            bump()
+            st = _lift_state()
+        return {"ok": True, "lift": st}
 
 
 def _immersed_state():
