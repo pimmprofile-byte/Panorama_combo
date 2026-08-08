@@ -1730,6 +1730,24 @@
     border:1px solid var(--line);cursor:pointer;background:rgba(0,0,0,.35);
     aspect-ratio:1/1;max-height:44dvh}
   .cardart img{display:block;width:100%;height:100%;object-fit:contain}
+  /* ── 그림칸 머리 ──────────────────────────────────────────────
+     협동 퍼즐 판(.lift .lf-head)과 같은 문법이다 — 위쪽에 어두운 틴팅 한 겹을 깔고
+     그 위에 한 줄을 얹는다. 그림 위에 바로 글을 놓으면 밝은 그림에서 글이 사라진다.
+     글을 읽히게 하는 것이 그 틴팅의 몫이다.
+     맨 위의 실선은 이 카드가 «어떤 카드인가»를 색으로 말한다 — 전체공개는 차게,
+     내 손패는 금빛(--mt 는 openCard 가 카드 상태에 맞춰 세워 둔다).
+     ★ 그림이 아직 안 붙은 칸에는 안 붙는다. 빈 칸 위에 뜬 머리띠는
+       「무언가 고장났다」로 읽힌다. */
+  .cardart:has(img)::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;
+    z-index:4;background:var(--mt,var(--cold));opacity:.85}
+  .cardart .ca-head{position:absolute;left:0;right:0;top:0;z-index:3;
+    display:flex;align-items:baseline;gap:8px;padding:7px 9px 11px;white-space:nowrap;
+    background:linear-gradient(180deg,rgba(6,7,7,.9),rgba(6,7,7,.45) 55%,transparent);
+    font-size:11px;color:var(--sub);pointer-events:none}
+  .cardart .ca-head b{color:var(--ink);font-weight:700}
+  .cardart .ca-zoom{margin-left:auto;overflow:hidden;text-overflow:ellipsis;min-width:0;
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--muted)}
+  @media(max-width:380px){ .cardart .ca-zoom{display:none} }
   .sharesec{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--cold);
     margin:14px 0 7px;padding-bottom:5px;border-bottom:1px solid var(--line)}
   .sharesec.cold{color:var(--cold)}
@@ -7906,12 +7924,17 @@ function liftWire(){
 }
 function paintCardArt(id){
   const sid=STATE.scenarioId||""; if(!sid) return;
+  const c=cardOpen(id)||cardCat(id)||{};
+  /* 머리에 적는 한 줄 — 이 그림이 «어디의 무엇»인가. 자리 이름이 있으면 그것,
+     없으면 구역 이름. 제목은 바로 위 창머리에 이미 크게 서 있어서 여기 또 안 적는다. */
+  const where=esc(c.spot||c.locName||"");
   findAsset(`/assets/${sid}_card_${id}`, url=>{
     const t=$("cardText"); if(!url||!t||t.dataset.art) return;
     t.dataset.art="1";
     t.insertAdjacentHTML("beforebegin",
       `<div class="cardart" onclick="showPic('${url}','${esc(($("cardBox").querySelector("h2")||{}).textContent||"")}')">
-         <img src="${url}" alt="" decoding="async"></div>`);
+         <img src="${url}" alt="" decoding="async">
+         <div class="ca-head">${where?`<b>${where}</b>`:""}<span class="ca-zoom">눌러서 크게</span></div></div>`);
   });
 }
 function pairOf(id){ return (SCEN.pairKeys||[]).find(k=>k.cards.includes(id))||null; }
@@ -10808,6 +10831,11 @@ function tourStart(key, modal, steps, onDone){
      그때마다 여기로 들어오면 짚어 주기가 첫 칸으로 되돌아간다 — 눌러도 안
      넘어가는 것처럼 보인다. */
   if(tour&&tour.key===key) return;
+  /* ★ 튜토리얼을 끈 사람에게는 «이것도» 안 뜬다. 하단바 안내(coachNext)만 막고
+     여기를 안 막아 두어서, 「튜토리얼 끔」을 눌러도 창 안에는 어둠막이 깔렸다 —
+     그 어둠막은 pointer-events 를 먹으므로 창 안의 것들이 통째로 안 눌린다.
+     검수 중에 위젯을 못 잡던 것이 이것이었다. */
+  if(coachOff()){ if(onDone) try{ onDone(); }catch(e){} return; }
   if(tourSeen(key)||!steps||!steps.length){ if(onDone) try{ onDone(); }catch(e){} return; }
   tour={key, modal, steps, i:0, onDone};
   tourPaint();
