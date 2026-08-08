@@ -1097,24 +1097,36 @@
   /* ── 그림이 아직 없는 자리 ─────────────────────────────────────
      이 사건의 SVG 에셋은 나중에 한 번에 만든다. 그때까지 그림 자리가 «빈칸» 이면
      레이아웃이 그림이 붙는 순간 통째로 다시 짜인다. 그래서 지금부터 자리를 잡아두고,
-     그 안을 8비트 플레이스홀더(격자 + 대각선 빗금 + 「그림 없음」)로 채운다.
+     그 안을 8비트 플레이스홀더(격자 + 대각선 빗금)로 채운다.
      --ph 는 :root 에 있는 한 덩이 패턴이라 자리마다 같은 결로 뜬다.
-     라벨은 붙일 수 있는 자리에만 붙인다 — 20px 짜리 아바타에는 글자가 안 들어간다. */
+     ★ 글자는 안 쓴다. 어떤 글자든 «잠깐 떴다 사라지는» 것이 되고, 읽는 순간엔
+       이미 그림이 와 있다. 빈 칸이 낫고, 결이 흐르면 더 낫다. */
   .imgslot,.ava.noimg,.por.noimg,.bc-av:not(:has(img)),
   .cardart:not(:has(img)),.room:not(:has(img)),.vic-p:not(:has(img)){
     background:var(--ph);background-attachment:local;image-rendering:pixelated}
-  /* 라벨은 자리가 넉넉한 칸에만. 8비트 계기판 글씨처럼 폭을 벌린다.
-     20px 짜리 말풍선 아바타에는 글자가 안 들어가므로 큰 초상(.cover/.lg)에만 붙인다. */
-  .por.noimg::before,.cardart:not(:has(img))::before,.room:not(:has(img))::before,
-  .vic-p:not(:has(img))::before,.ava.cover.noimg::before,.ava.lg.noimg::before{
-    content:"그림 없음";position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
-    font-family:var(--mono);font-size:9.5px;letter-spacing:.24em;line-height:1;
-    color:rgba(235,230,220,.45);border:1px solid rgba(235,230,220,.24);padding:3px 7px;
-    white-space:nowrap;pointer-events:none}
-  /* 배역 카드의 초상은 아래쪽을 이름 스크림이 덮는다 — 라벨은 그 위로 올린다 */
-  .por.noimg::before{bottom:auto;top:64%}
+  /* ★ 여기에 「그림 없음」이라고 적고 있었다. 그림은 확장자를 훑은 뒤에 붙으므로
+       그 글자는 «잠깐 떴다 사라지는» 것인데, 읽고 나면 이미 그림이 와 있다.
+       빈 칸보다 나쁜 안내다. 글자를 걷고, 대신 신호가 안 잡힌 화면처럼 결이 흐르게
+       둔다 — 「오는 중」이라는 것이 글자 없이 읽힌다. */
+  .cardart:not(:has(img))::after,.room:not(:has(img))::after,
+  .vic-p:not(:has(img))::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      repeating-linear-gradient(0deg,rgba(235,230,220,.055) 0 1px,transparent 1px 3px),
+      linear-gradient(0deg,transparent 42%,rgba(235,230,220,.05) 50%,transparent 58%);
+    background-size:100% 3px,100% 46px;
+    animation:phRoll 2.4s linear infinite}
+  @keyframes phRoll{
+    0%  {background-position:0 0,     0 120%; opacity:.9}
+    50% {                              opacity:.55}
+    100%{background-position:0 -24px, 0 -40%; opacity:.9}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .cardart:not(:has(img))::after,.room:not(:has(img))::after,
+    .vic-p:not(:has(img))::after{animation:none}
+  }
   /* 아직 아무것도 안 들어온 그림칸은 스스로 자리를 잡는다 — 나중에 그림이 오면 그대로 대체된다 */
-  .cardart:not(:has(img)){position:relative;min-height:130px;display:block}
+  .cardart:not(:has(img)){position:relative;display:block;overflow:hidden}
   .room:not(:has(img)){position:relative;aspect-ratio:16/9}
   .vic-p:not(:has(img)){position:relative;aspect-ratio:3/4}
   .bc-av:not(:has(img)){position:relative}
@@ -1707,11 +1719,17 @@
   /* 카드 그림 — 본문 위에 눕는다. 눌러서 크게 본다. */
   /* 비율을 고정하지 않는다 — 물건마다 알맞은 틀이 다르다(세운 병은 세로, 널린 서류는 가로).
      다만 세로로 길어도 화면을 다 먹지는 않게 잘라둔다. 카드는 읽는 물건이다. */
-  .cardart{margin:0 0 13px;border-radius:2px;overflow:hidden;border:1px solid var(--line);
-    cursor:pointer;max-height:54svh;background:rgba(0,0,0,.35)}
-  /* 잘라내지 않는다 — 세로 그림은 아래쪽에 단서가 앉는 경우가 많아서(밀랍 직인, 바닥의 자국)
-     가운데를 오려내면 그 카드가 말하려던 것이 사라진다. 남는 자리는 어둡게 둔다. */
-  .cardart img{display:block;width:100%;height:auto;max-height:54svh;object-fit:contain}
+  /* ★ 조사카드 그림칸은 «정사각»이다. 들어올리기 판(.lift)이 그 비율로 서 있고,
+     그림이 있는 카드와 없는 카드가 같은 틀 안에 서야 한 벌로 읽힌다. 예전에는
+     그림 비율을 그대로 받아서 카드마다 높이가 제각각이었다 — 넘길 때마다 글이
+     아래위로 뛰었다. 원고 그림은 전부 1:1 로 그린다.
+     잘라내지 않는다(contain) — 세로 그림은 아래쪽에 단서가 앉는 경우가 많아서
+     (밀랍 직인, 바닥의 자국) 가운데를 오려내면 그 카드가 말하려던 것이 사라진다.
+     남는 자리는 어둡게 둔다. */
+  .cardart{position:relative;margin:0 0 13px;border-radius:2px;overflow:hidden;
+    border:1px solid var(--line);cursor:pointer;background:rgba(0,0,0,.35);
+    aspect-ratio:1/1;max-height:44dvh}
+  .cardart img{display:block;width:100%;height:100%;object-fit:contain}
   .sharesec{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--cold);
     margin:14px 0 7px;padding-bottom:5px;border-bottom:1px solid var(--line)}
   .sharesec.cold{color:var(--cold)}
@@ -2183,6 +2201,21 @@
   /* 미끼 단서 — 금빛 어른거림 */
   @keyframes baitShimmer{0%,100%{box-shadow:var(--shadow)}50%{box-shadow:var(--shadow),0 0 26px 2px rgba(240,235,225,.24)}}
   .modal .box.reveal.bait{animation:boxReveal .5s ease both,baitShimmer 2.2s ease .3s 2}
+  /* ── 창이 «열린다» ────────────────────────────────────────────
+     단서창에만 있던 열림 연출을 창틀 쪽으로 옮겨, 어느 창이든 설 때 같은 몸짓을
+     한다. 안쪽 화면(.box)의 단서 연출은 그대로 남아 그 위에 겹친다 —
+     창틀이 먼저 서고, 그 안에서 단서가 떠오른다.
+     ★ «처음 설 때»만이다. 이 창들은 폴링마다 다시 그려지므로(openModal 이 다시
+       불린다) 매번 돌리면 1.5초마다 화면이 덜컹인다 — openModal 이 이미 서 있던
+       창에는 이 표시를 안 붙인다. */
+  @keyframes winOpen{
+    0%  {transform:perspective(1100px) rotateX(9deg) translateY(14px) scale(.968);
+         opacity:0;filter:blur(3px)}
+    100%{transform:none;opacity:1;filter:none}
+  }
+  .modal .win.winopen{animation:winOpen .3s cubic-bezier(.16,.8,.24,1) both;
+    transform-origin:50% 30%}
+  @media(prefers-reduced-motion:reduce){ .modal .win.winopen{animation:none} }
 
   /* 기억의 파편 떠오름 */
   @keyframes fragSurface{0%{opacity:0;filter:blur(8px);transform:translateY(10px)}100%{opacity:1;filter:blur(0);transform:none}}
@@ -2219,14 +2252,15 @@
   #vn .vn-bg.bg{--vnk:#2a0f10}
   #vn .vn-bg.body{--vnk:#24080b}
   #vn .vn-bg.scene{--vnk:#231017}
-  /* 「그림 없음」 표 — 그림을 실제로 찾은 컷(인라인 url 이 붙은 컷)에는 안 뜬다 */
-  /* ★ 「그림 없음」은 «그림을 안 정한 컷»에만 뜬다(.nopic). 예전엔 url 이 아직
-     안 붙었다는 것만 보고 띄워서, 처음 들어온 기기에서 내려받는 동안 오프닝
-     한복판에 이 글자가 떴다. 기다리는 것과 없는 것은 다른 일이다. */
-  #vn .vn-bg.nopic::after{content:"그림 없음";position:absolute;
-    left:50%;top:32%;transform:translateX(-50%);
-    font-family:var(--mono);font-size:1.5cqw;letter-spacing:.34em;line-height:1;
-    color:rgba(235,230,220,.42);border:1px solid rgba(235,230,220,.22);padding:.8cqw 1.6cqw}
+  /* ★ 여기에도 「그림 없음」이라고 적었었다. 오프닝 한복판에 그 글자만큼 몰입을
+     깨는 것이 없다 — 그림을 안 정한 컷이든 아직 안 붙은 컷이든, 보는 사람에게는
+     둘 다 그냥 «비어 있는 화면»이다. 글자를 걷고 신호가 안 잡힌 결만 흐르게 둔다. */
+  #vn .vn-bg.nopic::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      repeating-linear-gradient(0deg,rgba(235,230,220,.05) 0 .2cqw,transparent .2cqw .6cqw),
+      linear-gradient(0deg,transparent 42%,rgba(235,230,220,.045) 50%,transparent 58%);
+    background-size:100% .6cqw,100% 9cqw;
+    animation:phRoll 2.4s linear infinite}
   #vn .vn-vig{position:absolute;inset:0;pointer-events:none;
     box-shadow:inset 0 0 14cqw 5cqw rgba(0,0,0,.85);
     background:linear-gradient(0deg,rgba(5,4,3,.95) 0%,rgba(5,4,3,.6) 26%,transparent 52%)}
@@ -2251,9 +2285,7 @@
     opacity:0;transform:translateY(1.2cqw);transition:opacity .42s ease,transform .42s ease;
     filter:drop-shadow(.2cqw .2cqw 0 rgba(0,0,0,.9)) saturate(.75)}
   #vn .vn-emo.show{opacity:.92;transform:none}
-  #vn .vn-emo::after{content:"그림 없음";position:absolute;left:50%;bottom:1.2cqw;
-    transform:translateX(-50%);font-family:var(--mono);font-size:1.2cqw;letter-spacing:.24em;
-    color:rgba(235,230,220,.45);white-space:nowrap}
+  /* 이모지 액자에도 글자를 안 붙인다 — 이모지 하나로 이미 「아직 없다」가 읽힌다 */
   /* 말하는 동안 뒤를 눌러 인물을 앞으로 낸다. 예전엔 .vn-bg 에 filter:brightness 를 걸었는데,
      같은 레이어가 7초짜리 확대를 동시에 돌고 있어서 브라우저가 매 프레임 배경 전체를
      필터링해 다시 그렸다. 어둡게 하는 일은 겹쳐놓은 검은 판의 불투명도로 옮긴다 —
@@ -3378,12 +3410,6 @@
   .tb-why,
   .sys,
   .gmsay .g,
-  .por.noimg::before,
-  .cardart:not(:has(img))::before,
-  .room:not(:has(img))::before,
-  .vic-p:not(:has(img))::before,
-  .ava.cover.noimg::before,
-  .ava.lg.noimg::before,
   .msg .nm,
   .tag-me,
   .alb-j,
@@ -5802,6 +5828,12 @@ addEventListener("orientationchange",()=>setTimeout(sizeWide,120));
 function showSpot(id){
   const c=(SCEN.cardCatalog||[]).find(x=>x.id===id); if(!c) return;
   const st=cardState(c), full=cardOpen(c.id);
+  /* ★ «손을 대는» 자리는 설명 창을 한 겹 더 세우지 않는다. 들어올리기가 걸린 카드는
+     핀을 누르면 바로 그 자리에 선다 — 「방 한가운데 / 조각난 몸 / 전체공개」를 한 번
+     더 누르게 하는 것은 안내가 아니라 문턱이다. 이미 볼 수 있는 카드일 때만이다
+     (전체공개거나 내 손패). 아직 아무도 안 뒤진 자리는 예전 그대로 — 거기서
+     조사턴을 쓰는 것이 이 창의 몫이다. */
+  if(full && liftOn(id)){ openCard(id); return; }
   let body;
   if(full){
     body=`<b style="color:${st.k==="pub"?"var(--cold)":"var(--me,var(--gold-b))"}">${esc(full.title)}</b>
@@ -7749,11 +7781,16 @@ function liftSend(v, force){
   const now=Date.now();
   if(!force && (liftSending || now-liftSentAt<LIFT_SEND)) return;
   liftSentAt=now; liftSending=true;
-  post("/api/lift",{roleId:myRoleId,clientId,v}).then(r=>{
-    liftSending=false;
-    if(r&&r.lift){ if(STATE) STATE.lift=r.lift; liftPaint();
-      if(r.lift.done) { poll(); } }
-  }).catch(()=>{ liftSending=false; });
+  const took=r=>{ if(r&&r.lift){ if(STATE) STATE.lift=r.lift; liftPaint();
+                                 if(r.lift.done) poll(); } };
+  post("/api/lift",{roleId:myRoleId,clientId,v}).then(r=>{ liftSending=false; took(r); })
+    .catch(()=>{ liftSending=false; });
+  /* QA 검수 — 나머지 자리는 내가 당기는 만큼 같이 당긴다.
+     셋이 동시에 붙어야 열리는 자리를 혼자서는 못 연다. 검수하는 사람에게
+     손가락 셋을 요구할 수는 없으므로, 나머지는 나를 그대로 따라온다.
+     (QA 는 한 기기가 세 자리를 다 쥐고 있어서 서버가 그대로 받아 준다.) */
+  if(qaOn && qaOthersOn())
+    qaOtherSeats().forEach(id=>{ post("/api/lift",{roleId:id,clientId,v}).then(took).catch(()=>{}); });
 }
 /* 지금 화면에 그릴 값 — 내 쪽은 내 손가락, 남의 쪽은 서버 */
 function liftVal(rid){
@@ -7761,29 +7798,39 @@ function liftVal(rid){
   if(rid===myRoleId) return liftMine;
   return +(((L.at)||{})[rid]||0);
 }
+/* ★ 위젯은 화면에 «둘 이상» 설 수 있다 — 카드창에도, 소지품 슬라이드에도 같은 것이
+     선다. querySelector 하나로 첫 것만 잡으면 나머지는 죽은 그림이 된다.
+     그래서 그리기도 손가락 물리기도 전부 «있는 만큼» 돈다. */
 function liftPaint(){
-  const box=document.querySelector(".lift"); if(!box) return;
+  const boxes=document.querySelectorAll(".lift"); if(!boxes.length) return;
   const L=liftState()||{};
   const slots=L.slots||[];
   const vs=slots.map(liftVal);
   const lifted=vs.length&&vs.every(v=>v>=1);
-  // 높이는 셋의 평균, 기울기는 오른쪽과 왼쪽의 차 — 가운데는 높이에만 든다.
+  // 높이는 셋의 평균, 기울기는 왼쪽과 오른쪽의 차 — 가운데는 높이에만 든다.
   const avg=vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:0;
-  const tilt=(vs.length>=3?(vs[2]-vs[0]):0)*12;      // 도(deg)
-  const slab=box.querySelector(".lf-slab");
-  if(slab) slab.style.transform=`translateY(${-avg*26}%) rotate(${tilt.toFixed(2)}deg)`;
-  const sh=box.querySelector(".lf-sh");
-  if(sh){ sh.style.transform=`scale(${(1+avg*0.5).toFixed(3)})`;
-          sh.style.opacity=(1-avg*0.45).toFixed(3); }
-  slots.forEach((rid,i)=>{
-    const g=box.querySelector(`.lf-grip[data-r="${rid}"]`); if(!g) return;
-    const b=g.querySelector(".lf-bar i"); if(b) b.style.width=Math.round(liftVal(rid)*100)+"%";
-    g.classList.toggle("pull", liftVal(rid)>0.02);
+  /* ★ 부호를 거꾸로 쓰고 있었다. transform-origin 이 아래 가운데라, CSS 의 «양수 =
+     시계 방향» 회전은 «왼쪽»을 들어올린다. (오른쪽 − 왼쪽)을 넣었더니 왼쪽 사람이
+     당길 때 오른쪽이 들렸다 — 내 자리와 화면이 서로 반대로 움직였다.
+     당긴 쪽이 올라와야 한다: (왼쪽 − 오른쪽). */
+  const tilt=(vs.length>=3?(vs[0]-vs[2]):0)*12;      // 도(deg)
+  const cnt=slots.filter(r=>liftVal(r)>0.02).length;
+  boxes.forEach(box=>{
+    const slab=box.querySelector(".lf-slab");
+    if(slab) slab.style.transform=`translateY(${-avg*26}%) rotate(${tilt.toFixed(2)}deg)`;
+    const sh=box.querySelector(".lf-sh");
+    if(sh){ sh.style.transform=`scale(${(1+avg*0.5).toFixed(3)})`;
+            sh.style.opacity=(1-avg*0.45).toFixed(3); }
+    slots.forEach(rid=>{
+      const g=box.querySelector(`.lf-grip[data-r="${rid}"]`); if(!g) return;
+      const b=g.querySelector(".lf-bar i"); if(b) b.style.width=Math.round(liftVal(rid)*100)+"%";
+      g.classList.toggle("pull", liftVal(rid)>0.02);
+    });
+    const n=box.querySelector(".lf-n");
+    if(n) n.textContent=`${cnt} / ${L.of||3}`;
+    box.classList.toggle("done", !!L.done);
+    box.classList.toggle("ready", !!lifted);
   });
-  const n=box.querySelector(".lf-n");
-  if(n) n.textContent=`${slots.filter(r=>liftVal(r)>0.02).length} / ${L.of||3}`;
-  box.classList.toggle("done", !!L.done);
-  box.classList.toggle("ready", !!lifted);
 }
 /* 잡는 자리 하나를 손가락에 물린다 */
 function liftGrip(el){
@@ -7832,23 +7879,29 @@ function liftHTML(){
       <span class="lf-arrow">▲</span>
       <span class="lf-nm">${esc(side[i]||"")} · ${esc(c.name||rid)}${me?" (나)":""}</span>
       <span class="lf-bar"><i></i></span></div>`;}).join("");
+  /* ★ id 를 안 쓴다 — 이 위젯은 카드창과 소지품에 «동시에» 설 수 있어서
+     id 를 달면 문서에 같은 id 가 둘 생긴다. 전부 반 안에서 찾는다. */
   return `<div class="lift${L.done?" done":""}">
-    <div class="lf-floor" id="lfFloor"></div>
+    <div class="lf-floor"></div>
     <div class="lf-sh"></div>
-    <div class="lf-slab" id="lfSlab"><div class="lf-stub"></div></div>
+    <div class="lf-slab"><div class="lf-stub"></div></div>
     <div class="lf-head">셋이 함께 든다 · <b class="lf-n">0 / ${L.of||3}</b>
       <span class="lf-tip">내 자리를 <b>위로</b> 끄세요</span></div>
     <div class="lf-grips">${grips}</div></div>`;
 }
 /* 창이 다 선 뒤에 그림을 붙이고 손가락을 물린다 */
 function liftWire(){
-  const box=document.querySelector(".lift"); if(!box) return;
+  const boxes=[...document.querySelectorAll(".lift")].filter(b=>!b.dataset.on);
+  if(!boxes.length){ liftPaint(); return; }
   const sid=(STATE&&STATE.scenarioId)||"";
-  findAsset(`/assets/${sid}_lift_floor`, u=>{ const f=$("lfFloor");
-    if(u&&f) f.style.backgroundImage=`url("${u}")`; });
-  findAsset(`/assets/${sid}_lift_slab`, u=>{ const s=$("lfSlab");
-    if(u&&s) s.innerHTML=`<img src="${u}" alt="" decoding="async">`; });
-  box.querySelectorAll(".lf-grip.mine").forEach(liftGrip);
+  boxes.forEach(box=>{
+    box.dataset.on="1";                       // 두 번 물리지 않는다
+    findAsset(`/assets/${sid}_lift_floor`, u=>{ const f=box.querySelector(".lf-floor");
+      if(u&&f) f.style.backgroundImage=`url("${u}")`; });
+    findAsset(`/assets/${sid}_lift_slab`, u=>{ const s=box.querySelector(".lf-slab");
+      if(u&&s) s.innerHTML=`<img src="${u}" alt="" decoding="async">`; });
+    box.querySelectorAll(".lf-grip.mine").forEach(liftGrip);
+  });
   liftPaint();
 }
 function paintCardArt(id){
@@ -10876,6 +10929,9 @@ function showMyHand(tab){
       <div class="bc-title" style="color:var(--me,var(--gold-b))">${esc(c.title)}</div>
       <div class="bc-tags"><span class="pill">${esc(c.locName)}</span>${c.spot?`<span class="pill">${esc(c.spot)}</span>`:''}<span class="pill">R${c.round}</span>${keyTagFor(c.id,true)}${comboBadge(c.id)}${pairsOf(c.id).map(k=>{const rd=pairReady(k,c.id);
         return `<button class="pill pair${rd?" rdy":""}" title="${rd?"짝이 지금 나와 있습니다":"같은 조각을 단 카드와 맞춰보세요"}" onclick="event.stopPropagation();showPairHint('${c.id}',${k.i})">${pairChip(k,c.id,rd)}${rd?"맞물림":"조각"}</button>`;}).join("")}</div>
+      ${/* 손을 대는 카드는 여기서도 같은 얼굴로 선다 — 전체공개가 아니라 내 손패에
+           들어와 있어도 「열어서 해보는 자리」인 것은 그대로다. */""}
+      ${liftOn(c.id)?liftHTML():""}
       <div class="bc-body">${esc(c.text)}</div>${mynote(c.id)}${cnote(c)}
       ${c.unlocks&&!isPub?`<div class="unlocknote">${ICO.unlock} 이 카드를 <b>전체공개</b>하면 무언가 밝혀질 수 있습니다.</div>`:""}</div>`; };
   /* ★ 도구는 «장비창» 이다 — 넘겨 보는 카드가 아니라 격자에 놓인 물건이다.
@@ -10919,6 +10975,10 @@ function showMyHand(tab){
   $("handBox").style.setProperty("--mt","var(--me,var(--gold))");
   openModal("handModal");
   wireSwipe($("handBox"), {start, onIdx:k=>{ handAt[seat]=(cards[k]||{}).id||null; }});
+  /* 손을 대는 카드가 이 안에 섰으면 손가락을 물린다. 창은 폴링마다 다시 그려지므로
+     내 손가락 값은 매번 0 에서 다시 시작한다 — 카드창과 같은 규칙이다. */
+  if($("handBox").querySelector(".lift")){
+    liftMine=0; setTimeout(()=>{ try{ liftWire(); }catch(e){} },0); }
   /* 카드 칸에 카드가 실제로 있을 때만 짚는다 — 빈 칸을 두고 설명할 것이 없다.
      창이 다 서고 나서 재야 자리가 맞으므로 한 박자 뒤에 부른다.
      ★ 짚어 줄 것이 없는 자리(빈 칸·도구 칸)에서는 그냥 이 칸을 끝낸 것으로 찍는다 —
@@ -11392,12 +11452,19 @@ new MutationObserver(rs=>{ rs.forEach(r=>r.addedNodes.forEach(dressWin)); })
 
 function openModal(id){
   setTimeout(()=>{ try{ paintCoach(); paintMapHint(); }catch(e){} },0);
+  const el=$(id); if(!el) return;
+  /* 이미 서 있던 창인가 — 폴링이 다시 그리는 것과 «처음 여는 것»을 여기서 가른다 */
+  const wasOn=el.classList.contains("on");
   /* 오프닝에서만 부드럽게 — 그 뒤로는 손놀림이라 빠른 쪽이 맞다 */
-  try{ $(id).classList.toggle("softin", inOpening()&&!coachOff()); }catch(e){}
+  try{ el.classList.toggle("softin", inOpening()&&!coachOff()); }catch(e){}
   measureDock();
-  if($(id).classList.contains("overdock")) closeTabs(id);
-  $(id).classList.add("on"); markDock(id,true);
-  winTitle($(id));
+  if(el.classList.contains("overdock")) closeTabs(id);
+  el.classList.add("on"); markDock(id,true);
+  winTitle(el);
+  if(!wasOn){
+    const w=el.querySelector(".win");
+    if(w){ w.classList.remove("winopen"); void w.offsetWidth; w.classList.add("winopen"); }
+  }
 }
 /* 창을 닫으면 그 안의 입력칸도 같이 사라진다 — 자판 표식을 여기서 한 번 되짚는다 */
 function closeModal(id){ $(id).classList.remove("on"); markDock(id,false); setTimeout(kbdGuard,0);
