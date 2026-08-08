@@ -955,6 +955,23 @@ def scenario():
     return d
 
 
+@app.get("/api/admin/prompts")
+def admin_prompts(key: str = "", scenarioId: str = ""):
+    """검수용 — 그림을 뽑을 때 그대로 복사해 가는 프롬프트.
+
+    시나리오의 `ART_PROMPTS` 가 정본이고 문서는 그것을 설명할 뿐이다. 그림을 뽑을
+    때마다 저장소를 열어 문서를 스크롤하는 대신, 관리자 모드에서 바로 집어 간다.
+    카드 쪽과 같은 열쇠로 잠근다 — 세계관의 속이 그대로 적혀 있는 글이다.
+    """
+    if not _agent_ok(key):
+        return JSONResponse({"error": "key"}, status_code=403)
+    sid = scenarioId or SC.ID
+    if sid not in scenarios.ids():
+        return JSONResponse({"error": "없는 시나리오"}, status_code=404)
+    m = scenarios.get(sid)
+    return {"scenarioId": sid, "items": list(getattr(m, "ART_PROMPTS", []) or [])}
+
+
 @app.get("/api/admin/cards")
 def admin_cards(key: str = "", scenarioId: str = ""):
     """검수용 — 한 시나리오의 조사카드를 본문까지 통째로 준다.
@@ -2891,7 +2908,10 @@ def puzzle_answer(b: PuzzleTry):
                     "text": f"{who}{_subj(who)} {c.get('locName','')}의 수수께끼를 풀고 "
                             f"«{got}»{_obj(got)} 손에 넣었다."})
         bump()
-    return {"ok": True, "card": SC.public_card(b.cardId)}
+    # ★ «무엇을 얻었는가»를 같이 돌려준다. 화면은 푼 카드가 아니라 이 카드를 세운다 —
+    #   푼 사람에게 지금 궁금한 것은 자물쇠가 아니라 그 안에서 나온 물건이다.
+    #   푼 사람 본인에게만 가는 응답이고 그 카드는 이미 그의 손에 있으므로 새는 것이 없다.
+    return {"ok": True, "card": SC.public_card(b.cardId), "got": give}
 
 
 @app.post("/api/mark")

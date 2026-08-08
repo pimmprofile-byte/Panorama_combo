@@ -3120,3 +3120,121 @@ def decision_report(picks: dict, extra: str = "none", barred: str = "") -> dict:
     return {"title": "마지막으로 남긴 문장",
             "lines": [f'{r["name"]} — {r["label"]}' for r in rows],
             "rows": rows}
+
+
+# ══════════════════════════════════════════════════════════════════
+#  그림 프롬프트 — 관리자 모드에서 그대로 복사해 쓰는 것
+# ══════════════════════════════════════════════════════════════════
+# ★ **여기가 정본입니다.** `docs/룰더데이_방탈출설계.md` §6 은 이 값을 설명하는
+#   문서이고, 실제로 사람이 복사해 가는 것은 관리자 모드가 이 표에서 그려 줍니다.
+#   문서에만 적어 두면 그림을 뽑을 때마다 파일을 열어 스크롤해야 합니다.
+#
+# 붙이는 순서는 **앞머리 → 갈래 덧붙임 → 톤 블록 → 본문** 이고,
+# 앞머리·톤 블록은 `pending/rule_the_day/비주얼노벨.md` §4 의 것을 씁니다.
+# 아래 `text` 는 그 넷을 이미 이어 붙여 둔 것이라 **통째로 복사하면 됩니다.**
+# 시드는 `6060` 으로 고정합니다.
+
+_PIX_HEAD = """Hand-crafted PIXEL ART, in the manner of a late-90s point-and-click adventure
+background. Authentic low-resolution work: every pixel is a hard square with clean
+edges. No blur, no soft gradients, no photographic texture, no 3D render, no anime
+cel shading, no vector smoothness.
+
+Shading is built from DITHERING — ordered and hand-placed checkerboard and noise
+patterns between flat colours — not from smooth blends. Outlines are dark, one
+pixel wide, with selective hand-placed anti-aliasing only where a curve needs it.
+Limited palette of 32 to 40 colours, low saturation, cohesive across the whole set.
+
+Draw the SCENE ONLY. No game interface of any kind: no dialogue box, no text box,
+no health bar, no menu, no cursor, no icons, no button prompts, no HUD.
+No text anywhere in the image: no signs, no labels, no lettering, no numbers, no
+watermark, no signature. Where a sign or a document would carry writing, draw the
+writing as a few illegible pixel strokes only."""
+
+_PIX_TONE = """The place: a small hand-made town where nothing quite matches. Weathered timber
+and brass fittings sit right next to smooth white panelling, as if the place was
+assembled from parts of different worlds. Early morning, pale and cold, long
+shadows still lying across the ground.
+
+The light: thin dawn light from a low sun. Shadows are cool bluish grey, built
+with dithering.
+
+Accent colour, used sparingly and only where the administrator has broken:
+a phosphor green (#00FF99). It is the only saturated colour in the set."""
+
+ART_PROMPTS = [
+    {
+        "key": "escape_net",
+        "title": "방탈출 · 육면 전개도",
+        "file": "rule_the_day_escape_net.webp",
+        "spec": "2:3 세로 · 내부 540×810 · 니어리스트 ×2 · 32~40색 · 시드 6060 · 사람 없음 · 글자 없음",
+        "note": "이 막의 화면이 이 한 장으로 섭니다. 먼저 뽑으세요. "
+                "여덟 구역을 새로 그리는 것이 아니라, 마을이 «상자의 안쪽»이었다는 것을 "
+                "접힌 자국으로 말하는 그림입니다.",
+        "text": _PIX_HEAD + "\n\n" + """This is the UNFOLDED NET OF A CUBE, drawn flat, seen straight on.
+PORTRAIT 2:3, native canvas 540x810, presented upscaled 2x with nearest-neighbour.
+
+Six square faces laid out in a cross, joined edge to edge, with hard fold-lines
+between them and a little empty margin around the outside. Each face is a
+top-down diorama of one part of a small hand-made town, drawn as if it were a
+model glued to the inside wall of a box. The faces meet in a way that reads as
+"this town is the inside of a container" — the horizon on each face runs right
+into the fold and stops.
+
+Absolutely NO TEXT anywhere: no place names, no numbers, no labels, no signage,
+no compass rose, no legend, no title. Every face must be recognisable from what
+is drawn on it alone.
+No people, no game pieces, no tokens, no hands, no cursor, no UI of any kind.
+Keep the fold-lines and the seams clearly visible — they are the point.""" + "\n\n" + _PIX_TONE + "\n\n" + """The six faces, in cross layout:
+
+TOP face — the ceiling. A pale early-morning sky that has been cut off with a
+ruler: a clean rectangular edge where the sky simply ends, and beyond that edge
+a flat unpainted surface with faint mounting holes. A few small light fittings
+sit where clouds should be.
+
+BOTTOM face — the floor. A shallow sheet of still water draining away at one
+corner into a square grating. The water is only a few centimetres deep and the
+painted floor is visible right through it.
+
+CENTRE face — the town square. A cramped hand-made town where nothing matches:
+weathered timber and brass fittings pressed up against smooth white panelling.
+A small administrator's office with its door standing open. Nearby, the nose of
+a full-size submarine buried at an angle in the ground, far too large for the
+space, clearly from somewhere else.
+
+LEFT face — a strip of arcade shopfronts, cabinets in a row, thick cable looms
+running out of them and disappearing into the fold-line. One hand-crank
+generator bolted to the wall.
+
+RIGHT face — a service bay: an open rack of switches and dials, a piano lying on
+its side, and a low test bench with blank sheets pinned above it.
+
+FAR face (opposite the centre) — a wall of small monitors mounted like plants in
+planters, every screen showing a different corner of the same town, all of them
+faintly noisy.
+
+At the exact centre of the CENTRE face, set into the ground, a plain rectangular
+maintenance door frame with three empty sockets down one side. It is the only
+thing in the whole image that looks factory-made and undamaged.
+
+The phosphor green (#00FF99) appears only inside the administrator's open door
+and faintly along the fold-lines, nowhere else.""",
+    },
+    {
+        "key": "escape_room",
+        "title": "방탈출 · 방 안쪽 전환 컷",
+        "file": "rule_the_day_escape_room.webp",
+        "spec": "16:9 · 내부 480×270 · 니어리스트 ×4 · 32~40색 · 시드 6060 · 사람 없음 · 글자 없음",
+        "note": "1막에서 «마을이 접히는» 순간에 한 장 끼웁니다. 오프닝 컷과 같은 규격입니다.",
+        "text": _PIX_HEAD + "\n\n" + """This is a CINEMATIC STILL from a murder-mystery game. 16:9, native canvas
+480x270. Compose the whole frame edge to edge and leave no band, margin or empty
+strip anywhere for anything to be placed over — the picture is the whole picture.""" + "\n\n" + _PIX_TONE + "\n\n" + """The moment: the town seen from inside, from a low corner, revealed as a room.
+The morning sky is a lit ceiling panel with a visible rectangular seam. The far
+horizon is a painted wall, and the paint is peeling at the join. The ground is a
+floor with a square drain in it. The houses stop short of the walls, leaving a
+narrow service gap behind them where bare cable runs.
+In the middle distance, small and plain, a maintenance door frame with three
+empty sockets down one side — the only undamaged, factory-made thing in view.
+No figures. Phosphor green (#00FF99) only in the far doorway of the
+administrator's office.""",
+    },
+]
