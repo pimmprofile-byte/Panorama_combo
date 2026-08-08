@@ -933,7 +933,12 @@ def scenario():
     # 다른 기기는 옛 대본을 그대로 들고 있었다.
     d["scenarioId"] = SC.ID
     # 조사카드 카탈로그(제목·본문 제외 — 미공개 슬롯 구조만)
+    # 어떤 수수께끼를 풀면 나오는 «상품»인가. 상품은 지도에 핀으로 서 있으면 안 된다 —
+    # 그 자리는 뒤져서 여는 곳이 아니고, 서 있으면 「저기 뭔가 있다」만 미리 알린다.
+    _prize = {(c.get("puzzle") or {}).get("grants") for c in SC.CARDS}
+    _prize.discard(None); _prize.discard("")
     d["cardCatalog"] = [{"id": c["id"], "loc": c["loc"], "locName": c["locName"], "round": c["round"],
+                         "prize": c["id"] in _prize,
                          "spot": c.get("spot", ""),
                          "needs": _card_needs(c),
                          # auto  게임이 스스로 여는 자리 · hot  게임을 뒤집는 자리

@@ -1026,13 +1026,16 @@
   /* 첫 조사 안내가 짚어 준 자리 — 구역 칸(cc-cam)이든 방 안의 핀이든 같은 초록으로 뛴다.
      ★ transform 은 절대 건드리지 않는다 — 둘 다 제 자리를 transform 으로 잡고 있어서
        여기에 scale 한 번 얹으면 칸이 판 밖으로 튀어나간다. 테두리 빛만 얹는다. */
-  .cc-cam.tuton,.pin.tuton{animation:tutOn 1.05s steps(1) infinite;z-index:5}
+  /* ★ 구역 칸·핀뿐 아니라 «단추»도 짚는다(닫기). 그래서 클래스 하나로 잡고,
+     짚은 대상이 제 애니메이션을 갖고 있어도 지지 않게 못을 박는다 —
+     `.tourhit` 과 같은 이유다. */
+  .tuton{animation:tutOn 1.05s steps(1) infinite!important;z-index:5}
   @keyframes tutOn{
     0%,54%  {box-shadow:0 0 0 3px var(--sig-t),0 0 22px -4px var(--sig-t)}
     55%,100%{box-shadow:0 0 0 3px rgba(127,233,189,.22)}
   }
   @media(prefers-reduced-motion:reduce){
-    .cc-cam.tuton,.pin.tuton{animation:none;box-shadow:0 0 0 3px var(--sig-t)}
+    .tuton{animation:none!important;box-shadow:0 0 0 3px var(--sig-t)}
   }
   /* 안내 줄도 같은 초록을 두른다 — 짚은 자리와 말하는 자리가 한 짝으로 읽힌다 */
   .maphint.tut{border-color:var(--sig-t);box-shadow:2px 2px 0 var(--case-e),0 0 0 1px var(--sig-t)}
@@ -1042,6 +1045,13 @@
        띠는 안 걷히므로, 그 자리는 이 줄의 자리가 아니다.
        하단 독 바로 위 — 손가락이 이미 가 있는 자리에 세운다. */
   .maphint.over{position:fixed;top:auto;bottom:calc(var(--dh,64px) + 12px);z-index:73}
+  /* ★ 짚어 주는 줄은 «손을 안 먹는다». 창 위로 올라온 줄이 하필 발치 단추 위에
+     얹혀서, 「닫기를 누르세요」라고 해놓고 그 닫기를 못 누르게 막고 있었다.
+     안내가 길을 막는 것보다 나쁜 것은 없다. */
+  .maphint.tut{pointer-events:none}
+  /* 짚은 것이 아래쪽에 있으면 줄은 위로 비킨다 — 겹쳐 있으면 가리키는 것이
+     제 손에 가린다. 진행 안내 띠(82)보다는 아래라 띠가 내려오면 그쪽이 이긴다. */
+  .maphint.over.up{top:max(12px,env(safe-area-inset-top));bottom:auto}
   .coach-tip{position:fixed;z-index:77;transform:translateX(-50%);
     box-shadow:2px 2px 0 var(--case-e);
     background:var(--case-h);color:var(--case-fg);font-size:12.5px;font-weight:800;letter-spacing:.01em;
@@ -2244,7 +2254,21 @@
   }
   .modal .win.winopen{animation:winOpen .3s cubic-bezier(.16,.8,.24,1) both;
     transform-origin:50% 30%}
-  @media(prefers-reduced-motion:reduce){ .modal .win.winopen{animation:none} }
+  /* 닫힐 때는 «접힌다» — 세로로 눌리며 사라진다. 열릴 때와 짝이 맞아야
+     「이 창을 덮었다」가 남는다. .modal 은 닫는 순간 display 가 걷히므로,
+     접히는 동안만 따로 세워 둔다(어둠막은 걷고 창만 남긴다). */
+  @keyframes winFold{
+    0%  {transform:none;opacity:1}
+    100%{transform:perspective(1100px) rotateX(-7deg) scaleY(.04) translateY(-8px);opacity:0}
+  }
+  .modal.folding{display:flex!important;pointer-events:none;background:transparent;
+    backdrop-filter:none}
+  .modal.folding .win{animation:winFold .21s cubic-bezier(.4,0,.85,.2) both;
+    transform-origin:50% 42%}
+  @media(prefers-reduced-motion:reduce){
+    .modal .win.winopen{animation:none}
+    .modal.folding{display:none!important}
+  }
 
   /* 기억의 파편 떠오름 */
   @keyframes fragSurface{0%{opacity:0;filter:blur(8px);transform:translateY(10px)}100%{opacity:1;filter:blur(0);transform:none}}
@@ -4914,6 +4938,7 @@ function applyState(){
     /* 들어올리는 중이면 남들이 얼마나 올렸는지가 폴링으로 온다 — 다시 그린다.
        창을 통째로 다시 만들지 않는다. 그러면 내가 잡고 있던 손가락이 풀린다. */
     try{ if(document.querySelector(".lift")) liftPaint(); }catch(e){}
+  try{ roomRefresh(); }catch(e){}
     /* 소지품 탭은 남이 공개한 카드로도 늘어난다 — 열어둔 채로도 따라 움직여야 한다.
        ★ 다만 «달라졌을 때만» 다시 그린다. 예전에는 폴링마다 통째로 다시 그렸는데,
          다시 그리는 순간 스와이프가 처음으로 돌아가서 마지막 장을 읽고 있으면
@@ -5775,8 +5800,25 @@ function roomLegend(cards){
   if(bit.length<2) return "";               // 한 가지뿐이면 견줄 것이 없다
   return `<div class="rlgd"><b>표시</b>${bit.join("")}</div>`;
 }
+/* 지금 그려 둔 방의 «생김새» — 어느 자리가 어떤 상태인가. 이게 바뀌면 다시 그린다. */
+let roomSig="";
+function roomSigOf(room){
+  return room.key+"|"+roomCards(room).map(c=>c.id+cardState(c).k).join(",");
+}
+/* ★ 방을 열어 둔 채로 세상이 바뀌는 자리가 생겼다 — 셋이 들어내면 「시신 밑」이
+   그 자리에 «생긴다». 그런데 방 그림은 열 때 한 번 그리고 마는 것이라, 다시 열기
+   전에는 새 자리가 안 나타났다. 「닫았다 다시 열어야 보인다」는 안내로 메울 것이
+   아니라 그 자리에서 나타나야 한다. 바뀐 것이 있을 때만 그 방을 다시 그린다. */
+function roomRefresh(){
+  const mm=$("mapModal"); if(!mm||!mm.classList.contains("on")||!roomAt) return;
+  if($("mapBox")&&!$("mapBox").querySelector(".room")) return;   // 목록으로 보는 중이면 손대지 않는다
+  const room=roomByKey(roomAt); if(!room) return;
+  if(roomSigOf(room)===roomSig) return;
+  try{ openRoom(roomAt); }catch(e){}
+}
 function paintRoom(room, url){
   const cards=roomCards(room);
+  roomSig=roomSigOf(room);
   const done=cards.filter(c=>{ const k=cardState(c).k; return k!=="open"&&k!=="lock"; }).length;
   const pins=cards.map((c,i)=>{
     const st=cardState(c), p=pinAt(c.id,i,cards.length);
@@ -5859,6 +5901,10 @@ function showSpot(id){
      (전체공개거나 내 손패). 아직 아무도 안 뒤진 자리는 예전 그대로 — 거기서
      조사턴을 쓰는 것이 이 창의 몫이다. */
   if(full && liftOn(id)){ openCard(id); return; }
+  /* 수수께끼가 걸린 자리도 같다 — 「수수께끼로 여는 자리입니다 / [수수께끼를 푼다]」를
+     한 번 더 읽히는 것은 안내가 아니라 문턱이다. 지금 붙을 수 있는 자리면 바로 그
+     자리에 세운다(물음도 그림도 그 창 안에 있다). */
+  if(st.k==="puzzle"){ openPuzzle(id); return; }
   let body;
   if(full){
     body=`<b style="color:${st.k==="pub"?"var(--cold)":"var(--me,var(--gold-b))"}">${esc(full.title)}</b>
@@ -6845,10 +6891,15 @@ function zoneCards(loc){
      «생긴다». 그게 이 협동이 주는 것이다. */
   const L=(STATE&&STATE.lift)||null;
   const under=(L && !L.done && L.grants) ? L.grants : "";
+  /* ★ 수수께끼를 풀면 나오는 «상품»도 지도에 안 선다. 「그 날 밤의 녹취」가 핀으로
+     서 있으면 그 자리는 눌러도 안 열리면서 이름만 먼저 알린다 — 정작 풀어야 할
+     것은 그 옆의 「시신 밑」인데, 짚어 준 자리와 눈에 띄는 자리가 어긋난다.
+     손에 들어오거나 테이블에 펴진 뒤에야 제 자리에 선다. */
   // gone 이 지난 카드는 그 자리에서 «치워진» 것이다 — 어제와 같은 방이 아니다.
   // 내가 쥐고 있는 것만 남는다(이미 본 것을 뺏지는 않는다).
   return SCEN.cardCatalog.filter(c=>c.loc===loc
     && c.id!==under
+    && !(c.prize && !pub.has(c.id) && !hand.has(c.id))
     && !(c.gone && cr>=c.gone && !hand.has(c.id))
     && (c.round<=cr || pub.has(c.id) || hand.has(c.id)));
 }
@@ -7516,6 +7567,10 @@ function puzNoteText(hint,locked,hintN,maxT){
   if(hint)   return `${maxT}번 틀리면 해당 카드는 잠깁니다.`;
   return `${hintN}번 틀리면 한 줄이 열리고, ${maxT}번 틀리면 해당 카드는 잠깁니다.`;
 }
+/* ★ 수수께끼는 «카드»다. 예전에는 물음 한 줄과 입력칸만 담은 맨 상자를 따로 띄웠다 —
+   같은 지도에서 같은 손짓으로 연 자리인데 여기만 다른 물건이 떠서, 「조사한 것」과
+   「푸는 것」이 서로 다른 게임처럼 보였다. 조각난 몸과 같은 창틀, 같은 정사각 그림칸,
+   그 아래에 손대는 자리 — 그 배치를 그대로 쓴다. */
 async function openPuzzle(cid){
   const c=(SCEN.cardCatalog||[]).find(x=>x.id===cid); if(!c) return;
   let d={items:[]};
@@ -7526,15 +7581,17 @@ async function openPuzzle(cid){
   /* 세 번 틀리면 그 사람에게 잠긴다 — 목록에는 그대로 남는다. 사라지면 「넘겨야 한다」는
      생각 자체를 못 하기 때문이다. 잠긴 자리는 답 넣는 칸을 아예 안 그린다. */
   const maxT=+(d.maxTries||3), hintN=+(d.hintAfter||2);
-  const m=document.createElement("div");
-  m.className="modal on"; m.onclick=e=>{ if(e.target===m) m.remove(); };
-  m.innerHTML=`<div class="box" onclick="event.stopPropagation()">
-    <div class="mhead"><div class="mh-t"><span class="mh-eb">${esc(row.locName||"")}</span>
-      <h2>${keyMark()} ${esc(row.spot||"수수께끼")}</h2>
-      <span class="mh-sub">조사턴을 쓰지 않습니다 · 맞히면 내 인벤토리로</span></div>
-      <button class="mh-x" onclick="this.closest('.modal').remove()">${ICO.close}</button></div>
+  const box=$("cardBox"); if(!box) return;
+  box.dataset.card=cid;
+  box.innerHTML=`<div class="mhead">
+      <div class="mh-t"><span class="mh-eb">${esc(row.locName||"")}</span>
+        <h2>${esc(row.spot||"수수께끼")}</h2>
+        <div style="margin-top:6px">${keyTag("수수께끼로 여는 자리")}</div>
+        <span class="mh-sub">조사턴을 쓰지 않습니다</span></div>
+      <button class="mh-x" onclick="closeModal('cardModal')" aria-label="닫기">${ICO.close}</button></div>
     <div class="mbody">
-      <div class="puz-q">${mdB(esc(row.prompt||""))}</div>
+      ${cardArtSlot()}
+      <div class="sec"><div class="b" style="font-size:15px" id="cardText">${mdB(esc(row.prompt||""))}</div></div>
       ${row.locked
         ? `<div class="puz-dead">이 카드는 당신에게 잠겼습니다 — 다른 사람에게 넘기세요</div>`
         : `<div class="puz-in">
@@ -7544,10 +7601,21 @@ async function openPuzzle(cid){
       <div class="puz-msg" id="puzMsg">${row.tries&&!row.locked?`${row.tries}번 틀렸습니다 — ${maxT-row.tries}번 남았습니다.`:""}</div>
       ${row.hint?`<div class="puz-hint">${esc(row.hint)}</div>`:""}
       <div class="puz-note" id="puzNote">${puzNoteText(row.hint,row.locked,hintN,maxT)}</div>
-    </div></div>`;
-  document.body.appendChild(m);
-  setTimeout(()=>{ const i=$("puzAns"); if(i){ i.focus();
-    i.onkeydown=ev=>{ if(ev.key==="Enter") puzSend(cid); }; } },60);
+    </div>
+    <div class="mfoot"><span class="mf-note">맞히면 나온 것은 내가 가져갑니다.</span>
+      <button class="btn" onclick="closeModal('cardModal')">닫기</button></div>`;
+  paintCardArt(cid);
+  box.style.setProperty("--mt","var(--cold)");
+  box.classList.remove("reveal","shock","bait","clue");
+  void box.offsetWidth; box.classList.add("reveal","clue");
+  const mm=$("mapModal"), over=!!(mm&&mm.classList.contains("on"));
+  $("cardModal").classList.toggle("overmap", over);
+  if(mm) mm.classList.toggle("behind", over);
+  openModal("cardModal");
+  /* ★ 칸에 초점을 «주지 않는다». 초점이 가면 html.kbd 가 서서 하단바가 통째로
+     사라지고, 자판 없는 기기에서는 그냥 화면이 한 번 흔들린 것이 된다.
+     엔터로 보내는 길만 열어 둔다. */
+  setTimeout(()=>{ const i=$("puzAns"); if(i) i.onkeydown=ev=>{ if(ev.key==="Enter") puzSend(cid); }; },60);
 }
 async function puzSend(cid){
   const i=$("puzAns"); if(!i) return;
@@ -7558,10 +7626,12 @@ async function puzSend(cid){
   i.disabled=false; i.focus();
   const msg=$("puzMsg");
   if(r&&r.ok){
-    document.querySelectorAll(".modal.on").forEach(m=>m.remove());
     sfx("open");
-    banner("풀었습니다 — 인벤토리에 들어왔습니다.");
-    await poll(); openCard(cid);
+    banner("풀었습니다 — 나온 것은 내가 가져갑니다.");
+    /* 창을 닫았다 다시 여는 대신 그 자리에서 카드로 바뀐다 — 같은 창틀 안이라
+       「푼 자리가 열린 것」으로 읽힌다. */
+    await poll();
+    try{ openCard(cid); }catch(e){}
     return;
   }
   if(r&&r.error){
@@ -7587,7 +7657,8 @@ async function puzSend(cid){
 /* 잠긴 자리로 바꾼다 — 답 넣는 칸을 «없애고» 그 자리에 왜 못 넣는지를 박는다.
    목록에서는 지우지 않는다. 사라지면 옆사람에게 넘길 생각을 못 한다. */
 function puzSeal(cid){
-  const box=document.querySelector(".modal.on .mbody"); if(!box) return;
+  const box=($("cardBox")&&$("cardBox").querySelector(".mbody"))
+          ||document.querySelector(".modal.on .mbody"); if(!box) return;
   const inw=box.querySelector(".puz-in");
   if(inw){ const d=document.createElement("div"); d.className="puz-dead";
     d.textContent="이 카드는 당신에게 잠겼습니다 — 다른 사람에게 넘기세요";
@@ -7805,9 +7876,20 @@ let liftMine=0;                      // 내 손가락이 정한 값 0~1
 let liftSentAt=0, liftSending=false, liftHold=null;
 function liftState(){ return (STATE&&STATE.lift)||null; }
 /* 이 카드 위에서 들어올리기가 도는가 */
+/* 이 카드 위에서 들어올리기가 «움직이는가» — 손이 닿는 자리인가 */
 function liftOn(cardId){
   const L=liftState();
   return !!(L && L.cardId===cardId && !L.done && myRoleValid());
+}
+/* 이 카드에 들기 판이 «있는가» — 이미 들어냈어도 그림은 그대로 남는다.
+   ★ 여태 liftOn 하나로 그리기까지 걸어 두어서, 셋이 들어내는 순간 판이 통째로
+     사라졌다. 조각난 몸 카드에는 따로 그린 카드 그림이 없어서 그게 곧 «그림이
+     없어진 것»이었다 — 다시 열어 보면 글만 남았다.
+     푼 수수께끼도 마찬가지다. 그림은 두고 손만 뗀다(.lift.done 이 잡는 자리·머리를
+     감춘다). 「다 한 자리」는 비어 보이는 것이 아니라 «가만히 있는» 것이어야 한다. */
+function liftShow(cardId){
+  const L=liftState();
+  return !!(L && L.cardId===cardId && myRoleValid());
 }
 function liftSend(v, force){
   const now=Date.now();
@@ -7932,10 +8014,16 @@ function liftWire(){
       if(u&&f) f.style.backgroundImage=`url("${u}")`; });
     findAsset(`/assets/${sid}_lift_slab`, u=>{ const s=box.querySelector(".lf-slab");
       if(u&&s) s.innerHTML=`<img src="${u}" alt="" decoding="async">`; });
-    box.querySelectorAll(".lf-grip.mine").forEach(liftGrip);
+    // 다 들어낸 판에는 손을 안 물린다 — 그림만 남는 자리다
+    if(!box.classList.contains("done")) box.querySelectorAll(".lf-grip.mine").forEach(liftGrip);
   });
   liftPaint();
 }
+/* 그림이 붙을 «자리»는 카드가 서는 순간부터 있다. 그림은 확장자를 훑어야 해서
+   한 박자 늦게 오는데, 그때 자리가 없으면 글이 위로 붙었다가 그림이 오면서
+   아래로 밀린다 — 카드를 열 때마다 화면이 한 번 튄다.
+   빈 자리는 신호가 안 잡힌 결로 돈다(그림 없음 글자는 안 쓴다). */
+function cardArtSlot(){ return `<div class="cardart" id="cardArt"></div>`; }
 function paintCardArt(id){
   const sid=STATE.scenarioId||""; if(!sid) return;
   const c=cardOpen(id)||cardCat(id)||{};
@@ -7943,12 +8031,12 @@ function paintCardArt(id){
      없으면 구역 이름. 제목은 바로 위 창머리에 이미 크게 서 있어서 여기 또 안 적는다. */
   const where=esc(c.spot||c.locName||"");
   findAsset(`/assets/${sid}_card_${id}`, url=>{
-    const t=$("cardText"); if(!url||!t||t.dataset.art) return;
-    t.dataset.art="1";
-    t.insertAdjacentHTML("beforebegin",
-      `<div class="cardart" onclick="showPic('${url}','${esc(($("cardBox").querySelector("h2")||{}).textContent||"")}')">
-         <img src="${url}" alt="" decoding="async">
-         <div class="ca-head">${where?`<b>${where}</b>`:""}<span class="ca-zoom">눌러서 크게</span></div></div>`);
+    const slot=$("cardArt"); if(!url||!slot||slot.dataset.art) return;
+    slot.dataset.art="1";
+    const t=($("cardBox").querySelector("h2")||{}).textContent||"";
+    slot.onclick=()=>showPic(url,t);
+    slot.innerHTML=`<img src="${url}" alt="" decoding="async">
+      <div class="ca-head">${where?`<b>${where}</b>`:""}<span class="ca-zoom">눌러서 크게</span></div>`;
   });
 }
 function pairOf(id){ return (SCEN.pairKeys||[]).find(k=>k.cards.includes(id))||null; }
@@ -8080,6 +8168,8 @@ async function investigate(id){
 }
 function openCard(id){ const pub=(STATE.revealed||[]).find(c=>c.id===id); const hand=myHand.find(c=>c.id===id); const c=pub||hand; if(!c)return;
   const inHand=!!hand&&!pub;
+  // 지금 무슨 카드가 서 있는가 — 첫 조사 안내가 이걸로 어디까지 왔는지를 잰다
+  $("cardBox").dataset.card=id;
   $("cardBox").innerHTML=`<div class="mhead">
       <div class="mh-t"><span class="mh-eb">${pub?"전체공개 단서":"손패 · 비공개"}</span>
         <h2>${esc(c.title)}${c.bait?' <span class="pill">※미끼?</span>':''}</h2>${
@@ -8090,7 +8180,7 @@ function openCard(id){ const pub=(STATE.revealed||[]).find(c=>c.id===id); const 
     <div class="mbody">${pairsOf(c.id).length?`<div class="pchips">${pairsOf(c.id).map(k=>
         `<button class="pill pair${pairReady(k,c.id)?" rdy":""}" onclick="showPairHint('${c.id}',${k.i})">${pairChip(k,c.id,pairReady(k,c.id))}${pairReady(k,c.id)?"맞물림":"조각"}</button>`).join("")}
         <span class="pc-note">${pairsOf(c.id).some(k=>pairReady(k,c.id))?"<b style='color:var(--good)'>짝이 지금 나와 있습니다.</b> 맞춰보세요.":"같은 조각을 단 카드와 맞물립니다"}</span></div>`:""}
-      ${liftOn(c.id)?liftHTML():""}
+      ${liftShow(c.id)?liftHTML():cardArtSlot()}
       <div class="sec"><div class="b" style="font-size:15px" id="cardText">${esc(c.text)}</div></div>${mynote(c.id)}${cnote(c)}</div>
     <div class="mfoot"><span class="mf-note">${inHand?"알리려면 대화로 말하세요 — 저절로 새어 나가지 않습니다.":"이미 모두가 보고 있는 단서입니다."}</span>
       ${(inHand&&overLimit()>0)?`<button class="btn ember" onclick="dropFromCard('${c.id}')">손패에서 내려놓기</button>`:""}
@@ -8107,7 +8197,7 @@ function openCard(id){ const pub=(STATE.revealed||[]).find(c=>c.id===id); const 
   if(mm) mm.classList.toggle("behind", over);
   openModal("cardModal");
   liftMine=0;
-  if(liftOn(c.id)) setTimeout(()=>{ try{ liftWire(); }catch(e){} },0);
+  if(liftShow(c.id)) setTimeout(()=>{ try{ liftWire(); }catch(e){} },0);
 }
 /* 손패가 넘칠 때는 카드를 읽는 그 자리에서 바로 내려놓을 수 있어야 한다.
    「정리하기」로 목록을 다시 열어 같은 카드를 또 찾는 걸음이 하나 더 있었다. */
@@ -11015,7 +11105,7 @@ function showMyHand(tab){
         return `<button class="pill pair${rd?" rdy":""}" title="${rd?"짝이 지금 나와 있습니다":"같은 조각을 단 카드와 맞춰보세요"}" onclick="event.stopPropagation();showPairHint('${c.id}',${k.i})">${pairChip(k,c.id,rd)}${rd?"맞물림":"조각"}</button>`;}).join("")}</div>
       ${/* 손을 대는 카드는 여기서도 같은 얼굴로 선다 — 전체공개가 아니라 내 손패에
            들어와 있어도 「열어서 해보는 자리」인 것은 그대로다. */""}
-      ${liftOn(c.id)?liftHTML():""}
+      ${liftShow(c.id)?liftHTML():""}
       <div class="bc-body">${esc(c.text)}</div>${mynote(c.id)}${cnote(c)}
       ${c.unlocks&&!isPub?`<div class="unlocknote">${ICO.unlock} 이 카드를 <b>전체공개</b>하면 무언가 밝혀질 수 있습니다.</div>`:""}</div>`; };
   /* ★ 도구는 «장비창» 이다 — 넘겨 보는 카드가 아니라 격자에 놓인 물건이다.
@@ -11292,8 +11382,20 @@ function tutStage(){
   if(ph.key!=="invest" || ((STATE&&STATE.round)||0)!==1) return "";
   const L=(STATE&&STATE.lift)||null;
   if(!L) return "";                          // 이 사건에 그런 자리가 없다
-  if(L.opened) return "done";
-  if(L.done) return "puzzle";
+  const cm=$("cardModal"), cbox=$("cardBox");
+  const openCardId=(cm&&cm.classList.contains("on")&&cbox)?(cbox.dataset.card||""):"";
+  /* 풀고 나면 그 자리의 카드가 그대로 서 있다 — 다 읽고 닫는 것까지가 이 사슬이다.
+     닫아야 배너가 내려오고 조사 화면으로 돌아간다. */
+  if(L.opened) return (openCardId===L.grants) ? "close2" : "done";
+  if(L.done){
+    /* 들어낸 뒤 — 사슬은 세 걸음이다.
+       ① 아직 조각난 몸 카드를 보고 있다   → 닫으라고 한다
+       ② 창을 닫았다                       → 지도에 «생긴» 자리를 짚는다
+       ③ 그 자리를 열었다                  → 다 봤으면 닫으라고 한다 */
+    if(openCardId===L.grants) return "close2";
+    if(openCardId===L.cardId) return "close1";
+    return "found";
+  }
   /* 들기 위젯이 화면에 있으면 그 자리에 «서 있는» 것이다 — 카드창이 열렸는지가
      아니라 위젯이 있는지로 잰다. 다른 카드를 열어 둔 것까지 들기로 세면 안 된다. */
   if(document.querySelector(".lift")) return "lift";
@@ -11313,14 +11415,25 @@ const TUT_SAY={
   zone:  "먼저 <b>관리자실</b>을 눌러 보세요",
   pin:   "<b>방 한가운데</b>를 눌러 보세요",
   lift:  "셋이 <b>각자 자기 자리</b>를 위로 끌어올리세요",
-  puzzle:"몸 아래에서 나온 것을 <b>살펴보세요</b>",
+  close1:"몸 아래에서 무언가가 나왔습니다 — <b>닫기</b>를 누르세요",
+  found: "몸 아래에서 나온 것을 <b>살펴보세요</b>",
+  close2:"다 봤으면 <b>닫기</b>를 누르세요",
 };
+/* 닫으라고 하는 칸에서 짚을 것 — 지금 서 있는 창의 발치 「닫기」. 없으면 머리의 ×. */
+function tutCloseBtn(){
+  const b=$("cardBox"); if(!b) return null;
+  return [...b.querySelectorAll(".mfoot .btn")].find(x=>x.textContent.trim()==="닫기")
+      || b.querySelector(".mh-x");
+}
 let tutBannerAt="";
 /* 배너는 한 판에 한 번만. 판이 바뀌면 다시 뜬다 — 새 사람에게는 새 판이다. */
 function tutBannerOnce(){
   const k="pmb.tutdone."+((STATE&&STATE.roomId)||"1");
   if(tutBannerAt===k) return; tutBannerAt=k;
   try{ if(localStorage.getItem(k)==="1") return; localStorage.setItem(k,"1"); }catch(e){}
+  /* ★ 구역창을 걷고 조사 화면으로 되돌린다. 「원하는 곳을 조사해보세요」라고 해놓고
+     관리자실 안에 세워 두면, 그 말이 가리키는 화면이 지금 눈앞에 없다. */
+  try{ const mm=$("mapModal"); if(mm&&mm.classList.contains("on")) closeModal("mapModal"); }catch(e){}
   try{ gmBarSay("안내","이제 직접 원하는 곳을 조사해보세요!"); }catch(e){}
 }
 function paintMapHint(){
@@ -11353,9 +11466,12 @@ function paintMapHint(){
   /* 짚을 자리를 «화면에 실제로 있는 것»에서 고른다. 창이 열려 있으면 창 안의 핀을,
      아니면 조사 화면의 구역 칸을 짚는다. 창 안에 그 핀이 없으면 — 다른 방을 열어 둔
      것이다 — 구역부터 다시 말한다. 없는 자리를 가리키느니 한 칸 물러선다. */
-  if(st==="zone"||st==="pin"||st==="puzzle"){
+  if(st==="close1"||st==="close2"){
+    const b=tutCloseBtn(); if(b) b.classList.add("tuton");
+  }
+  else if(st==="zone"||st==="pin"||st==="found"){
     const L=(STATE&&STATE.lift)||{};
-    const id=(st==="puzzle"?L.grants:L.cardId)||"";
+    const id=(st==="found"?L.grants:L.cardId)||"";
     const inBox=id?document.querySelector(`.modal.on [data-c="${CSS.escape(id)}"]`):null;
     if(inBox) inBox.classList.add("tuton");
     else{
@@ -11363,7 +11479,10 @@ function paintMapHint(){
       const cam=loc?(document.querySelector(`.cctv .cc-cam[data-loc="${CSS.escape(loc)}"]`)
                    ||document.querySelector(`#mapArt [data-loc="${CSS.escape(loc)}"]`)):null;
       if(cam) cam.classList.add("tuton");
+      /* 짚을 자리가 화면에 없다 — 지도를 닫아 둔 것이다. 한 칸 물러서서 구역부터 말한다.
+         「몸 아래에서 나온 것」은 그 방을 다시 열어야 보인다. */
       if(st==="pin") msg=TUT_SAY.zone;
+      if(st==="found") msg="<b>관리자실</b>을 다시 열어 보세요";
     }
   }
   /* 들기 칸에서는 줄을 안 띄운다 — 위젯이 제 입으로 말한다. */
@@ -11375,12 +11494,16 @@ function paintMapHint(){
      창 뒤에 깔려서 아무도 못 본다. */
   const over=!!document.querySelector(".modal.on");
   const host=over?document.body:$("playBody"); if(!host) return;
+  /* 짚은 것이 화면 아래쪽에 있으면 줄을 위로 비킨다 */
+  let up=false;
+  try{ const t=document.querySelector(".tuton");
+       if(t){ const r=t.getBoundingClientRect(); up=(r.top>innerHeight*0.62); } }catch(e){}
   /* 열쇠에 문구까지 넣는다 — 같은 칸에서도 짚을 자리가 화면에서 사라지면 문구가 바뀐다 */
-  const key=(st||"map")+"|"+msg+(over?"|o":"");
+  const key=(st||"map")+"|"+msg+(over?"|o":"")+(up?"|u":"");
   if(old&&old.dataset.k===key) return;
   if(old) old.remove();
   const el=document.createElement("div");
-  el.className="maphint"+(st?" tut":"")+(over?" over":""); el.id="mapHint"; el.dataset.k=key;
+  el.className="maphint"+(st?" tut":"")+(over?" over":"")+(up?" up":""); el.id="mapHint"; el.dataset.k=key;
   if(over){ const dk=$("dock");
             el.style.setProperty("--dh",(dk?Math.round(dk.getBoundingClientRect().height):64)+"px"); }
   el.innerHTML=msg;
@@ -11555,7 +11678,19 @@ function openModal(id){
   }
 }
 /* 창을 닫으면 그 안의 입력칸도 같이 사라진다 — 자판 표식을 여기서 한 번 되짚는다 */
-function closeModal(id){ $(id).classList.remove("on"); markDock(id,false); setTimeout(kbdGuard,0);
+function closeModal(id){
+  /* ★ 화면이 크게 바뀌는 자리는 «접히며» 닫힌다. 딱 하고 사라지면 창이 닫힌 것이
+     아니라 화면이 갈아 끼워진 것으로 읽힌다 — 어디서 어디로 왔는지가 사라진다.
+     0.2초 동안 위아래로 접어서 «이 창을 덮었다»를 남긴다. 접는 동안에도 .on 은
+     곧바로 걷는다(다시 열면 접기가 취소된다). */
+  const el=$(id); if(!el) return;
+  const w=el.querySelector(".win");
+  if(w&&el.classList.contains("on")){
+    w.classList.remove("winopen");
+    el.classList.add("folding");
+    setTimeout(()=>{ el.classList.remove("folding"); },230);
+  }
+  el.classList.remove("on"); markDock(id,false); setTimeout(kbdGuard,0);
   // 단서창이 걷히면 뒤로 물러나 있던 구역창이 제자리로 돌아온다
   if(id==="cardModal"){ const mm=$("mapModal"); if(mm) mm.classList.remove("behind"); }
   // 창이 닫힌 뒤에야 다음 안내가 설 자리가 생긴다
