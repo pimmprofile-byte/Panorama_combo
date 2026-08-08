@@ -910,27 +910,31 @@
      그쪽으로 «기운다». 기울어진 그림이 곧 「아직 아니다」다.
      ★ 기울기는 그림이 아니라 셈이다. 셋이 얼마나 올렸는지를 화면이 알고 있으니
        조각 한 장을 그만큼 올리고 그만큼 돌린다 — 필요한 그림이 둘로 준다. */
+  /* 그림이 세로에 가깝다(마루 0.96 · 조각 1.16). 판을 그림에 맞춘다 — 가로로
+     잡아 늘리면 마루 결이 뭉개지고 조각이 납작해진다. */
   .lift{position:relative;margin:0 0 14px;border:1px solid var(--line);border-radius:2px;
     background:#0d0f0e;overflow:hidden;touch-action:none;user-select:none;
-    aspect-ratio:4/3;max-height:46dvh}
-  .lift .lf-floor{position:absolute;inset:0;background:center/cover no-repeat #14100e}
-  /* 조각. 아래쪽 가운데를 축으로 돈다 — 널빤지를 지렛대처럼 든다. */
-  .lift .lf-slab{position:absolute;left:8%;right:8%;top:34%;
+    aspect-ratio:1/1;max-height:44dvh}
+  .lift .lf-floor{position:absolute;inset:0;background:center 62%/cover no-repeat #14100e}
+  /* 조각. 아래쪽 가운데를 축으로 돈다 — 지렛대처럼 든다.
+     화면 한가운데에 놓고 좌우로 여백을 넉넉히 남긴다(잡는 자리가 그 아래 선다). */
+  .lift .lf-slab{position:absolute;left:12%;right:12%;top:16%;
     transform-origin:50% 100%;will-change:transform;
-    transition:transform .12s linear}
+    transition:transform .12s linear;
+    filter:drop-shadow(0 3px 0 rgba(0,0,0,.45))}
   .lift .lf-slab img{width:100%;display:block;image-rendering:pixelated}
   /* 그림이 아직 없을 때 — 도형으로라도 돌아야 한다. 그림이 들어오면 이 판은 숨는다. */
   .lift .lf-slab .lf-stub{height:64px;border-radius:3px;
     background:linear-gradient(180deg,#6b6257,#3a352e);
     box-shadow:inset 0 2px 0 rgba(255,255,255,.16),inset 0 -3px 0 rgba(0,0,0,.5)}
   /* 조각이 뜬 만큼 아래에 그림자가 퍼진다 — 높이는 그림자로 읽힌다 */
-  .lift .lf-sh{position:absolute;left:14%;right:14%;bottom:16%;height:12px;border-radius:50%;
+  .lift .lf-sh{position:absolute;left:20%;right:20%;bottom:30%;height:14px;border-radius:50%;
     background:radial-gradient(closest-side,rgba(0,0,0,.75),transparent);
     transition:transform .12s linear,opacity .12s linear}
   /* 잡는 자리 셋 */
   .lift .lf-grips{position:absolute;inset:0;display:flex;align-items:flex-end;
     justify-content:space-between;padding:0 4% 6%}
-  .lift .lf-grip{position:relative;flex:0 0 28%;height:74%;border-radius:2px;
+  .lift .lf-grip{position:relative;flex:0 0 28%;height:48%;border-radius:2px;
     display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;
     padding-bottom:4px;cursor:grab;
     border:1px dashed color-mix(in srgb,var(--rc,var(--cold)) 48%,transparent);
