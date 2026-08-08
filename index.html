@@ -1052,6 +1052,13 @@
     font-size:13px;line-height:1.6;word-break:keep-all;text-wrap:pretty;
     animation:fade .22s ease both}
   .tuttip b{font-weight:800;color:#0b6a4a}
+  /* 몇 번째인가 · 다음으로 — 본문과 붙어 버리면 문장의 일부로 읽힌다. 줄을 가른다. */
+  .tuttip .tt-b{display:block}
+  .tuttip .tt-f{display:flex;align-items:center;gap:8px;margin-top:9px;
+    padding-top:7px;border-top:1px solid color-mix(in srgb,var(--case-e) 30%,transparent);
+    font-family:var(--ui);font-size:11px;font-weight:700;color:var(--case-fg2)}
+  .tuttip .tt-f i{font-style:normal;font-family:var(--mono);font-size:10px;
+    letter-spacing:.1em;margin-right:auto}
   /* 꼬리 — 짚은 것 쪽을 가리킨다 */
   .tuttip::after{content:"";position:absolute;left:50%;translate:-50% 0;
     border:7px solid transparent;border-bottom-color:var(--case-h);bottom:100%}
@@ -1212,25 +1219,45 @@
      그만큼 입력칸이 길어진다. 좁은 폰에서 이름표가 88px을 먹고 있었다. */
   .composer textarea{flex:1;resize:none;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:2px;padding:9px 12px;font-size:16px;font-family:inherit;line-height:1.5;max-height:96px}
   .composer textarea:focus{outline:none;border-color:var(--case-line)}.composer textarea:disabled{opacity:.5}
+  /* 경고 띠도 같은 결로 내려온다 — 알림은 하나의 몸짓이어야 한다 */
+  @keyframes bnDrop{
+    0%  {transform:translate(-50%,-70px);opacity:0}
+    62% {transform:translate(-50%,6px);opacity:1}
+    100%{transform:translate(-50%,0);opacity:1}
+  }
   .banner{position:fixed;left:50%;top:112px;transform:translate(-50%,-14px);z-index:80;
     max-width:min(92vw,420px);background:#2a1414;border:1px solid #5a2c2c;color:#ffd3d3;
     padding:9px 15px;font-size:13px;line-height:1.5;text-align:center;border-radius:2px;
     box-shadow:3px 3px 0 rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .22s,transform .22s}
-  .banner.on{opacity:1;transform:translate(-50%,0)}
+  .banner.on{opacity:1;transform:translate(-50%,0);
+    animation:bnDrop .5s cubic-bezier(.22,1,.3,1) both}
+  @media(prefers-reduced-motion:reduce){ .banner.on{animation:none} }
 
   /* ── GM 진행 안내 · 위에서 내려오는 띠 ────────────────────────────
      GM 지문은 대화가 아니라 진행 안내다. 대화창 딱지로 부르면 «누가 말을 걸었다»로
      읽히고, 조사화면을 짚어 주는 중이면 화면 두 곳이 동시에 깜빡인다.
      그래서 대화 셈에서 빼고(chatLines) 여기로 내려보낸다.
      갈 곳이 없는 안내라 누르면 «읽었다»는 뜻이고, 그대로 위로 올라가며 사라진다. */
-  .gmbar{position:fixed;left:50%;top:0;transform:translate(-50%,-120%);z-index:82;
+  .gmbar{position:fixed;left:50%;top:0;transform:translate(-50%,-140%);z-index:82;
     width:min(94vw,520px);cursor:pointer;
     background:linear-gradient(180deg,var(--case-b),var(--case-h));
     border:1px solid var(--case-e);border-top:0;border-radius:0 0 2px 2px;
     box-shadow:0 6px 0 -3px rgba(0,0,0,.5),inset 0 -1px 0 var(--case-lo);
     padding:calc(10px + env(safe-area-inset-top)) 14px 11px;
-    transition:transform .34s cubic-bezier(.22,.9,.24,1),opacity .2s}
-  .gmbar.on{transform:translate(-50%,0)}
+    transition:transform .3s cubic-bezier(.4,0,.85,.2),opacity .2s}
+  /* ★ 내려오는 것을 «보이게» 한다. 전이 하나로 -140% → 0 을 0.34초에 끝냈더니
+     화면 밖에서 대부분을 지나와서, 눈에는 그냥 툭 나타난 것으로 보였다.
+     들어올 때만 따로 재생한다 — 조금 지나쳤다가 제자리로 돌아앉는다. 폰의 알림이
+     그렇게 움직이고, 그 결이 「방금 내려왔다」를 만든다. */
+  @keyframes gmDrop{
+    0%  {transform:translate(-50%,-140%)}
+    62% {transform:translate(-50%,7px)}
+    82% {transform:translate(-50%,-3px)}
+    100%{transform:translate(-50%,0)}
+  }
+  .gmbar.on{transform:translate(-50%,0);
+    animation:gmDrop .62s cubic-bezier(.22,1,.3,1) both}
+  @media(prefers-reduced-motion:reduce){ .gmbar.on{animation:none} }
   .gmbar .gb-k{display:flex;align-items:center;gap:7px;
     font-family:var(--mono);font-size:10px;letter-spacing:.16em;
     color:var(--case-fg2);text-transform:uppercase}
@@ -5927,10 +5954,12 @@ function showSpot(id){
      더 누르게 하는 것은 안내가 아니라 문턱이다. 이미 볼 수 있는 카드일 때만이다
      (전체공개거나 내 손패). 아직 아무도 안 뒤진 자리는 예전 그대로 — 거기서
      조사턴을 쓰는 것이 이 창의 몫이다. */
-  if(full && liftOn(id)){ openCard(id); return; }
-  /* 수수께끼가 걸린 자리도 같다 — 「수수께끼로 여는 자리입니다 / [수수께끼를 푼다]」를
-     한 번 더 읽히는 것은 안내가 아니라 문턱이다. 지금 붙을 수 있는 자리면 바로 그
-     자리에 세운다(물음도 그림도 그 창 안에 있다). */
+  /* ★ 이미 «내가 읽을 수 있는» 카드(전체공개거나 내 손패)라면 이 창은 아무것도
+     더 말해 주지 않는다 — 제목 없는 상자 하나를 세우고 「전체공개」 단추를 한 번 더
+     누르게 할 뿐이다. 그건 안내가 아니라 문턱이다. 바로 그 카드에 세운다.
+     아직 아무도 안 뒤진 자리는 예전 그대로 — 거기서 조사턴을 쓰는 것이 이 창의 몫이다. */
+  if(full){ openCard(id); return; }
+  /* 수수께끼가 걸린 자리도 같다 — 물음도 그림도 그 카드 창 안에 있다. */
   if(st.k==="puzzle"){ openPuzzle(id); return; }
   let body;
   if(full){
@@ -8239,6 +8268,15 @@ async function dropFromCard(id){
   if(r&&r.error){ banner(r.error); return; }
   await poll();
   banner(overLimit()>0?`아직 ${overLimit()}장 더 내려놔야 합니다.`:"공개했습니다.");
+}
+/* 「카드 내려놓기」 — 고르는 창을 또 띄우지 않는다. 지금 «보고 있는» 그 장이다.
+   손패는 넘겨 보는 물건이고, 넘겨서 이 장을 보고 있다는 것이 곧 고른 것이다.
+   목록에서 다시 고르게 하면 방금 본 장을 목록에서 또 찾아야 한다. */
+async function dropShown(){
+  const seat=(handTab==="belong")?"belong":(handTab==="tool"?"tool":"clue");
+  const id=handAt[seat] || ((clueCards().slice().reverse()[0]||{}).id);
+  if(!id){ banner("내려놓을 카드가 없습니다"); return; }
+  await dropFromCard(id);
 }
 async function publish(id){ closeModal("cardModal"); const r=await post("/api/publish",{cardId:id,roleId:myRoleId,clientId}); if(r&&r.error)banner(r.error); await poll(); }
 
@@ -10551,12 +10589,10 @@ async function showMySheet(){
   /* ★ 최근에 생긴 것이 «위»다. 서버는 생긴 차례대로 쌓아 보내는데, 그대로 그리면
        방금 떠오른 조각이 늘 맨 아래에 있어서 매번 끝까지 굴려야 닿았다.
        새것인지는 뒤집기 «전»에 정한다 — 원래 순서의 마지막 하나가 새것이다. */
-  if(frags.length){ const lastI=frags.length-1;
-    const fh=frags.map((f,i)=>({f, isNew:(f.when===curPhase&&i===lastI)})).reverse()
-      .map(({f,isNew})=>`<div class="frag${isNew?" newfrag":""}"><div class="w">${esc(fragL)} · ${esc(f.when)}${isNew?" · NEW":""}</div>${esc(f.text)}</div>`).join("");
-    // 게임이 도는 동안 «늘어나는» 글이다. 훑는 자리(한눈에)가 아니라
-    // 판 위에서 쓰는 자리(추가 정보)에 둔다 — 새로 생긴 것을 여기서 찾게 된다.
-    slides.push({tab:"extra", html:`<div class="bigcard role k-frag" style="--rc:${s.color}"><div class="bc-eyebrow">${esc(fragE)}</div><div class="bc-title" style="font-size:18px">${esc(fragL)}</div><div style="margin-top:14px">${fh}</div></div>`}); }
+  /* ★ 「떠오른 것」 장은 세우지 않는다. 막이 넘어갈 때마다 한 줄씩 늘어나고 그때마다
+     NEW 가 붙어서, 정작 지금 봐야 하는 장 앞에 늘 이것이 끼어들었다 — 읽을 것이
+     아니라 «치워야 하는 것»이 되어 있었다. 서버가 보내는 값(fragments)은 그대로 둔다.
+     다시 세우기로 하면 이 자리 하나만 되살리면 된다. */
   // 4-b) 고갯짓 — 질문지의 결과.
   //       늘어나는 것들(조각·고갯짓)이 앞이고 늘 있는 것(배치도)이 뒤다 — 새로 생긴 걸 여기서 찾는다. 줄글로 적으면 여섯 줄이 뭉개져서 한 장으로 세운다.
   //       물은 것과 «아무도 안 물은 것»이 같은 무게로 보여야 한다 — 안 물어진 쪽이 이 막의 기록이다.
@@ -10723,7 +10759,6 @@ async function showMySheet(){
   hoist(/k-belong/);           // 소지품 — 늘 있고, 압수되면 게임이 뒤집히는 자리
   hoist(/k-night/);            // 그날 밤
   hoist(/k-vault/);            // 그리고 그 앞에 금고 — 오늘 아침 다 같이 본 것이 제일 위다
-  hoist(/k-frag/);             // 맨 앞은 떠오른 것 — 이 탭에서 제일 자주 다시 펴보는 장이다
   // 「추가 정보」는 아직 빈 게임에서도 자리를 지킨다. 게임이 도는 중에 탭이 생겼다 없어졌다 하면
   // 탭 줄의 모양이 바뀌고, 어제까지 한 번이면 닿던 자리가 오늘은 두 번이 된다.
   if(!slides.some(x=>x.tab==="extra")){
@@ -10933,9 +10968,7 @@ function tourEnd(run){
   if(!tour) return;
   const t=tour, done=t.onDone; tour=null;
   tourOff();
-  const m=$(t.modal);
-  if(m){ m.querySelectorAll(".tourdim,.tourtip").forEach(x=>x.remove());
-         m.querySelectorAll(".tourhit").forEach(x=>x.classList.remove("tourhit","live")); }
+  spotClear();
   tourMark(t.key);
   if(run!==false&&done) try{ done(); }catch(e){}
   /* 이제 하단바가 말할 차례다 — 도는 동안 재워 뒀으니 여기서 깨운다 */
@@ -10951,29 +10984,22 @@ function tourPaint(){
   const t=tour; if(!t) return;
   const m=$(t.modal); if(!m||!m.classList.contains("on")){ tourEnd(false); return; }
   tourOff();
-  m.querySelectorAll(".tourhit").forEach(x=>x.classList.remove("tourhit","live"));
-  /* ★ 어둠막과 말풍선은 창«틀» 안에 넣는다. 창 밖(모달)에 붙여 두면 짚은 것과
-     쌓임 맥락이 갈려서, 짚은 것의 z-index 가 아무리 높아도 어둠막 아래에 깔릴 수
-     있다. 셋을 한 맥락에 모아 두면 84 < 86 < 88 이 그대로 성립한다. */
-  const host=m.querySelector(".win")||m;
-  let dim=m.querySelector(".tourdim");
-  if(!dim){ dim=document.createElement("div"); dim.className="tourdim";
-            dim.onclick=e=>{ e.stopPropagation(); tourGo(); }; host.appendChild(dim); }
-  let tip=m.querySelector(".tourtip");
-  if(!tip){ tip=document.createElement("div"); tip.className="tourtip";
-            tip.onclick=e=>{ e.stopPropagation(); tourGo(); }; host.appendChild(tip); }
   const st=t.steps[t.i];
+  /* ★ 그 칸이 «어느 화면에서» 하는 이야기인지를 먼저 맞춘다. 인물정보 세 칸처럼
+     칸마다 화면이 갈리는 자리는, 말로만 「여기 있습니다」 하고 정작 그 화면을
+     안 보여 주면 무슨 말인지 알 수가 없다. */
+  if(st.before){ try{ st.before(); }catch(e){} }
+  document.querySelectorAll(".tourhit").forEach(x=>x.classList.remove("tourhit","live"));
   const el=(typeof st.el==="function")?st.el():st.el;
   if(!el||!el.isConnected){ tourGo(); return; }
   el.classList.add("tourhit");
   /* ★ 짚은 것은 «보이기만» 한다 — 설명을 읽는 중에 그 단추가 진짜로 눌리면
        설명 위로 또 다른 창이 뜬다. 어디를 눌러도 다음 칸으로만 간다.
      ★ 다만 «눌러 보라»고 하는 칸(tap)은 예외다. 그 칸은 실제로 눌리고,
-       눌리는 순간 짚어 주기를 먼저 끝낸다 — 창이 다시 그려지기 전에 걷어야
-       어둠막이 새 화면에 남지 않는다. */
+       눌린 것을 확인한 뒤 다음 칸으로 넘어간다. */
   if(st.tap){
     el.classList.add("live");
-    const onTap=()=>{ tourEnd(); };
+    const onTap=()=>{ setTimeout(()=>{ try{ tourGo(); }catch(e){} },260); };
     el.addEventListener("click", onTap, true);
     tourPaint._off=()=>{ el.removeEventListener("click", onTap, true); };
   }
@@ -10982,23 +11008,18 @@ function tourPaint(){
        이미 보이는 것은 굴리지 않는다. 안 보일 때만, 그것도 제일 가까운 자리로. */
   try{
     const vr=el.getBoundingClientRect(), br=m.getBoundingClientRect();
-    if(vr.top<br.top+8||vr.bottom>br.bottom-8)
+    if(vr.top<br.top+8||vr.bottom>br.bottom-8){
       el.scrollIntoView({block:"nearest",inline:"nearest",behavior:"auto"});
+      // 굴린 뒤의 자리로 다시 재야 구멍이 안 어긋난다
+      setTimeout(()=>{ try{ if(tour===t) tourPaint(); }catch(e){} },60);
+    }
   }catch(e){}
-  tip.innerHTML=`<div class="tt-b">${st.tip}</div>
-    <div class="tt-f"><span class="tt-n">${t.i+1}/${t.steps.length}</span>
-      <span class="tt-x">${t.i+1<t.steps.length?"눌러서 다음 ›":"눌러서 닫기"}</span></div>`;
-  // 자리 — 짚은 것 «위»에 두되, 위가 좁으면 아래로 내린다.
-  // 기준은 말풍선이 실제로 매달린 것(창틀)이다 — 모달로 재면 창틀 안쪽 여백만큼 어긋난다.
-  const mb=host.getBoundingClientRect(), r=el.getBoundingClientRect();
-  tip.style.left="0px"; tip.style.top="0px";                 // 재기 전에 초기화
-  const th=tip.offsetHeight||70, tw=tip.offsetWidth||240;
-  const above=(r.top-mb.top)>th+16;
-  tip.style.top=(above ? r.top-mb.top-th-10 : r.bottom-mb.top+10)+"px";
-  let x=r.left-mb.left+r.width/2-tw/2;
-  x=Math.max(10, Math.min(mb.width-tw-10, x));
-  tip.style.left=x+"px";
-  tip.classList.toggle("down", !above);
+  const last=t.i+1>=t.steps.length;
+  spotPaint(el, st.tip, {
+    onDim: st.tap?null:(e=>{ if(e&&e.stopPropagation) e.stopPropagation(); tourGo(); }),
+    tip:`<i>${t.i+1}/${t.steps.length}</i>${st.tap?"짚은 곳을 눌러 보세요"
+                                                :(last?"눌러서 닫기":"눌러서 다음 ›")}`,
+  });
 }
 function tourStart(key, modal, steps, onDone){
   /* ★ 이미 도는 중이면 손대지 않는다. 창은 폴링마다 다시 그려질 수 있는데,
@@ -11053,6 +11074,11 @@ function handTour(){
   if([...box.querySelectorAll(".htabs .htab")].some(b=>b.textContent.indexOf("도구")>=0))
     steps.push({el:tourFindTxt("#handBox .htabs .htab","도구"), tap:true,
       tip:"수수께끼를 풀어 얻은 <b>도구</b>는 이 칸에 따로 쌓입니다 — 손패 상한 밖이라 몇 개든 들 수 있어요. <b>눌러서 열어 보세요.</b>"});
+    /* ★ 누른 것을 «확인하고» 넘어간다. 예전에는 누르는 순간 짚어 주기가 끝나서,
+       정작 열린 도구 칸은 아무도 안 보고 하단바가 인물정보를 부르기 시작했다.
+       눌러서 열린 그 화면을 한 번 짚어 주는 것까지가 이 칸의 몫이다. */
+    steps.push({el:tourFind("#handBox .invgrid"), before:()=>{ try{ showMyHand("tool"); }catch(e){} },
+      tip:"여기가 <b>도구 칸</b>입니다. 빈 자리가 아직 채울 것이 남았다는 뜻이에요."});
   /* 다 들었으면 소지품 칸을 «끝낸 것»으로 찍는다. 인물정보는 열어 주지 않는다 —
      하단바가 그 칸을 부르고, 사람이 눌러서 들어가는 것이 이 게임의 차례다. */
   tourStart("hand","handModal",steps,()=>{ try{ coachDone("hand"); }catch(e){} });
@@ -11060,18 +11086,22 @@ function handTour(){
 /* 인물정보 — 칸이 셋이다. 무엇이 어느 칸에 있는지만 짚는다. */
 function whoTour(){
   const box=$("whoBox"); if(!box) return;
+  /* ★ 칸 이름만 짚고 「여기 있습니다」 하면 무슨 말인지 알 수가 없다 —
+     그 칸이 «무엇을 보여주는 화면인지»를 못 봤기 때문이다. 짚을 때마다 실제로
+     그 칸으로 옮겨 간다. 어둠막은 그대로 깔린 채라 딴 데로 새지 않는다. */
   const T=[
-    ["이 자리의 사람들",
+    ["cast","이 자리의 사람들",
      "누가 <b>어디를 뒤졌는지</b>가 여기 모입니다. 무엇을 찾았는지는 본인만 알아요 — 자물쇠는 자리만 아는 카드입니다."],
-    ["사건 현장과 피해자",
+    ["case","사건 현장과 피해자",
      "현장과 피해자에 대해 <b>모두가 아는 것</b>입니다. 언제든 다시 볼 수 있어요."],
-    ["메모",
+    ["memo","메모",
      "떠오른 것을 적어 두는 칸입니다. <b>나만 봅니다.</b>"],
   ];
   const steps=[];
-  T.forEach(([k,tip])=>{
+  T.forEach(([key,k,tip])=>{
     if([...box.querySelectorAll(".shtabs .shtab")].some(b=>b.textContent.indexOf(k)>=0))
-      steps.push({el:tourFindTxt("#whoBox .shtabs .shtab",k), tip});
+      steps.push({el:tourFindTxt("#whoBox .shtabs .shtab",k), tip,
+                  before:()=>{ try{ whoGo(key); }catch(e){} }});
   });
   /* 여기까지가 이 게임을 굴리는 데 필요한 전부다. 마지막 한 줄을 띠로 내려보내고
      짚어 주기를 아주 접는다 — 이 뒤로는 하단바가 잠기는 자리가 없다. */
@@ -11175,7 +11205,7 @@ function showMyHand(tab){
   h+=`</div>${canAct?`<div class="mfoot">
     <button class="btn" onclick="showShare()">${ICO.chat} 대화에 올리기</button>
     ${pubN?`<button class="btn" onclick="showSwap()">${ICO.swap} 테이블 위 카드와 바꾸기</button>`:""}
-    <button class="btn${over>0?" ember":""}"${over>0?` onclick="showHandTrim()"`:" disabled"}
+    <button class="btn${over>0?" ember":""}"${over>0?` onclick="dropShown()"`:" disabled"}
       title="${over>0?`${over}장을 내려놓아야 합니다`:"손패가 상한을 넘지 않았습니다"}"
       >카드 내려놓기${over>0?` <b>${over}</b>`:""}</button></div>`:""}`;
   $("handBox").innerHTML=h;
@@ -11426,8 +11456,14 @@ function tutStage(){
          풀지 않고 닫을 수 있는데, 푼 것으로 재고 있었더니 다 보고 닫아도 다시
          「몸 아래에서 나온 것을 살펴보세요」로 돌아갔다 — 끝나지 않는 안내가 된다.
          한 번 열어 봤으면 이 기기에서는 그것으로 끝이다. */
-    if(openCardId===L.grants){ tutSawGrant(true); return "close2"; }
+    /* ★ 한 번 보고 닫았으면 이 사슬은 끝이다 — 그 검사가 제일 앞에 온다.
+       뒤에 두었더니 닫고 «다시 열» 때마다 또 「창을 닫고 조사를 이어가주세요」가
+       걸렸다. 튜토리얼이 끝나지 않고 그 카드를 붙들고 늘어진 셈이다.
+       ★ «봤다»는 열 때가 아니라 «닫을 때» 찍는다. 열자마자 찍으면 다음 그리기에
+         바로 끝나 버려서, 정작 읽으라고 띄운 안내가 눈앞에서 사라진다. */
     if(tutSawGrant()) return "done";
+    if(openCardId===L.grants){ tutSawSoft=true; return "close2"; }
+    if(tutSawSoft){ tutSawGrant(true); return "done"; }
     if(openCardId===L.cardId) return "close1";
     return "found";
   }
@@ -11437,6 +11473,7 @@ function tutStage(){
   if($("mapModal")&&$("mapModal").classList.contains("on")) return "pin";
   return "zone";
 }
+let tutSawSoft=false;                // 지금 그 카드를 열어 «보고 있는» 중인가
 /* 「몸 아래에서 나온 것」을 이 기기에서 한 번이라도 열어 봤는가.
    판이 바뀌면 다시 센다 — 새 사람에게는 새 판이다. */
 function tutSawGrant(set){
@@ -11488,20 +11525,33 @@ function tutBannerOnce(){
      올려도 창 밖의 막 아래로 가라앉는다(실제로 그래서 하이라이트가 안 보였다).
      둘레만 덮으면 짚은 것 위에는 아무것도 없으므로 그 싸움 자체가 없어진다.
      덤으로 «구멍»이 진짜 구멍이라, 짚은 것은 그대로 눌린다. */
-function tutClear(){
-  document.querySelectorAll(".tuton").forEach(e=>e.classList.remove("tuton"));
+function tutClear(){ spotClear(); }
+function spotClear(){
+  document.querySelectorAll(".tuton,.tourhit").forEach(e=>e.classList.remove("tuton","tourhit","live"));
   const w=$("tutWrap"); if(w) w.remove();
 }
-/* 네 조각 + 말풍선. 자리는 매번 다시 잰다 — 창이 굴러가면 구멍도 같이 가야 한다. */
-function tutSpot(el, msg){
+/* 짚어 주기 «한 벌» — 둘레를 네 조각으로 덮고, 짚은 것만 남기고, 말풍선을 단다.
+   첫 조사 안내도 창 «안»의 짚어 주기도 이 한 벌을 쓴다. 같은 뜻이면 같은 모양이다.
+     el   짚을 것 (이 위에는 아무것도 안 얹는다 — 그래서 하이라이트가 늘 보인다)
+     html 말풍선 속
+     opt.onDim  둘레를 눌렀을 때. 없으면 둘레는 그냥 막기만 한다.
+     opt.tip    말풍선 아래 작은 줄(몇 번째인가 · 다음으로) */
+function spotPaint(el, html, opt){
+  opt=opt||{};
   let w=$("tutWrap");
   if(!w){
     w=document.createElement("div"); w.id="tutWrap"; w.className="tutwrap";
     w.innerHTML=`<div class="tp t"></div><div class="tp b"></div>
                  <div class="tp l"></div><div class="tp r"></div>
-                 <div class="tuttip"><span class="tt-b"></span></div>`;
+                 <div class="tuttip"><span class="tt-b"></span><span class="tt-f"></span></div>`;
     document.body.appendChild(w);
   }
+  w.querySelectorAll(".tp").forEach(e=>{ e.onclick=opt.onDim||null;
+    e.style.cursor=opt.onDim?"pointer":"default"; });
+  const tipEl=w.querySelector(".tuttip");
+  tipEl.onclick=opt.onDim||null;
+  tipEl.style.pointerEvents=opt.onDim?"auto":"none";
+  tipEl.style.cursor=opt.onDim?"pointer":"default";
   const r=el.getBoundingClientRect(), P=7;
   const top=Math.max(0,r.top-P), bot=Math.min(innerHeight,r.bottom+P);
   const lef=Math.max(0,r.left-P), rig=Math.min(innerWidth,r.right+P);
@@ -11510,18 +11560,21 @@ function tutSpot(el, msg){
   set(".tp.b",{left:"0px",top:bot+"px",width:"100%",height:Math.max(0,innerHeight-bot)+"px"});
   set(".tp.l",{left:"0px",top:top+"px",width:lef+"px",height:(bot-top)+"px"});
   set(".tp.r",{left:rig+"px",top:top+"px",width:Math.max(0,innerWidth-rig)+"px",height:(bot-top)+"px"});
-  const tip=w.querySelector(".tuttip");
-  const body=tip.querySelector(".tt-b");
-  if(body.innerHTML!==msg) body.innerHTML=msg;
+  const body=tipEl.querySelector(".tt-b"), foot=tipEl.querySelector(".tt-f");
+  if(body.innerHTML!==html) body.innerHTML=html;
+  const ft=opt.tip||"";
+  if(foot.innerHTML!==ft) foot.innerHTML=ft;
+  foot.style.display=ft?"":"none";
   // 짚은 것 «아래»에 두되, 아래가 좁으면 위로 올린다
-  tip.style.left="0px"; tip.style.top="0px"; tip.classList.remove("up");
-  const th=tip.offsetHeight||56, tw=tip.offsetWidth||240;
+  tipEl.style.left="0px"; tipEl.style.top="0px"; tipEl.classList.remove("up");
+  const th=tipEl.offsetHeight||56, tw=tipEl.offsetWidth||240;
   const below=(innerHeight-bot)>th+18;
-  tip.style.top=(below? bot+10 : Math.max(8, top-th-10))+"px";
-  tip.classList.toggle("up", !below);
-  let x=r.left+r.width/2-tw/2;
-  tip.style.left=Math.max(10,Math.min(innerWidth-tw-10,x))+"px";
+  tipEl.style.top=(below? bot+10 : Math.max(8, top-th-10))+"px";
+  tipEl.classList.toggle("up", !below);
+  tipEl.style.left=Math.max(10,Math.min(innerWidth-tw-10,
+                    r.left+r.width/2-tw/2))+"px";
 }
+function tutSpot(el,msg){ spotPaint(el,msg); }
 /* 짚을 것을 고른다 — 화면에 «실제로 있는» 것에서만 고른다.
    반환: {el, msg} 또는 null */
 function tutTarget(st){
@@ -11545,6 +11598,11 @@ function paintMapHint(){
   const old=$("mapHint");
   const ph=(STATE&&STATE.phase)||{};
   const turn=STATE&&STATE.turn;
+  /* ★ 창 «안»의 짚어 주기가 도는 중이면 손대지 않는다 — 걷지도 않는다.
+     여기서 tutClear() 를 먼저 부르고 있었는데, 창이 다시 그려질 때마다
+     openModal → paintMapHint 가 돌아서 짚어 주기의 어둠막과 하이라이트를
+     통째로 지워 버렸다. 「어둠막과 말풍선만 있고 하이라이트가 없다」가 그것이다. */
+  if(tour) return;
   const st=tutStage();
   tutClear();
 
