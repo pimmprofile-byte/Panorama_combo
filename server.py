@@ -5207,10 +5207,17 @@ def api_build():
 @app.get("/favicon.ico")
 def favicon():
     """브라우저는 <link> 와 상관없이 이 주소를 한 번 두드린다. 없으면 404 가 한 줄
-    남고, 북마크·홈화면처럼 <link> 를 안 읽는 자리에서는 아이콘이 아예 안 뜬다."""
+    남고, 북마크·홈화면처럼 <link> 를 안 읽는 자리에서는 아이콘이 아예 안 뜬다.
+
+    ★ 여기에 max-age=86400 을 걸어 두었다. <link> 쪽은 ?v= 를 올리면 새 주소가 되니
+      바로 바뀌는데, 이 «맨 주소»에는 붙일 표가 없다 — 그림을 갈아도 하루 동안은
+      옛것이 그대로 뜬다. 파비콘은 브라우저가 유난히 오래 붙들고 있는 물건이라
+      그 하루가 「고쳐도 안 바뀐다」로 돌아온다.
+      501바이트짜리 하나다. 매번 물어보게 두고, 안 바뀌었으면 ETag 로 304 를 받는다 —
+      값은 거의 0 이고 「고치면 바뀐다」를 얻는다."""
     return FileResponse(_ASSETS / "favicon.ico",
                         media_type="image/x-icon",
-                        headers={"Cache-Control": "public, max-age=86400"})
+                        headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/")
