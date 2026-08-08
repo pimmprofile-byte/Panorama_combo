@@ -3033,7 +3033,14 @@ def _lift_state() -> dict | None:
     #   바닥 한 장과 조각 한 장뿐이다.
     #   숨길 값이 아니다 — 오히려 서로 보여야 누가 안 잡고 있는지 부를 수 있다.
     at = {rid: round(float(d.get("v") or 0), 3) for rid, d in live.items()}
+    give = c["lift"].get("grants") or ""
     return {"cardId": c["id"], "n": len(live), "of": of,
+            # 들어내면 «어느 자리»가 생기는가. 들어낸 뒤에는 그 핀이 지도에 그대로
+            # 서므로 숨길 값이 아니다 — 첫 조사 안내가 그 자리를 짚는 데 쓴다.
+            "grants": give,
+            # 그 아래 것을 «열었는가». 첫 조사 안내가 어디까지 왔는지를 이걸로 잰다.
+            # 카드 내용은 안 나간다 — 열렸다/아니다 한 칸뿐이다.
+            "opened": bool(give and give in ROOM["revealed"]),
             "who": sorted(live.keys()), "at": at, "h": round(h, 3),
             # 잡는 자리(왼쪽·가운데·오른쪽)는 배역 차례로 고정한다 —
             # 기기마다 같은 사람이 같은 쪽을 잡아야 「네가 오른쪽」이 통한다.

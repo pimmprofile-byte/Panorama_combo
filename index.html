@@ -1012,6 +1012,25 @@
     animation:bob2 2.1s ease-in-out infinite;cursor:pointer}
   @keyframes bob2{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-3px)}}
   @media(prefers-reduced-motion:reduce){ .maphint{animation:none} }
+  /* 첫 조사 안내가 짚어 준 자리 — 구역 칸(cc-cam)이든 방 안의 핀이든 같은 초록으로 뛴다.
+     ★ transform 은 절대 건드리지 않는다 — 둘 다 제 자리를 transform 으로 잡고 있어서
+       여기에 scale 한 번 얹으면 칸이 판 밖으로 튀어나간다. 테두리 빛만 얹는다. */
+  .cc-cam.tuton,.pin.tuton{animation:tutOn 1.05s steps(1) infinite;z-index:5}
+  @keyframes tutOn{
+    0%,54%  {box-shadow:0 0 0 3px var(--sig-t),0 0 22px -4px var(--sig-t)}
+    55%,100%{box-shadow:0 0 0 3px rgba(127,233,189,.22)}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .cc-cam.tuton,.pin.tuton{animation:none;box-shadow:0 0 0 3px var(--sig-t)}
+  }
+  /* 안내 줄도 같은 초록을 두른다 — 짚은 자리와 말하는 자리가 한 짝으로 읽힌다 */
+  .maphint.tut{border-color:var(--sig-t);box-shadow:2px 2px 0 var(--case-e),0 0 0 1px var(--sig-t)}
+  /* 창 위에 뜨는 자리 — 창(60)보다 위, 하단바 안내(74)보다 아래에 둔다.
+     ★ 위가 아니라 «아래»다. 화면 꼭대기는 진행 안내 띠(.gmbar, z 82)의 자리라
+       거기에 두면 띠가 내려와 있는 동안 통째로 가려진다. 눌러서 닫기 전까지
+       띠는 안 걷히므로, 그 자리는 이 줄의 자리가 아니다.
+       하단 독 바로 위 — 손가락이 이미 가 있는 자리에 세운다. */
+  .maphint.over{position:fixed;top:auto;bottom:calc(var(--dh,64px) + 12px);z-index:73}
   .coach-tip{position:fixed;z-index:77;transform:translateX(-50%);
     box-shadow:2px 2px 0 var(--case-e);
     background:var(--case-h);color:var(--case-fg);font-size:12.5px;font-weight:800;letter-spacing:.01em;
@@ -5712,7 +5731,7 @@ function paintRoom(room, url){
     const st=cardState(c), p=pinAt(c.id,i,cards.length);
     const seen=(st.k!=="open"&&st.k!=="lock");
     const wc=(st.who&&st.who.color)||"";
-    return `<button class="pin ${st.k} ${seen?"seen":""} ${p[0]>55?"rt":""}"
+    return `<button class="pin ${st.k} ${seen?"seen":""} ${p[0]>55?"rt":""}" data-c="${c.id}"
       style="left:${p[0]}%;top:${p[1]}%${wc?`;--wc:${vnNameSafeColor(wc)||"var(--line)"}`:""}"
       onclick="event.stopPropagation();showSpot('${c.id}')" title="${esc(c.spot||"")}">
       <i></i><span>${esc(c.spot||room.name)}</span></button>`; }).join("");
@@ -5748,7 +5767,7 @@ function roomWide(key){
     const pins=cards.map((c,i)=>{ const st=cardState(c), p=pinAt(c.id,i,cards.length);
       const seen=(st.k!=="open"&&st.k!=="lock");
       const wc=(st.who&&st.who.color)||"";
-      return `<button class="pin ${st.k} ${seen?"seen":""} ${p[0]>55?"rt":""}"
+      return `<button class="pin ${st.k} ${seen?"seen":""} ${p[0]>55?"rt":""}" data-c="${c.id}"
         style="left:${p[0]}%;top:${p[1]}%${wc?`;--wc:${vnNameSafeColor(wc)||"var(--line)"}`:""}"
         onclick="showSpot('${c.id}')"><i></i><span>${esc(c.spot||room.name)}</span></button>`; }).join("");
     const doors=roomSubs(room.key).filter(r=>!r.needPod||podMarked()).map(r=>{
@@ -5826,7 +5845,7 @@ function openZoneList(loc){
   const list=cards.map(c=>{ const st=cardState(c); const full=cardOpen(c.id);
     // 제목은 카탈로그가 아니라 실제로 열린 판본에서 가져온다 — 카탈로그에는 제목이 없어서
     // 여태 내 손패·전체공개 카드의 이름 자리가 빈 채로 떴다.
-    return `<div class="zcard ${st.k}${isFresh(c)?" fresh":""}${c.hot?" hot":""}"${st.who?` style="--tc:${st.who.color}"`:""}>
+    return `<div class="zcard ${st.k}${isFresh(c)?" fresh":""}${c.hot?" hot":""}" data-c="${c.id}"${st.who?` style="--tc:${st.who.color}"`:""}>
       <div class="zc-spot">${esc(c.spot||z.name||"")}${isFresh(c)?`<span class="fr">이튿날</span>`:""}</div>
       <div class="zc-body">${full?`<b>${esc(full.title)}</b>`:`<span class="zc-q">아직 보지 않은 곳</span>`}</div>
       ${st.act?`<button class="btn ${st.k==="open"?"primary":"quiet"} sm" onclick="${st.act}">${st.label}</button>`
@@ -10970,17 +10989,23 @@ const COACH_STEPS=[
      제일 크게 바뀌는 자리인데, 그때 하단바가 다 열려 있으면 사람들이 소지품과
      인물정보를 먼저 뒤진다 — 아직 아무것도 안 든 칸들이다. 조사화면 하나만
      열어 두고, 그리로 들어오면 그다음 칸들이 차례로 풀린다. */
+  /* ★ skip 을 «가진 카드가 있는가»로 재고 있었다. 데이지는 도구 한 장을 쥐고
+     시작한다 — 그래서 그 한 장 때문에 이 칸이 통째로 건너뛰어졌고, 조사 화면을
+     한 번도 안 짚어 준 채 소지품 안내부터 떴다. 첫 조사 사슬이 도는 동안에는
+     무엇을 쥐고 있든 건너뛰지 않는다. */
   {k:"invest",dk:0, lock:true, tip:"여기에서 사건을 조사합니다", open:()=>dockHome(),
    when:()=> introsAllSaid() && ((STATE.phase||{}).key==="invest"),
-   skip:()=> myCheckedIds().length>0},
+   skip:()=> !tutOn() && myCheckedIds().length>0},
   /* ★ tour:true — 이 두 칸은 창 «안»에서 이야기가 이어진다(handTour/whoTour).
      그래서 «끝났다»고 찍는 것도 그 안의 짚어 주기가 끝난 뒤고, 누른 직후에는
      하단바를 한 박자 재워 둔다. */
+  /* ★ 첫 조사 사슬(관리자실 → 들기 → 수수께끼)이 도는 동안에는 안 익는다.
+     그 사슬이 「이제 직접 원하는 곳을 조사해보세요!」로 끝난 뒤가 이 두 칸의 자리다. */
   {k:"hand",  dk:1, tour:true, tip:"찾아낸 카드는 「소지품」에 쌓입니다", open:()=>showMyHand(),
-   when:()=> myCheckedIds().length>0},
+   when:()=> myCheckedIds().length>0 && !tutOn()},
   {k:"who",   dk:4, tour:true, tip:"다른 인물에 대한 내용은 여기서 봅니다",
    open:()=>showWho(),
-   when:()=> myCheckedIds().length>0},
+   when:()=> myCheckedIds().length>0 && !tutOn()},
 ];
 /* 셋이 다 자기 입으로 한마디씩 했는가 — 자기소개가 한 바퀴 돌았다는 뜻이다.
    AI·GM 줄은 안 센다. 사람이 친 줄만 센다. */
@@ -11104,24 +11129,114 @@ function paintCoach(){
 }
 /* 조사화면의 몫. 하단바가 아니라 «지도 위»에 뜬다 — 눌러야 하는 것이 지도이기
    때문에 어둠막도 안 깐다. 한 곳이라도 열어 보면 그걸로 끝난다. */
+/* ── 첫 조사의 사슬 ─────────────────────────────────────────────
+   조사화면에 들어선 뒤부터 「이제 알아서 하세요」까지, 손을 한 번씩 잡아 준다.
+   그 손잡이가 «관리자실의 방 한가운데»다 — 셋이 함께 들어올리는 자리라,
+   이 게임이 혼자 카드를 모으는 게임이 아니라는 것을 첫 조사에서 몸으로 겪는다.
+
+     구역   관리자실을 누르세요                (구역 칸이 점멸)
+     자리   방 한가운데를 누르세요              (핀이 점멸)
+     들기   셋이 함께 위로 끌어올리세요          (카드 안의 위젯이 말한다)
+     퍼즐   몸 아래에서 나온 것을 살펴보세요
+     끝     이제 직접 원하는 곳을 조사해보세요!   (띠 한 줄, 한 번)
+
+   ★ 어디까지 왔는지는 «서버가 아는 것»으로 잰다(들어냈는가·그 아래를 열었는가).
+     기기마다 따로 세면 셋이 서로 다른 데를 짚는다. */
+function tutStage(){
+  if(coachOff()||!myRoleValid()) return "";
+  const ph=(STATE&&STATE.phase)||{};
+  if(ph.key!=="invest" || ((STATE&&STATE.round)||0)!==1) return "";
+  const L=(STATE&&STATE.lift)||null;
+  if(!L) return "";                          // 이 사건에 그런 자리가 없다
+  if(L.opened) return "done";
+  if(L.done) return "puzzle";
+  /* 들기 위젯이 화면에 있으면 그 자리에 «서 있는» 것이다 — 카드창이 열렸는지가
+     아니라 위젯이 있는지로 잰다. 다른 카드를 열어 둔 것까지 들기로 세면 안 된다. */
+  if(document.querySelector(".lift")) return "lift";
+  if($("mapModal")&&$("mapModal").classList.contains("on")) return "pin";
+  return "zone";
+}
+/* 첫 조사 사슬이 «도는 중»인가. 하단바 안내는 이게 도는 동안 입을 다문다 —
+   짚어 주는 자리가 둘이 되면 사람은 어느 쪽도 안 따라간다. */
+function tutOn(){ const s=tutStage(); return !!s && s!=="done"; }
+/* 그 자리가 있는 구역 — 원고가 아니라 카드에서 읽는다 */
+function tutLoc(){
+  const id=((STATE&&STATE.lift)||{}).cardId||"";
+  const c=(SCEN&&SCEN.cardCatalog||[]).find(x=>x.id===id);
+  return c?c.loc:"";
+}
+const TUT_SAY={
+  zone:  "먼저 <b>관리자실</b>을 눌러 보세요",
+  pin:   "<b>방 한가운데</b>를 눌러 보세요",
+  lift:  "셋이 <b>각자 자기 자리</b>를 위로 끌어올리세요",
+  puzzle:"몸 아래에서 나온 것을 <b>살펴보세요</b>",
+};
+let tutBannerAt="";
+/* 배너는 한 판에 한 번만. 판이 바뀌면 다시 뜬다 — 새 사람에게는 새 판이다. */
+function tutBannerOnce(){
+  const k="pmb.tutdone."+((STATE&&STATE.roomId)||"1");
+  if(tutBannerAt===k) return; tutBannerAt=k;
+  try{ if(localStorage.getItem(k)==="1") return; localStorage.setItem(k,"1"); }catch(e){}
+  try{ gmBarSay("안내","이제 직접 원하는 곳을 조사해보세요!"); }catch(e){}
+}
 function paintMapHint(){
-  const host=$("playBody"); if(!host) return;
   const old=$("mapHint");
   const ph=(STATE&&STATE.phase)||{};
   const turn=STATE&&STATE.turn;
-  /* 하단바 안내(coach)가 도는 중이면 안 뜬다 — 어둠막 위로 한 줄이 더 뜨면
-     짚어 준 자리가 둘이 된다. 조사화면 칸을 짚어 준 다음이 이 줄의 차례다. */
+  const st=tutStage();
+
+  /* 짚어 준 자리 표시는 매번 걷고 다시 붙인다 — 남아 있으면 지난 자리가 계속 뛴다 */
+  document.querySelectorAll(".tuton").forEach(e=>e.classList.remove("tuton"));
+
+  if(st==="done"){
+    tutBannerOnce();
+    try{ coachDone("map"); }catch(e){}
+    if(old) old.remove(); return;
+  }
+  /* 하단바 안내(coach)가 도는 중이면 여기서는 «아무것도» 안 한다 — 줄도, 짚은 자리도.
+     짚어 주는 곳이 둘이면 사람은 어느 쪽도 안 따라간다.
+     ★ 차례(turn)는 첫 조사 안내에 안 건다. 조각난 몸은 전체공개라 조사턴을 안 쓰고,
+       들어올리기는 애초에 셋이 다 붙어야 한다 — 차례가 아닌 사람도 와야 한다. */
   const seen=coachSeen();
-  const want = myRoleValid() && ph.key==="invest" && !openLocked() && !coachOff()
-            && (!turn || turn===myRoleId)
-            && !seen.map && !!seen.invest && !coachNext()
-            && !document.querySelector(".modal.on");
+  const free = myRoleValid() && ph.key==="invest" && !openLocked() && !coachOff() && !coachNext();
+  if(!free){ if(old) old.remove(); return; }
+
+  let msg = st ? TUT_SAY[st] : "구역을 누르면 그 안을 조사할 수 있습니다";
+  /* 짚을 자리를 «화면에 실제로 있는 것»에서 고른다. 창이 열려 있으면 창 안의 핀을,
+     아니면 조사 화면의 구역 칸을 짚는다. 창 안에 그 핀이 없으면 — 다른 방을 열어 둔
+     것이다 — 구역부터 다시 말한다. 없는 자리를 가리키느니 한 칸 물러선다. */
+  if(st==="zone"||st==="pin"||st==="puzzle"){
+    const L=(STATE&&STATE.lift)||{};
+    const id=(st==="puzzle"?L.grants:L.cardId)||"";
+    const inBox=id?document.querySelector(`.modal.on [data-c="${CSS.escape(id)}"]`):null;
+    if(inBox) inBox.classList.add("tuton");
+    else{
+      const loc=tutLoc();
+      const cam=loc?(document.querySelector(`.cctv .cc-cam[data-loc="${CSS.escape(loc)}"]`)
+                   ||document.querySelector(`#mapArt [data-loc="${CSS.escape(loc)}"]`)):null;
+      if(cam) cam.classList.add("tuton");
+      if(st==="pin") msg=TUT_SAY.zone;
+    }
+  }
+  /* 들기 칸에서는 줄을 안 띄운다 — 위젯이 제 입으로 말한다. */
+  const want = st ? (st!=="lift")
+                  : ((!turn||turn===myRoleId) && !seen.map && !!seen.invest
+                     && !document.querySelector(".modal.on"));
   if(!want){ if(old) old.remove(); return; }
-  if(old) return;
+  /* 창이 열려 있으면 줄도 창 위로 올라가야 한다 — 조사 화면 안에 붙은 줄은
+     창 뒤에 깔려서 아무도 못 본다. */
+  const over=!!document.querySelector(".modal.on");
+  const host=over?document.body:$("playBody"); if(!host) return;
+  /* 열쇠에 문구까지 넣는다 — 같은 칸에서도 짚을 자리가 화면에서 사라지면 문구가 바뀐다 */
+  const key=(st||"map")+"|"+msg+(over?"|o":"");
+  if(old&&old.dataset.k===key) return;
+  if(old) old.remove();
   const el=document.createElement("div");
-  el.className="maphint"; el.id="mapHint";
-  el.textContent="구역을 누르면 그 안을 조사할 수 있습니다";
-  el.onclick=()=>coachDone("map");
+  el.className="maphint"+(st?" tut":"")+(over?" over":""); el.id="mapHint"; el.dataset.k=key;
+  if(over){ const dk=$("dock");
+            el.style.setProperty("--dh",(dk?Math.round(dk.getBoundingClientRect().height):64)+"px"); }
+  el.innerHTML=msg;
+  if(!st) el.onclick=()=>coachDone("map");
   host.appendChild(el);
 }
 /* 막 진행표. 지금 막은 금색으로 채우고, 지나온 막은 흐리게 둔다.
