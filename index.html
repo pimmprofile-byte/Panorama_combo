@@ -1820,13 +1820,15 @@
      그림이 있는 카드와 없는 카드가 같은 틀 안에 서야 한 벌로 읽힌다. 예전에는
      그림 비율을 그대로 받아서 카드마다 높이가 제각각이었다 — 넘길 때마다 글이
      아래위로 뛰었다. 원고 그림은 전부 1:1 로 그린다.
-     잘라내지 않는다(contain) — 세로 그림은 아래쪽에 단서가 앉는 경우가 많아서
-     (밀랍 직인, 바닥의 자국) 가운데를 오려내면 그 카드가 말하려던 것이 사라진다.
-     남는 자리는 어둡게 둔다. */
+     빈틈 없이 채우고 가운데를 잡는다(cover). 원고 그림은 이미 1:1 이라 잘릴 것이
+     없고, 창이 낮아 칸이 가로로 눌리는 때만 위아래가 조금 깎인다 — 그때도 좌우로
+     검은 띠가 서는 것보다 꽉 찬 쪽이 낫다. 잘리면 곤란한 그림은 「눌러서 크게」로
+     통째로 볼 수 있다 — showPic 은 폭에 맞추고 높이를 그대로 두어 안 자른다. */
   .cardart{position:relative;margin:0 0 13px;border-radius:2px;overflow:hidden;
     border:1px solid var(--line);cursor:pointer;background:rgba(0,0,0,.35);
     aspect-ratio:1/1;max-height:44dvh}
-  .cardart img{display:block;width:100%;height:100%;object-fit:contain}
+  .cardart img{display:block;width:100%;height:100%;
+    object-fit:cover;object-position:50% 50%}
   /* ── 조각 맞추기 판 ───────────────────────────────────────────
      칩 그림을 깔고 그 위 허공에 자국이 떠 있다. 칩이 내는 초록빛이 그 근거고,
      그림의 어두운 고리가 «아직 안 쓴 조각이 놓인 자리»가 된다 — 무대를 따로
