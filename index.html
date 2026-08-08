@@ -5106,6 +5106,7 @@ function applyState(){
   applyGM();   // 배역이 바뀌면 진행석 쪽 '내 자리' 버튼도 따라 바뀐다
   paintQA();   // 「지금 누구로 보고 있는가」는 폴링마다 다시 박는다
   scanNewZones();   // 새로 열린 구역이 있으면 현황판이 그걸 깜빡인다
+  scanWhatsNew();   // 지도에 «늘어난 것»이 있으면 초록 띠로 알린다
   // 오프닝은 화면에도 배역에도 매이지 않는다.
   // 예전엔 플레이 화면의 오프닝 패널이 그릴 때만 열렸는데, 거기로 넘어가는 조건에
   // myRoleValid()가 붙어 있어서 '배역 없는 GM'은 로비에 남고 영영 못 봤다 —
@@ -5198,8 +5199,8 @@ function applyState(){
     
     maybePhaseFx(ph);
   }
-  /* 셋이 자기소개를 마쳤으면 1차 조사를 저절로 연다 */
-  autoOpenAdvance();
+  /* 셋이 자기소개를 마쳤으면 대화창에 「계속」이 선다 — 넘기는 것은 사람이 한다 */
+  introGate();
   /* QA 「나머지 자동」 — 폴링 끝자락에 한 번 돈다. 안에서 스스로 꺼져 있는지,
      이미 도는 중인지 보므로 여기서는 조건 없이 부른다. */
   qaOthersTick();
@@ -7599,6 +7600,57 @@ function scanNewZones(){
   });
   zoneNew=out;
 }
+/* ── 무엇이 «어디에» 생겼는가 ──────────────────────────────────────
+   푸는 데는 성공했는데 어디에 뭐가 생겼는지를 모르는 것이 이 게임의 제일 큰 구멍이었다.
+   셋이 시신을 들어내면 관리자실 지도에 핀이 하나 늘어난다. 잠수함에서 항해 일지를
+   찾아내면 모니터 정원이라는 구역이 통째로 생긴다. 둘 다 «조용히» 일어난다 —
+   조사화면을 다시 열어 눈으로 훑기 전에는 아무도 모른다.
+
+   그래서 지도에 서 있는 것을 폴링마다 세어 두고, 늘어난 순간에 띠로 알린다.
+   해낸 일이므로 초록 띠다(banner "good").
+
+   ★ 씨앗을 먼저 심는다. 처음 세는 판은 «생긴 것»이 아니라 «원래 있던 것»이다 —
+     새로고침할 때마다 지도에 있는 전부를 새것이라고 외치면 안 된다.
+   ★ 판이 통째로 갈리는 자리(막·라운드·밤·배역·방)에서는 세기만 다시 하고 입을
+     다문다. 2차 조사가 열리면 카드가 열댓 장 한꺼번에 서는데, 그건 이 띠가 할
+     말이 아니라 막 전환 연출이 이미 하는 말이다.
+   ★ 내 손에 든 것과 이미 테이블에 펴진 것은 안 센다. 내가 찾아냈거나 누가 올려
+     놓은 것이고, 그건 카드창과 대화록이 이미 눈앞에 띄워 준다 — 같은 말을 두 번
+     하는 셈이 된다. 여기 띠가 말해야 하는 것은 «가서 조사할 자리가 생겼다» 하나다.
+   ★ 알림 띠는 글자만 받는다(textContent) — 그래서 esc 를 안 쓴다. */
+let nwSeenCards=null, nwSeenZones=null, nwStamp=null;
+function zoneNameOf(loc){ return (((SCEN&&SCEN.map)||[]).find(z=>z.loc===loc)||{}).name||loc; }
+function scanWhatsNew(){
+  if(!SCEN||!SCEN.map||!STATE||!myRoleValid()||!SCEN.cardCatalog){
+    nwSeenCards=null; nwSeenZones=null; nwStamp=null; return;
+  }
+  const st=(STATE&&STATE.night)||{};
+  /* 판이 갈렸는가 — 이 지문이 달라지면 세기만 다시 한다 */
+  const stamp=[(STATE.roomId)||"", myRoleId, ((STATE.phase)||{}).key||"",
+               STATE.round||0, st.done?1:0].join("|");
+  const locs=(SCEN.map||[]).map(z=>z.loc);
+  const seen=new Set(myHand.map(c=>c.id));
+  ((STATE.revealed)||[]).forEach(c=>seen.add(c.id));
+  const at=new Map();
+  locs.forEach(l=>{ try{ zoneCards(l).forEach(c=>{ if(!seen.has(c.id)) at.set(c.id,l); }); }catch(e){} });
+  const zs=new Set(locs);
+  const reseed=(nwSeenCards===null||nwStamp!==stamp);
+  const wasCards=nwSeenCards, wasZones=nwSeenZones;
+  nwSeenCards=at; nwSeenZones=zs; nwStamp=stamp;
+  if(reseed) return;
+  const freshZones=locs.filter(l=>!wasZones.has(l));
+  if(freshZones.length){
+    /* 「가서 눌러 보라」까지는 안 적는다 — 조사화면 맨 위의 줄(newZoneHTML)이
+       그 말을 이미 하고 있고, 그 줄은 들어가 볼 때까지 안 사라진다. */
+    banner(`${freshZones.map(l=>`「${zoneNameOf(l)}」`).join(" · ")} 구역이 열렸습니다.`, "good");
+    return;                       // 새 구역 안의 카드는 그 구역이 데려온 것이다
+  }
+  const byLoc={};
+  at.forEach((loc,id)=>{ if(!wasCards.has(id)) (byLoc[loc]=byLoc[loc]||[]).push(id); });
+  const hit=Object.keys(byLoc);
+  if(!hit.length) return;
+  banner(`${hit.map(zoneNameOf).join(" · ")}에 새로운 카드가 추가되었습니다.`, "good");
+}
 function wireZones(svg){
   ((SCEN.map)||[]).forEach(z=>{
     const g=svg.querySelector("#zone-"+z.loc); if(!g) return;
@@ -9694,7 +9746,9 @@ function openBlocked(want){
        창을 하나 더 띄우면 도로 덮는 셈이다. */
     banner("먼저 한 곳을 조사해 보세요 — 조사화면에서 구역을 누르면 됩니다.");
   }else{
-    banner("지금은 대화창만 열립니다 — 셋이 자기소개를 마치면 조사가 열립니다.");
+    banner(introsAllSaid()
+      ? "지금은 대화창만 열립니다 — 대화창의 「계속」을 셋이 다 누르면 조사가 열립니다."
+      : "지금은 대화창만 열립니다 — 셋이 자기소개를 마치면 「계속」이 뜹니다.");
     if(want!=="chat") setTimeout(()=>{ try{ showChatFull(); }catch(e){} },220);
   }
   return true;
@@ -9749,23 +9803,39 @@ function briefGo(){
   try{ paintSeat(); }catch(e){}          // 하단바 잠금이 한 칸 옮겨간다
   showMySheet();
 }
-/* ── 자기소개가 한 바퀴 돌면 1차 조사가 열린다 ─────────────────────
-   ★ 예전에는 여기서 사람이 「다음 페이즈」를 눌러야 했다. 그런데 이 자리에서
-     해야 하는 일은 이미 끝났다 — 셋이 다 말했다는 것이 곧 «다 됐다»이고,
-     그걸 다시 한 번 눌러 확인시키는 것은 절차지 게임이 아니다.
+/* ── 자기소개가 한 바퀴 돌면 「계속」이 선다 ────────────────────────
+   ★ 예전에는 셋이 다 말한 «순간» 화면이 스스로 /api/ready 를 보내 조사로 넘어갔다.
+     그런데 마지막 사람이 엔터를 치는 그 찰나에 화면이 통째로 갈린다 — 자기가 방금
+     무슨 말을 했는지 되읽을 새도 없고, 앞사람 말을 아직 읽던 사람은 읽던 자리를
+     뺏긴다. 성격이 다른 대목이 이어 붙는 자리에는 문이 있어야 한다. 알리바이가
+     끝나는 자리에 이미 그 문이 있다(dripPaused 의 「계속」) — 같은 모양으로 세운다.
    ★ 각자 자기 몫만 누른다. 호스트를 기다리지 않는다 — 셋이 다 누르면 서버가
-     스스로 막을 넘긴다(/api/ready 가 원래 그렇게 생겼다).
-   ★ 한 게임에 한 번만 보낸다. 폴링마다 보내면 토글이라 눌렀다 취소했다를 반복한다. */
-let openAdvAt=null;
-function autoOpenAdvance(){
-  const seq=(STATE&&STATE.seq);
-  if(openAdvAt!==seq){ openAdvAt=null; }
-  if(!inOpening()||!myRoleValid()||!introsAllSaid()) return;
-  if(openAdvAt===seq) return;
-  const mine=((STATE&&STATE.ready)||{}).mine||[];
-  if(mine.indexOf(myRoleId)>=0){ openAdvAt=seq; return; }
-  openAdvAt=seq;
-  post("/api/ready",{roleId:myRoleId,clientId}).then(()=>{ try{ poll(); }catch(e){} });
+     스스로 막을 넘기고(/api/ready 가 원래 그렇게 생겼다), 그 다음이 조사화면
+     튜토리얼이다(COACH_STEPS 의 invest 칸).
+   ★ 누르고 나면 «기다리는 중»으로 바뀐다. 다시 누르면 취소된다 — 셋 다 눌러야
+     넘어가는 자리라, 잘못 누른 사람이 되돌릴 길이 있어야 한다. */
+function introGoOn(){
+  return inOpening() && myRoleValid() && introsAllSaid() && !dripHeld();
+}
+function introReady(){ return (((STATE&&STATE.ready)||{}).mine||[]).indexOf(myRoleId)>=0; }
+async function introGoBtn(){
+  const r=await post("/api/ready",{roleId:myRoleId,clientId});
+  if(r&&r.error) banner(r.error); else { banner(""); poll(); }
+}
+/* 「계속」은 대화창 안에 선다 — 자기소개를 한 자리가 거기라 눈이 이미 거기 있다.
+   그런데 창을 닫아 둔 사람에게는 그 단추가 화면에 아예 없다. 오프닝의 이 마당은
+   대화창 하나만 여는 마당이므로(openStage()==="talk"), 한 번은 대신 열어 준다.
+   ★ 읽는 창이 떠 있으면 안 뺏는다. 한 번만 연다 — 사람이 스스로 닫았으면 그건
+     닫아 두겠다는 뜻이다. */
+let introGoOpened=false;
+function introGate(){
+  if(!introGoOn()||introReady()||coachOff()) return;
+  const cm=$("chatModal");
+  if(cm&&cm.classList.contains("on")) return;
+  if(document.querySelector(".modal.on")) return;
+  if(introGoOpened) return;
+  introGoOpened=true;
+  try{ showChatFull(); }catch(e){}
 }
 /* ── 네 번째 마당 · 첫 조사 ────────────────────────────────────
    자기소개가 끝나고 조사가 열리는 자리가 이 게임에서 화면이 제일 크게 바뀌는
@@ -10486,6 +10556,16 @@ function renderChat(boxId){
        그러면 점멸시킨다. 이 게임에서 «누르라»는 늘 같은 깜빡임이다(.btn.blink). */
     const d=document.createElement("div"); d.className="dripgo";
     d.innerHTML=`<button class="btn gold sm blink" onclick="dripGoBtn()">계속 ›</button>`;
+    box.appendChild(d);
+  }
+  /* 자기소개가 한 바퀴 돈 자리. 여기서도 게임은 멈춰 선다 — 셋이 각자 「계속」을
+     눌러야 조사가 열린다. 누른 사람에게는 몇 명이 눌렀는지가 단추에 적힌다. */
+  else if(introGoOn()){
+    const r=(STATE&&STATE.ready)||{n:0,of:3};
+    const on=introReady();
+    const d=document.createElement("div"); d.className="dripgo";
+    d.innerHTML=`<button class="btn ${on?"quiet":"gold"} sm${on?"":" blink"}" onclick="introGoBtn()">${
+      on?`기다리는 중 — ${r.n}/${r.of}명 · 취소`:"계속 › 조사를 시작합니다"}</button>`;
     box.appendChild(d);
   }
   /* ★ 「계속」이 떠 있다고 바닥으로 끌어내리지 않는다. 그 단추는 «위엣것을 다 읽고»
