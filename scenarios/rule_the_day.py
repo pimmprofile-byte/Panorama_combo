@@ -1744,6 +1744,15 @@ BELONGINGS = {
 }
 BELONGINGS_ORDER = ["david", "damon", "daisy"]
 
+# ── 1차 지목에서 자기 이름을 적을 수 있는가 ────────────────────────
+# **이 게임에서는 못 적습니다.** 진행 지문(4막 `gm`)이 처음부터 그렇게 적고 있었는데
+# 엔진은 안 막고 있었습니다 — 「못 찍습니다」라고 읽어 준 다음 화면에서는 찍히는,
+# 규칙과 화면이 어긋나 있던 자리입니다.
+#
+# 엔진 기본값은 «적을 수 있다» 입니다(자기를 지목할 이유가 있는 사건이 있습니다).
+# 이 값을 적은 시나리오만 막힙니다.
+ACCUSE_SELF = False
+
 START_ITEMS = {rid: [c["id"] for c in CARDS if c.get("startWith") == rid]
                for rid in ("david", "damon", "daisy")}
 
@@ -2792,6 +2801,10 @@ def public_scenario() -> dict:
                         "when": "오늘", "goals": "오늘, 내가 노리는 것",
                         "pastTl": "그날부터 오늘까지"},
         "victimStages": VICTIM_STAGES,
+        # 1차 지목에서 자기 이름을 적을 수 있는가. 화면이 이 값을 보고 내 이름을
+        # 목록에서 뺍니다 — 못 누르게만 해 두면 「왜 안 눌리지」가 되고, 규칙표에도
+        # 이 한 줄이 같이 섭니다.
+        "accuseSelf": ACCUSE_SELF,
         "fragLabel": FRAGMENT_LABEL, "fragEyebrow": FRAGMENT_EYEBROW,
         "fragNotice": FRAGMENT_NOTICE,
         # round 도 같이 내보냅니다 — 조사 라운드 탭이 이걸 읽습니다.

@@ -1859,6 +1859,12 @@
   @keyframes pzDone{0%{filter:none}40%{filter:brightness(2.2) saturate(1.4)}100%{filter:none}}
   .pzk.done .pz-svg{animation:pzDone .9s ease both}
   .pzk.done .pz-head{display:none}
+  /* 조사 페이즈가 아닐 때 — 판은 그대로 보이되 손이 안 간다. 감추지 않는다:
+     무엇을 푸는 자리인지 보는 것까지는 막을 이유가 없고, 보고 나서 「조사 때
+     여기로 오면 되겠다」로 이어지는 것이 이 화면이 할 일이다. */
+  .pzk.cold .pz-svg{opacity:.42;filter:grayscale(.65)}
+  .pzk.cold .pz-p{cursor:default}
+  .pzk.cold .pz-tip{display:none}
   @media(prefers-reduced-motion:reduce){
     .pzk .pz-slot.on,.pzk .pz-p.bad,.pzk.done .pz-svg{animation:none}
   }
@@ -1881,8 +1887,15 @@
     font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--muted)}
   @media(max-width:380px){ .cardart .ca-zoom{display:none} }
   .sharesec{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--cold);
-    margin:14px 0 7px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+    margin:14px 0 7px;padding-bottom:5px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .sharesec.cold{color:var(--cold)}
+  /* 내 손패 칸에만 붙는 경고. 카드를 짚는 것은 되돌릴 수 있는 일이 아니라,
+     칸 이름 옆에 늘 서 있어야 «올리기 전»에 눈에 걸린다. */
+  .sharesec .ss-warn{margin-left:auto;display:inline-flex;align-items:center;gap:5px;
+    font-family:var(--ui);font-size:11px;font-weight:700;letter-spacing:0;
+    color:var(--ember-b);word-break:keep-all}
+  .sharesec .ss-warn svg{width:13px;height:13px;flex:0 0 13px}
   .shareSay{width:100%;margin-top:12px;padding:10px 12px;border-radius:2px;font-size:14px;
     font-family:inherit;line-height:1.6;resize:vertical;
     background:var(--bg2);border:1px solid var(--line);color:var(--ink)}
@@ -2892,6 +2905,17 @@
   .nt-mine{margin-top:13px;padding:11px 13px;border-left:2px solid var(--me,var(--cold));background:rgba(195,186,176,.06);
     font-size:13px;line-height:1.85;color:#e2dbd2;white-space:pre-line;word-break:keep-all}
   .nt-mine .w{font-size:11px;letter-spacing:.2em;color:var(--me,var(--cold));font-weight:700;margin-bottom:6px}
+  /* 1차 지목의 규칙표 — 한 줄에 이름 하나, 그 옆에 그 뜻 하나. 줄글로 이어 붙이면
+     제일 중요한 「못 바꾼다」와 「압수당한다」가 문장 속에 파묻힌다. */
+  .ac-rules{margin-top:13px;border:1px solid var(--line);border-radius:2px;
+    background:rgba(255,255,255,.02)}
+  .ac-rule{display:flex;gap:11px;padding:9px 12px;border-bottom:1px solid var(--line)}
+  .ac-rule:last-child{border-bottom:0}
+  .ac-rule .ac-rk{flex:0 0 66px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+    line-height:1.9;color:var(--sub);word-break:keep-all}
+  .ac-rule .ac-rt{flex:1 1 auto;min-width:0;font-size:12.5px;line-height:1.8;
+    color:#cfc8bf;word-break:keep-all;text-wrap:pretty}
+  .ac-rule .ac-rt b{color:var(--ember-b);font-weight:800}
   .ac-opt{display:flex;align-items:center;gap:9px;width:100%;text-align:left;margin-top:9px;padding:11px 13px;
     cursor:pointer;border:1px solid var(--line);border-radius:2px;background:rgba(255,255,255,.02);color:inherit;font:inherit}
   .ac-opt .mk{width:11px;height:11px;border-radius:0;border:1px solid var(--rc,var(--sub))}
@@ -5000,6 +5024,7 @@ function applyState(){
   if(!STATE)return;
   kbdGuard();          // 하단바가 감춰진 채 굳어 있으면 여기서 되돌린다(1.5초마다)
   immGate();           // 오프닝의 문이 열리는 순간을 잡는다
+  try{ talkGate(); }catch(e){}   // 토론 막에 들어서는 순간 — 카드를 짚는 길을 알려준다
   // 내 배역은 서버 말을 따른다. 로컬 기억과 어긋나면 서버가 맞다 —
   // 잡은 직후 폴링이 먼저 오면 내 카드가 '참여 중'으로 보이던 원인이었다.
   const wasRole=myRoleId;
@@ -7739,13 +7764,17 @@ function pzHTML(cid){
       <span class="pz-tip">끌어서 옮기고, <b>톡 치면 돌아갑니다</b></span></div>
   </div>`;
 }
-function pzWire(cid){
+/* live — 지금 손을 댈 수 있는 때인가(조사 페이즈인가). false 면 판은 그대로 보여주되
+   조각을 못 잡는다. 못 잡게 안 해 두면, 조사 때가 아닌 사람이 일곱 장을 다 맞춘
+   «뒤에» 서버가 물린다 — 다 해놓고 안 된다는 말을 듣는 것이 제일 나쁘다. */
+function pzWire(cid, live){
   const d=PZ[cid]; if(!d) return;
   const box=$("pzk"); if(!box) return;
+  box.classList.toggle("cold", live===false);
   const sid=(STATE&&STATE.scenarioId)||"";
   findAsset(`/assets/${sid}_card_${cid}`, u=>{ const b=$("pzBg");
     if(u&&b) b.style.backgroundImage=`url("${u}")`; });
-  pzk={cid, done:false, hintAt:Date.now(),
+  pzk={cid, done:false, cold:(live===false), hintAt:Date.now(),
        pieces:d.pieces.map((p,i)=>{
          const st=d.start[i];
          return {...p, cx:st?st.x:p.x, cy:st?st.y:p.y, rot:st?st.r:p.r, set:!st};
@@ -7804,6 +7833,7 @@ function pzGrip(g){
   const pid=g.dataset.id;
   const P=()=>pzk&&pzk.pieces.find(p=>p.id===pid);
   g.addEventListener("pointerdown",e=>{
+    if(pzk&&pzk.cold) return;                 // 조사 페이즈가 아니다 — 보는 것까지만
     const p=P(); if(!p||p.set||id!==null) return;
     id=e.pointerId; try{ g.setPointerCapture(id); }catch(x){}
     const a=pzAt(e); sx=a.x; sy=a.y; ox=p.cx; oy=p.cy; moved=0;
@@ -7884,6 +7914,12 @@ async function openPuzzle(cid){
   try{ d=await (await fetch(`/api/puzzle/${encodeURIComponent(myRoleId)}?clientId=${encodeURIComponent(clientId)}`)).json(); }catch(e){}
   const row=(d.items||[]).find(x=>x.id===cid);
   if(!row){ banner(d.why||"지금은 풀 수 없습니다"); return; }
+  /* 지금이 «푸는 때»인가. 수수께끼는 조사 페이즈에만 연다 — 목록은 그대로 나오므로
+     여기서 갈라야 한다. 닫혀 있어도 창은 연다: 무엇을 푸는 자리인지 보는 것까지는
+     막을 이유가 없고, 오히려 「조사 때 여기로 오면 된다」를 알려 주는 것이 낫다.
+     ★ 손대는 자리만 걷어낸다. 안 걷으면 조각을 다 맞춘 «뒤에» 서버가 물리는 꼴이 된다. */
+  const canTry=(d.open!==false);
+  const why=d.why||"지금은 풀 수 없습니다";
   puzTries[cid]=row.tries||0;
   /* 세 번 틀리면 그 사람에게 잠긴다 — 목록에는 그대로 남는다. 사라지면 「넘겨야 한다」는
      생각 자체를 못 하기 때문이다. 잠긴 자리는 답 넣는 칸을 아예 안 그린다. */
@@ -7900,7 +7936,9 @@ async function openPuzzle(cid){
     <div class="mbody">
       ${kit?pzHTML(cid):cardArtSlot()}
       <div class="sec"><div class="b" style="font-size:15px" id="cardText">${mdB(esc(row.prompt||""))}</div></div>
-      ${kit ? "" : (row.locked
+      ${kit ? "" : (!canTry
+        ? `<div class="puz-dead">${esc(why)}</div>`
+        : row.locked
         ? `<div class="puz-dead">이 카드는 당신에게 잠겼습니다 — 다른 사람에게 넘기세요</div>`
         : `<div class="puz-in">
         <input id="puzAns" type="text" autocomplete="off" placeholder="답을 적으세요" enterkeyhint="done">
@@ -7910,12 +7948,13 @@ async function openPuzzle(cid){
       ${row.hint?`<div class="puz-hint">${esc(row.hint)}</div>`:""}
       ${/* ★ 맞추는 판에는 «몇 번 틀리면 잠긴다»가 없다. 색이 안 맞으면 아예 안 붙어서
             틀린 조합이 만들어지지 않는다 — 셀 것이 없는데 세겠다고 하면 겁만 준다. */""}
-      <div class="puz-note" id="puzNote">${kit?"맞출 때까지 몇 번이든 붙였다 떼도 됩니다."
+      <div class="puz-note" id="puzNote">${!canTry ? esc(why)
+                                              :kit?"맞출 때까지 몇 번이든 붙였다 떼도 됩니다."
                                               :puzNoteText(row.hint,row.locked,hintN,maxT)}</div>
     </div>
     <div class="mfoot"><span class="mf-note">맞히면 나온 것은 내가 가져갑니다.</span>
       <button class="btn" onclick="closeModal('cardModal')">닫기</button></div>`;
-  if(kit) pzWire(cid); else paintCardArt(cid);
+  if(kit) pzWire(cid,canTry); else paintCardArt(cid);
   box.style.setProperty("--mt","var(--cold)");
   box.classList.remove("reveal","shock","bait","clue");
   void box.offsetWidth; box.classList.add("reveal","clue");
@@ -8712,10 +8751,11 @@ function showShare(){
     <div class="mbody">
       <div class="mlead">내 손패를 올리면 <b>«이런 걸 하나 쥐고 있다»</b>고 말하는 것이고, 테이블 카드를 올리면 <b>그 카드를 짚는 것</b>입니다.
         어느 쪽이든 내용은 새어 나가지 않고, 카드도 그대로 남습니다.</div>
-      ${myHand.length?`<div class="sharesec">내 손패 · 비공개</div>
+      ${myHand.length?`<div class="sharesec" id="shareMineSec">내 손패 · 비공개
+          <span class="ss-warn">${ICO.warn} 너무 많이 드러내면 위험합니다</span></div>
         <div class="swaprow" id="shareRow">${myHand.map(c=>card(c,true)).join("")}</div>`:""}
-      ${pubc.length?`<div class="sharesec cold">테이블 · 전체공개</div>
-        <div class="swaprow">${pubc.map(c=>card(c,false)).join("")}</div>`:""}
+      ${pubc.length?`<div class="sharesec cold" id="sharePubSec">테이블 · 전체공개</div>
+        <div class="swaprow" id="sharePubRow">${pubc.map(c=>card(c,false)).join("")}</div>`:""}
       <div class="swaphint" id="shareHint">짚을 카드를 고르세요.</div>
       <textarea id="shareSay" class="shareSay" rows="2" placeholder="같이 할 말 (없어도 됩니다) — 이거 좀 이상하지 않아요?"></textarea>
     </div>
@@ -8723,6 +8763,22 @@ function showShare(){
       <button class="btn" id="shareGo" disabled onclick="shareConfirm()">대화에 올리기</button></div>`;
   $("swapBox").style.setProperty("--mt","var(--cold)");
   openModal("swapModal");
+  setTimeout(()=>{ try{ shareTour2(); }catch(e){} },220);
+}
+/* 카드 올리기 창 안에서 이어지는 두 칸. 예시로 짚는 것은 «실제로 테이블에 나가
+   있는 카드» 한 장이다 — 지어낸 예시를 그리면 그 카드가 어디 있는지 못 찾는다.
+   조각난 몸(A1)이 첫 조사에서 반드시 전체공개되므로 그것을 먼저 고르고,
+   없으면 테이블의 첫 장을 고른다. */
+function shareTour2(){
+  const box=$("swapBox"); if(!box) return;
+  const steps=[];
+  const pick=()=>box.querySelector('#sharePubRow .swapcard[data-id="A1"]')
+              ||box.querySelector("#sharePubRow .swapcard");
+  if(pick()) steps.push({el:pick,
+    tip:"<b>테이블 · 전체공개</b>는 이미 모두가 본 카드입니다. 짚어 올려도 새로 드러나는 것이 없어요 — 「이 카드 얘기를 하자」는 뜻입니다."});
+  if(box.querySelector("#shareMineSec")) steps.push({el:tourFind("#shareMineSec"),
+    tip:"<b>내 손패</b>는 다릅니다. 올려도 내용은 안 펼쳐지지만 <b>「이런 걸 쥐고 있다」</b>는 알려집니다 — 너무 많이 드러내면 위험할 수 있어요."});
+  tourStart("share2","swapModal",steps);
 }
 function sharePickOne(id){
   sharePick=id;
@@ -8787,19 +8843,48 @@ function showChatFull(){
   chatInMark();          // 오프닝이면 «들어왔다»고 알린다
   renderChat("chatFull");
   const box=$("chatFull"); box.scrollTop=box.scrollHeight;
-  // 토론에 들어와 대화창을 처음 열면 «카드를 짚는 길»부터 알려준다
+  // 토론 진입 안내가 예약돼 있으면 여기서 이어 간다
   setTimeout(shareCoach,260);
 }
-/* ── 토론 첫 화면의 안내 ──────────────────────────────────────────
+/* ── 토론 진입 안내 ────────────────────────────────────────────────
    토론은 게임이 아니라 사람이 끌고 가는 자리다(그래서 자동 대사를 뺐다).
    그러면 처음 앉은 사람에게는 «무엇을 근거로 말하나»가 안 보인다 — 테이블 위 카드를
-   짚어 올리는 길이 그 답이라, 토론에 들어와 대화창을 처음 열 때 그 단추를 짚어준다. */
+   짚어 올리는 길이 그 답이다.
+
+   ★ 예전에는 «토론 중에 대화창을 처음 열 때» 떴다. 대화창은 토론 내내 여닫는
+     물건이라, 언제 처음 여는지가 사람마다 달랐다 — 한참 이야기하다가 불쑥 뜨니
+     아무 때나 나오는 것처럼 보였다. 이제 «토론 막에 들어서는 그 순간»이다.
+     게임(roomId)과 배역마다 한 번이고, 새로고침해도 다시 안 뜬다.
+   ★ 모양도 다른 안내들과 맞췄다 — 어둠막 + 하이라이트 + 말풍선(spotPaint).
+     대화창 안의 옛 가리개(chatCoach)는 자기소개 자리에만 남는다. */
+let talkOpened=false;
+function talkGate(){
+  if(!myRoleValid()||coachOff()) return;
+  if(tourSeen("share1")) return;                        // 한 번 하면 끝이다
+  if((((STATE&&STATE.phase)||{}).key)!=="talk") return;
+  if(!(STATE.revealed||[]).length) return;              // 짚을 것이 아직 없다
+  if(tour||document.querySelector(".modal.dlg.on")) return;
+  /* 대화창을 열어 준다 — 「카드를 올리며 진행합니다」라고 해놓고 그 단추가 화면에
+     없으면 무슨 말인지 알 수가 없다. 한 번만 대신 열어 준다: 사람이 스스로 닫았으면
+     그건 지금 다른 것을 보겠다는 뜻이라, 그 위로 계속 창을 밀어 올리면 안 된다.
+     ★ 창이 안 열린 채로 끝나도 사슬은 안 잃는다 — 다음에 대화창을 열면
+       showChatFull 의 꼬리가 shareCoach 를 다시 부른다. */
+  const cm=$("chatModal");
+  if(!cm||!cm.classList.contains("on")){
+    if(!talkOpened){ talkOpened=true; try{ showChatFull(); }catch(e){} }
+    return;
+  }
+  setTimeout(shareCoach,260);
+}
 function shareCoach(){
   const ph=(STATE&&STATE.phase)||{};
   if(ph.key!=="talk"||!myRoleValid()) return;
   if(!(STATE.revealed||[]).length) return;        // 짚을 것이 아직 없다
   const pb=$("chatPlus"); if(!pb||pb.disabled) return;
-  chatCoach(pb, "전체공개된 테이블 위 카드를 올리며 진행할 수 있습니다.", `pmb.scoach.${(STATE&&STATE.roomId)||""}.${myRoleId}`);
+  /* 짚은 곳을 «눌러야» 넘어간다(tap). 이 단추는 눌러 보지 않으면 무엇이 열리는지
+     알 수 없고, 열린 창에서 이야기가 이어진다(shareTour2). */
+  tourStart("share1","chatModal",[{el:tourFind("#chatPlus"), tap:true,
+    tip:"토론은 <b>테이블 위 카드를 짚어 올리며</b> 진행합니다. <b>눌러서</b> 무엇을 올릴 수 있는지 보세요."}]);
 }
 async function humanSayFrom(id){
   if(!myRoleValid()) return;
@@ -9258,12 +9343,35 @@ function renderAccuse(p){
   const mineDone=!!a.mineDone;
   const can=myRoleValid()&&a.open&&!mineDone;
   if(!can) acSel="";
-  const targets=allPersons();
+  /* 자기 이름을 못 적는 사건에서는 목록에서 «뺀다». 눌러도 안 되게만 해 두면
+     「왜 안 눌리지」가 되고, 진행 지문이 읽어 준 규칙과 화면이 어긋난다. */
+  const selfOk=((SCEN&&SCEN.accuseSelf)!==false);
+  const targets=allPersons().filter(c=>selfOk||c.id!==myRoleId);
   // 소지품을 쓰는 사건에서는 이 표가 종막까지 잠들어 있지 않다 — 최다 득표자는 그 자리에서
   // 품을 털린다. 그걸 안 알려주면 「어차피 안 열리는 표」라고 여기고 아무렇게나 적는다.
   const bl=(STATE&&STATE.belongings)||null;
   const seizeNote=bl?"★ 표를 가장 많이 받은 사람은 그 자리에서 <b>소지품을 압수당합니다.</b>"
                     +" 표가 갈리면 갈린 사람 전부입니다.":"";
+  /* ── 규칙을 «적어 준다» ────────────────────────────────────────
+     여기는 이 게임에서 되돌릴 수 없는 일이 처음 벌어지는 자리다. 그런데 화면에는
+     「각자 몰래 적습니다」 두 줄뿐이라, 사람들이 무엇을 걸고 있는지 모른 채 이름을
+     찍었다 — 특히 «압수»와 «못 바꾼다»를 모르고 던지면 그건 선택이 아니라 사고다.
+     한 줄씩 갈라 적고, 값을 치르는 대목만 굵게 둔다. 다 굵게 하면 아무것도 안 굵다. */
+  const RULES=[
+    ["비밀투표", "각자 <b>몰래</b> 적습니다. 전원이 던지기 전에는 누가 무엇을 적었는지도, 몇 표인지도 안 보입니다."],
+    ["못 바꾼다", "한 번 적으면 <b>고칠 수 없습니다.</b> 「이 이름으로 적는다」를 누르는 순간 봉인됩니다."],
+    ["누구를", selfOk
+      ? "이 마을 사람이면 <b>누구든</b> 적을 수 있습니다 — 피해자도, <b>자기 자신도</b> 됩니다."
+      : "이 마을 사람이면 누구든 적을 수 있습니다 — 피해자도 됩니다. 다만 <b>자기 자신은 못 적습니다.</b>"],
+  ];
+  if(bl) RULES.push(["값을 치른다",
+    "표를 가장 많이 받은 사람은 그 자리에서 <b>소지품을 압수당합니다.</b> "
+    +"압수된 소지품은 <b>모두가 봅니다.</b> 표가 갈리면 <b>갈린 사람 전부</b>입니다."]);
+  RULES.push(["표는 종막에", bl
+    ? "누가 누구를 적었는지는 <b>여기서 안 열립니다</b> — 종막에서 열립니다. 압수만 지금 벌어집니다."
+    : "누가 누구를 적었는지는 <b>여기서 안 열립니다</b> — 종막에서 열립니다."]);
+  const rulesHTML=`<div class="ac-rules">${RULES.map(([k,t])=>
+    `<div class="ac-rule"><span class="ac-rk">${esc(k)}</span><span class="ac-rt">${t}</span></div>`).join("")}</div>`;
   const btns=targets.map(c=>`<button class="ac-opt${acSel===c.id?" on":""}" style="--rc:${c.color}"
       ${can?`onclick="acSel1('${c.id}')"`:"disabled"}><span class="mk"></span><b>${esc(c.name)}</b>
       <span class="jb">${esc(c.job||"")}</span></button>`).join("");
@@ -9273,8 +9381,8 @@ function renderAccuse(p){
     <div class="nt-intro">${a.done
       ? "종이는 접힌 채로 봉투에 들어갔습니다.\n"
         +(seizeNote||"★ 이 표는 지워지지 않습니다 — 종막에서 열립니다.")
-      : "각자 몰래 적습니다. 무엇을 적었는지는 아무에게도 안 알립니다.\n"
-        +(seizeNote||"★ 이 표는 지워지지 않습니다 — 그리고 여기서는 안 열립니다. 종막에서 열립니다.")}</div>
+      : "각자 몰래 적습니다. 무엇을 적었는지는 아무에게도 안 알립니다."}</div>
+    ${a.done?"":rulesHTML}
     ${(a.open&&!a.done)?(myRoleValid()
       ? (mineDone?`<div class="panel-note" style="margin-top:12px">적었습니다. 나머지를 기다립니다.</div>`:btns)
       : `<div class="panel-note" style="margin-top:12px">관전 중 — 배역을 맡은 사람만 적습니다.</div>`):""}
@@ -10901,13 +11009,21 @@ async function showMySheet(){
   //       내려놓을 수도 없다. 1차 지목에서 표가 제일 많이 모이면 그 자리에서 압수되고,
   //       압수된 것만 남의 화면에 붙는다. 그 전에는 «누가 무엇을 쥐고 있다»조차 안 내려온다.
   const bl=(STATE&&STATE.belongings)||null;
-  if(bl&&bl.mine){
+  /* ★ 「품 안에 있는 것」 장은 «압수되기 전에는» 안 세운다. (사람 결정)
+     이 장은 게임이 열리는 순간부터 늘 거기 있었다 — 오프닝에도, 조사에도 있다.
+     그런데 막이 토론으로 넘어갈 때 추가 정보의 셈(extraN)이 늘면서 「추가 정보가
+     늘었습니다」가 내려오고, 열어 보면 이 장 하나가 서 있다. 그래서 «방금 생긴 것»
+     으로 읽힌다 — 늘 있던 것을 새것이라고 가리킨 셈이다.
+     압수된 뒤에는 이야기가 다르다. 그때는 정말로 그 순간 벌어진 일이고, 아래
+     압수 목록이 그 몫을 진다. 서버가 보내는 값(belongings.mine)은 그대로 둔다 —
+     다시 세우기로 하면 이 자리 하나만 되살리면 된다. */
+  if(bl&&bl.mine&&bl.mineSeized){
     const b=bl.mine;
-    slides.push({tab:"extra", html:`<div class="bigcard role k-belong${bl.mineSeized?" seized":""}" style="--rc:${s.color}">
+    slides.push({tab:"extra", html:`<div class="bigcard role k-belong seized" style="--rc:${s.color}">
       <div class="bc-eyebrow">${esc(bl.kick||"품 안에 있는 것")}</div>
       <div class="bc-title" style="font-size:18px">${esc(b.title||"")}</div>
       <div class="bg-spot">${esc(b.spot||"")}</div>
-      ${bl.mineSeized?`<div class="bg-seized">${ICO.warn}<span>압수됐습니다 — 이건 이제 <b>모두가 봅니다.</b></span></div>`:""}
+      <div class="bg-seized">${ICO.warn}<span>압수됐습니다 — 이건 이제 <b>모두가 봅니다.</b></span></div>
       <div class="ntx bg-tx">${esc(b.text||"")}</div>
       ${b.hint?`<div class="knownote" style="margin-top:12px">${esc(b.hint)}</div>`:""}
       ${bl.note?`<div class="bg-note">${esc(bl.note)}</div>`:""}</div>`});
@@ -11261,7 +11377,11 @@ function tourPaint(){
        눌린 것을 확인한 뒤 다음 칸으로 넘어간다. */
   if(st.tap){
     el.classList.add("live");
-    const onTap=()=>{ setTimeout(()=>{ try{ tourGo(); }catch(e){} },260); };
+    /* ★ 그 사이에 «다른» 짚어 주기가 시작됐으면 손대지 않는다. 이 칸을 누르면 창이
+       하나 열리고, 그 창이 자기 짚어 주기를 세우는 자리가 있다(+ 단추 → 카드 올리기).
+       그때 여기 예약해 둔 「다음으로」가 새로 선 그 짚어 주기를 한 칸 밀어 버려서,
+       첫 칸(전체공개 카드 예시)을 아무도 못 보고 지나갔다. */
+    const onTap=()=>{ setTimeout(()=>{ try{ if(tour===t) tourGo(); }catch(e){} },260); };
     el.addEventListener("click", onTap, true);
     tourPaint._off=()=>{ el.removeEventListener("click", onTap, true); };
   }
@@ -11767,7 +11887,10 @@ const TUT_SAY={
   lift:  "셋이 <b>각자 자기 자리</b>를 위로 끌어올리세요",
   close1:"몸 아래에서 무언가가 나왔습니다 — 창을 <b>닫아</b> 보세요",
   found: "몸 아래에서 나온 것을 <b>살펴보세요</b>",
-  close2:"창을 <b>닫고</b> 조사를 이어가주세요",
+  /* ★ 이 칸이 수수께끼의 규칙을 말하는 자리다. 사람이 방금 첫 수수께끼를 «보고»
+     나온 참이라, 여기 말고는 「이건 언제 푸는 것인가」를 물을 마음이 생기는 자리가
+     없다. 나중에 목록 어딘가에 적어 두면 아무도 안 읽는다. */
+  close2:"수수께끼는 <b>조사 페이즈</b>에만 풀 수 있습니다 — 창을 <b>닫고</b> 조사를 이어가주세요",
 };
 /* 닫으라고 하는 칸에서 짚을 것 — 지금 서 있는 창의 발치 「닫기」. 없으면 머리의 ×. */
 function tutCloseBtn(){

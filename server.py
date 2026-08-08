@@ -1475,10 +1475,12 @@ def state(clientId: str = "", gm: int = 0, roleId: str = "", key: str = ""):
         mine0 = me
         if mine0:
             n = 0
-            try:
-                n += len(SC.memory_up_to(mine0, ROOM["seq"]))
-            except Exception:                                # noqa: BLE001
-                pass
+            # ★ 「떠오른 것」(memory_up_to)은 이 셈에 «안» 넣습니다. 화면이 그 장을
+            #   세우지 않기로 했기 때문입니다(index.html 의 4번 자리). 셈에만 넣어 두면
+            #   막이 넘어갈 때마다 「추가 정보가 늘었습니다」가 내려오는데, 열어 보면
+            #   늘어난 것이 없습니다 — 알림이 없는 것을 가리킵니다. 실제로 그렇게
+            #   보이던 자리이고, 그래서 늘 거기 있던 소지품 장이 «방금 생긴 것»으로
+            #   읽혔습니다. 그 장을 되살릴 때 이 줄도 같이 되살립니다.
             if ((ROOM.get("ask") or {}).get("asked") or []):
                 n += 1
             if ((ROOM.get("night") or {}).get("result")):
@@ -2715,17 +2717,24 @@ PUZZLE_MAX_TRIES = 3
 
 
 def _puzzle_open_now() -> tuple[bool, str]:
-    """지금 수수께끼를 풀 수 있는 때인가.
+    """지금 수수께끼를 풀 수 있는 때인가 — **조사 페이즈에만** 엽니다. (사람 결정)
 
-    조사 페이즈에만 열어두면 「이번 턴에 못 풀면 다음 라운드까지 기다려라」가 되는데,
-    그건 퍼즐이 아니라 대기다. 그래서 **게임이 끝날 때까지 언제든** 풀 수 있게 두고,
-    토론에서만 닫는다 — 토론은 서로 말로 맞춰 보는 자리이고, 그 시간에 각자 폰을
-    들여다보며 답을 찍고 있으면 토론이 아니게 된다.
+    예전에는 토론에서만 닫고 나머지는 다 열어 두었습니다. 「이번 턴에 못 풀면 다음
+    라운드까지 기다려라」가 되면 그건 퍼즐이 아니라 대기라고 봤기 때문입니다.
+    그런데 열어 두면 막이 바뀔 때마다 사람들이 «아직 안 푼 그 카드»로 되돌아가서,
+    지금 해야 하는 일(지목·질문·서로 맞춰 보기)이 늘 뒷전이 됩니다. 수수께끼를 푸는
+    것은 «조사하는 행위»고, 조사하는 자리는 조사 페이즈입니다.
+
+    대기가 되지 않는 이유는 조사 페이즈가 여러 번 오기 때문입니다 — 못 푼 자리는
+    다음 조사에서 다시 잡으면 됩니다. 기다림이 아니라 다음 차례입니다.
+
+    ※ 이 규칙은 사람에게 «첫 수수께끼를 보고 나온 그 자리»에서 말해 줍니다 —
+      index.html 의 `TUT_SAY.close2`(시신 밑 카드를 닫는 칸)입니다.
     """
     ph = SC.phase_by_seq(ROOM["seq"]) or {}
-    if ph.get("key") == "talk":
-        return False, "토론 중에는 수수께끼를 풀 수 없습니다 — 지금은 서로 맞춰 보는 시간입니다"
-    return True, ""
+    if ph.get("key") == "invest":
+        return True, ""
+    return False, "수수께끼는 조사 페이즈에만 풀 수 있습니다"
 
 
 @app.get("/api/puzzle/{role_id}")
@@ -4031,10 +4040,15 @@ def accuse_interim(b: VoteReq):
         if SC.phase_by_seq(ROOM["seq"]).get("key") != "accuse":
             return JSONResponse({"error": "지목 페이즈에서만 할 수 있습니다"}, status_code=409)
         # 이 집 사람이면 누구든 적을 수 있다 — 배역도, 앉을 수 없는 자리도, 당주 본인도.
-        # 자기 이름도 막지 않는다. 그렇게 적을 이유가 있는 게임이다.
+        # 자기 이름도 기본은 막지 않는다. 그렇게 적을 이유가 있는 게임이 있다.
         ok = set(ROOM["roles"]) | {n["id"] for n in (getattr(SC, "NPCS", []) or [])} | {"victim"}
         if b.targetRoleId not in ok:
             return JSONResponse({"error": "이 집 사람이 아닙니다"}, status_code=404)
+        # ★ 시나리오가 «자기 이름은 못 적는다»고 적어 두었으면 여기서 막는다.
+        #   룰더데이의 진행 지문이 처음부터 「자기 자신은 못 찍습니다」였는데 엔진은
+        #   안 막고 있었다 — 읽어 준 규칙과 화면이 어긋난 자리다(ACCUSE_SELF).
+        if not getattr(SC, "ACCUSE_SELF", True) and b.targetRoleId == b.roleId:
+            return JSONResponse({"error": "자기 자신은 적을 수 없습니다"}, status_code=409)
         a1 = ROOM.setdefault("accuse1", {"seq": None, "picks": {}})
         first = b.roleId not in a1["picks"]
         a1["seq"] = ROOM["seq"]
