@@ -538,8 +538,11 @@
   .confirm .lbl.warn{color:var(--alert-bri)}
   .confirm .go{white-space:nowrap}
 
-  /* 토스트 */
-  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(10px);z-index:70;
+  /* 토스트
+     ★ 관리자 막(.admask, z 80)보다 위에 있어야 한다. 70 이었을 때는 관리자 안에서
+       부른 note() 가 전부 그 막 뒤에 깔려 아무 말도 안 하는 것처럼 보였다 —
+       「고친 원고 내보내기를 눌러도 변화가 없다」가 그것이었다. */
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(10px);z-index:90;
     background:var(--case);color:var(--ink);border:1px solid var(--ink);padding:9px 16px;font-size:14px;
     box-shadow:3px 3px 0 var(--ink);opacity:0;pointer-events:none;transition:.2s steps(4);
     max-width:88vw;text-align:center}
@@ -614,6 +617,10 @@
     border:1px solid var(--line2);background:none;color:var(--bone-dim);cursor:pointer}
   .adcf .row button.go{border-color:#4c7a5c;color:#8fd6a8}
   .adcf .row button.rv{border-color:#7a4c4c;color:#d68f8f}
+  /* 무엇이 어떻게 바뀌었는지 한 줄씩 — 통째 JSON 만 던져 놓으면 눈으로 못 짚는다 */
+  .adexl{font-size:.72rem;line-height:1.75;color:var(--bone-dim);
+    max-height:150px;overflow:auto;padding:7px 9px;border:1px solid var(--line2);background:var(--screen)}
+  .adexl b{font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;color:var(--brass)}
   .adcf .st{font-family:var(--mono);font-size:.58rem;letter-spacing:.06em;color:var(--faint);
     min-height:1em}
   /* 이튿날 새로 나오는 카드 — 몇 장인지 세는 자리라 눈으로 갈라져야 한다 */
@@ -2035,15 +2042,42 @@ function admRepaintCard(id){
 }
 /* 고친 것을 원고로 되돌리는 길. 배포판은 판이 새로 올라가면 파일이 날아가므로,
    고친 뒤에는 여기서 한 번 꺼내 원고에 옮겨 심어야 한다. */
+/* ★ 여기는 «화면에 글로 내놓는 것»이 본체다. 예전에는 클립보드 복사 하나에 걸고
+     결과를 note() 로만 알렸는데, note() 의 토스트가 관리자 막 뒤에 깔려 있어서
+     눌러도 아무 일도 안 나는 것처럼 보였다. 복사가 막히는 자리(권한·비 HTTPS)도
+     있으니, 글은 언제나 창 안에 펴 놓고 복사는 덤으로 시도한다. */
+function admExpSay(html){ const e=$("admexp"); if(e) e.innerHTML=html; }
 async function admEditExport(){
+  admExpSay(`<div class="adsub" style="margin-top:10px">꺼내는 중…</div>`);
   let r;
   try{ r=await (await fetch(`/api/admin/card/edits?scenarioId=${encodeURIComponent(admScen)}&key=${encodeURIComponent(admKey)}`)).json(); }
-  catch(e){ note("서버에 못 닿았습니다."); return; }
-  if(r.error){ note("안 됩니다 — "+r.error); return; }
-  if(!r.n){ note("고친 카드가 없습니다."); return; }
+  catch(e){ admExpSay(`<div class="adsub" style="margin-top:10px">서버에 못 닿았습니다.</div>`); return; }
+  if(r.error){
+    admExpSay(`<div class="adsub" style="margin-top:10px">안 됩니다 — ${ADM_ESC(r.error)}${
+      r.error==="key"?" · 관리자 열쇠를 다시 넣어 주세요":""}</div>`); return; }
+  if(!r.n){
+    admExpSay(`<div class="adsub" style="margin-top:10px">고친 카드가 없습니다 — 「원고 고치기」에서 «저장»까지 눌러야 여기에 쌓입니다.</div>`);
+    return; }
   const t=JSON.stringify(r.edits,null,2);
-  try{ await navigator.clipboard.writeText(t); note(`고친 카드 ${r.n}장을 복사했습니다.`); }
-  catch(e){ try{ prompt("아래를 복사해 주세요", t); }catch(e2){ note(t.slice(0,200)); } }
+  const lines=(r.diff||[]).map(d=>{
+    const b=(d.before||{}).title, a=(d.after||{}).title;
+    return `<div>· <b>${ADM_ESC(d.id)}</b> ${ADM_ESC(d.spotNow||"")}${
+      (a!=null&&a!==b)?` — 「${ADM_ESC(b||"")}」 → 「${ADM_ESC(a)}」`:` — ${Object.keys(d.after||{}).join("·")} 고침`}</div>`;
+  }).join("");
+  admExpSay(`<div class="adcf" style="margin-top:10px">
+      <div class="st">고친 카드 ${r.n}장 · 아래 글을 그대로 가져가면 됩니다</div>
+      <div class="adexl">${lines}</div>
+      <textarea id="admexpt" readonly style="min-height:180px;font-family:var(--mono);font-size:.7rem">${ADM_ESC(t)}</textarea>
+      <div class="row"><button class="go" onclick="admExpCopy()">복사</button></div>
+      <div class="st" id="admexpst"></div></div>`);
+  const ta=$("admexpt"); if(ta){ ta.scrollIntoView({block:"nearest"}); }
+  admExpCopy(true);
+}
+async function admExpCopy(quiet){
+  const ta=$("admexpt"); if(!ta) return;
+  const say=m=>{ const e=$("admexpst"); if(e) e.textContent=m; };
+  try{ await navigator.clipboard.writeText(ta.value); say("복사했습니다."); }
+  catch(e){ if(!quiet){ ta.focus(); ta.select(); say("복사가 막혀 있습니다 — 글을 골라 뒀으니 직접 복사해 주세요."); } }
 }
 function admSetKey(to){
   const i=$("admk"); if(!i) return;
@@ -2058,8 +2092,9 @@ function showCardBrowser(){
   $("adcard").innerHTML=`<h3>조사카드 훑어보기</h3><div class="adsub">QA READOUT · 본문·힌트까지 전부</div>
     <div class="adtabs">${tabs}<button class="adtab" onclick="showRoleBrowser()">배역</button><button class="adtab" onclick="showAssetBrowser()">에셋 프롬프트</button><button class="adtab" onclick="showAdminPanel()">← 사건 정본</button></div>
     <div id="admcards"></div>
-    <button class="adtab" style="margin-top:14px;width:100%;padding:10px" onclick="admEditExport()">고친 원고 내보내기 (복사)</button>
+    <button class="adtab" style="margin-top:14px;width:100%;padding:10px" onclick="admEditExport()">고친 원고 내보내기</button>
     <div class="adsub" style="margin-top:6px">배포판은 판이 새로 올라가면 고친 것이 날아갑니다 — 고친 뒤에는 여기서 꺼내 두세요.</div>
+    <div id="admexp"></div>
     <button class="adclose" onclick="closeAdmin()">닫기</button>`;
   $("admask").classList.add("on");
   admLoad();
