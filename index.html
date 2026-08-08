@@ -1797,6 +1797,51 @@
     border:1px solid var(--line);cursor:pointer;background:rgba(0,0,0,.35);
     aspect-ratio:1/1;max-height:44dvh}
   .cardart img{display:block;width:100%;height:100%;object-fit:contain}
+  /* ── 조각 맞추기 판 ───────────────────────────────────────────
+     칩 그림을 깔고 그 위 허공에 자국이 떠 있다. 칩이 내는 초록빛이 그 근거고,
+     그림의 어두운 고리가 «아직 안 쓴 조각이 놓인 자리»가 된다 — 무대를 따로
+     그릴 필요가 없다. 그림칸과 같은 정사각이라 카드 배치가 안 흔들린다. */
+  .pzk{position:relative;margin:0 0 13px;border:1px solid var(--line);border-radius:2px;
+    background:#0d1210;overflow:hidden;aspect-ratio:1/1;max-height:44dvh;
+    touch-action:none;user-select:none}
+  .pzk .pz-bg{position:absolute;inset:0;background:center/cover no-repeat;
+    filter:saturate(.9)}
+  .pzk .pz-svg{position:absolute;inset:0;width:100%;height:100%}
+  /* 자국은 획이다 — 굵기와 끝맺음이 손글씨처럼 보여야 «새겨진 것»으로 읽힌다 */
+  .pzk .pz-p path{fill:none;stroke:#eaf5ee;stroke-width:11;
+    stroke-linecap:round;stroke-linejoin:round;
+    filter:drop-shadow(0 0 1.5px rgba(0,0,0,.9))}
+  .pzk .pz-p{cursor:grab;transition:opacity .12s}
+  .pzk .pz-p.held{cursor:grabbing}
+  .pzk .pz-p.held path{stroke:#fff}
+  /* 제자리를 찾은 조각 — 초록으로 가라앉고 더는 안 잡힌다 */
+  .pzk .pz-p.set{pointer-events:none}
+  .pzk .pz-p.set path{stroke:var(--signal);
+    filter:drop-shadow(0 0 3px color-mix(in srgb,var(--signal) 55%,transparent))}
+  .pzk .pz-dot{opacity:.55}
+  .pzk .pz-p.held .pz-dot{opacity:1}
+  /* 자리가 맞는데 각이 안 맞을 때 — 말 대신 몸짓으로 「돌려라」 */
+  @keyframes pzBad{0%,100%{transform:none}25%{transform:translateX(-2.5px)}
+                   50%{transform:translateX(2.5px)}75%{transform:translateX(-1.5px)}}
+  .pzk .pz-p.bad path{stroke:#f0b429}
+  .pzk .pz-p.bad{animation:pzBad .3s ease 2}
+  /* 빈 자리의 이음점 — 평소엔 있다는 것만, 잡고 있을 때만 그 짝이 뛴다 */
+  @keyframes pzSlot{0%,100%{opacity:.55}50%{opacity:1}}
+  .pzk .pz-slot.on{animation:pzSlot .9s ease-in-out infinite}
+  .pzk .pz-head{position:absolute;left:0;right:0;top:0;z-index:3;
+    display:flex;align-items:baseline;gap:8px;padding:7px 9px 11px;white-space:nowrap;
+    background:linear-gradient(180deg,rgba(6,7,7,.9),rgba(6,7,7,.4) 60%,transparent);
+    font-size:11px;color:var(--sub);pointer-events:none}
+  .pzk .pz-head b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .pzk .pz-tip{margin-left:auto;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  @media(max-width:380px){ .pzk .pz-tip{display:none} }
+  /* 다 맞추면 한 번 타오른다 */
+  @keyframes pzDone{0%{filter:none}40%{filter:brightness(2.2) saturate(1.4)}100%{filter:none}}
+  .pzk.done .pz-svg{animation:pzDone .9s ease both}
+  .pzk.done .pz-head{display:none}
+  @media(prefers-reduced-motion:reduce){
+    .pzk .pz-slot.on,.pzk .pz-p.bad,.pzk.done .pz-svg{animation:none}
+  }
   /* ── 그림칸 머리 ──────────────────────────────────────────────
      협동 퍼즐 판(.lift .lf-head)과 같은 문법이다 — 위쪽에 어두운 틴팅 한 겹을 깔고
      그 위에 한 줄을 얹는다. 그림 위에 바로 글을 놓으면 밝은 그림에서 글이 사라진다.
@@ -7614,6 +7659,181 @@ function ensureCardBack(){
    조사턴을 안 쓴다. 토론만 아니면 게임이 끝날 때까지 몇 번이든 붙을 수 있고,
    맞히면 그 카드가 «푼 사람의» 인벤토리로 들어간다(손패 상한 밖).
    판정은 전부 서버가 한다 — 답은 이 파일 어디에도 없다. */
+/* ── 조각 맞추기 — 낱자를 돌려 한글로 ────────────────────────────
+   「LITTLIK」의 일곱 낱자를 돌려서 «녹취» 두 글자를 만든다.
+   회전만으로 다 된다 — L→ㄴ · L↕→ㄱ · T↕→ㅗ · T→ㅜ · I→ㅣ · I↻+K↻→ㅊ.
+   일곱 장이 여섯 자모로 정확히 떨어져서, 남는 조각도 모자란 조각도 없다.
+
+   ★ 손짓은 둘뿐이다 — 끌면 옮기고, 톡 치면 90° 돈다. 배울 것이 하나여야 한다.
+   ★ 첫 조각(녹의 ㄴ)은 이미 놓여 있다. 「여기에 채운다」와 「세로로 세운 글자다」를
+     설명 한 줄 없이 그 하나가 대신 말한다 — 이 수수께끼의 문턱은 조작이 아니라
+     «영어가 아니다»를 눈치채는 그 한 걸음이다.
+   ★ 색이 안 맞으면 아예 안 붙는다. 그래서 «틀렸습니다»가 없다 — 못 푼 것이 아니라
+     아직 안 맞춘 것뿐이다. 이 카드만 시도 횟수를 안 센다. */
+const PZ_GLYPH={
+  L:"M30 14 V84 H76",
+  I:"M50 14 V86",
+  T:"M16 24 H84 M50 24 V88",
+  K:"M30 12 V88 M30 50 L74 14 M30 50 L74 88",
+};
+/* 판은 100×100. 조각 상자는 24 — 여섯 자모가 두 덩이로 앉는 크기다. */
+const PZ_BOX=24;
+const PZ={
+  A9:{ answer:"녹취",
+    /* k 낱자 · r 맞는 각 · x,y 맞는 자리 · c 이음점 색 · fix 처음부터 놓여 있는 것 */
+    pieces:[
+      {id:"n1", k:"L", r:0,   x:30, y:28, c:"#f2d94e", fix:true},  // 녹 ㄴ
+      {id:"n2", k:"T", r:180, x:31, y:47, c:"#f2d94e"},            // 녹 ㅗ
+      {id:"n3", k:"L", r:180, x:31, y:66, c:"#e0503f"},            // 녹 ㄱ
+      {id:"c1", k:"I", r:90,  x:64, y:22, c:"#8fd14f"},            // 취 ㅊ 윗획
+      {id:"c2", k:"K", r:90,  x:64, y:34, c:"#8fd14f"},            // 취 ㅊ 아래
+      {id:"c3", k:"T", r:0,   x:63, y:58, c:"#4aa3e8"},            // 취 ㅜ
+      {id:"c4", k:"I", r:0,   x:84, y:47, c:"#4aa3e8"},            // 취 ㅣ
+    ],
+    /* 흩어 놓는 자리 — 그림의 어두운 고리 위다. 늘 같은 자리에 둔다(사람마다 달라야
+       할 이유가 없고, 같아야 「저기 있던 거」로 서로 부를 수 있다). */
+    start:[null,{x:14,y:12,r:90},{x:86,y:14,r:90},{x:10,y:52,r:0},
+           {x:16,y:86,r:180},{x:50,y:92,r:90},{x:90,y:80,r:180}],
+  },
+};
+let pzk=null;                        // {cid, pieces:[{...상태}], el}
+function pzHas(cid){ return !!PZ[cid]; }
+function pzHTML(cid){
+  const d=PZ[cid]; if(!d) return "";
+  return `<div class="pzk" id="pzk">
+    <div class="pz-bg" id="pzBg"></div>
+    <svg class="pz-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"
+         id="pzSvg" aria-label="조각 맞추기"></svg>
+    <div class="pz-head">칩에 새겨진 자국 · <b class="pz-n">1 / ${d.pieces.length}</b>
+      <span class="pz-tip">끌어서 옮기고, <b>톡 치면 돌아갑니다</b></span></div>
+  </div>`;
+}
+function pzWire(cid){
+  const d=PZ[cid]; if(!d) return;
+  const box=$("pzk"); if(!box) return;
+  const sid=(STATE&&STATE.scenarioId)||"";
+  findAsset(`/assets/${sid}_card_${cid}`, u=>{ const b=$("pzBg");
+    if(u&&b) b.style.backgroundImage=`url("${u}")`; });
+  pzk={cid, done:false, hintAt:Date.now(),
+       pieces:d.pieces.map((p,i)=>{
+         const st=d.start[i];
+         return {...p, cx:st?st.x:p.x, cy:st?st.y:p.y, rot:st?st.r:p.r, set:!st};
+       })};
+  pzDraw();
+}
+/* 판을 «한 번» 세운다. 그 뒤로는 자리와 각만 갈아 끼운다 —
+   ★ 끌고 있는 동안 innerHTML 을 다시 쓰면 잡고 있던 그 요소가 사라진다. 포인터를
+     붙들어 둔 대상이 없어지므로 손가락이 허공을 끄는 꼴이 된다. 처음에 그렇게
+     짰다가 조각이 아예 안 움직였다. 다시 그리는 것과 «옮기는 것»은 다른 일이다. */
+function pzDraw(){
+  const svg=$("pzSvg"); if(!svg||!pzk) return;
+  const S=PZ_BOX/100;
+  svg.innerHTML=
+    pzk.pieces.map(p=>`<circle class="pz-slot" data-s="${p.id}" cx="${p.x}" cy="${p.y}"
+        r="1.5" fill="rgba(235,230,220,.22)"/>`).join("")+
+    pzk.pieces.map(p=>`<g class="pz-p" data-id="${p.id}">
+        ${/* ★ 속이 빈 획만으로는 손가락이 못 잡는다 — 획은 화면에서 2~3픽셀이다.
+             안 보이는 판을 한 장 깔아 상자 전체를 잡을 수 있게 한다. */""}
+        <rect class="pz-grab" x="12" y="12" width="76" height="76" fill="transparent"/>
+        <path d="${PZ_GLYPH[p.k]}"/>
+        <circle class="pz-dot" cx="50" cy="50" r="7" fill="${p.c}"/>
+      </g>`).join("");
+  svg.querySelectorAll(".pz-p").forEach(pzGrip);
+  pzSync();
+}
+/* 지금 상태를 화면에 얹는다 — 요소는 그대로 두고 속성만 바꾼다 */
+function pzSync(){
+  const svg=$("pzSvg"); if(!svg||!pzk) return;
+  const S=PZ_BOX/100, held=pzk.held;
+  pzk.pieces.forEach(p=>{
+    const g=svg.querySelector(`.pz-p[data-id="${p.id}"]`); if(!g) return;
+    g.setAttribute("transform",
+      `translate(${p.cx} ${p.cy}) rotate(${p.rot}) scale(${S}) translate(-50 -50)`);
+    g.classList.toggle("set", !!p.set);
+    g.classList.toggle("held", !!(held&&held.id===p.id));
+    const sl=svg.querySelector(`.pz-slot[data-s="${p.id}"]`); if(!sl) return;
+    const on=!!(held&&held.id===p.id);
+    sl.classList.toggle("on", on);
+    sl.setAttribute("r", on?"2.6":"1.5");
+    sl.setAttribute("fill", on?p.c:"rgba(235,230,220,.22)");
+    sl.style.display=p.set?"none":"";
+  });
+  const nEl=document.querySelector("#pzk .pz-n");
+  if(nEl) nEl.textContent=`${pzk.pieces.filter(p=>p.set).length} / ${pzk.pieces.length}`;
+}
+/* 판 좌표로 옮긴다 — 화면 크기가 어떻든 판은 늘 100×100 이다 */
+function pzAt(e){
+  const svg=$("pzSvg"); const r=svg.getBoundingClientRect();
+  const s=Math.min(r.width,r.height);
+  return {x:(e.clientX-(r.left+(r.width-s)/2))/s*100,
+          y:(e.clientY-(r.top+(r.height-s)/2))/s*100};
+}
+function pzGrip(g){
+  let id=null, sx=0, sy=0, ox=0, oy=0, moved=0;
+  const pid=g.dataset.id;
+  const P=()=>pzk&&pzk.pieces.find(p=>p.id===pid);
+  g.addEventListener("pointerdown",e=>{
+    const p=P(); if(!p||p.set||id!==null) return;
+    id=e.pointerId; try{ g.setPointerCapture(id); }catch(x){}
+    const a=pzAt(e); sx=a.x; sy=a.y; ox=p.cx; oy=p.cy; moved=0;
+    pzk.held=p;
+    // 잡은 것은 맨 위로 — 겹친 조각 아래로 들어가 버리면 끄는 손과 눈이 어긋난다
+    try{ g.parentNode.appendChild(g); }catch(x){}
+    pzSync(); e.preventDefault();
+  });
+  g.addEventListener("pointermove",e=>{
+    const p=P(); if(!p||id!==e.pointerId) return;
+    const a=pzAt(e);
+    moved=Math.max(moved, Math.abs(a.x-sx)+Math.abs(a.y-sy));
+    p.cx=Math.max(8,Math.min(92, ox+(a.x-sx)));
+    p.cy=Math.max(8,Math.min(92, oy+(a.y-sy)));
+    pzSync(); e.preventDefault();
+  });
+  const up=e=>{
+    const p=P(); if(!p||id!==e.pointerId) return;
+    try{ g.releasePointerCapture(id); }catch(x){}
+    id=null; pzk.held=null;
+    /* 손가락이 거의 안 움직였으면 «톡 친 것»이다 — 돌린다 */
+    /* ★ 돌린 뒤에도 붙는지 본다. 자리에 갖다 놓고 그 자리에서 돌려 맞추는 것이
+       제일 자연스러운 순서인데, 붙는 검사를 «놓을 때»만 하고 있어서 각을 맞춰
+       놓고도 안 붙었다 — 들었다 다시 놓아야 했다. 그건 규칙이 아니라 헛손질이다. */
+    if(moved<3){ p.rot=(p.rot+90)%360; try{ sfx("tap"); }catch(x){} pzSnap(p); return; }
+    pzSnap(p);
+  };
+  g.addEventListener("pointerup",up);
+  g.addEventListener("pointercancel",up);
+}
+function pzSnap(p){
+  const near=Math.abs(p.cx-p.x)+Math.abs(p.cy-p.y);
+  if(near<=13){
+    if(((p.rot%360)+360)%360===p.r){
+      p.cx=p.x; p.cy=p.y; p.set=true;
+      try{ sfx("good"); }catch(x){}
+      pzSync(); pzCheck(); return;
+    }
+    /* 자리는 맞는데 각이 안 맞는다 — 말 대신 몸짓으로 「돌려라」 */
+    const g=document.querySelector(`#pzSvg .pz-p[data-id="${p.id}"]`);
+    if(g){ g.classList.remove("bad"); void g.getBoundingClientRect(); g.classList.add("bad");
+           setTimeout(()=>{ try{ g.classList.remove("bad"); }catch(e){} },700); }
+    try{ sfx("bad"); }catch(x){}
+  }
+  pzSync();
+}
+async function pzCheck(){
+  if(!pzk||pzk.done) return;
+  if(pzk.pieces.some(p=>!p.set)) return;
+  pzk.done=true;
+  const box=$("pzk"); if(box) box.classList.add("done");
+  const cid=pzk.cid, ans=PZ[cid].answer;
+  setTimeout(()=>{ try{ pzSend(cid,ans); }catch(e){} },900);
+}
+async function pzSend(cid,ans){
+  const r=await post("/api/puzzle",{cardId:cid,roleId:myRoleId,clientId,answer:ans});
+  if(r&&r.ok){ sfx("open"); banner("맞췄습니다 — 나온 것은 내가 가져갑니다.");
+    await poll(); try{ openCard(cid); }catch(e){} return; }
+  banner((r&&r.error)||"보내지 못했습니다");
+}
+
 let puzTries={};
 /* 아래 안내 한 줄 — 상황마다 말이 달라야 앞뒤가 맞는다.
    힌트가 아직 안 열렸으면 「언제 열리는지」와 「언제 잠기는지」를 같이,
@@ -7638,6 +7858,7 @@ async function openPuzzle(cid){
      생각 자체를 못 하기 때문이다. 잠긴 자리는 답 넣는 칸을 아예 안 그린다. */
   const maxT=+(d.maxTries||3), hintN=+(d.hintAfter||2);
   const box=$("cardBox"); if(!box) return;
+  const kit=pzHas(cid);                 // 손으로 맞추는 판이 있는 수수께끼인가
   box.dataset.card=cid;
   box.innerHTML=`<div class="mhead">
       <div class="mh-t"><span class="mh-eb">${esc(row.locName||"")}</span>
@@ -7646,21 +7867,24 @@ async function openPuzzle(cid){
         <span class="mh-sub">조사턴을 쓰지 않습니다</span></div>
       <button class="mh-x" onclick="closeModal('cardModal')" aria-label="닫기">${ICO.close}</button></div>
     <div class="mbody">
-      ${cardArtSlot()}
+      ${kit?pzHTML(cid):cardArtSlot()}
       <div class="sec"><div class="b" style="font-size:15px" id="cardText">${mdB(esc(row.prompt||""))}</div></div>
-      ${row.locked
+      ${kit ? "" : (row.locked
         ? `<div class="puz-dead">이 카드는 당신에게 잠겼습니다 — 다른 사람에게 넘기세요</div>`
         : `<div class="puz-in">
         <input id="puzAns" type="text" autocomplete="off" placeholder="답을 적으세요" enterkeyhint="done">
         <button class="btn primary" onclick="puzSend('${cid}')">맞춰 보기</button>
-      </div>`}
-      <div class="puz-msg" id="puzMsg">${row.tries&&!row.locked?`${row.tries}번 틀렸습니다 — ${maxT-row.tries}번 남았습니다.`:""}</div>
+      </div>`)}
+      <div class="puz-msg" id="puzMsg">${(!kit&&row.tries&&!row.locked)?`${row.tries}번 틀렸습니다 — ${maxT-row.tries}번 남았습니다.`:""}</div>
       ${row.hint?`<div class="puz-hint">${esc(row.hint)}</div>`:""}
-      <div class="puz-note" id="puzNote">${puzNoteText(row.hint,row.locked,hintN,maxT)}</div>
+      ${/* ★ 맞추는 판에는 «몇 번 틀리면 잠긴다»가 없다. 색이 안 맞으면 아예 안 붙어서
+            틀린 조합이 만들어지지 않는다 — 셀 것이 없는데 세겠다고 하면 겁만 준다. */""}
+      <div class="puz-note" id="puzNote">${kit?"맞출 때까지 몇 번이든 붙였다 떼도 됩니다."
+                                              :puzNoteText(row.hint,row.locked,hintN,maxT)}</div>
     </div>
     <div class="mfoot"><span class="mf-note">맞히면 나온 것은 내가 가져갑니다.</span>
       <button class="btn" onclick="closeModal('cardModal')">닫기</button></div>`;
-  paintCardArt(cid);
+  if(kit) pzWire(cid); else paintCardArt(cid);
   box.style.setProperty("--mt","var(--cold)");
   box.classList.remove("reveal","shock","bait","clue");
   void box.offsetWidth; box.classList.add("reveal","clue");
@@ -7672,6 +7896,7 @@ async function openPuzzle(cid){
      사라지고, 자판 없는 기기에서는 그냥 화면이 한 번 흔들린 것이 된다.
      엔터로 보내는 길만 열어 둔다. */
   setTimeout(()=>{ const i=$("puzAns"); if(i) i.onkeydown=ev=>{ if(ev.key==="Enter") puzSend(cid); }; },60);
+  if(kit) setTimeout(()=>{ try{ pzDraw(); }catch(e){} },80);
 }
 async function puzSend(cid){
   const i=$("puzAns"); if(!i) return;
