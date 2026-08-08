@@ -9893,7 +9893,13 @@ function dripTick(){
   dripTypeAt=now+dripHold(m);        // 이 줄이 머무는 시간이 끝나면 다음 사람이 치기 시작한다
   dripReadyAt=0;
   dripTyping=null;
-  if(m.stop&&dripHeld()) dripPaused=true;   // 끊는 자리 — 뒤에 더 있을 때만 멈춘다
+  /* 끊는 자리 — «뒤에 더 있을 때만» 멈추게 해 두었다. 뒤가 없으면 멈출 것도 없다는
+     뜻이었는데, 그게 아니었다. 이 표가 붙은 줄 뒤에는 화면이 무언가를 «가르친다» —
+     대화창에 어둠막이 깔리고 입력칸이 밝아진다. 그대로 이어서 켜지면, 위엣것을
+     아직 다 안 읽은 사람은 읽던 화면을 빼앗기고 자기소개부터 하게 된다.
+     「계속」은 그 사이의 문이다. 다 읽었다고 셋이 각자 손으로 말하는 자리이므로,
+     뒤에 줄이 있든 없든 여기서는 반드시 멈춘다. */
+  if(m.stop) dripPaused=true;
   // 이 줄을 지나고 「계속」을 누르면 화면이 뭔가를 가르친다. 지금은 자기소개 하나뿐이다.
   if(m.coach) dripCoachAt=m.coach;
   if(m.roleId!==myRoleId) sfx("chat");
