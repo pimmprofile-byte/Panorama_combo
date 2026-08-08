@@ -2197,6 +2197,11 @@ def _openable_cards(role_id: str) -> list:
             continue
         if any(r not in seen for r in _card_needs(c)):
             continue
+        # ★ 아직 안 들어낸 것 아래에 있는 자리는 지도에 «없다». 여기서 안 거르면
+        #   「시신 밑」 핀이 처음부터 떠 있고, 눌러도 「수수께끼를 풀어야 열립니다」만
+        #   나온다 — 눌리는데 안 열리는 핀은 안내가 아니라 고장으로 읽힌다.
+        if _lift_locked(c["id"]):
+            continue
         out.append(c)
     # 자기 것은 «남의 것이 하나라도 남아 있을 때만» 뺀다. 무조건 빼면 마지막 차례에
     # 자기 카드만 남은 배역이 후보 0이 되어 턴을 그냥 흘린다 — 실제로 그랬다.
