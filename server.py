@@ -39,6 +39,73 @@ except Exception:
 import handoff  # noqa: E402
 import scenarios  # noqa: E402
 
+
+# ══════════════════════════════════════════════════════════════════
+#  원고를 화면에서 고친다 — 조사카드 덧쓰기
+# ══════════════════════════════════════════════════════════════════
+#  카드 이름과 본문은 원고이고, 원고는 쓰는 사람의 것이다. 그걸 고치자고 매번
+#  파이썬 파일을 열어 문자열을 찾는 것은 글 쓰는 일이 아니라 코드 일이다.
+#  관리자 화면에서 고치고 저장하면 그 자리에서 판에 반영된다.
+#
+#  ★ 원본(scenarios/*.py)은 안 건드린다. 고친 것만 따로 적어 두고 그 위에 덮는다.
+#    그래야 무엇을 고쳤는지가 한눈에 남고, 되돌리는 것도 한 줄 지우면 된다.
+#  ★ 고칠 수 있는 것은 «읽는 글»뿐이다 — 이름·본문·힌트·자리. 라운드·선행·퍼즐 답
+#    같은 «판을 굴리는 값»은 여기서 못 만진다. 화면에서 고쳐 판이 어긋나면 그건
+#    고친 사람도 모르게 어긋난다.
+_EDITS = _HERE / "scenario_edits"
+EDIT_FIELDS = ("title", "text", "hint", "spot")
+
+
+def _edits_path(sid: str) -> Path:
+    return _EDITS / f"{re.sub(r'[^a-z0-9_]', '', sid.lower())}.json"
+
+
+def _edits_load(sid: str) -> dict:
+    p = _edits_path(sid)
+    if not p.exists():
+        return {}
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+        return d if isinstance(d, dict) else {}
+    except Exception:
+        return {}
+
+
+def _edits_save(sid: str, data: dict) -> None:
+    _EDITS.mkdir(exist_ok=True)
+    _edits_path(sid).write_text(
+        json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _edits_apply(sid: str) -> int:
+    """고친 것을 그 시나리오 모듈의 카드에 덮는다. 덮은 장수를 돌려준다."""
+    d = _edits_load(sid)
+    if not d:
+        return 0
+    m = scenarios.get(sid)
+    by = {c.get("id"): c for c in getattr(m, "CARDS", [])}
+    n = 0
+    for cid, patch in d.items():
+        c = by.get(cid)
+        if not c or not isinstance(patch, dict):
+            continue
+        # 원본을 한 번만 따로 챙겨 둔다 — 되돌릴 때 쓴다
+        c.setdefault("_orig", {k: c.get(k) for k in EDIT_FIELDS})
+        for k in EDIT_FIELDS:
+            if k in patch:
+                c[k] = str(patch[k])
+        n += 1
+    return n
+
+
+for _sid in scenarios.ids():
+    try:
+        _n = _edits_apply(_sid)
+        if _n:
+            print(f"[원고] {_sid} — 화면에서 고친 카드 {_n}장을 덮었습니다")
+    except Exception:
+        pass
+
 # 기본 사건. 방이 아직 아무것도 안 고른 순간에만 쓰인다.
 DEFAULT_SID = os.getenv("SCENARIO") or scenarios.default_id()
 
@@ -1133,6 +1200,103 @@ def admin_assets(key: str = ""):
     if not _agent_ok(key):
         return JSONResponse({"error": "key"}, status_code=403)
     return _asset_prompts()
+
+
+class CardEdit(BaseModel):
+    scenarioId: str = ""
+    cardId: str
+    key: str = ""
+    title: str | None = None
+    text: str | None = None
+    hint: str | None = None
+    spot: str | None = None
+
+
+@app.post("/api/admin/card")
+def admin_card_edit(b: CardEdit):
+    """카드 하나의 «읽는 글»을 고친다. 원본은 안 건드리고 덧쓰기로 쌓는다.
+
+    보내지 않은 칸은 손대지 않는다 — 이름만 고치고 싶은데 본문까지 같이 보내
+    실수로 지우는 일이 없게.
+    """
+    if not _agent_ok(b.key):
+        return JSONResponse({"error": "key"}, status_code=403)
+    sid = b.scenarioId or SC.ID
+    if sid not in scenarios.ids():
+        return JSONResponse({"error": "없는 시나리오"}, status_code=404)
+    m = scenarios.get(sid)
+    card = next((c for c in getattr(m, "CARDS", []) if c.get("id") == b.cardId), None)
+    if not card:
+        return JSONResponse({"error": "없는 카드"}, status_code=404)
+    with LOCK:
+        d = _edits_load(sid)
+        patch = dict(d.get(b.cardId) or {})
+        card.setdefault("_orig", {k: card.get(k) for k in EDIT_FIELDS})
+        for k in EDIT_FIELDS:
+            v = getattr(b, k)
+            if v is None:
+                continue
+            v = str(v).replace("\r\n", "\n").strip()
+            if v == str(card["_orig"].get(k) or ""):
+                patch.pop(k, None)        # 원본과 같아졌으면 덧쓰기를 지운다
+            else:
+                patch[k] = v
+            card[k] = v
+        if patch:
+            d[b.cardId] = patch
+        else:
+            d.pop(b.cardId, None)
+            for k in EDIT_FIELDS:         # 통째로 원본으로 되돌린 것이다
+                card[k] = card["_orig"].get(k)
+        _edits_save(sid, d)
+        bump()
+    return {"ok": True, "cardId": b.cardId, "edited": bool(patch),
+            "card": {k: card.get(k) for k in EDIT_FIELDS}, "n": len(d)}
+
+
+@app.post("/api/admin/card/revert")
+def admin_card_revert(b: CardEdit):
+    """이 카드를 원본으로 되돌린다."""
+    if not _agent_ok(b.key):
+        return JSONResponse({"error": "key"}, status_code=403)
+    sid = b.scenarioId or SC.ID
+    m = scenarios.get(sid)
+    card = next((c for c in getattr(m, "CARDS", []) if c.get("id") == b.cardId), None)
+    if not card:
+        return JSONResponse({"error": "없는 카드"}, status_code=404)
+    with LOCK:
+        d = _edits_load(sid)
+        d.pop(b.cardId, None)
+        _edits_save(sid, d)
+        for k in EDIT_FIELDS:
+            if "_orig" in card:
+                card[k] = card["_orig"].get(k)
+        bump()
+    return {"ok": True, "card": {k: card.get(k) for k in EDIT_FIELDS}, "n": len(d)}
+
+
+@app.get("/api/admin/card/edits")
+def admin_card_edits(key: str = "", scenarioId: str = ""):
+    """고친 것 전부. 원고로 되돌릴 때 이걸 그대로 가져간다.
+
+    ★ 배포판(Render)은 판이 새로 올라가면 파일이 날아간다. 그래서 고친 뒤에는
+      여기서 한 번 꺼내 원고에 옮겨 심어야 한다 — 화면의 「고친 것 내보내기」가
+      이 주소를 부른다.
+    """
+    if not _agent_ok(key):
+        return JSONResponse({"error": "key"}, status_code=403)
+    sid = scenarioId or SC.ID
+    d = _edits_load(sid)
+    m = scenarios.get(sid)
+    by = {c.get("id"): c for c in getattr(m, "CARDS", [])}
+    out = []
+    for cid, patch in d.items():
+        c = by.get(cid) or {}
+        o = c.get("_orig") or {}
+        out.append({"id": cid, "spotNow": c.get("spot", ""),
+                    "before": {k: o.get(k) for k in patch},
+                    "after": {k: patch[k] for k in patch}})
+    return {"ok": True, "scenarioId": sid, "n": len(d), "edits": d, "diff": out}
 
 
 @app.get("/api/admin/roles")

@@ -591,8 +591,31 @@
     border-bottom:1px solid var(--line2);padding-bottom:7px}
   .adzone > h4 .n{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;color:var(--faint);margin-left:8px}
   .adcards{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr))}
-  .adc{background:var(--screen2);border:1px solid var(--line2);border-radius:0;padding:13px 14px}
+  .adc{background:var(--screen2);border:1px solid var(--line2);border-radius:0;padding:13px 14px;
+    position:relative}
   .adc.bait{border-color:color-mix(in srgb,var(--blood) 45%,var(--line2))}
+  /* ── 원고를 이 자리에서 고친다 ─────────────────────────────────
+     이름과 본문은 원고이고, 원고는 쓰는 사람의 것이다. 그걸 고치자고 매번
+     파이썬 파일을 열어 문자열을 찾는 것은 글 쓰는 일이 아니라 코드 일이다. */
+  .adc .cedit{position:absolute;top:9px;right:10px;font-family:var(--mono);font-size:.55rem;
+    letter-spacing:.08em;padding:2px 7px;border:1px solid var(--line2);background:none;
+    color:var(--faint);cursor:pointer}
+  .adc .cedit:hover{color:var(--bone);border-color:var(--bone-dim)}
+  .adc.edited{border-color:color-mix(in srgb,#c99a4e 55%,var(--line2))}
+  .adc.edited .cti::after{content:" ✎";color:#c99a4e;font-size:.8em}
+  .adcf{margin-top:10px;display:flex;flex-direction:column;gap:7px}
+  .adcf label{font-family:var(--mono);font-size:.55rem;letter-spacing:.1em;color:var(--faint)}
+  .adcf input,.adcf textarea{width:100%;background:var(--screen);border:1px solid var(--line2);
+    color:var(--bone);border-radius:0;padding:7px 9px;font-family:inherit;font-size:.86rem;
+    line-height:1.6;resize:vertical;box-sizing:border-box}
+  .adcf textarea{min-height:96px}
+  .adcf .row{display:flex;gap:6px}
+  .adcf .row button{flex:1 1 0;border-radius:0;padding:8px;font-size:.78rem;
+    border:1px solid var(--line2);background:none;color:var(--bone-dim);cursor:pointer}
+  .adcf .row button.go{border-color:#4c7a5c;color:#8fd6a8}
+  .adcf .row button.rv{border-color:#7a4c4c;color:#d68f8f}
+  .adcf .st{font-family:var(--mono);font-size:.58rem;letter-spacing:.06em;color:var(--faint);
+    min-height:1em}
   /* 이튿날 새로 나오는 카드 — 몇 장인지 세는 자리라 눈으로 갈라져야 한다 */
   .adc.fresh{background:linear-gradient(180deg,rgba(96,150,190,.12),var(--screen2) 70%);
     border-color:color-mix(in srgb,#6096be 42%,var(--line2))}
@@ -1828,6 +1851,11 @@ async function admLoad(sid){
   }
   ADMD=d;
   ADM_RL=d.roundLabels||{};
+  /* 어느 카드가 고쳐져 있는지 같이 받아 둔다 — 목록에서 ✎ 로 표가 난다 */
+  try{
+    const e=await (await fetch(`/api/admin/card/edits?scenarioId=${encodeURIComponent(admScen)}&key=${encodeURIComponent(admKey)}`)).json();
+    ADM_ED={}; Object.keys(e.edits||{}).forEach(k=>ADM_ED[k]=1);
+  }catch(x){ ADM_ED={}; }
   const all=d.cards||[];
   /* ★ 퍼즐이 여는 «보상카드» 는 따로 서 있으면 안 된다. 목록에서 빼서 부모 밑에
      끼워 넣는다 — 예전에는 둘이 멀리 떨어져 있어서, 이 카드가 왜 여기 있는지
@@ -1921,7 +1949,8 @@ function admCard(c,from){
     (c.knownBy||[]).length?`<i>미리 앎 ${c.knownBy.map(ADM_ESC).join("·")}</i>`:"",
   ].filter(Boolean).join("");
   const fresh=(c.round===3&&!c.auto&&!from);
-  return `<div class="adc ${from?"reward":""} ${fresh?"fresh":""} ${c.hot?"hot":""} ${c.round===9?"sleep":""} ${c.bait?"bait":""} ${c.unlocks?"rulecard":""}">
+  return `<div class="adc ${from?"reward":""} ${fresh?"fresh":""} ${c.hot?"hot":""} ${c.round===9?"sleep":""} ${c.bait?"bait":""} ${c.unlocks?"rulecard":""} ${ADM_ED[c.id]?"edited":""}" id="adc-${ADM_ESC(c.id)}">
+    <button class="cedit" onclick="admEditOpen('${ADM_ESC(c.id)}')">원고 고치기</button>
     <div class="ch"><span class="cid">${ADM_ESC(c.id)}</span><span class="cti">${ADM_ESC(c.title)}</span>
       <span class="cks">${from?`<span class="cfr kw">보상 · ${ADM_ESC(from)}</span>`:""}<span class="cfr ${kc}">${kn}</span>${c.auto?'<span class="cfr ka">자동공개</span>':""}</span></div>
     <div class="cwhere">${ADM_ESC(c.locName||"")}${c.spot?" · "+ADM_ESC(c.spot):""}</div>
@@ -1936,7 +1965,85 @@ function admCard(c,from){
       <div class="ctx">${ADM_ESC(c.day2.text||c.text)}</div>
       ${c.day2.hint?`<div class="chint">${ADM_ESC(c.day2.hint)}</div>`:""}</div>`:""}
     ${c.gone?`<div class="cgone">이튿날에는 이 자리가 없다</div>`:""}
-    ${tags?`<div class="ctags">${tags}</div>`:""}</div>`;
+    ${tags?`<div class="ctags">${tags}</div>`:""}
+    <div class="adcfslot" id="adcf-${ADM_ESC(c.id)}"></div></div>`;
+}
+/* ── 원고 고치기 ────────────────────────────────────────────────
+   고칠 수 있는 것은 «읽는 글»뿐이다 — 이름·본문·힌트·자리. 라운드·선행·퍼즐 답
+   같은 «판을 굴리는 값»은 여기서 안 만진다. 화면에서 고쳐 판이 어긋나면 그건
+   고친 사람도 모르게 어긋난다.
+   ★ 원본은 안 건드린다. 고친 것만 따로 쌓이고(scenario_edits/), 「되돌리기」는
+     그 한 줄을 지우는 것이다. */
+let ADM_ED={};                       // cardId -> 고쳐진 칸들
+function admEditOpen(id){
+  const slot=document.getElementById("adcf-"+id); if(!slot) return;
+  if(slot.firstChild){ slot.innerHTML=""; return; }        // 다시 누르면 접는다
+  const c=((ADMD||{}).cards||[]).find(x=>x.id===id); if(!c) return;
+  slot.innerHTML=`<div class="adcf">
+    <label>이름</label><input id="ed-t-${id}" value="${ADM_ESC(c.title||"")}">
+    <label>자리</label><input id="ed-s-${id}" value="${ADM_ESC(c.spot||"")}">
+    <label>본문</label><textarea id="ed-x-${id}">${ADM_ESC(c.text||"")}</textarea>
+    <label>힌트</label><input id="ed-h-${id}" value="${ADM_ESC(c.hint||"")}">
+    <div class="row"><button class="go" onclick="admEditSave('${id}')">저장</button>
+      <button class="rv" onclick="admEditRevert('${id}')">원본으로</button>
+      <button onclick="admEditOpen('${id}')">접기</button></div>
+    <div class="st" id="ed-st-${id}"></div></div>`;
+  const t=document.getElementById("ed-t-"+id); if(t) t.focus();
+}
+function admEditSay(id,msg){ const e=document.getElementById("ed-st-"+id); if(e) e.textContent=msg; }
+async function admEditSave(id){
+  const g=k=>{ const e=document.getElementById(`ed-${k}-${id}`); return e?e.value:null; };
+  admEditSay(id,"저장하는 중…");
+  let r;
+  try{ r=await (await fetch("/api/admin/card",{method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({scenarioId:admScen,cardId:id,key:admKey,
+      title:g("t"),spot:g("s"),text:g("x"),hint:g("h")})})).json(); }
+  catch(e){ admEditSay(id,"서버에 못 닿았습니다."); return; }
+  if(r.error){ admEditSay(id,"안 됩니다 — "+r.error); return; }
+  /* 손에 든 목록도 같이 고친다. 안 그러면 접었다 펴면 옛 글이 돌아온다. */
+  const c=((ADMD||{}).cards||[]).find(x=>x.id===id);
+  if(c) Object.assign(c, r.card);
+  if(r.edited) ADM_ED[id]=1; else delete ADM_ED[id];
+  admEditSay(id, r.edited?`저장했습니다 · 고친 카드 ${r.n}장`:"원본과 같아져서 덧쓰기를 지웠습니다");
+  admRepaintCard(id);
+}
+async function admEditRevert(id){
+  admEditSay(id,"되돌리는 중…");
+  let r;
+  try{ r=await (await fetch("/api/admin/card/revert",{method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({scenarioId:admScen,cardId:id,key:admKey})})).json(); }
+  catch(e){ admEditSay(id,"서버에 못 닿았습니다."); return; }
+  if(r.error){ admEditSay(id,"안 됩니다 — "+r.error); return; }
+  const c=((ADMD||{}).cards||[]).find(x=>x.id===id);
+  if(c) Object.assign(c, r.card);
+  delete ADM_ED[id];
+  admEditSay(id,"원본으로 되돌렸습니다");
+  admRepaintCard(id);
+}
+/* 목록을 통째로 다시 그리면 스크롤이 맨 위로 튄다 — 그 카드 한 장만 갈아 끼운다 */
+function admRepaintCard(id){
+  const el=document.getElementById("adc-"+id); if(!el) return;
+  const c=((ADMD||{}).cards||[]).find(x=>x.id===id); if(!c) return;
+  const t=el.querySelector(".cti"); if(t) t.textContent=c.title||"";
+  const w=el.querySelector(".cwhere");
+  if(w) w.textContent=(c.locName||"")+(c.spot?" · "+c.spot:"");
+  const x=el.querySelector(".ctx"); if(x) x.textContent=c.text||"";
+  const h=el.querySelector(".chint"); if(h) h.textContent=c.hint||"";
+  el.classList.toggle("edited", !!ADM_ED[id]);
+}
+/* 고친 것을 원고로 되돌리는 길. 배포판은 판이 새로 올라가면 파일이 날아가므로,
+   고친 뒤에는 여기서 한 번 꺼내 원고에 옮겨 심어야 한다. */
+async function admEditExport(){
+  let r;
+  try{ r=await (await fetch(`/api/admin/card/edits?scenarioId=${encodeURIComponent(admScen)}&key=${encodeURIComponent(admKey)}`)).json(); }
+  catch(e){ note("서버에 못 닿았습니다."); return; }
+  if(r.error){ note("안 됩니다 — "+r.error); return; }
+  if(!r.n){ note("고친 카드가 없습니다."); return; }
+  const t=JSON.stringify(r.edits,null,2);
+  try{ await navigator.clipboard.writeText(t); note(`고친 카드 ${r.n}장을 복사했습니다.`); }
+  catch(e){ try{ prompt("아래를 복사해 주세요", t); }catch(e2){ note(t.slice(0,200)); } }
 }
 function admSetKey(to){
   const i=$("admk"); if(!i) return;
@@ -1951,6 +2058,8 @@ function showCardBrowser(){
   $("adcard").innerHTML=`<h3>조사카드 훑어보기</h3><div class="adsub">QA READOUT · 본문·힌트까지 전부</div>
     <div class="adtabs">${tabs}<button class="adtab" onclick="showRoleBrowser()">배역</button><button class="adtab" onclick="showAssetBrowser()">에셋 프롬프트</button><button class="adtab" onclick="showAdminPanel()">← 사건 정본</button></div>
     <div id="admcards"></div>
+    <button class="adtab" style="margin-top:14px;width:100%;padding:10px" onclick="admEditExport()">고친 원고 내보내기 (복사)</button>
+    <div class="adsub" style="margin-top:6px">배포판은 판이 새로 올라가면 고친 것이 날아갑니다 — 고친 뒤에는 여기서 꺼내 두세요.</div>
     <button class="adclose" onclick="closeAdmin()">닫기</button>`;
   $("admask").classList.add("on");
   admLoad();
