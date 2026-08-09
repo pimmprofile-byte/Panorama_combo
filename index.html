@@ -1873,6 +1873,33 @@
   .pzk .pz-head b{color:var(--ink);font-variant-numeric:tabular-nums}
   .pzk .pz-tip{margin-left:auto;overflow:hidden;text-overflow:ellipsis;min-width:0}
   @media(max-width:380px){ .pzk .pz-tip{display:none} }
+  /* ── 짚거나 돌리는 판 (PZART) ─────────────────────────────────
+     조각판과 같은 껍데기를 쓰되 안에 든 것이 다르다 — 팻말과 세그먼트와 휠.
+     글꼴은 둥근모 한 벌(--pix)로 못박는다. 이 세상의 기계에 뜨는 글자다. */
+  .pzk.art text{font-family:var(--pix);text-anchor:middle;dominant-baseline:alphabetic}
+  .pzk.art .ag-pan{fill:rgba(7,10,8,.72);stroke:#4b5a4e;stroke-width:.6}
+  .pzk.art .ag-dim{fill:#9fb0a3}
+  /* 오려낸 조각 — 평소엔 없는 것처럼 있다가, 짚으면 이 세상의 초록으로 켜진다 */
+  .pzk.art .ag-lit{fill:var(--signal);opacity:0;transition:opacity .18s}
+  .pzk.art .ag-lit.on{opacity:1;filter:drop-shadow(0 0 2.5px color-mix(in srgb,var(--signal) 70%,transparent))}
+  /* 손바닥 자국 — 벽에 남은 얼룩이라 흐릿하다. 짚은 손가락만 남는다. */
+  .pzk.art .ag-hand{cursor:pointer}
+  .pzk.art .ag-palm,.pzk.art .ag-fin{fill:rgba(232,238,230,.14);stroke:rgba(232,238,230,.3);
+    stroke-width:.5;transition:fill .16s}
+  .pzk.art .ag-fin.on{fill:color-mix(in srgb,var(--signal) 55%,transparent);
+    stroke:var(--signal)}
+  .pzk.art.cold .ag-hand,.pzk.art.cold .wh{cursor:default}
+  /* 세븐세그먼트 — 꺼진 획도 «있다»는 것이 보여야 뜬 글자가 글자로 읽힌다 */
+  .pzk.art .sg{fill:#e6ece4;opacity:.09;transition:opacity .12s,fill .12s}
+  .pzk.art .sg.on{opacity:1;fill:#f0c06a}
+  .pzk.art .sg.on.go{fill:var(--signal);
+    filter:drop-shadow(0 0 2.5px color-mix(in srgb,var(--signal) 70%,transparent))}
+  /* 휠 — 잡아 돌리는 자리. 톱니 자국 하나가 몇 바퀴 돌렸는지를 말한다. */
+  .pzk.art .wh{cursor:grab}
+  .pzk.art .wh-o{fill:rgba(10,14,12,.66);stroke:#c8d2c6;stroke-width:1.4}
+  .pzk.art .wh-sp{stroke:rgba(200,210,198,.45);stroke-width:.9}
+  .pzk.art .wh-i{fill:#c8d2c6}
+  .pzk.art .wh-g{fill:#f0c06a}
   /* 다 맞추면 한 번 타오른다 */
   @keyframes pzDone{0%{filter:none}40%{filter:brightness(2.2) saturate(1.4)}100%{filter:none}}
   .pzk.done .pz-svg{animation:pzDone .9s ease both}
@@ -8152,6 +8179,188 @@ function pzCheck(){
   const n=$("puzNote"); if(n) n.textContent="자국이 다 이어졌습니다 — 읽히는 대로 아래 칸에 적으세요.";
   const i=$("puzAns"); if(i) i.classList.add("ready");
 }
+/* ── 손으로 만지는 판 (PZART) ────────────────────────────────────
+   조각 맞추기(PZ)와 결이 다른 판이다 — 끌어다 놓는 것이 아니라 «짚거나 돌리는» 자리.
+   수수께끼 창의 그림칸(cardArtSlot) 자리에 대신 선다. 판이 답을 보내지는 않는다:
+   판은 글자를 «읽히게» 할 뿐이고, 읽은 것은 사람이 아래 답 칸에 적는다(PZ 와 같다).
+   ★ 조각판(.pzk)의 껍데기를 그대로 쓴다 — 같은 정사각, 같은 그림 배경, 조사 때가
+     아니면 흐려지는 것(.cold)까지. 판마다 창이 달라 보이면 안 된다. */
+function artShell(cid, head, tip, svg){
+  return `<div class="pzk art" id="pzk">
+    <div class="pz-bg" id="pzBg"></div>
+    <svg class="pz-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"
+         id="pzSvg" aria-label="${esc(head)}">${svg}</svg>
+    <div class="pz-head">${esc(head)}<span class="pz-tip">${tip}</span></div>
+  </div>`;
+}
+function artBg(cid, live){
+  const box=$("pzk"); if(box) box.classList.toggle("cold", live===false);
+  const sid=(STATE&&STATE.scenarioId)||"";
+  findAsset(`/assets/${sid}_card_${cid}`, u=>{ const b=$("pzBg");
+    if(u&&b) b.style.backgroundImage=`url("${u}")`; });
+}
+/* 판을 다 만졌다 — 답 칸에 불을 켜 준다. 여기서 끝이고, 답은 사람이 적는다. */
+function artDone(msg){
+  const box=$("pzk"); if(box&&!box.classList.contains("done")) box.classList.add("done");
+  const n=$("puzNote"); if(n) n.textContent=msg;
+  const i=$("puzAns"); if(i) i.classList.add("ready");
+}
+
+/* ── C5 가짜 벽 — 「접근금지」 안에 답이 들어 있다 ────────────────
+   접[저] · 근[ㄴ] · 금[ㄱ] · 지[ㅣ] — 네 글자에서 저 부분만 초록으로 켜면
+   «전기»가 읽힌다. 손바닥 자국의 손가락을 짚으면 그 자리가 켜진다.
+   ★ 켜는 방법이 **오려내기(clipPath)**다. 「저」를 따로 그려 「접」 위에 얹으면
+     글꼴마다 받침 있는 글자가 위를 눌러 담아서 획이 어긋난다 — 같은 글자를
+     한 번 더 그리고 «윗부분만 남기면» 자리가 언제나 정확히 맞는다. */
+const C5_LIT=[
+  {ch:"접", clip:{x:-.54, y:-.86, w:1.08, h:.57}},   // 위 → 저   (받침 ㅂ 을 뺀다)
+  {ch:"근", clip:{x:-.54, y:-.29, w:1.08, h:.37}},   // 아래 → ㄴ (ㄱ·ㅡ 를 뺀다)
+  {ch:"금", clip:{x:-.54, y:-.86, w:1.08, h:.33}},   // 위 → ㄱ   (ㅡ·ㅁ 을 뺀다)
+  {ch:"지", clip:{x:  .09, y:-.86, w:.58,  h:1.00}}, // 오른쪽 → ㅣ (ㅈ 을 뺀다)
+];
+const C5_HAND=[
+  {k:0, cx:34, cy:66, rx:2.8, ry:5.4, rot:-22},
+  {k:1, cx:43, cy:62, rx:2.8, ry:6.2, rot:-8},
+  {k:2, cx:52, cy:62, rx:2.8, ry:6.4, rot:4},
+  {k:3, cx:61, cy:65, rx:2.8, ry:5.6, rot:16},
+];
+const C5_F=18, C5_BASE=38, C5_X=[23, 41, 59, 77];
+function c5HTML(cid){
+  const chars=C5_LIT.map((d,i)=>{
+    const x=C5_X[i], c=d.clip, F=C5_F;
+    return `<clipPath id="agc-${i}"><rect x="${(x+c.x*F).toFixed(2)}" y="${(C5_BASE+c.y*F).toFixed(2)}"
+        width="${(c.w*F).toFixed(2)}" height="${(c.h*F).toFixed(2)}"/></clipPath>
+      <text class="ag-dim" x="${x}" y="${C5_BASE}" font-size="${F}">${d.ch}</text>
+      <text class="ag-lit" data-k="${i}" clip-path="url(#agc-${i})"
+        x="${x}" y="${C5_BASE}" font-size="${F}">${d.ch}</text>`;
+  }).join("");
+  const hand=C5_HAND.map(f=>`<ellipse class="ag-fin" data-k="${f.k}" cx="${f.cx}" cy="${f.cy}"
+      rx="${f.rx}" ry="${f.ry}" transform="rotate(${f.rot} ${f.cx} ${f.cy})"/>`).join("");
+  return artShell(cid, "접근금지 팻말",
+    `<b>손바닥 자국</b>을 짚어 보세요`,
+    `<rect class="ag-pan" x="8" y="18" width="84" height="28" rx="2"/>
+     ${chars}
+     <g class="ag-hand">
+       <ellipse class="ag-palm" data-k="all" cx="49" cy="79" rx="13" ry="9.5"/>
+       ${hand}
+     </g>`);
+}
+function c5Wire(cid, live){
+  artBg(cid, live);
+  const svg=$("pzSvg"); if(!svg) return;
+  const lit=new Set();
+  const paint=()=>{
+    svg.querySelectorAll(".ag-lit").forEach(t=>t.classList.toggle("on", lit.has(+t.dataset.k)));
+    svg.querySelectorAll(".ag-fin").forEach(f=>f.classList.toggle("on", lit.has(+f.dataset.k)));
+    if(lit.size===C5_LIT.length) artDone("네 자리가 다 켜졌습니다 — 읽히는 대로 아래 칸에 적으세요.");
+  };
+  const tap=k=>{
+    if(live===false) return;
+    if(k==="all"){ C5_LIT.forEach((d,i)=>lit.add(i)); }
+    else if(lit.has(k)) lit.delete(k);
+    else lit.add(k);
+    try{ sfx("good"); }catch(e){}
+    paint();
+  };
+  svg.querySelectorAll(".ag-fin,.ag-palm").forEach(el=>{
+    el.addEventListener("pointerdown", e=>{
+      e.preventDefault();
+      const v=el.dataset.k;
+      tap(v==="all"?"all":+v);
+    });
+  });
+}
+
+/* ── C4 수동발전기 — 돌리면 세그먼트에 글자가 뜬다 ───────────────
+   세븐세그먼트 두 칸(왼·오른). 휠을 돌릴 때마다 한 칸씩 나아간다 —
+   ㄴㅏ → ㄱㅏ → ㄱㅣ. 세 칸을 다 지나면 초록으로 두 번 깜빡이고 처음으로 돌아간다.
+   ★ 자모가 일곱 획에 정확히 떨어진다: ㄴ=f·e·d · ㅏ=f·e·g · ㄱ=a·b·c · ㅣ=f·e.
+     그래서 이 판은 «한글이 뜨는 세그먼트»가 억지가 아니다. */
+const SEG7={ "ㄴ":"fed", "ㅏ":"feg", "ㄱ":"abc", "ㅣ":"fe" };
+const C4_STEPS=[["ㄴ","ㅏ"],["ㄱ","ㅏ"],["ㄱ","ㅣ"]];
+function segCell(side, cx, cy){
+  const S=[["a",cx-6,cy-13,12,2.6],["b",cx+5.2,cy-11.6,2.6,10.4],["c",cx+5.2,cy+1.2,2.6,10.4],
+           ["d",cx-6,cy+10.4,12,2.6],["e",cx-7.8,cy+1.2,2.6,10.4],["f",cx-7.8,cy-11.6,2.6,10.4],
+           ["g",cx-6,cy-1.3,12,2.6]];
+  return S.map(([k,x,y,w,h])=>
+    `<rect class="sg" data-s="${side}${k}" x="${x}" y="${y}" width="${w}" height="${h}" rx="1"/>`).join("");
+}
+function c4HTML(cid){
+  const spokes=Array.from({length:8},(_,i)=>{
+    const a=i*45*Math.PI/180, r0=5, r1=15.5;
+    return `<line class="wh-sp" x1="${(50+Math.cos(a)*r0).toFixed(2)}" y1="${(72+Math.sin(a)*r0).toFixed(2)}"
+        x2="${(50+Math.cos(a)*r1).toFixed(2)}" y2="${(72+Math.sin(a)*r1).toFixed(2)}"/>`;
+  }).join("");
+  return artShell(cid, "수동발전기",
+    `휠을 <b>돌리면</b> 한 칸씩 나아갑니다`,
+    `<rect class="ag-pan" x="22" y="18" width="56" height="30" rx="2"/>
+     ${segCell("L", 37, 33)}${segCell("R", 63, 33)}
+     <g class="wh" id="c4Wheel">
+       <circle class="wh-o" cx="50" cy="72" r="17"/>
+       ${spokes}
+       <circle class="wh-i" cx="50" cy="72" r="4.6"/>
+       <circle class="wh-g" cx="50" cy="55.5" r="3"/>
+     </g>`);
+}
+function c4Wire(cid, live){
+  artBg(cid, live);
+  const svg=$("pzSvg"); if(!svg) return;
+  const wheel=svg.querySelector("#c4Wheel"); if(!wheel) return;
+  const st={step:-1, turn:0, spin:0, seen:0, busy:false};
+  const paint=(blink)=>{
+    const on=new Set();
+    if(!blink && st.step>=0 && st.step<C4_STEPS.length){
+      const [l,r]=C4_STEPS[st.step];
+      (SEG7[l]||"").split("").forEach(k=>on.add("L"+k));
+      (SEG7[r]||"").split("").forEach(k=>on.add("R"+k));
+    }
+    svg.querySelectorAll(".sg").forEach(g=>{
+      g.classList.toggle("on", blink?true:on.has(g.dataset.s));
+      g.classList.toggle("go", !!blink);
+    });
+  };
+  const advance=()=>{
+    if(st.busy) return;
+    st.step++;
+    if(st.step>=C4_STEPS.length){
+      /* 한 바퀴 — 초록으로 두 번 깜빡이고 처음으로 돌아간다 */
+      st.busy=true; st.seen++;
+      let n=0;
+      const t=setInterval(()=>{ paint(n%2===0); n++;
+        if(n>=4){ clearInterval(t); st.step=-1; st.busy=false; paint(false);
+                  if(st.seen>=1) artDone("한 바퀴를 다 봤습니다 — 읽히는 대로 아래 칸에 적으세요."); }
+      },170);
+      return;
+    }
+    try{ sfx("cursor"); }catch(e){}
+    paint(false);
+  };
+  paint(false);
+  /* 돌리기 — 휠 한가운데를 축으로 각을 잰다. 120°마다 한 칸씩 나아간다. */
+  let pid=null, last=0;
+  const ang=e=>{ const r=svg.getBoundingClientRect(), s=Math.min(r.width,r.height);
+    const x=(e.clientX-(r.left+(r.width-s)/2))/s*100, y=(e.clientY-(r.top+(r.height-s)/2))/s*100;
+    return Math.atan2(y-72, x-50)*180/Math.PI; };
+  wheel.addEventListener("pointerdown", e=>{
+    if(live===false||pid!==null) return;
+    pid=e.pointerId; try{ wheel.setPointerCapture(pid); }catch(x){}
+    last=ang(e); e.preventDefault();
+  });
+  wheel.addEventListener("pointermove", e=>{
+    if(pid!==e.pointerId) return;
+    const a=ang(e); let d=a-last; if(d>180) d-=360; if(d<-180) d+=360;
+    last=a; st.spin+=d; st.turn+=Math.abs(d);
+    wheel.setAttribute("transform", `rotate(${st.spin.toFixed(1)} 50 72)`);
+    while(st.turn>=120){ st.turn-=120; advance(); }
+    e.preventDefault();
+  });
+  const up=e=>{ if(pid!==e.pointerId) return;
+    try{ wheel.releasePointerCapture(pid); }catch(x){} pid=null; };
+  wheel.addEventListener("pointerup", up);
+  wheel.addEventListener("pointercancel", up);
+}
+const PZART={ C5:{html:c5HTML, wire:c5Wire}, C4:{html:c4HTML, wire:c4Wire} };
+function pzArt(cid){ return PZART[cid]||null; }
 /* ── 풀고 난 자리 ─────────────────────────────────────────────────
    예전에는 «푼 그 카드»를 그 자리에서 다시 세웠다. 그런데 푼 사람에게 지금 궁금한
    것은 자물쇠가 아니라 그 안에서 나온 물건이다 — 이미 다 맞춘 판을 한 번 더 보여
@@ -8208,6 +8417,7 @@ async function openPuzzle(cid){
   const maxT=+(d.maxTries||3), hintN=+(d.hintAfter||2);
   const box=$("cardBox"); if(!box) return;
   const kit=pzHas(cid);                 // 손으로 맞추는 판이 있는 수수께끼인가
+  const art=kit?null:pzArt(cid);        // 짚거나 돌리는 판(PZART)
   box.dataset.card=cid;
   box.innerHTML=`<div class="mhead">
       <div class="mh-t"><span class="mh-eb">${esc(row.locName||"")}</span>
@@ -8216,7 +8426,7 @@ async function openPuzzle(cid){
         <span class="mh-sub">조사턴을 쓰지 않습니다</span></div>
       <button class="mh-x" onclick="closeModal('cardModal')" aria-label="닫기">${ICO.close}</button></div>
     <div class="mbody">
-      ${kit?pzHTML(cid):cardArtSlot()}
+      ${kit?pzHTML(cid):art?art.html(cid):cardArtSlot()}
       <div class="sec"><div class="b" style="font-size:15px" id="cardText">${mdB(esc(row.prompt||""))}</div></div>
       ${/* ★ 맞추는 판이 있어도 답 칸은 «있다». 판은 글자를 세워 줄 뿐이고, 읽은 것을
             적는 것은 사람 몫이다 — 예전에는 다 맞추면 판이 답을 대신 보냈다. */""}
@@ -8232,11 +8442,12 @@ async function openPuzzle(cid){
       ${hintOf(row)?`<div class="puz-hint">${esc(hintOf(row))}</div>`:""}
       <div class="puz-note" id="puzNote">${!canTry ? esc(why)
                                               :kit?`자리에 끌어다 놓으면 저절로 돌아갑니다 — 몇 번이든 붙였다 떼도 됩니다. ${puzNoteText(hintOf(row),row.locked,hintN,maxT)}`
+                                              :art?`위의 판을 만져 보세요 — 몇 번이든 다시 해도 됩니다. ${puzNoteText(hintOf(row),row.locked,hintN,maxT)}`
                                               :puzNoteText(hintOf(row),row.locked,hintN,maxT)}</div>
     </div>
     <div class="mfoot"><span class="mf-note">맞히면 나온 것은 내가 가져갑니다.</span>
       <button class="btn" onclick="closeModal('cardModal')">닫기</button></div>`;
-  if(kit) pzWire(cid,canTry); else paintCardArt(cid);
+  if(kit) pzWire(cid,canTry); else if(art) art.wire(cid,canTry); else paintCardArt(cid);
   box.style.setProperty("--mt","var(--cold)");
   box.classList.remove("reveal","shock","bait","clue");
   void box.offsetWidth; box.classList.add("reveal","clue");
