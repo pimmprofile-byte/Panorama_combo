@@ -1527,10 +1527,13 @@ def state(clientId: str = "", gm: int = 0, roleId: str = "", key: str = ""):
         _dv = _dev_me(me)
         if _dv:
             st["dev"] = _dv
-            mc = _dev_my_cuts(me)
-            if mc:
-                # 그 사람 몫의 컷. 같은 id 의 공통 컷이 있으면 화면이 그것을 갈아 끼운다.
-                st["myCuts"] = list(st.get("myCuts") or []) + mc
+        # 그 사람 몫의 컷. 같은 id 의 공통 컷이 있으면 화면이 그것을 갈아 끼운다.
+        # ★ 개발자만이 아니라 **모두가** 받는다. 개발자에게만 내려보내면 「나만
+        #   다른 것을 봤다」가 그 자리에서 티가 난다 — 넷이 다 다른 것을 봐야
+        #   아무도 자기가 갈라졌다는 것을 모른다.
+        mc = _my_cuts(me)
+        if mc:
+            st["myCuts"] = list(st.get("myCuts") or []) + mc
         # 방탈출 — 남는 열쇠가 내 것인지, 클리어 뒤의 내 몫이 무엇인지가 사람마다 다르다.
         if st.get("escape") is not None and me:
             st["escape"] = _escape_public(me)
@@ -1941,6 +1944,11 @@ def sheet(role_id: str, clientId: str = ""):
         s["fragments"] = SC.memory_up_to(role_id, seq, _cs)
     except TypeError:                      # 위기 개념이 없는 시나리오
         s["fragments"] = SC.memory_up_to(role_id, seq)
+    # 개발자가 된 사람에게는 «자기 이야기»가 추가정보 맨 앞에 선다. 이 몸에 남아
+    # 있던 기억(memory_up_to)은 걷지 않는다 — 둘 다 지금은 그 사람 것이고,
+    # 「내가 들어온 몸이 무엇을 겪었나」가 이 배역의 재미다.
+    if s and _dv and (_dv.get("sheet") or {}).get("devFragments"):
+        s["fragments"] = list(_dv["sheet"]["devFragments"]) + list(s.get("fragments") or [])
     # 그날 밤은 줄글 조각이 아니라 제 자리를 갖는다 — 시트가 한 장으로 세운다.
     nr = getattr(SC, "night_report", None)
     if nr:
@@ -4191,27 +4199,46 @@ def _dev_me(role_id: str) -> dict | None:
     return out
 
 
-def _dev_my_cuts(role_id: str) -> list:
-    """개발자가 된 사람만 보는 컷 — `myCuts` 로 나간다.
+def _my_cuts(role_id: str) -> list:
+    """**이 사람 몫의** 컷 — `myCuts` 로 나간다.
 
     방이 다 같이 보는 컷 목록에는 못 넣는다. 대신 «같은 id 의 공통 컷을 갈아 끼우는»
     자리라, 원고가 `DEV_PICK["cutAll"]` 로 **모두가 보는 컷**을 하나 두면 그 자리에
-    이것이 덮인다 — 그러면 화면만 보고는 어느 갈래인지 알 수 없다.
+    이것이 덮인다 — 그러면 화면만 보고는 누가 무엇을 봤는지 알 수 없다.
+
+    두 갈래다. 개발자가 된 사람은 개발자 컷을 받고, 나머지는 원고의
+    `role_cut(roleId, key)` 가 주는 배역 몫을 받는다. 둘 다 없으면 공통 컷이
+    그대로 남는다 — 그것도 화면에서는 똑같아 보인다.
     """
-    if not _dev_me(role_id):
+    if not role_id:
         return []
     dp = getattr(SC, "DEV_PICK", {}) or {}
-    key = dp.get("cut") or "dev"
-    fn = getattr(SC, "event_cut", None)
-    if not fn:
+    slot = dp.get("cutAll")
+    cuts: list = []
+    if _dev_me(role_id):
+        key = dp.get("cut") or "dev"
+        fn = getattr(SC, "event_cut", None)
+        if fn:
+            try:
+                cuts = list(fn(key) or [])
+            except Exception:                           # noqa: BLE001
+                cuts = []
+        slot = slot or key
+    else:
+        rf = getattr(SC, "role_cut", None)
+        if rf and slot:
+            try:
+                cuts = list(rf(role_id, slot) or [])
+            except Exception:                           # noqa: BLE001
+                cuts = []
+    if not cuts or not slot:
         return []
-    try:
-        cuts = list(fn(key) or [])
-    except Exception:                                   # noqa: BLE001
-        cuts = []
-    if not cuts:
-        return []
-    return [{"id": dp.get("cutAll") or key, "cuts": cuts}]
+    return [{"id": slot, "cuts": cuts}]
+
+
+def _dev_my_cuts(role_id: str) -> list:
+    """옛 이름. 개발자 몫만 물어보던 자리라 그대로 남겨 둔다."""
+    return _my_cuts(role_id) if _dev_me(role_id) else []
 
 
 def _dev_fire_common_cut() -> None:
