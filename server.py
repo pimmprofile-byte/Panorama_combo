@@ -694,11 +694,14 @@ def public_state() -> dict:
             "overLimit": {rid: _over_limit(rid) for rid in ROOM["hands"] if _over_limit(rid) > 0},
             # 누가 도구를 몇 개 모았는가 — 이건 공개 정보다. 이 게임의 시계다.
             # 무엇이 나왔는지는 푼 사람만 안다(개수만 나간다).
-            # 열쇠 반쪽은 도구가 아니라 입장권이라 이 셈에서 뺀다(§6) — 그건 문 앞에서만 센다.
+            # ★ **열쇠 반쪽도 이 셈에 넣는다**(2026-08-09, 사람 결정). 예전에는
+            #   「입장권이지 도구가 아니다」로 빼 두었는데, 정작 쥔 사람 화면에서는
+            #   처음부터 도구 칸에 앉아 있었다(isTool 이 keyHalf 를 센다). 내 화면과
+            #   남의 화면이 같은 물건을 다르게 세고 있었던 것이다.
+            #   덤으로 「도구 2」가 조합용 도구인지 열쇠인지 남은 모른다 — 셈이 흐려지는
+            #   것이 이 게임에서는 손해가 아니다.
             "items": {rid: n for rid, n in
-                      ((r, len([c for c in _inventory(r)
-                                if not (SC.get_card(c) or {}).get("keyHalf")]))
-                       for r in ROOM["roles"]) if n},
+                      ((r, len(_inventory(r))) for r in ROOM["roles"]) if n},
             "itemNeed": len(getattr(SC, "ESCAPE_ITEMS", []) or []),
             "puzzleOpen": _puzzle_open_now()[0],
             "vault": _vault_public(),
