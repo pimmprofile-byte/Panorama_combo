@@ -5661,10 +5661,35 @@ document.addEventListener("click",e=>{
 },{capture:true});
 
 /* 배역마다 기본 음높이를 달리 줘서, 말풍선 소리만으로도 누가 말하는지 감이 오게 한다 */
-const VN_VOICE={munjaei:520,kangyunseo:645,oserin:470,jinharam:300,yutaeo:585,handokyung:262};
-function vnBlip(who){
+/* 배역마다 «목소리 높이»가 다르다. 타자 소리가 그 사람 것으로 들려야 누가 말하는지가
+   글자를 안 읽어도 먼저 온다. 없는 배역은 지문과 같은 높이로 떨어진다. */
+const VN_VOICE={munjaei:520,kangyunseo:645,oserin:470,jinharam:300,yutaeo:585,handokyung:262,
+                david:300, damon:560, daisy:470};
+function vnBlip(who,gain){
   const base=VN_VOICE[who]||395;
-  vnTone(base*(.94+Math.random()*.12),.045,who?"triangle":"sine",who?.055:.032);
+  vnTone(base*(.94+Math.random()*.12),.045,who?"triangle":"sine",
+         gain!=null?gain:(who?.055:.032));
+}
+/* ── 대화창의 «치고 있다» 소리 ────────────────────────────────────
+   말풍선 앞에 점 셋이 뛰는 자리(.msg.typing)에 소리를 붙인다. 비주얼노벨에서
+   글자가 찍힐 때 나는 그 소리와 **같은 합성기 · 같은 목소리**를 쓴다 — 그래야
+   오프닝에서 듣던 그 사람이 지금 치고 있는 것으로 이어진다.
+   ★ 소리는 더 여리게 준다(.026). VN 은 한 번에 한 줄이지만 여기는 판이 도는
+     내내 울리는 자리라, 같은 세기로 두면 금세 거슬린다.
+   ★ 화면에 그 줄이 사라지면 스스로 멎는다 — 창을 닫았는데 소리만 남는 일이 없게. */
+let chatTyTimer=null, chatTyKey="";
+function chatTypeSfx(m){
+  const key=m?(m.roleId+"|"+nOf(m)):"";
+  if(key===chatTyKey) return;                 // 같은 줄이면 이미 울리고 있다
+  chatTyKey=key;
+  if(chatTyTimer){ clearInterval(chatTyTimer); chatTyTimer=null; }
+  if(!key) return;
+  const who=m.roleId;
+  vnBlip(who,.026);
+  chatTyTimer=setInterval(()=>{
+    if(!document.querySelector(".msg.typing")){ chatTypeSfx(null); return; }
+    vnBlip(who,.026);
+  },112);
 }
 function vnToggleMute(){
   vnMuted=!vnMuted;
@@ -10646,6 +10671,7 @@ function renderChat(boxId){
   while(box.children.length>CHAT_KEEP) box.removeChild(box.firstChild);
   const tym=dripTypingMsg();
   if(tym) box.appendChild(typingRow(tym));
+  chatTypeSfx(tym);
   if(dripPaused){
     /* 이 단추가 떠 있는 동안 대화는 멈춰 서 있다 — 여기서 눌릴 것은 이것 하나뿐이다.
        그러면 점멸시킨다. 이 게임에서 «누르라»는 늘 같은 깜빡임이다(.btn.blink). */
