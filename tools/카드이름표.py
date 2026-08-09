@@ -43,9 +43,13 @@ def table(mod) -> str:
             out.append("")
             out.append("| ID | 차수 | 뒷면이름 (조사 핀) | 카드이름 (열었을 때) |")
             out.append("|---|---|---|---|")
-        same = " ⚠" if (c.get("spot") or "") == (c.get("title") or "") else ""
+        if c.get("startWith"):
+            back = f"*(핀 없음 — {c['startWith']} 소지)*"
+        else:
+            same = " ⚠" if (c.get("spot") or "") == (c.get("title") or "") else ""
+            back = f"{c.get('spot') or '—'}{same}"
         out.append(f"| {c['id']} | {c.get('round', '?')}차 | "
-                   f"{c.get('spot') or '—'}{same} | {c.get('title') or '—'} |")
+                   f"{back} | {c.get('title') or '—'} |")
     out.append("")
     return "\n".join(out).strip() + "\n"
 
@@ -59,7 +63,8 @@ def main(sid: str, write: bool) -> int:
 
     body = table(mod)
     dup = [c["id"] for c in getattr(mod, "CARDS", [])
-           if (c.get("spot") or "") == (c.get("title") or "")]
+           if not c.get("startWith")
+           and (c.get("spot") or "") == (c.get("title") or "")]
 
     if not write:
         print(body)
