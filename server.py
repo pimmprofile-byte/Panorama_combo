@@ -1931,7 +1931,15 @@ def sheet(role_id: str, clientId: str = ""):
     # 여기서 덮어도 남에게는 한 톨도 안 간다.
     _dv = _dev_me(role_id)
     if s and _dv and _dv.get("sheet"):
-        s.update(_dv["sheet"])
+        _sh = _dv["sheet"]
+        # ★★ 「나의 이야기」와 「사건 당일 행적」이 갈아 끼워지면, 이 몸의 옛 주인이
+        #   무엇이었는지가 어디에도 안 남는다. 그건 잃어버리기 아까운 자리다 —
+        #   갈아 끼우기 «전»의 두 장을 휴지통으로 옮겨 둔다(화면의 「휴지통」 탭).
+        if _sh.get("storyPast") or _sh.get("storyToday"):
+            s["trashed"] = {"name": s.get("name", ""),
+                            "past": s.get("storyPast", ""),
+                            "today": s.get("storyToday", "")}
+        s.update(_sh)
         s["dev"] = True
     # 나이는 롤카드에도 «지금 값»으로 뜬다. 스스로 적는 배역이면 적어 넣은 것이,
     # 아니면 「신원미상」이 온다. 이 창구는 본인만 열 수 있으니 여기서는 ageInput 을 실어도 된다 —

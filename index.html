@@ -1918,7 +1918,18 @@
        보려고 누르는 것이라, 판이 안 따라가면 누른 보람이 없다. */
   .cardart .ca-lay,.picwrap .ca-lay{position:absolute;inset:0;width:100%;height:100%;
     z-index:2;pointer-events:none}
-  .picwrap{position:relative}
+  .picwrap{position:relative;width:100%}
+  /* ── 크게 보기 ────────────────────────────────────────────────
+     ★ 창들 «위»에 선다. 예전에는 `.modal:not(.overdock){z-index:70}` 을 받아서
+       `#cardModal{z-index:72}` 뒤로 깔렸다 — 카드 그림을 눌러도 화면은 그대로였고,
+       누른 만큼 뒤에 쌓여 있다가 카드를 닫을 때 한꺼번에 나왔다.
+     ★ 좌우를 화면 끝까지 쓴다. 작아서 못 읽던 것을 보려고 누른 자리인데
+       창틀 폭(540)에 갇히면 누를 이유가 없다. 그림 위의 판(CARD_LAYER)은
+       그림에 붙어 있으므로 같이 커진다. */
+  .modal.picv{padding:8px}
+  .modal.picv > .box{width:100%;max-width:min(100%,980px);margin:0}
+  .modal.picv .mbody{padding:10px 10px 14px}
+  .modal.picv img{display:block;width:100%;height:auto;border-radius:2px}
   .ca-lay text{font-family:var(--pix);fill:#e6ece4;dominant-baseline:middle}
   .ca-lay .lg-pan{fill:rgba(7,9,8,.86);stroke:#4b5a4e;stroke-width:.6}
   .ca-lay .lg-rule{stroke:#3c4a40;stroke-width:.45}
@@ -1977,6 +1988,9 @@
        누르면 묻는 창이 카드창 뒤에 숨어 아무것도 못 누르는 상태가 됐다.
        숫자를 아무리 키워도 규칙이 안 이기면 소용이 없다. */
   .modal.dlg.on,.modal.dlg.folding{z-index:120}
+  /* 그때그때 만들어 띄우는 창은 «방금 연 것»이라 늘 맨 위다 — 자리 팝업도,
+     크게 보기도, 확인창도. 아래에 깔리면 누른 사람 눈에는 아무 일도 안 일어난다. */
+  .modal.dyn.on,.modal.dyn.folding{z-index:130}
   .dlg .win{max-width:400px}
   .dlg .box{max-width:none}
   .dlg .mhead{align-items:center;gap:11px;padding:17px 18px 14px}
@@ -2063,6 +2077,13 @@
 
   .bigcard.role{border-color:color-mix(in srgb,var(--rc,#2f6b57) 45%,var(--line));background:linear-gradient(165deg,#201f1e,#151413)}
   .bigcard.role::before{content:"";display:block;height:3px;width:46px;border-radius:0;background:var(--rc,var(--cold));margin-bottom:14px}
+  /* 휴지통에 내려간 장 — 읽히기는 하되 «지금 것»으로 안 보여야 한다.
+     빛을 빼고 머리띠를 끊어 놓는다. 지운 것이 아니라 버린 것이다. */
+  .bigcard.role.gone{opacity:.62;filter:saturate(.5)}
+  .bigcard.role.gone::before{background:repeating-linear-gradient(90deg,
+    var(--rc,var(--cold)) 0 5px,transparent 5px 10px)}
+  .bigcard.role.k-trash::before{background:repeating-linear-gradient(90deg,
+    var(--rc,var(--cold)) 0 5px,transparent 5px 10px)}
   .bigcard.clue{border-color:var(--case-line);background:linear-gradient(165deg,#232019,#151413)}
   .bc-eyebrow{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
   .bc-title{font-weight:800;font-size:20px;line-height:1.28;color:#f2ecdf}
@@ -2426,13 +2447,18 @@
      ★ «처음 설 때»만이다. 이 창들은 폴링마다 다시 그려지므로(openModal 이 다시
        불린다) 매번 돌리면 1.5초마다 화면이 덜컹인다 — openModal 이 이미 서 있던
        창에는 이 표시를 안 붙인다. */
+  /* ★ 2026-08-09 — **닫힐 때의 «접힘»을 그대로 뒤집었습니다**(사람 결정).
+     예전에는 살짝 커지며 밝아지는 정도라, 닫힘은 눈에 띄는데 열림은 없는 것처럼
+     보였습니다. 이제 가로 한 줄에서 «펴집니다» — 아래 winFold 와 같은 길을
+     거꾸로 갑니다. 그래야 덮은 자리에서 다시 펴진 것으로 읽힙니다.
+     blur 는 안 씁니다 — 이 게임에서 프레임 드랍의 원인이던 자리입니다. */
   @keyframes winOpen{
-    0%  {transform:perspective(1100px) rotateX(9deg) translateY(14px) scale(.968);
-         opacity:0;filter:blur(3px)}
-    100%{transform:none;opacity:1;filter:none}
+    0%  {transform:perspective(1100px) rotateX(-7deg) scaleY(.04) translateY(-8px);opacity:0}
+    60% {opacity:1}
+    100%{transform:none;opacity:1}
   }
-  .modal .win.winopen{animation:winOpen .3s cubic-bezier(.16,.8,.24,1) both;
-    transform-origin:50% 30%}
+  .modal .win.winopen,.modal > .box.winopen{animation:winOpen .26s cubic-bezier(.16,.86,.28,1) both;
+    transform-origin:50% 42%}
   /* 닫힐 때는 «접힌다» — 세로로 눌리며 사라진다. 열릴 때와 짝이 맞아야
      「이 창을 덮었다」가 남는다. .modal 은 닫는 순간 display 가 걷히므로,
      접히는 동안만 따로 세워 둔다(어둠막은 걷고 창만 남긴다). */
@@ -2444,8 +2470,8 @@
     backdrop-filter:none}
   /* 그때그때 만들어 띄우는 창(자리 팝업·큰 그림·확인창)은 창틀이 없다 —
      펴지는 것도 .box 가 진다. 열고 닫는 몸짓은 어느 창이든 같아야 한다. */
-  .modal.dyn > .box{animation:winOpen .3s cubic-bezier(.16,.8,.24,1) both;
-    transform-origin:50% 30%}
+  .modal.dyn > .box{animation:winOpen .26s cubic-bezier(.16,.86,.28,1) both;
+    transform-origin:50% 42%}
   /* ★ 접히기는 펴지기 «뒤»에 온다. 둘 다 클래스 셋짜리라 명시도가 같아서, 순서가
      곧 승부다 — 뒤에 두지 않으면 닫을 때도 펴지는 몸짓이 그대로 걸린 채라
      창이 안 접혔다. */
@@ -2453,7 +2479,7 @@
     transform-origin:50% 42%}
   @media(prefers-reduced-motion:reduce){ .modal.dyn > .box{animation:none} }
   @media(prefers-reduced-motion:reduce){
-    .modal .win.winopen{animation:none}
+    .modal .win.winopen,.modal > .box.winopen{animation:none}
     .modal.folding{display:none!important}
   }
 
@@ -10194,13 +10220,17 @@ function paintScene(sel){
 /* layer — 그림 위에 덧그린 판(CARD_LAYER). 작아서 못 읽던 것을 크게 보려고
    누르는 것이라, 이 판이 안 따라오면 크게 봐도 읽을 것이 없다. */
 function showPic(url, title, note, layer){
+  /* ★ 이미 크게 보고 있으면 그것부터 걷는다. 예전에는 누를 때마다 한 장씩 쌓였는데,
+     쌓인 것이 카드창 «뒤»에 깔려 있어서 누른 사람 눈에는 아무 일도 안 일어났다 —
+     카드를 닫고 나서야 그동안 눌린 만큼이 한꺼번에 나왔다. */
+  document.querySelectorAll(".modal.picv").forEach(x=>{ try{ x.remove(); }catch(e){} });
   const m=document.createElement("div");
-  m.className="modal on"; m.onclick=()=>dynClose(m);
-  const img=`<img src="${url}" style="display:block;width:100%;border-radius:2px">`;
+  m.className="modal picv on"; m.onclick=()=>dynClose(m);
+  const img=`<img src="${url}" alt="">`;
   m.innerHTML=`<div class="box" data-wt="그림" onclick="event.stopPropagation()">
     <div class="mhead"><div class="mh-t"><h2>${esc(title||"")}</h2></div>
       <button class="mh-x" onclick="dynClose(this)">${ICO.close}</button></div>
-    <div class="mbody">${layer?`<div class="picwrap">${img}${layer}</div>`:img}
+    <div class="mbody"><div class="picwrap">${img}${layer||""}</div>
       ${note?`<div class="piccap">${esc(note)}</div>`:""}</div></div>`;
   dynOpen(m);
 }
@@ -10500,7 +10530,7 @@ function chatRow(m){
     const d=document.createElement("div"); d.className="msg alb-msg"+(m.roleId===myRoleId?" own":"");
     d.style.setProperty("--tc", c.color||"var(--muted)");
     d.innerHTML=`<div class="av">${avaHTML(c,"sm")}</div><div><div class="nm" style="color:${c.color||"#999"}">${esc(m.speaker)}`
-      +`<span class="alb-j">${esc(c.job||"")}</span><span class="alb-t">${esc(m.at||"")}</span></div>`
+      +`<span class="alb-j">${esc(c.tag||c.job||"")}</span><span class="alb-t">${esc(m.at||"")}</span></div>`
       +`<div class="bub alb-bub">${esc(m.text)}</div></div>`;
     return d; }
   const c=roleById(m.roleId);
@@ -11356,13 +11386,28 @@ async function showMySheet(){
   // 2) 나의 이야기 — 줄글. 요약을 두 번 겹치면 어디서도 안 풀린다.
   //    사람이 «되어야» 하는 대목이라 카테고리로 쪼개지 않고 한 흐름으로 읽힌다.
   const SL=(SCEN&&SCEN.storyLabels)||{};
-  const storySlide=(eb,ttl,txt)=>{ const paras=String(txt||"").split("\n\n").map(t=>t.trim()).filter(Boolean);
+  const storySlide=(eb,ttl,txt,tab,cls)=>{ const paras=String(txt||"").split("\n\n").map(t=>t.trim()).filter(Boolean);
     if(!paras.length) return;
-    slides.push({tab:"main", html:`<div class="bigcard role k-story" style="--rc:${s.color}">
+    slides.push({tab:tab||"main", html:`<div class="bigcard role k-story${cls?" "+cls:""}" style="--rc:${s.color}">
       <div class="bc-eyebrow">${esc(eb)}</div><div class="bc-title" style="font-size:18px">${esc(ttl)}</div>
       <div class="story">${paras.map(t=>`<p>${storyTx(t)}</p>`).join("")}</div></div>`}); };
   storySlide("나의 이야기", SL.past||"여기까지 오게 된 일", s.storyPast);
   storySlide("사건 당일 행적", SL.today||"그리고 오늘 밤", s.storyToday);
+  /* ── 휴지통 ────────────────────────────────────────────────────
+     이 몸의 «옛 주인» 이야기다. 개발자가 된 사람은 위 두 장이 통째로 갈아 끼워지는데
+     (서버 private_sheet), 그러면 여태 자기가 읽어 온 것이 어디에도 안 남는다.
+     지우지 않고 여기로 내린다 — 버린 것이지 없어진 것은 아니다. */
+  const tz=s.trashed;
+  if(tz&&(tz.past||tz.today)){
+    slides.push({tab:"trash", html:`<div class="bigcard role k-trash" style="--rc:${s.color}">
+      <div class="bc-eyebrow">버려진 것</div>
+      <div class="bc-title" style="font-size:18px">${esc(tz.name||"이 몸")}의 이야기</div>
+      <div class="knownote" style="margin-top:12px">이 몸이 여태 살아온 이야기입니다.
+        <b>이제 당신의 것이 아닙니다</b> — 그래도 이 안에 무엇이 있었는지는
+        알고 있어야 흉내를 낼 수 있습니다.</div></div>`});
+    storySlide("휴지통 · 나의 이야기", SL.past||"여기까지 오게 된 일", tz.past, "trash", "gone");
+    storySlide("휴지통 · 사건 당일 행적", SL.today||"그리고 오늘 밤", tz.today, "trash", "gone");
+  }
   // 3) 감춰야 할 것 — 줄글에 녹이면 심문당했을 때 «내가 부인해야 하는 게 뭐였더라»를 못 찾는다.
   //    이건 판 중에 제일 급하게 다시 꺼내 보는 항목이라 목록으로 남긴다.
   if((s.hide||[]).length){
@@ -11579,7 +11624,7 @@ async function showMySheet(){
   $("sheetBox").style.setProperty("--mt",s.color||"var(--gold)");
   openModal("sheetModal");
 }
-const SHEET_TABS=[["main","나의 이야기"],["extra","추가 정보"],["sum","한눈에"]];
+const SHEET_TABS=[["main","나의 이야기"],["extra","추가 정보"],["trash","휴지통"],["sum","한눈에"]];
 let sheetSlides=[], sheetRole=null, sheetTab="main";
 /* 「추가 정보」·「한눈에」는 열어보지 않고 지나치기 쉽다 — 한 번 볼 때까지 표시를 남긴다.
    배역별로 따로 센다. 배역을 바꾸면 그 사람의 시트는 처음 보는 것이다. */
@@ -12678,7 +12723,9 @@ function openModal(id){
   winTitle(el);
   if(!wasOn){
     const w=el.querySelector(".win");
-    if(w){ w.classList.remove("winopen"); void w.offsetWidth; w.classList.add("winopen"); }
+    // 창틀이 없는 창(그때그때 만들어 띄우는 것)은 .box 가 창틀 몫을 한다
+    const t=w||el.querySelector(":scope > .box");
+    if(t){ t.classList.remove("winopen"); void t.offsetWidth; t.classList.add("winopen"); }
   }
 }
 /* 창을 닫으면 그 안의 입력칸도 같이 사라진다 — 자판 표식을 여기서 한 번 되짚는다 */
