@@ -4214,8 +4214,24 @@ def _my_cuts(role_id: str) -> list:
         return []
     dp = getattr(SC, "DEV_PICK", {}) or {}
     slot = dp.get("cutAll")
+    mine = bool(_dev_me(role_id))
+    # 갈래 셋 — 내가 됐나 · 남이 됐나 · 아무도 안 됐나.
+    # 「아무도 안 됐다」에서는 원고가 None 을 주고, 공통 컷이 전원에게 그대로 돈다.
+    mode = "dev" if mine else ("other" if _dev_id() else "none")
     cuts: list = []
-    if _dev_me(role_id):
+    rf = getattr(SC, "role_cut", None)
+    if rf and slot:
+        try:
+            cuts = list(rf(role_id, slot, mode) or [])
+        except TypeError:                               # 옛 서명(roleId, key)
+            try:
+                cuts = list(rf(role_id, slot) or [])
+            except Exception:                           # noqa: BLE001
+                cuts = []
+        except Exception:                               # noqa: BLE001
+            cuts = []
+    if not cuts and mine:
+        # 원고가 배역별 개발자 컷을 안 줬다 — 옛 길(EVENT_CUTS["dev"])로 되돌아간다
         key = dp.get("cut") or "dev"
         fn = getattr(SC, "event_cut", None)
         if fn:
@@ -4224,16 +4240,12 @@ def _my_cuts(role_id: str) -> list:
             except Exception:                           # noqa: BLE001
                 cuts = []
         slot = slot or key
-    else:
-        rf = getattr(SC, "role_cut", None)
-        if rf and slot:
-            try:
-                cuts = list(rf(role_id, slot) or [])
-            except Exception:                           # noqa: BLE001
-                cuts = []
     if not cuts or not slot:
         return []
-    return [{"id": slot, "cuts": cuts}]
+    # even — 화면이 컷 수를 공통 컷에 맞춰 자를지. 여태는 개발자만 제 몫을 받아서
+    # «컷 수»가 곧 갈래 표시였다. 이제는 한 판 안에서 셋이 늘 같은 수를 보므로
+    # (없는 판 4컷 · 있는 판 6컷) 자를 이유가 없다. 원고가 끄면 끈다.
+    return [{"id": slot, "cuts": cuts, "even": dp.get("evenCuts", True) is not False}]
 
 
 def _dev_my_cuts(role_id: str) -> list:

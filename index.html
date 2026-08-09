@@ -5768,7 +5768,10 @@ function cutQueue(){
   const out=common.map(c=>{
     const m=left[c.id]; if(!m) return c;
     delete left[c.id];
-    return {id:c.id, cuts:vnEvenOut(m.cuts,(c.cuts||[]).length,c.id)};
+    /* even:false 면 길이를 안 맞춘다 — 그 자리는 «한 판 안에서 모두가 같은 수»를
+       보도록 서버가 이미 갈라 놨다는 뜻이다(개발자만 제 몫을 받던 시절의 안전판). */
+    return {id:c.id, cuts: m.even===false ? (m.cuts||[])
+                                          : vnEvenOut(m.cuts,(c.cuts||[]).length,c.id)};
   });
   // 공통에 짝이 없는 내 몫(나만 보는 밤의 결과 같은 것)은 뒤에 그대로 붙인다
   mine.forEach(c=>{ if(c&&c.id&&left[c.id]) out.push(c); });
@@ -5874,9 +5877,15 @@ function vnRender(){
   }
 
   // 화자 — 스프라이트·이름표·강조색
+  /* 화자는 두 길로 온다 — 시나리오에 등록된 사람의 id(who), 또는 컷에 직접 적힌
+     이름표(name/color/pic). 뒤엣것은 **공개 명단에 없는 사람**을 세우는 자리다:
+     개발자를 npcs 에 올리면 인물정보 탭에 처음부터 앉아 있게 되는데, 이 컷들은
+     그 사람에게만 가므로 여기 적힌 이름은 밖으로 안 샌다. */
   const ch=cut.who ? (((SCEN.characters||[]).find(c=>c.id===cut.who))
                      || ((SCEN.npcs||[]).find(c=>c.id===cut.who))
-                     || (cut.who==="victim" ? vnVictimSpeaker() : null)) : null;
+                     || (cut.who==="victim" ? vnVictimSpeaker() : null))
+                   : (cut.name ? {id:cut.pic||"", name:cut.name, job:cut.job||"",
+                                  color:vnNameSafeColor(cut.color), avatar:cut.avatar||""} : null);
   const root=$("vn");
   root.classList.toggle("speak",!!ch);
   sp.classList.remove("show"); emo.classList.remove("show");
