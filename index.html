@@ -9024,6 +9024,11 @@ function shareCoach(){
   const ph=(STATE&&STATE.phase)||{};
   if(ph.key!=="talk"||!myRoleValid()) return;
   if(!(STATE.revealed||[]).length) return;        // 짚을 것이 아직 없다
+  /* ★ 대화창이 맨 위일 때만. 카드 올리기 창을 열어 둔 채로 이걸 세우면, 짚는
+     단추(+)가 그 창 뒤에 깔려 눌리지 않는다 — 안내가 아니라 덫이 된다.
+     260ms 뒤에 부르는 자리라 그 사이에 창이 하나 더 떴을 수 있어서, 부르기 전이
+     아니라 여기서 다시 본다. */
+  if(topModal()!==$("chatModal")) return;
   const pb=$("chatPlus"); if(!pb||pb.disabled) return;
   /* 짚은 곳을 «눌러야» 넘어간다(tap). 이 단추는 눌러 보지 않으면 무엇이 열리는지
      알 수 없고, 열린 창에서 이야기가 이어진다(shareTour2). */
@@ -11542,9 +11547,25 @@ function tourGo(d){
   if(tour.i>=tour.steps.length){ tourEnd(); return; }
   tourPaint();
 }
+/* 지금 «맨 위»에 떠 있는 창. 겹쳐 있을 때는 z-index 가 정하고, 같으면 나중에
+   그려진 쪽이다.
+   ★ 독에 붙박이로 깔리는 탭 창(.overdock — 대화·소지품·인물정보)도 «센다». 처음에는
+     「그건 창이 아니라 바닥」이라고 빼 두었는데, 그러면 대화창 하나만 떠 있을 때
+     맨 위가 «없음»이 되어 대화창 안의 짚어 주기가 통째로 안 섰다.
+     층은 이미 z 가 가르고 있다 — 탭 창 60 · 팝업 70 · 확인창 120. */
+function topModal(){
+  const on=[...document.querySelectorAll(".modal.on")];
+  if(!on.length) return null;
+  return on.reduce((a,b)=>((+getComputedStyle(b).zIndex||0)>=(+getComputedStyle(a).zIndex||0)?b:a));
+}
 function tourPaint(){
   const t=tour; if(!t) return;
   const m=$(t.modal); if(!m||!m.classList.contains("on")){ tourEnd(false); return; }
+  /* ★ 그 창이 «맨 위»가 아니면 짚지 않는다. 짚을 자리가 다른 창 뒤에 깔려 있으면,
+     하이라이트만 보이고 「눌러 보세요」는 아무리 눌러도 안 눌린다 — 그 자리에서
+     통째로 멈춘다. 덮인 짚어 주기는 «본 것»으로 찍고 접는다(tourEnd 가 찍는다). */
+  const top=topModal();
+  if(top&&top!==m){ tourEnd(false); return; }
   tourOff();
   const st=t.steps[t.i];
   /* ★ 그 칸이 «어느 화면에서» 하는 이야기인지를 먼저 맞춘다. 인물정보 세 칸처럼
@@ -11592,6 +11613,15 @@ function tourStart(key, modal, steps, onDone){
      그때마다 여기로 들어오면 짚어 주기가 첫 칸으로 되돌아간다 — 눌러도 안
      넘어가는 것처럼 보인다. */
   if(tour&&tour.key===key) return;
+  /* ★ **다른 짚어 주기가 돌던 중이면 그건 «끝난» 것이다.** 예전에는 여기서 그냥
+     덮어썼다 — 그러면 덮인 쪽은 «본 것»으로 안 찍힌다(tourMark 를 못 지나간다).
+     실제로 그렇게 났다: 대화창의 「+ 를 눌러 보세요」(share1)를 누르면 카드 올리기
+     창이 서면서 그 창의 짚어 주기(share2)가 시작되는데, 그 순간 share1 이 통째로
+     증발했다. 그래서 share2 가 끝난 뒤 폴링이 한 바퀴 돌 때마다 talkGate 가
+     「share1 은 아직 안 봤네」 하고 다시 세웠다 — 이미 다 본 사람 화면에 첫 안내가
+     불쑥 다시 뜨고, 짚은 단추는 카드 올리기 창 «뒤»에 깔려 있어서 누를 수가 없다.
+     거기서 판이 멈춘다. 넘겨받을 때 앞엣것을 제대로 닫는다. */
+  if(tour) tourEnd(false);
   /* ★ 하단바 안내는 곧바로 걷는다. coachNext 는 짚어 주기가 도는 동안 null 을 물리게
      돼 있는데, 그걸 다시 그리라고 아무도 안 불러서 어둠막(.coach, z 74)이 창 위에
      그대로 남아 있었다 — 그 막이 창틀보다 위라, 창 «안»에서 짚어 준 것을 통째로
