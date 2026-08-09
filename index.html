@@ -2029,25 +2029,15 @@
   .sw-dot.on{background:var(--case-ink);box-shadow:1px 1px 0 rgba(0,0,0,.6)}
   /* 큰 카드(롤/손패) */
   .bigcard{border-radius:2px;padding:18px 18px 20px;background:linear-gradient(165deg,#1d1c1b,#141312);border:1px solid var(--line);min-height:220px}
-  /* ★ 강조 — 롤카드에서 「이건 특히 중요하다」를 뜻하고, ★ 수가 곧 세기다.
-     색은 그 배역의 키컬러(--rc)다. 롤카드는 그 사람의 물건이라 강조도 그 사람 색이어야
-     「내 것」으로 먼저 읽힌다. 세기는 색을 더 진하게 하는 게 아니라 판을 한 단계씩 세운다:
-       ★   글자만        ★★  옅은 판       ★★★ 통째로 반전
-     1비트 GUI 에서 최고 강조는 «반전» 이다 — 더 밝은 색이 아니라 흑백이 뒤집히는 것.
-     ★ 글리프는 Neo둥근모에 없어서 다른 글꼴로 떨어져 나왔다. 픽셀 네모로 직접 그린다. */
+  /* ★ 강조 — 롤카드에서 「이건 특히 중요하다」를 뜻한다.
+     **표시는 글자색 하나뿐이다**(2026-08-09, 사람 결정). 예전에는 ★ 수만큼 세기를
+     나눠 옅은 판·반전 판까지 세웠는데, 「나의 이야기」처럼 ★ 줄이 여럿 섞인 화면에서는
+     네모 판이 문단을 뒤덮어 오히려 아무것도 안 읽혔다. **세기는 안 나눈다** —
+     중요한 줄은 그 배역의 키컬러(--rc)로 서고, 나머지는 본문색 그대로다.
+     ★ 개수는 원고 쪽 표시로만 남는다(사람이 읽고 고칠 때의 눈금). */
   .sx{--k:var(--rc,var(--me,var(--gold-b)))}
-  .sx .sxm{display:inline-flex;gap:2px;align-items:center;vertical-align:1px;margin-right:7px}
-  .sx .sxp{width:6px;height:6px;background:var(--k);display:block}
-  /* s0 — 세기만 세고 판은 안 세운다. ★ 글리프가 Neo둥근모에 없어서 픽셀로 다시 그린
-     것이므로, 강조를 안 하는 자리에서도 이 모양은 그대로 쓴다. */
   .sx.s0{color:inherit}
-  .sx.s0 .sxp{background:color-mix(in srgb,var(--k) 72%,transparent)}
-  .sx.s1{color:var(--k)}
-  .sx.s2{color:var(--k);background:color-mix(in srgb,var(--k) 15%,transparent);
-    box-shadow:0 0 0 3px color-mix(in srgb,var(--k) 15%,transparent)}
-  .sx.s3{background:var(--k);color:#0b0b09;box-shadow:0 0 0 3px var(--k);font-weight:700}
-  .sx.s3 .sxp{background:#0b0b09}
-  @media(forced-colors:active){ .sx.s3{background:Highlight;color:HighlightText} }
+  .sx.s1,.sx.s2,.sx.s3{color:var(--k)}
 
   .bigcard.role{border-color:color-mix(in srgb,var(--rc,#2f6b57) 45%,var(--line));background:linear-gradient(165deg,#201f1e,#151413)}
   .bigcard.role::before{content:"";display:block;height:3px;width:46px;border-radius:0;background:var(--rc,var(--cold));margin-bottom:14px}
@@ -4444,17 +4434,16 @@ const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").rep
 /* 원고는 **굵게** 를 쓴다. 여태 그대로 화면에 별 네 개가 찍혀 나왔다 —
    esc() 뒤에 한 번만 돌린다(먼저 돌리면 태그가 이스케이프된다). */
 const mdB=t=>String(t).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+/* 원고의 앞머리 ★ 는 «이 줄이 중요하다»는 표시다. 화면에는 **글자색으로만** 나온다 —
+   네모 판도, 세기 구분도 없다. ★ 표시 자체는 지우고 색만 남긴다. */
 function starMark(line, lit){
   const raw=String(line==null?"":line);
   const m=/^\s*(★+)\s*/.exec(raw);
   if(!m) return mdB(esc(raw));
-  const n=Math.min(3,m[1].length);
-  const pips=Array.from({length:n},()=>'<i class="sxp"></i>').join("");
-  return `<span class="sx s${lit?n:0}"><span class="sxm" aria-label="중요도 ${n}단계">${pips}</span>`
-       + mdB(esc(raw.slice(m[0].length))) + `</span>`;
+  return `<span class="sx s${lit?1:0}">` + mdB(esc(raw.slice(m[0].length))) + `</span>`;
 }
-/* 줄 하나짜리 항목(목표·연표·팁·감출 것) — 여기서는 ★를 «세는 표시»로만 둔다.
-   판까지 세우면 목록 전체가 형광펜으로 덮여서 어느 것이 더 급한지가 오히려 안 보인다. */
+/* 줄 하나짜리 항목(목표·연표·팁·감출 것) — 여기서는 색도 안 준다. 목록은 줄마다
+   ★가 붙어 있어서, 색까지 주면 목록 전체가 물들어 어느 것이 급한지가 안 보인다. */
 const starTx=t=>starMark(t,false);
 /* 줄글(나의 이야기 · 오늘 일어난 일) — 여기가 진짜 강조가 필요한 자리다.
    문단 안에 ★ 줄이 섞여 있어서, 줄 단위로 잘라 그 줄만 세운다.
@@ -8557,10 +8546,10 @@ function liftWire(){
 const B9_LOG=[
   ["20:40","잠수함","입장","데이먼"],
   ["21:30","기록보관소","입장","데이빗"],
-  ["22:00","아케이드상가","입장","데이지"],
   ["23:05","잠수함","퇴장","데이먼"],
   ["23:05","기록보관소","퇴장","데이빗"],
   ["23:10","관리자실","입장","데이먼"],
+  ["23:15","아케이드상가","입장","데이지"],
   ["23:20","관리자실","퇴장","데이미안"],
 ];
 function b9LayerSVG(){
@@ -11382,7 +11371,7 @@ async function showMySheet(){
   // 진행 팁 — 이 배역을 어떻게 굴리는가. 처음 하는 사람이 제일 막막해하는 자리다.
   if((s.tips||[]).length){
     slides.push({tab:"sum", html:`<div class="bigcard role k-tips" style="--rc:${s.color}">
-      <div class="bc-eyebrow">한눈에</div><div class="bc-title" style="font-size:18px">이 배역, 이렇게 굴린다</div>
+      <div class="bc-eyebrow">한눈에</div><div class="bc-title" style="font-size:18px">이렇게 플레이해보세요</div>
       <div class="tiplist">${s.tips.map(t=>`<div class="tipitem">${starTx(t)}</div>`).join("")}</div></div>`});
   }
   // 4-d) 금고에서 나온 서류. 조사로 여는 카드가 아니라 «다 함께 읽는» 종이다.
