@@ -1902,6 +1902,23 @@
   .cardart .ca-zoom{margin-left:auto;overflow:hidden;text-overflow:ellipsis;min-width:0;
     font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--muted)}
   @media(max-width:380px){ .cardart .ca-zoom{display:none} }
+  /* ── 그림 위에 덧그리는 판 (CARD_LAYER) ────────────────────────
+     기록·표·명단처럼 «읽어야 하는» 카드가 있다. 그런 것을 그림 안에 그려 넣으면
+     글씨가 뭉개져서 못 읽고, 본문에 표로 적으면 그림칸이 장식으로만 남는다.
+     그래서 그림은 그대로 두고 그 위에 우리가 그린 판을 한 겹 얹는다.
+     ★ 이 판은 그림이 안 와도 선다 — 읽을 것이 그림에 매여 있으면 안 된다.
+     ★ 크게 보기(showPic)에도 같은 판이 따라간다. 작아서 못 읽던 것을 크게
+       보려고 누르는 것이라, 판이 안 따라가면 누른 보람이 없다. */
+  .cardart .ca-lay,.picwrap .ca-lay{position:absolute;inset:0;width:100%;height:100%;
+    z-index:2;pointer-events:none}
+  .picwrap{position:relative}
+  .ca-lay text{font-family:var(--pix);fill:#e6ece4;dominant-baseline:middle}
+  .ca-lay .lg-pan{fill:rgba(7,9,8,.86);stroke:#4b5a4e;stroke-width:.6}
+  .ca-lay .lg-rule{stroke:#3c4a40;stroke-width:.45}
+  .ca-lay .lg-cap{fill:#8fa593;letter-spacing:.12em}
+  .ca-lay .lg-t{fill:#cfe0d2;font-variant-numeric:tabular-nums}
+  .ca-lay .lg-out{fill:#f0c06a}          /* 나간 줄만 다른 빛 — 셈이 눈에 든다 */
+  .ca-lay .lg-nm{fill:#e6ece4}
   .sharesec{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--cold);
     margin:14px 0 7px;padding-bottom:5px;border-bottom:1px solid var(--line);
     display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -5792,7 +5809,7 @@ function vnVictimSpeaker(){
    구분이 안 됐다.
 
    ★ 이름 목록은 시나리오에서 만든다 — 배역·NPC·피해자. 색도 거기서 읽는다.
-   ★ 긴 이름부터 치환한다. 「데이」가 먼저 걸리면 「데이미안」가 앞 두 글자만 물든다.
+   ★ 긴 이름부터 치환한다. 「데이」가 먼저 걸리면 「데이미안」이 앞 두 글자만 물든다.
    ★ 치환은 «HTML 이스케이프 뒤에» 한다. 순서를 바꾸면 이름이 든 대사 한 줄로
      마크업을 넣을 수 있다 — 대사는 원고에서 오지만 규칙은 규칙이다.
    ★ 색값도 그대로 안 쓴다. 속성 안에 들어가는 값이라 흰 목록으로 거른다. */
@@ -8517,6 +8534,49 @@ function liftWire(){
    한 박자 늦게 오는데, 그때 자리가 없으면 글이 위로 붙었다가 그림이 오면서
    아래로 밀린다 — 카드를 열 때마다 화면이 한 번 튄다.
    빈 자리는 신호가 안 잡힌 결로 돈다(그림 없음 글자는 안 쓴다). */
+/* ── 그림 위에 덧그리는 판 ────────────────────────────────────────
+   «읽어야 하는» 카드가 있다 — 기록대의 출입기록처럼 표가 곧 단서인 자리다.
+   그런 표를 그림 안에 그려 넣으면 글씨가 뭉개져 못 읽고, 본문에 글자표로 적으면
+   그림칸이 장식으로만 남는다. 그림은 그대로 두고 그 위에 우리가 그린 판을 얹는다.
+   ★ 여기 적힌 것이 «정본»이다. 원고(scenarios/*.py)의 본문은 이 판을 둘러싼 말만
+     하고, 줄과 시각은 여기서 읽는다. 두 곳에 같은 표를 적으면 반드시 어긋난다. */
+const B9_LOG=[
+  ["20:40","잠수함","입장","데이먼"],
+  ["21:30","기록보관소","입장","데이빗"],
+  ["22:00","아케이드상가","입장","데이지"],
+  ["23:05","잠수함","퇴장","데이먼"],
+  ["23:05","기록보관소","퇴장","데이빗"],
+  ["23:10","관리자실","입장","데이먼"],
+  ["23:20","관리자실","퇴장","데이미안"],
+];
+function b9LayerSVG(){
+  const rows=B9_LOG.map((r,i)=>{
+    const y=69+i*17, out=(r[2]==="퇴장");
+    const rule=i?`<line class="lg-rule" x1="16" y1="${y-8.5}" x2="184" y2="${y-8.5}"/>`:"";
+    return `${rule}
+      <text class="lg-t"  x="18"  y="${y}" font-size="9">${r[0]}</text>
+      <text class="lg-nm" x="46"  y="${y}" font-size="8.5">${r[1]}</text>
+      <text class="${out?"lg-out":"lg-nm"}" x="108" y="${y}" font-size="9">${r[2]}</text>
+      <text class="lg-nm" x="132" y="${y}" font-size="9">[${r[3]}]</text>`;
+  }).join("");
+  return `<svg class="ca-lay" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet"
+      aria-label="어젯밤의 출입기록">
+    <rect class="lg-pan" x="8" y="22" width="184" height="164" rx="2"/>
+    <text class="lg-cap" x="18" y="36" font-size="8">어젯밤 장 · 출입기록</text>
+    <line class="lg-rule" x1="16" y1="43" x2="184" y2="43"/>
+    <text class="lg-cap" x="18"  y="54" font-size="7">시각</text>
+    <text class="lg-cap" x="46"  y="54" font-size="7">구역</text>
+    <text class="lg-cap" x="108" y="54" font-size="7">구분</text>
+    <text class="lg-cap" x="132" y="54" font-size="7">이름</text>
+    <line class="lg-rule" x1="16" y1="61" x2="184" y2="61"/>
+    ${rows}
+  </svg>`;
+}
+const CARD_LAYER={ B9: b9LayerSVG };
+function cardLayer(id){
+  const f=CARD_LAYER[id]; if(!f) return "";
+  try{ return f(); }catch(e){ return ""; }
+}
 function cardArtSlot(){ return `<div class="cardart" id="cardArt"></div>`; }
 function paintCardArt(id){
   const sid=STATE.scenarioId||""; if(!sid) return;
@@ -8524,13 +8584,22 @@ function paintCardArt(id){
   /* 머리에 적는 한 줄 — 이 그림이 «어디의 무엇»인가. 자리 이름이 있으면 그것,
      없으면 구역 이름. 제목은 바로 위 창머리에 이미 크게 서 있어서 여기 또 안 적는다. */
   const where=esc(c.spot||c.locName||"");
+  const lay=cardLayer(id);
+  /* ★ 판을 «먼저» 세운다. 그림은 찾아 오는 데 시간이 걸리고 아예 없을 수도 있는데,
+     읽을 것이 그 뒤에 매달려 있으면 안 된다. 그림은 나중에 판 «아래»로 들어간다. */
+  if(lay){
+    const slot=$("cardArt");
+    if(slot&&!slot.dataset.lay){ slot.dataset.lay="1"; slot.innerHTML=lay; }
+  }
   findAsset(`/assets/${sid}_card_${id}`, url=>{
     const slot=$("cardArt"); if(!url||!slot||slot.dataset.art) return;
     slot.dataset.art="1";
     const t=($("cardBox").querySelector("h2")||{}).textContent||"";
-    slot.onclick=()=>showPic(url,t);
-    slot.innerHTML=`<img src="${url}" alt="" decoding="async">
-      <div class="ca-head">${where?`<b>${where}</b>`:""}<span class="ca-zoom">눌러서 크게</span></div>`;
+    slot.onclick=()=>showPic(url,t,"",lay);
+    const head=`<div class="ca-head">${where?`<b>${where}</b>`:""}<span class="ca-zoom">눌러서 크게</span></div>`;
+    /* 판이 이미 서 있으면 그 «앞»에 그림을 끼운다 — innerHTML 로 갈아 치우면 판이 날아간다 */
+    if(lay) slot.insertAdjacentHTML("afterbegin", `<img src="${url}" alt="" decoding="async">${head}`);
+    else    slot.innerHTML=`<img src="${url}" alt="" decoding="async">${head}`;
   });
 }
 function pairOf(id){ return (SCEN.pairKeys||[]).find(k=>k.cards.includes(id))||null; }
@@ -9967,13 +10036,16 @@ function paintScene(sel){
   });
 }
 /* 그림 한 장을 화면 가득 띄운다. 조사 카드의 큰 보기와 같은 자리를 쓴다. */
-function showPic(url, title, note){
+/* layer — 그림 위에 덧그린 판(CARD_LAYER). 작아서 못 읽던 것을 크게 보려고
+   누르는 것이라, 이 판이 안 따라오면 크게 봐도 읽을 것이 없다. */
+function showPic(url, title, note, layer){
   const m=document.createElement("div");
   m.className="modal on"; m.onclick=()=>dynClose(m);
+  const img=`<img src="${url}" style="display:block;width:100%;border-radius:2px">`;
   m.innerHTML=`<div class="box" data-wt="그림" onclick="event.stopPropagation()">
     <div class="mhead"><div class="mh-t"><h2>${esc(title||"")}</h2></div>
       <button class="mh-x" onclick="dynClose(this)">${ICO.close}</button></div>
-    <div class="mbody"><img src="${url}" style="display:block;width:100%;border-radius:2px">
+    <div class="mbody">${layer?`<div class="picwrap">${img}${layer}</div>`:img}
       ${note?`<div class="piccap">${esc(note)}</div>`:""}</div></div>`;
   dynOpen(m);
 }
