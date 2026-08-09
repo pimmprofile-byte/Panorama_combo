@@ -1944,10 +1944,22 @@ def sheet(role_id: str, clientId: str = ""):
         s["fragments"] = SC.memory_up_to(role_id, seq, _cs)
     except TypeError:                      # 위기 개념이 없는 시나리오
         s["fragments"] = SC.memory_up_to(role_id, seq)
-    # 개발자가 된 사람에게는 «자기 이야기»가 추가정보 맨 앞에 선다. 이 몸에 남아
-    # 있던 기억(memory_up_to)은 걷지 않는다 — 둘 다 지금은 그 사람 것이고,
-    # 「내가 들어온 몸이 무엇을 겪었나」가 이 배역의 재미다.
-    if s and _dv and (_dv.get("sheet") or {}).get("devFragments"):
+    # ★★ 1차 범인지목 뒤의 «추가 정보» — **갈래마다 다르다.** 개발자가 들어온
+    #   판인지, 안 들어온 판인지, 그리고 내가 그 사람인지. 원고가 갈라 준다.
+    #   맨 앞에 세운다 — 방금 들어온 것이 제일 위에 있어야 읽는다.
+    #   이 몸에 남아 있던 기억(memory_up_to)은 걷지 않는다: 개발자가 된 사람에게도
+    #   「내가 들어온 몸이 무엇을 겪었나」가 그대로 남는 것이 이 배역의 재미다.
+    bm = getattr(SC, "branch_memory", None)
+    if s and bm:
+        _mode = "dev" if _dv else ("other" if _dev_id() else "none")
+        try:
+            _extra = list(bm(role_id, seq, _mode) or [])
+        except Exception:                  # noqa: BLE001
+            _extra = []
+        if _extra:
+            s["fragments"] = _extra + list(s.get("fragments") or [])
+    # 옛 길 — 원고가 branch_memory 를 안 두고 devFragments 만 둔 경우
+    elif s and _dv and (_dv.get("sheet") or {}).get("devFragments"):
         s["fragments"] = list(_dv["sheet"]["devFragments"]) + list(s.get("fragments") or [])
     # 그날 밤은 줄글 조각이 아니라 제 자리를 갖는다 — 시트가 한 장으로 세운다.
     nr = getattr(SC, "night_report", None)
