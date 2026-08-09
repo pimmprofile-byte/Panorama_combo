@@ -8551,11 +8551,12 @@ const B9_LOG=[
   ["23:10","관리자실","입장","데이먼"],
   ["23:15","아케이드상가","입장","데이지"],
   ["23:20","관리자실","퇴장","데이미안"],
+  ["04:50","모니터 정원","입장","데이지"],
 ];
 function b9LayerSVG(){
   const rows=B9_LOG.map((r,i)=>{
-    const y=69+i*17, out=(r[2]==="퇴장");
-    const rule=i?`<line class="lg-rule" x1="16" y1="${y-8.5}" x2="184" y2="${y-8.5}"/>`:"";
+    const y=69+i*15, out=(r[2]==="퇴장");
+    const rule=i?`<line class="lg-rule" x1="16" y1="${y-7.5}" x2="184" y2="${y-7.5}"/>`:"";
     return `${rule}
       <text class="lg-t"  x="18"  y="${y}" font-size="9">${r[0]}</text>
       <text class="lg-nm" x="46"  y="${y}" font-size="8.5">${r[1]}</text>
