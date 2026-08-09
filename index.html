@@ -1850,15 +1850,22 @@
   .pzk .pz-p.set{pointer-events:none}
   .pzk .pz-p.set path{stroke:var(--signal);
     filter:drop-shadow(0 0 3px color-mix(in srgb,var(--signal) 55%,transparent))}
-  .pzk .pz-dot{opacity:.55}
-  .pzk .pz-p.held .pz-dot{opacity:1}
+  /* 아래에 놓인 줄 — 「여기 적혀 있던 것」이라는 바닥 한 겹. 얕게만 깐다. */
+  .pzk .pz-tray{fill:rgba(6,9,8,.62)}
   /* 자리에 놓는 순간 «저절로» 돌아간다. 돌아가는 것이 보여야 «맞춰졌다»가 아니라
      «맞아 들어갔다»로 읽힌다 — 그래서 순간이동이 아니라 한 번 도는 길을 준다.
      끄는 동안에는 이 결이 붙지 않는다(붙으면 손가락보다 조각이 늦게 온다). */
   .pzk .pz-p.snap{transition:transform .42s cubic-bezier(.2,.85,.25,1)}
-  /* 빈 자리의 이음점 — 평소엔 있다는 것만, 잡고 있을 때만 그 짝이 뛴다 */
-  @keyframes pzSlot{0%,100%{opacity:.55}50%{opacity:1}}
-  .pzk .pz-slot.on{animation:pzSlot .9s ease-in-out infinite}
+  /* 빈 자리 — 평소엔 «있다»는 점 하나뿐이고, 그 짝을 잡았을 때만 고리가 빛난다.
+     예전에는 조각마다 다른 색을 물려 두었는데, 그러면 색끼리 짝짓는 놀이가 되어
+     낱자를 돌려 읽는 이 판의 본래 걸음을 건너뛰게 된다. 표시는 하나면 된다. */
+  @keyframes pzSlot{0%,100%{opacity:.5}50%{opacity:1}}
+  .pzk .pz-slot .ps-d{fill:rgba(235,230,220,.22);transition:fill .14s}
+  .pzk .pz-slot .ps-r{fill:none;stroke:var(--signal);stroke-width:.9;opacity:0;
+    transition:opacity .16s}
+  .pzk .pz-slot.on .ps-d{fill:var(--signal)}
+  .pzk .pz-slot.on .ps-r{opacity:1;animation:pzSlot 1s ease-in-out infinite;
+    filter:drop-shadow(0 0 2.5px color-mix(in srgb,var(--signal) 70%,transparent))}
   .pzk .pz-head{position:absolute;left:0;right:0;top:0;z-index:3;
     display:flex;align-items:baseline;gap:8px;padding:7px 9px 11px;white-space:nowrap;
     background:linear-gradient(180deg,rgba(6,7,7,.9),rgba(6,7,7,.4) 60%,transparent);
@@ -1877,7 +1884,7 @@
   .pzk.cold .pz-p{cursor:default}
   .pzk.cold .pz-tip{display:none}
   @media(prefers-reduced-motion:reduce){
-    .pzk .pz-slot.on,.pzk.done .pz-svg{animation:none}
+    .pzk .pz-slot.on .ps-r,.pzk.done .pz-svg{animation:none}
     .pzk .pz-p.snap{transition:none}
   }
   /* 다 맞춘 뒤의 답 칸 — 판에서 읽은 것을 여기 적는다. 초록 테두리가
@@ -1919,6 +1926,19 @@
   .ca-lay .lg-t{fill:#cfe0d2;font-variant-numeric:tabular-nums}
   .ca-lay .lg-out{fill:#f0c06a}          /* 나간 줄만 다른 빛 — 셈이 눈에 든다 */
   .ca-lay .lg-nm{fill:#e6ece4}
+  /* ── 관계도(B10) ────────────────────────────────────────────
+     선의 «결»로 관계를 가른다 — 끊긴 줄 · 물려받는 줄 · 새로 난 줄. */
+  .ca-lay .rl-ring{fill:none;stroke:#8fa593;stroke-width:1.1}
+  .ca-lay .rl-nm{text-anchor:middle;fill:#e6ece4}
+  .ca-lay .rl-tag{text-anchor:middle;letter-spacing:.06em}
+  .ca-lay .rl-sub{text-anchor:middle;fill:#8fa593;letter-spacing:.06em}
+  .ca-lay .rl-lab{fill:rgba(7,9,8,.92)}
+  .ca-lay line.rl-cut{stroke:#c86b52;stroke-width:1.2;stroke-dasharray:5 6;opacity:.85}
+  .ca-lay line.rl-heir{stroke:#e6ece4;stroke-width:2;color:#e6ece4}
+  .ca-lay line.rl-aim{stroke:#00FF99;stroke-width:1.4;stroke-dasharray:2 3;color:#00FF99}
+  .ca-lay text.rl-cut{fill:#e08a6c}
+  .ca-lay text.rl-heir{fill:#f2f6f0}
+  .ca-lay text.rl-aim{fill:#00FF99}
   .sharesec{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--cold);
     margin:14px 0 7px;padding-bottom:5px;border-bottom:1px solid var(--line);
     display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -4446,6 +4466,16 @@ const mdB=t=>String(t)
 /* 카드 본문·개인 메모가 지나는 길. **굵게** 와 ==초록== 이 여기서 살아난다.
    ★ 이스케이프를 «먼저» 한다 — 순서를 바꾸면 원고 한 줄로 마크업을 넣을 수 있다. */
 const cardTx=t=>mdB(esc(t==null?"":t));
+/* ── 힌트를 화면에서 내린다 (2026-08-09, 사람 결정) ────────────────
+   원고에는 카드마다 `hint` 가 있고 수수께끼에도 몇 번 틀리면 열리는 줄이 있었다.
+   그런데 그건 «작가가 미리 써둔 읽는 법»이라, 있으면 사람들이 카드를 읽는 대신
+   힌트를 읽는다. 지금은 통째로 안 보이게 한다.
+   ★ 원고에서 지우지 않는다 — 나중에 되살릴 수 있게 자리는 그대로 두고, 화면으로
+     나가는 길만 이 스위치 하나로 막는다. 되살릴 때는 여기를 true 로.
+   ★ 관리자 모드(QA 엿보기)는 예외다. 그건 플레이어 화면이 아니라 원고를 들여다보는
+     자리라, 거기서까지 가리면 검수를 못 한다. */
+const SHOW_HINT=false;
+const hintOf=x=>SHOW_HINT?((x&&x.hint)||""):"";
 /* 원고의 앞머리 ★ 는 «이 줄이 중요하다»는 표시다. 화면에는 **글자색으로만** 나온다 —
    네모 판도, 세기 구분도 없다. ★ 표시 자체는 지우고 색만 남긴다. */
 function starMark(line, lit){
@@ -7902,38 +7932,48 @@ function ensureCardBack(){
    ★ 손짓은 하나다 — 끌어다 자리에 놓는 것. 각은 판이 맞춘다(pzSnap).
      예전에는 «톡 쳐서 90° 돌리는» 손짓이 하나 더 있었는데, 배울 것이 둘이 되는
      순간 이 판은 수수께끼가 아니라 조작 연습이 됐다.
-   ★ 첫 조각(녹의 ㄴ)은 이미 놓여 있다. 「여기에 채운다」와 「세로로 세운 글자다」를
-     설명 한 줄 없이 그 하나가 대신 말한다 — 이 수수께끼의 문턱은 조작이 아니라
-     «영어가 아니다»를 눈치채는 그 한 걸음이다.
    ★ 판은 답을 «보내지 않는다». 다 맞추면 「녹취」가 읽힐 뿐이고, 읽은 것은 사람이
      아래 답 칸에 적는다 — 조각을 맞추는 손과 답을 아는 머리를 갈라 놓는 자리다.
-     판에서 딴 글자만으로는 부족하고, 본문의 「쓰러지면서」와 만나야 답이 선다. */
+     판에서 딴 글자만으로는 부족하고, 본문의 「쓰러지면서」와 만나야 답이 선다.
+
+   ★ 2026-08-09 — 시작 자리를 다시 잡았습니다(사람 결정).
+     예전에는 일곱 장이 그림 위에 흩뿌려져 있었고 첫 장은 미리 놓여 있었습니다.
+     이제 «아래에 LITTLIK 이 순서대로 한 줄로» 적혀 있고, 거기서 끌어 올립니다 —
+     칩에 적힌 그 글자가 그대로 조각이라는 것이 판을 보는 첫 순간에 읽힙니다.
+     미리 놓인 조각은 없습니다. 그 자리는 «끌면 빛나는 자리»가 대신 말합니다.
+   ★ 색 점은 걷었습니다. 조각마다 다른 색을 물려 두면 색끼리 짝을 맞추는 놀이가
+     되어, 정작 «낱자를 돌려 자모로 읽는» 그 한 걸음을 건너뛰게 됩니다.
+     이제 표시는 하나뿐입니다 — 잡으면 그 조각이 갈 자리가 초록으로 빛납니다.
+     제자리에 붙으면 지금처럼 초록으로 가라앉습니다. */
 const PZ_GLYPH={
   L:"M30 14 V84 H76",
   I:"M50 14 V86",
   T:"M16 24 H84 M50 24 V88",
   K:"M30 12 V88 M30 50 L74 14 M30 50 L74 88",
 };
-/* 판은 100×100. 조각 상자는 24 — 여섯 자모가 두 덩이로 앉는 크기다. */
-const PZ_BOX=24;
+/* 판은 100×100. 조각 상자는 24 — 여섯 자모가 두 덩이로 앉는 크기다.
+   아래 줄에 놓인 동안에는 13 으로 작다 — 일곱 장이 한 줄에 안 겹치고 들어가야
+   «LITTLIK» 으로 읽힌다. 잡는 순간 제 크기로 커진다. */
+const PZ_BOX=24, PZ_TRAY=13, PZ_TRAY_Y=89;
 const PZ={
   A9:{ answer:"녹취",
-    /* k 낱자 · r 맞는 각 · x,y 맞는 자리 · c 이음점 색 · fix 처음부터 놓여 있는 것 */
+    /* k 낱자 · r 맞는 각 · x,y 맞는 자리 */
     pieces:[
-      {id:"n1", k:"L", r:0,   x:30, y:28, c:"#f2d94e", fix:true},  // 녹 ㄴ
-      {id:"n2", k:"T", r:180, x:31, y:47, c:"#f2d94e"},            // 녹 ㅗ
-      {id:"n3", k:"L", r:180, x:31, y:66, c:"#e0503f"},            // 녹 ㄱ
-      {id:"c1", k:"I", r:90,  x:64, y:22, c:"#8fd14f"},            // 취 ㅊ 윗획
-      {id:"c2", k:"K", r:90,  x:64, y:34, c:"#8fd14f"},            // 취 ㅊ 아래
-      {id:"c3", k:"T", r:0,   x:63, y:58, c:"#4aa3e8"},            // 취 ㅜ
-      {id:"c4", k:"I", r:0,   x:84, y:47, c:"#4aa3e8"},            // 취 ㅣ
+      {id:"n1", k:"L", r:0,   x:30, y:28},   // 녹 ㄴ
+      {id:"n2", k:"T", r:180, x:31, y:47},   // 녹 ㅗ
+      {id:"n3", k:"L", r:180, x:31, y:66},   // 녹 ㄱ
+      {id:"c1", k:"I", r:90,  x:64, y:22},   // 취 ㅊ 윗획
+      {id:"c2", k:"K", r:90,  x:64, y:34},   // 취 ㅊ 아래
+      {id:"c3", k:"T", r:0,   x:63, y:58},   // 취 ㅜ
+      {id:"c4", k:"I", r:0,   x:84, y:47},   // 취 ㅣ
     ],
-    /* 흩어 놓는 자리 — 그림의 어두운 고리 위다. 늘 같은 자리에 둔다(사람마다 달라야
-       할 이유가 없고, 같아야 「저기 있던 거」로 서로 부를 수 있다). */
-    start:[null,{x:14,y:12,r:90},{x:86,y:14,r:90},{x:10,y:52,r:0},
-           {x:16,y:86,r:180},{x:50,y:92,r:90},{x:90,y:80,r:180}],
+    /* 아래 줄 — 왼쪽부터 L·I·T·T·L·I·K. 칩에 적힌 순서 그대로다.
+       모두 안 돌아간 채(각 0) 서 있어서 영어로 읽힌다. */
+    tray:["n1","c1","n2","c3","n3","c4","c2"],
   },
 };
+/* 아래 줄에서 k 번째 조각이 서는 자리 */
+function pzTrayAt(k){ return {x:8+k*14, y:PZ_TRAY_Y}; }
 let pzk=null;                        // {cid, pieces:[{...상태}], el}
 function pzHas(cid){ return !!PZ[cid]; }
 function pzHTML(cid){
@@ -7942,7 +7982,7 @@ function pzHTML(cid){
     <div class="pz-bg" id="pzBg"></div>
     <svg class="pz-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"
          id="pzSvg" aria-label="조각 맞추기"></svg>
-    <div class="pz-head">칩에 새겨진 자국 · <b class="pz-n">1 / ${d.pieces.length}</b>
+    <div class="pz-head">칩에 새겨진 자국 · <b class="pz-n">0 / ${d.pieces.length}</b>
       <span class="pz-tip"><b>자리에 끌어다 놓으면</b> 저절로 돌아갑니다</span></div>
   </div>`;
 }
@@ -7956,10 +7996,13 @@ function pzWire(cid, live){
   const sid=(STATE&&STATE.scenarioId)||"";
   findAsset(`/assets/${sid}_card_${cid}`, u=>{ const b=$("pzBg");
     if(u&&b) b.style.backgroundImage=`url("${u}")`; });
-  pzk={cid, done:false, cold:(live===false), hintAt:Date.now(),
-       pieces:d.pieces.map((p,i)=>{
-         const st=d.start[i];
-         return {...p, cx:st?st.x:p.x, cy:st?st.y:p.y, rot:st?st.r:p.r, set:!st};
+  /* 일곱 장이 «전부» 아래 줄에서 시작한다. 줄에서의 순서는 tray 가 정한다 —
+     그 순서대로 읽으면 칩에 적힌 LITTLIK 이다. */
+  const ord=d.tray||d.pieces.map(p=>p.id);
+  pzk={cid, done:false, cold:(live===false),
+       pieces:d.pieces.map(p=>{
+         const k=ord.indexOf(p.id), t=pzTrayAt(k<0?0:k);
+         return {...p, home:t, cx:t.x, cy:t.y, rot:0, set:false, tray:true};
        })};
   pzDraw();
 }
@@ -7969,16 +8012,20 @@ function pzWire(cid, live){
      짰다가 조각이 아예 안 움직였다. 다시 그리는 것과 «옮기는 것»은 다른 일이다. */
 function pzDraw(){
   const svg=$("pzSvg"); if(!svg||!pzk) return;
-  const S=PZ_BOX/100;
   svg.innerHTML=
-    pzk.pieces.map(p=>`<circle class="pz-slot" data-s="${p.id}" cx="${p.x}" cy="${p.y}"
-        r="1.5" fill="rgba(235,230,220,.22)"/>`).join("")+
+    /* 아래 줄 — 글자가 «놓여 있는 자리»라는 것만 말하는 얕은 띠 */
+    `<rect class="pz-tray" x="0" y="${PZ_TRAY_Y-9}" width="100" height="18"/>`+
+    /* 놓을 자리 — 평소엔 작은 점 하나뿐이고, 그 짝을 잡았을 때만 고리가 빛난다.
+       고리를 늘 띄워 두면 일곱 개가 겹쳐서 판이 답을 미리 그려 준 꼴이 된다. */
+    pzk.pieces.map(p=>`<g class="pz-slot" data-s="${p.id}">
+        <circle class="ps-r" cx="${p.x}" cy="${p.y}" r="9"/>
+        <circle class="ps-d" cx="${p.x}" cy="${p.y}" r="1.6"/>
+      </g>`).join("")+
     pzk.pieces.map(p=>`<g class="pz-p" data-id="${p.id}">
         ${/* ★ 속이 빈 획만으로는 손가락이 못 잡는다 — 획은 화면에서 2~3픽셀이다.
              안 보이는 판을 한 장 깔아 상자 전체를 잡을 수 있게 한다. */""}
         <rect class="pz-grab" x="12" y="12" width="76" height="76" fill="transparent"/>
         <path d="${PZ_GLYPH[p.k]}"/>
-        <circle class="pz-dot" cx="50" cy="50" r="7" fill="${p.c}"/>
       </g>`).join("");
   svg.querySelectorAll(".pz-p").forEach(pzGrip);
   pzSync();
@@ -7986,18 +8033,17 @@ function pzDraw(){
 /* 지금 상태를 화면에 얹는다 — 요소는 그대로 두고 속성만 바꾼다 */
 function pzSync(){
   const svg=$("pzSvg"); if(!svg||!pzk) return;
-  const S=PZ_BOX/100, held=pzk.held;
+  const held=pzk.held;
   pzk.pieces.forEach(p=>{
     const g=svg.querySelector(`.pz-p[data-id="${p.id}"]`); if(!g) return;
+    // 아래 줄에 그대로 서 있는 동안만 작다 — 잡는 순간(tray=false) 제 크기가 된다
+    const S=(p.tray&&!p.set?PZ_TRAY:PZ_BOX)/100;
     g.setAttribute("transform",
       `translate(${p.cx} ${p.cy}) rotate(${p.rot}) scale(${S}) translate(-50 -50)`);
     g.classList.toggle("set", !!p.set);
     g.classList.toggle("held", !!(held&&held.id===p.id));
     const sl=svg.querySelector(`.pz-slot[data-s="${p.id}"]`); if(!sl) return;
-    const on=!!(held&&held.id===p.id);
-    sl.classList.toggle("on", on);
-    sl.setAttribute("r", on?"2.6":"1.5");
-    sl.setAttribute("fill", on?p.c:"rgba(235,230,220,.22)");
+    sl.classList.toggle("on", !!(held&&held.id===p.id));
     sl.style.display=p.set?"none":"";
   });
   const nEl=document.querySelector("#pzk .pz-n");
@@ -8019,6 +8065,7 @@ function pzGrip(g){
     const p=P(); if(!p||p.set||id!==null) return;
     id=e.pointerId; try{ g.setPointerCapture(id); }catch(x){}
     const a=pzAt(e); sx=a.x; sy=a.y; ox=p.cx; oy=p.cy; moved=0;
+    p.tray=false;                             // 집어 올렸다 — 여기서부터 제 크기다
     pzk.held=p;
     // 잡은 것은 맨 위로 — 겹친 조각 아래로 들어가 버리면 끄는 손과 눈이 어긋난다
     try{ g.parentNode.appendChild(g); }catch(x){}
@@ -8046,7 +8093,15 @@ function pzGrip(g){
 /* 자리만 맞으면 붙는다 — 각은 판이 맞춘다. */
 function pzSnap(p){
   const near=Math.abs(p.cx-p.x)+Math.abs(p.cy-p.y);
-  if(near>13){ pzSync(); return; }
+  /* 빗나가면 아래 줄의 제 칸으로 돌아간다. 그냥 그 자리에 두면 판 한가운데에
+     안 쓴 조각이 널브러져서, 아래에 적혀 있던 LITTLIK 이 몇 번 만에 사라진다. */
+  if(near>13){
+    const g0=document.querySelector(`#pzSvg .pz-p[data-id="${p.id}"]`);
+    if(g0){ g0.classList.add("snap");
+            setTimeout(()=>{ try{ g0.classList.remove("snap"); }catch(e){} },420); }
+    p.cx=p.home.x; p.cy=p.home.y; p.rot=0; p.tray=true;
+    pzSync(); return;
+  }
   p.cx=p.x; p.cy=p.y;
   /* 돌아가는 «길»은 가까운 쪽으로 잡는다. 270°를 도는 조각은 맞아 들어간 것이
      아니라 헛도는 것으로 보인다. */
@@ -8101,7 +8156,8 @@ let puzTries={};
    힌트가 이미 열렸으면 잠김만, 이미 잠겼으면 그 사실만 말한다. */
 function puzNoteText(hint,locked,hintN,maxT){
   if(locked) return `이 카드는 다른 사람만 풀 수 있습니다.`;
-  if(hint)   return `${maxT}번 틀리면 해당 카드는 잠깁니다.`;
+  // 힌트를 안 주기로 한 판에서는 「한 줄이 열린다」를 약속하면 안 된다(SHOW_HINT)
+  if(hint||!SHOW_HINT) return `${maxT}번 틀리면 해당 카드는 잠깁니다.`;
   return `${hintN}번 틀리면 한 줄이 열리고, ${maxT}번 틀리면 해당 카드는 잠깁니다.`;
 }
 /* ★ 수수께끼는 «카드»다. 예전에는 물음 한 줄과 입력칸만 담은 맨 상자를 따로 띄웠다 —
@@ -8147,10 +8203,10 @@ async function openPuzzle(cid){
         <button class="btn primary" onclick="puzSend('${cid}')">맞춰 보기</button>
       </div>`}
       <div class="puz-msg" id="puzMsg">${(row.tries&&!row.locked)?`${row.tries}번 틀렸습니다 — ${maxT-row.tries}번 남았습니다.`:""}</div>
-      ${row.hint?`<div class="puz-hint">${esc(row.hint)}</div>`:""}
+      ${hintOf(row)?`<div class="puz-hint">${esc(hintOf(row))}</div>`:""}
       <div class="puz-note" id="puzNote">${!canTry ? esc(why)
-                                              :kit?`자리에 끌어다 놓으면 저절로 돌아갑니다 — 몇 번이든 붙였다 떼도 됩니다. ${puzNoteText(row.hint,row.locked,hintN,maxT)}`
-                                              :puzNoteText(row.hint,row.locked,hintN,maxT)}</div>
+                                              :kit?`자리에 끌어다 놓으면 저절로 돌아갑니다 — 몇 번이든 붙였다 떼도 됩니다. ${puzNoteText(hintOf(row),row.locked,hintN,maxT)}`
+                                              :puzNoteText(hintOf(row),row.locked,hintN,maxT)}</div>
     </div>
     <div class="mfoot"><span class="mf-note">맞히면 나온 것은 내가 가져갑니다.</span>
       <button class="btn" onclick="closeModal('cardModal')">닫기</button></div>`;
@@ -8195,7 +8251,7 @@ async function puzSend(cid){
   const left=maxT-puzTries[cid];
   if(msg) msg.textContent=left>0?`틀렸습니다 — ${puzTries[cid]}번째. ${left}번 남았습니다.`
                                :`틀렸습니다 — ${puzTries[cid]}번째.`;
-  if(r&&r.hint){
+  if(SHOW_HINT&&r&&r.hint){
     const box=msg&&msg.parentNode;
     if(box&&!box.querySelector(".puz-hint")){
       const h=document.createElement("div"); h.className="puz-hint"; h.textContent=r.hint;
@@ -8613,7 +8669,65 @@ function b9LayerSVG(){
     ${rows}
   </svg>`;
 }
-const CARD_LAYER={ B9: b9LayerSVG };
+/* ── 마을주민 조직관계도 (B10) ────────────────────────────────────
+   출입기록과 같은 자리다 — «읽어야 하는» 카드라 그림 위에 판을 얹는다.
+   다만 이건 표가 아니라 «관계»라, 줄글로 읽는 것보다 선으로 보는 쪽이 훨씬 빠르다.
+   ★ 글자는 최소한만 둔다(사람 결정). 얼굴과 선의 결이 관계를 말하고, 글자는
+     그 선에 이름표 한 마디씩만 붙는다.
+   ★ 세 관계의 «결»이 서로 다르다 — 끊긴 줄은 끊어져 있고, 물려받는 줄은 굵고
+     곧으며, 새로 생긴 줄은 이 세상의 초록이다. 색과 굵기만으로도 셋이 갈린다.
+   ★ 화살표는 «누가 그렇게 적어 두었는가»를 가리킨다. 후계자와 공략 목표는
+     둘 다 아래쪽에서 데이미안을 향해 붙인 표기다(원고 본문과 같다). */
+const B10_TIE=[
+  {who:"david", name:"데이빗", cx:40,  cls:"rl-cut",  tag:"단절",      sub:"이따금 우호", ty:110},
+  {who:"damon", name:"데이먼", cx:100, cls:"rl-heir", tag:"후계자",    sub:"",           ty:128, up:true},
+  {who:"daisy", name:"데이지", cx:160, cls:"rl-aim",  tag:"공략 목표", sub:"신규",       ty:116, up:true},
+];
+function b10LayerSVG(){
+  const sid=(STATE&&STATE.scenarioId)||"rule_the_day";
+  const pic=r=>`/assets/${sid}_portrait_${r}.webp`;
+  /* ★ 데이미안의 이름표는 얼굴 «위»에 둔다. 아래에 두면 세 줄이 모여드는 자리와
+       겹쳐서, 이름과 화살촉과 이름표가 한 덩어리로 뭉개진다. */
+  const TOP={cx:100, cy:78, r:17}, BOT_Y=152, BOT_R=14;
+  const face=(r,cx,cy,rad)=>`
+    <clipPath id="rlc-${r}"><circle cx="${cx}" cy="${cy}" r="${rad}"/></clipPath>
+    <image href="${pic(r)}" x="${cx-rad}" y="${cy-rad}" width="${rad*2}" height="${rad*2}"
+       preserveAspectRatio="xMidYMid slice" clip-path="url(#rlc-${r})"/>
+    <circle class="rl-ring" cx="${cx}" cy="${cy}" r="${rad}"/>`;
+  const lines=B10_TIE.map(t=>{
+    /* 줄은 얼굴 «가장자리»에서 시작해 가장자리에서 끝난다 — 원 밑으로 파고들면
+       화살촉이 얼굴에 가려 안 보인다. 아래에서 위로 그어서 화살촉이 데이미안 쪽에
+       선다(그렇게 적어 둔 쪽이 아래이기 때문이다). */
+    const dx=t.cx-TOP.cx, dy=BOT_Y-TOP.cy, L=Math.hypot(dx,dy)||1;
+    const ax=t.cx-dx/L*(BOT_R+2),  ay=BOT_Y-dy/L*(BOT_R+2);      // 아래 얼굴 가장자리
+    const bx=TOP.cx+dx/L*(TOP.r+3), by=TOP.cy+dy/L*(TOP.r+3);    // 데이미안 쪽 가장자리
+    // 이름표가 앉을 자리 — 그 줄 «위»의 한 점이다. 셋의 높이를 어긋나게 두어 겹치지 않는다.
+    const k=(t.ty-TOP.cy)/(BOT_Y-TOP.cy), lx=TOP.cx+dx*k;
+    const w=Math.max(t.tag.length*8.2, t.sub.length*6.4)+7;
+    return `<line class="${t.cls}" x1="${ax.toFixed(1)}" y1="${ay.toFixed(1)}"
+        x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}"
+        ${t.up?'marker-end="url(#rlArw)"':""}/>
+      <rect class="rl-lab" x="${(lx-w/2).toFixed(1)}" y="${t.ty-6.5}" width="${w.toFixed(1)}"
+        height="${t.sub?16:13}" rx="1.5"/>
+      <text class="rl-tag ${t.cls}" x="${lx.toFixed(1)}" y="${t.ty}" font-size="8">${t.tag}</text>
+      ${t.sub?`<text class="rl-sub" x="${lx.toFixed(1)}" y="${t.ty+8.5}" font-size="6">${t.sub}</text>`:""}`;
+  }).join("");
+  const nodes=B10_TIE.map(t=>`${face(t.who,t.cx,BOT_Y,BOT_R)}
+      <text class="rl-nm" x="${t.cx}" y="${BOT_Y+BOT_R+8}" font-size="8.5">${t.name}</text>`).join("");
+  return `<svg class="ca-lay" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet"
+      aria-label="마을주민 조직관계도">
+    <defs><marker id="rlArw" viewBox="0 0 8 8" refX="6.5" refY="4" markerWidth="3.6"
+        markerHeight="3.6" orient="auto"><path d="M1 1 L7 4 L1 7 z" fill="currentColor"/></marker></defs>
+    <rect class="lg-pan" x="8" y="22" width="184" height="164" rx="2"/>
+    <text class="lg-cap" x="18" y="36" font-size="8">주민 관계 색인</text>
+    <line class="lg-rule" x1="16" y1="43" x2="184" y2="43"/>
+    <text class="rl-nm" x="${100}" y="55" font-size="9">데이미안</text>
+    ${lines}
+    ${face("victim",TOP.cx,TOP.cy,TOP.r)}
+    ${nodes}
+  </svg>`;
+}
+const CARD_LAYER={ B9: b9LayerSVG, B10: b10LayerSVG };
 function cardLayer(id){
   const f=CARD_LAYER[id]; if(!f) return "";
   try{ return f(); }catch(e){ return ""; }
@@ -8918,7 +9032,7 @@ function showHandTrim(){
         <div class="tt">${esc(c.title)}</div>
         <div class="tm"><span class="pill">${esc(c.locName)}</span>${c.spot?`<span class="pill">${esc(c.spot)}</span>`:''}<span class="pill">R${c.round}</span></div>
         <div class="tb">${cardTx(c.text)}</div>
-        ${c.hint?`<div class="cnote" style="margin-top:8px;font-size:12px"><b>해석</b>${esc(c.hint)}</div>`:""}
+        ${hintOf(c)?`<div class="cnote" style="margin-top:8px;font-size:12px"><b>해석</b>${esc(hintOf(c))}</div>`:""}
       </button>`).join("")}</div></div>
     <div class="mfoot">
       <span class="mf-note" id="trimHint"></span>
@@ -11330,7 +11444,7 @@ async function showMySheet(){
       <div class="bg-spot">${esc(b.spot||"")}</div>
       <div class="bg-seized">${ICO.warn}<span>압수됐습니다 — 이건 이제 <b>모두가 봅니다.</b></span></div>
       <div class="ntx bg-tx">${esc(b.text||"")}</div>
-      ${b.hint?`<div class="knownote" style="margin-top:12px">${esc(b.hint)}</div>`:""}
+      ${hintOf(b)?`<div class="knownote" style="margin-top:12px">${esc(hintOf(b))}</div>`:""}
       ${bl.note?`<div class="bg-note">${esc(bl.note)}</div>`:""}</div>`});
   }
   ((bl&&bl.seized)||[]).forEach(b=>{
@@ -11341,7 +11455,7 @@ async function showMySheet(){
         <span class="bg-w">${esc(b.name||"")}<i>${esc(b.job||"")}</i></span>
         <span class="bg-s">${esc(b.spot||"")}</span></div>
       <div class="ntx bg-tx">${esc(b.text||"")}</div>
-      ${b.hint?`<div class="knownote" style="margin-top:12px">${esc(b.hint)}</div>`:""}</div>`});
+      ${hintOf(b)?`<div class="knownote" style="margin-top:12px">${esc(hintOf(b))}</div>`:""}</div>`});
   });
   // 5) 배치도 — 전원이 갖는다. 포드는 아는 사람 지도에만 그려진다.
   if(s.hasMap){
