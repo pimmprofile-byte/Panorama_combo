@@ -1852,11 +1852,10 @@
     filter:drop-shadow(0 0 3px color-mix(in srgb,var(--signal) 55%,transparent))}
   .pzk .pz-dot{opacity:.55}
   .pzk .pz-p.held .pz-dot{opacity:1}
-  /* 자리가 맞는데 각이 안 맞을 때 — 말 대신 몸짓으로 「돌려라」 */
-  @keyframes pzBad{0%,100%{transform:none}25%{transform:translateX(-2.5px)}
-                   50%{transform:translateX(2.5px)}75%{transform:translateX(-1.5px)}}
-  .pzk .pz-p.bad path{stroke:#f0b429}
-  .pzk .pz-p.bad{animation:pzBad .3s ease 2}
+  /* 자리에 놓는 순간 «저절로» 돌아간다. 돌아가는 것이 보여야 «맞춰졌다»가 아니라
+     «맞아 들어갔다»로 읽힌다 — 그래서 순간이동이 아니라 한 번 도는 길을 준다.
+     끄는 동안에는 이 결이 붙지 않는다(붙으면 손가락보다 조각이 늦게 온다). */
+  .pzk .pz-p.snap{transition:transform .42s cubic-bezier(.2,.85,.25,1)}
   /* 빈 자리의 이음점 — 평소엔 있다는 것만, 잡고 있을 때만 그 짝이 뛴다 */
   @keyframes pzSlot{0%,100%{opacity:.55}50%{opacity:1}}
   .pzk .pz-slot.on{animation:pzSlot .9s ease-in-out infinite}
@@ -1878,8 +1877,13 @@
   .pzk.cold .pz-p{cursor:default}
   .pzk.cold .pz-tip{display:none}
   @media(prefers-reduced-motion:reduce){
-    .pzk .pz-slot.on,.pzk .pz-p.bad,.pzk.done .pz-svg{animation:none}
+    .pzk .pz-slot.on,.pzk.done .pz-svg{animation:none}
+    .pzk .pz-p.snap{transition:none}
   }
+  /* 다 맞춘 뒤의 답 칸 — 판에서 읽은 것을 여기 적는다. 초록 테두리가
+     「이제 여기 차례다」를 말한다(글자는 안 늘린다). */
+  .puz-in input.ready{border-color:var(--signal);
+    box-shadow:inset 2px 2px 0 rgba(0,0,0,.5),0 0 0 1px color-mix(in srgb,var(--signal) 45%,transparent)}
   /* ── 그림칸 머리 ──────────────────────────────────────────────
      협동 퍼즐 판(.lift .lf-head)과 같은 문법이다 — 위쪽에 어두운 틴팅 한 겹을 깔고
      그 위에 한 줄을 얹는다. 그림 위에 바로 글을 놓으면 밝은 그림에서 글이 사라진다.
@@ -7838,12 +7842,15 @@ function ensureCardBack(){
    회전만으로 다 된다 — L→ㄴ · L↕→ㄱ · T↕→ㅗ · T→ㅜ · I→ㅣ · I↻+K↻→ㅊ.
    일곱 장이 여섯 자모로 정확히 떨어져서, 남는 조각도 모자란 조각도 없다.
 
-   ★ 손짓은 둘뿐이다 — 끌면 옮기고, 톡 치면 90° 돈다. 배울 것이 하나여야 한다.
+   ★ 손짓은 하나다 — 끌어다 자리에 놓는 것. 각은 판이 맞춘다(pzSnap).
+     예전에는 «톡 쳐서 90° 돌리는» 손짓이 하나 더 있었는데, 배울 것이 둘이 되는
+     순간 이 판은 수수께끼가 아니라 조작 연습이 됐다.
    ★ 첫 조각(녹의 ㄴ)은 이미 놓여 있다. 「여기에 채운다」와 「세로로 세운 글자다」를
      설명 한 줄 없이 그 하나가 대신 말한다 — 이 수수께끼의 문턱은 조작이 아니라
      «영어가 아니다»를 눈치채는 그 한 걸음이다.
-   ★ 색이 안 맞으면 아예 안 붙는다. 그래서 «틀렸습니다»가 없다 — 못 푼 것이 아니라
-     아직 안 맞춘 것뿐이다. 이 카드만 시도 횟수를 안 센다. */
+   ★ 판은 답을 «보내지 않는다». 다 맞추면 「녹취」가 읽힐 뿐이고, 읽은 것은 사람이
+     아래 답 칸에 적는다 — 조각을 맞추는 손과 답을 아는 머리를 갈라 놓는 자리다.
+     판에서 딴 글자만으로는 부족하고, 본문의 「쓰러지면서」와 만나야 답이 선다. */
 const PZ_GLYPH={
   L:"M30 14 V84 H76",
   I:"M50 14 V86",
@@ -7879,7 +7886,7 @@ function pzHTML(cid){
     <svg class="pz-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"
          id="pzSvg" aria-label="조각 맞추기"></svg>
     <div class="pz-head">칩에 새겨진 자국 · <b class="pz-n">1 / ${d.pieces.length}</b>
-      <span class="pz-tip">끌어서 옮기고, <b>톡 치면 돌아갑니다</b></span></div>
+      <span class="pz-tip"><b>자리에 끌어다 놓으면</b> 저절로 돌아갑니다</span></div>
   </div>`;
 }
 /* live — 지금 손을 댈 수 있는 때인가(조사 페이즈인가). false 면 판은 그대로 보여주되
@@ -7972,45 +7979,40 @@ function pzGrip(g){
     const p=P(); if(!p||id!==e.pointerId) return;
     try{ g.releasePointerCapture(id); }catch(x){}
     id=null; pzk.held=null;
-    /* 손가락이 거의 안 움직였으면 «톡 친 것»이다 — 돌린다 */
-    /* ★ 돌린 뒤에도 붙는지 본다. 자리에 갖다 놓고 그 자리에서 돌려 맞추는 것이
-       제일 자연스러운 순서인데, 붙는 검사를 «놓을 때»만 하고 있어서 각을 맞춰
-       놓고도 안 붙었다 — 들었다 다시 놓아야 했다. 그건 규칙이 아니라 헛손질이다. */
-    if(moved<3){ p.rot=(p.rot+90)%360; try{ sfx("tap"); }catch(x){} pzSnap(p); return; }
+    /* 손을 뗀 자리가 제 자리 근처면 붙는다. 톡 쳐서 돌리는 손짓은 없앴다 —
+       손가락이 안 움직인 «톡»도 그냥 놓은 것으로 친다. */
     pzSnap(p);
   };
   g.addEventListener("pointerup",up);
   g.addEventListener("pointercancel",up);
 }
+/* 자리만 맞으면 붙는다 — 각은 판이 맞춘다. */
 function pzSnap(p){
   const near=Math.abs(p.cx-p.x)+Math.abs(p.cy-p.y);
-  if(near<=13){
-    if(((p.rot%360)+360)%360===p.r){
-      p.cx=p.x; p.cy=p.y; p.set=true;
-      try{ sfx("good"); }catch(x){}
-      pzSync(); pzCheck(); return;
-    }
-    /* 자리는 맞는데 각이 안 맞는다 — 말 대신 몸짓으로 「돌려라」 */
-    const g=document.querySelector(`#pzSvg .pz-p[data-id="${p.id}"]`);
-    if(g){ g.classList.remove("bad"); void g.getBoundingClientRect(); g.classList.add("bad");
-           setTimeout(()=>{ try{ g.classList.remove("bad"); }catch(e){} },700); }
-    try{ sfx("bad"); }catch(x){}
-  }
-  pzSync();
+  if(near>13){ pzSync(); return; }
+  p.cx=p.x; p.cy=p.y;
+  /* 돌아가는 «길»은 가까운 쪽으로 잡는다. 270°를 도는 조각은 맞아 들어간 것이
+     아니라 헛도는 것으로 보인다. */
+  let d=(((p.r-p.rot)%360)+360)%360; if(d>180) d-=360;
+  p.rot=p.rot+d;
+  p.set=true;
+  /* 결은 «값을 바꾸기 전에» 걸어 둬야 그 사이를 건너간다 */
+  const g=document.querySelector(`#pzSvg .pz-p[data-id="${p.id}"]`);
+  if(g){ g.classList.add("snap");
+         setTimeout(()=>{ try{ g.classList.remove("snap"); }catch(e){} },520); }
+  try{ sfx("good"); }catch(x){}
+  pzSync(); pzCheck();
 }
-async function pzCheck(){
+/* 다 맞췄다 — 그리고 여기서 끝이다. 예전에는 판이 답을 대신 보냈는데, 그러면
+   맞춘 사람이 «무슨 글자였는지 읽지도 않고» 카드를 얻었다. 읽는 것이 이 수수께끼의
+   전부라 그 한 걸음을 사람에게 돌려준다 — 판은 글자를 세우고, 답은 아래 칸에 적는다. */
+function pzCheck(){
   if(!pzk||pzk.done) return;
   if(pzk.pieces.some(p=>!p.set)) return;
   pzk.done=true;
   const box=$("pzk"); if(box) box.classList.add("done");
-  const cid=pzk.cid, ans=PZ[cid].answer;
-  setTimeout(()=>{ try{ pzSend(cid,ans); }catch(e){} },900);
-}
-async function pzSend(cid,ans){
-  const r=await post("/api/puzzle",{cardId:cid,roleId:myRoleId,clientId,answer:ans});
-  if(r&&r.ok){ banner("풀었습니다! 손패에 카드가 추가됩니다.", "good");
-    await puzzleWon(cid, r.got); return; }
-  banner((r&&r.error)||"보내지 못했습니다");
+  const n=$("puzNote"); if(n) n.textContent="자국이 다 이어졌습니다 — 읽히는 대로 아래 칸에 적으세요.";
+  const i=$("puzAns"); if(i) i.classList.add("ready");
 }
 /* ── 풀고 난 자리 ─────────────────────────────────────────────────
    예전에는 «푼 그 카드»를 그 자리에서 다시 세웠다. 그런데 푼 사람에게 지금 궁금한
@@ -8077,20 +8079,20 @@ async function openPuzzle(cid){
     <div class="mbody">
       ${kit?pzHTML(cid):cardArtSlot()}
       <div class="sec"><div class="b" style="font-size:15px" id="cardText">${mdB(esc(row.prompt||""))}</div></div>
-      ${kit ? "" : (!canTry
+      ${/* ★ 맞추는 판이 있어도 답 칸은 «있다». 판은 글자를 세워 줄 뿐이고, 읽은 것을
+            적는 것은 사람 몫이다 — 예전에는 다 맞추면 판이 답을 대신 보냈다. */""}
+      ${!canTry
         ? `<div class="puz-dead">${esc(why)}</div>`
         : row.locked
         ? `<div class="puz-dead">이 카드는 당신에게 잠겼습니다 — 다른 사람에게 넘기세요</div>`
         : `<div class="puz-in">
         <input id="puzAns" type="text" autocomplete="off" placeholder="답을 적으세요" enterkeyhint="done">
         <button class="btn primary" onclick="puzSend('${cid}')">맞춰 보기</button>
-      </div>`)}
-      <div class="puz-msg" id="puzMsg">${(!kit&&row.tries&&!row.locked)?`${row.tries}번 틀렸습니다 — ${maxT-row.tries}번 남았습니다.`:""}</div>
+      </div>`}
+      <div class="puz-msg" id="puzMsg">${(row.tries&&!row.locked)?`${row.tries}번 틀렸습니다 — ${maxT-row.tries}번 남았습니다.`:""}</div>
       ${row.hint?`<div class="puz-hint">${esc(row.hint)}</div>`:""}
-      ${/* ★ 맞추는 판에는 «몇 번 틀리면 잠긴다»가 없다. 색이 안 맞으면 아예 안 붙어서
-            틀린 조합이 만들어지지 않는다 — 셀 것이 없는데 세겠다고 하면 겁만 준다. */""}
       <div class="puz-note" id="puzNote">${!canTry ? esc(why)
-                                              :kit?"맞출 때까지 몇 번이든 붙였다 떼도 됩니다."
+                                              :kit?`자리에 끌어다 놓으면 저절로 돌아갑니다 — 몇 번이든 붙였다 떼도 됩니다. ${puzNoteText(row.hint,row.locked,hintN,maxT)}`
                                               :puzNoteText(row.hint,row.locked,hintN,maxT)}</div>
     </div>
     <div class="mfoot"><span class="mf-note">맞히면 나온 것은 내가 가져갑니다.</span>
