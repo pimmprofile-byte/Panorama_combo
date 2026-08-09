@@ -2257,6 +2257,11 @@
   #sheetModal .tl-t{font-size:16.5px;line-height:1.8;max-width:52ch}
 
   .bc-goal{display:flex;gap:10px;font-size:15px;padding:9px 0;border-bottom:1px solid var(--line)}.bc-goal:last-child{border-bottom:0}.bc-goal .pt{margin-left:auto;color:var(--good);font-weight:700;font-family:var(--pix)}
+  /* 잃는 목표 — 「비밀」이다. 얻는 줄과 같은 초록으로 서면 읽는 사람이 헷갈린다. */
+  .bc-goal.minus{border-bottom-color:color-mix(in srgb,var(--ember) 45%,var(--line))}
+  .bc-goal .pt.minus{color:var(--ember-b)}
+  .bc-gnote{margin:-2px 0 9px;padding-left:2px;font-size:12.5px;line-height:1.65;
+    color:var(--muted);white-space:pre-line;word-break:keep-all}
   /* 내 정보(배역 시트)는 한 번에 읽을 분량이 많다 — 팝업을 넓히고 본문을 키운다.
      본문 줄길이는 measure로 잡아, 넓어져도 한 줄이 지나치게 길어지지 않게 한다. */
   #sheetModal .win{max-width:760px;max-height:92vh;max-height:94svh}
@@ -11332,7 +11337,15 @@ async function showMySheet(){
   });
   // 7) 나의 목표
   slides.push({tab:"main", html:`<div class="bigcard role" style="--rc:${s.color}"><div class="bc-eyebrow">나의 목표</div><div class="bc-title" style="font-size:18px">${esc(SL.goals||"이번 밤, 내가 노리는 것")}</div>
-    <div style="margin-top:12px">${(s.goals||[]).map(g=>`<div class="bc-goal"><span>${starTx(g.t)}</span><span class="pt">+${g.p}</span></div>`).join("")}
+    ${/* ★ 목표에 «깎이는» 것이 섞여 있다(비밀 -5). 부호를 그대로 찍고 색을 갈라야
+          「+-5」 같은 글자가 안 나오고, 무엇이 얻는 것이고 무엇이 잃는 것인지가
+          한눈에 갈린다. 0점짜리(개발자의 «절반» 규칙)는 점수 칸을 아예 안 그린다. */""}
+    <div style="margin-top:12px">${(s.goals||[]).map(g=>{
+      const p=+g.p||0, minus=p<0;
+      const pt=p?`<span class="pt${minus?" minus":""}">${minus?"":"+"}${p}</span>`:"";
+      return `<div class="bc-goal${minus?" minus":""}"><span>${starTx(g.t)}</span>${pt}</div>`
+        +(g.note?`<div class="bc-gnote">${esc(g.note)}</div>`:"");
+    }).join("")}
     ${s.keepGoal?`<div class="bc-goal keep"><span>${esc(s.keepGoal.label)}</span><span class="pt">+${s.keepGoal.points}</span></div>
       <div class="keepnote">어느 카드인지는 <b>찾아내야 한다</b>. 조사해서 열어보면 그 자리에서 나에게만 표시된다.
         끝까지 <b>내 손패에 있어야</b> 점수가 인정되고, 전체공개되거나 남이 눈치채면 무효다.</div>`:""}</div></div>`});
